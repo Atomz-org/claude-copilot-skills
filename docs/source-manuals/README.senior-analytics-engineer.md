@@ -1,4 +1,4 @@
-# Senior Analytics Engineer — How to Use It
+# dbt Skill — How to Use It
 
 A scaffold that turns a business data request into working, tested, documented **dbt Core**
 models. This file is the operating manual: how to install it, how to call the agents, what
@@ -30,18 +30,18 @@ agents, skills, and commands from `.claude/` at your **project root** or in
 **Option A — use it on a specific dbt project** (most common)
 
 ```bash
-cp -r senior-analytics-engineer/.claude   /path/to/your-dbt-project/
-cp -r senior-analytics-engineer/scripts   /path/to/your-dbt-project/
-cp -r senior-analytics-engineer/templates /path/to/your-dbt-project/
-cp -r senior-analytics-engineer/references /path/to/your-dbt-project/
+cp -r code-skills/.claude   /path/to/your-dbt-project/
+cp -r code-skills/scripts   /path/to/your-dbt-project/
+cp -r code-skills/templates /path/to/your-dbt-project/
+cp -r code-skills/references /path/to/your-dbt-project/
 ```
 
 **Option B — make it available everywhere**
 
 ```bash
-cp -r senior-analytics-engineer/.claude/agents/*   ~/.claude/agents/
-cp -r senior-analytics-engineer/.claude/skills/*   ~/.claude/skills/
-cp -r senior-analytics-engineer/.claude/commands/* ~/.claude/commands/
+cp -r code-skills/.claude/agents/*   ~/.claude/agents/
+cp -r code-skills/.claude/skills/*   ~/.claude/skills/
+cp -r code-skills/.claude/commands/* ~/.claude/commands/
 ```
 
 Copy `scripts/` somewhere stable and adjust the paths in the commands, or keep the whole
@@ -51,7 +51,7 @@ scaffold checked out and point at it.
 Code from **this directory**, not from the repository root:
 
 ```bash
-cd senior-analytics-engineer && claude
+cd code-skills && claude
 ```
 
 Claude Code finds slash commands in `.claude/commands/` at the project root — the directory
@@ -101,7 +101,7 @@ Seven. One leads, six specialize.
 
 | Agent | Owns | Say something like |
 |---|---|---|
-| **`senior-analytics-engineer`** | The whole request, end to end. Frames it, delegates, synthesizes. | "We need a revenue mart" · "Why don't these two dashboards agree?" |
+| **`dbt-skill`** | Canonical entrypoint (compatibility alias: `senior-analytics-engineer`). The whole request, end to end. Frames it, delegates, synthesizes. | "We need a revenue mart" · "Why don't these two dashboards agree?" |
 | **`data-modeler`** | What the tables *are* — entities, ERD, keys, grain, conformed dimensions, SCD strategy | "How should we model vehicle valuations?" · "Star schema or one big table?" · "Draw the ERD" |
 | **`dbt-model-designer`** | How each model is *built* — layers, joins, fan-out, materialization, the SQL | "Where does this logic belong?" · "Should this be incremental?" · "Why is this duplicating rows?" |
 | **`data-contract-owner`** | Boundaries — sources, freshness, contracts, versions, access, impact analysis | "What breaks if I change this?" · "Add freshness to these sources" · "Does this need a version bump?" |
@@ -147,7 +147,7 @@ Use a command when you know the stage; describe the problem when you don't.
 All seven can read, write, and edit files, search the repo, and run shell commands — so
 they will actually run `dbt build` and the analyzer scripts, not just describe them.
 
-Only `senior-analytics-engineer` can delegate to other agents. The six specialists work
+Only `dbt-skill` can delegate to other agents. The six specialists work
 alone and hand results back.
 
 Each agent starts with a **fresh context window**. It sees the task you or the lead gives
@@ -232,7 +232,7 @@ need real accounts to verify.
 > Sales wants a dashboard showing subscription churn by plan tier.
 ```
 
-`senior-analytics-engineer` takes it and does **not** start writing SQL:
+`dbt-skill` takes it and does **not** start writing SQL:
 
 1. Reads `dbt_project.yml` and `dbt ls` — half of all requests are already answerable
    with an existing model.

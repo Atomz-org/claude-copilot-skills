@@ -1,8 +1,8 @@
-# Senior Analytics Engineer Scaffold
+# dbt Skill Scaffold
 
 A scaffold for turning any data request into a working, tested, documented **dbt Core**
 transformation. The method lives in [.claude/](.claude/); the work lives in
-[use-cases/](use-cases/).
+[skill-packs/dbt-skills/use-cases/](skill-packs/dbt-skills/use-cases/).
 
 Everything here is dbt Core — the open-source CLI, run on infrastructure you control,
 reading and writing the JSON artifacts in `target/`. Where dbt Cloud sells a hosted
@@ -19,11 +19,11 @@ service, this scaffold documents the Core equivalent and names the gap explicitl
 | Templates | [templates/](templates/) | the deliverable shapes — specs, blueprints, YAML and SQL patterns, runbooks |
 | References | [references/](references/) | method and syntax depth, loaded on demand |
 | Scripts | [scripts/](scripts/) | eleven artifact-driven analyzers |
-| Use cases | [use-cases/](use-cases/) | one directory per data request |
+| Use cases | [skill-packs/dbt-skills/use-cases/](skill-packs/dbt-skills/use-cases/) | one directory per data request |
 
 ## Agents
 
-- **`senior-analytics-engineer`** — the entry point. Takes a data request end to end and
+- **`dbt-skill`** — the canonical entry point (compatibility alias: `senior-analytics-engineer`). Takes a data request end to end and
   delegates specialized depth.
 - **`data-modeler`** — entities, ERD, keys, grain, bus matrix, conformed dimensions, star schemas, SCD strategy.
 - **`dbt-model-designer`** — grain, layers, joins, materialization, incremental strategy, SQL.
@@ -112,7 +112,7 @@ python scripts/dimensional_model_validator.py --manifest target/manifest.json --
 
 ## Working sequence
 
-1. **Frame** — `/new-use-case <request>` writes `use-cases/<slug>/use-case-spec.md`.
+1. **Frame** — `/new-use-case <request>` writes `skill-packs/dbt-skills/use-cases/<slug>/use-case-spec.md`.
    Nothing is modeled until the decision sentence and the grain are written down.
 2. **Model** — for any subject area producing more than one model: entities, ERD with
    cardinality *and* optionality, keys, grain per table, bus matrix, star schema spec.
@@ -157,12 +157,12 @@ The five that matter most:
 
 ## Example
 
-[use-cases/example-order-revenue-mart/](use-cases/example-order-revenue-mart/) is a
+[skill-packs/dbt-skills/use-cases/example-order-revenue-mart/](skill-packs/dbt-skills/use-cases/example-order-revenue-mart/) is a
 complete worked case that **runs**:
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install 'dbt-core~=1.9.0' 'dbt-duckdb~=1.9.0'
-cd use-cases/example-order-revenue-mart/dbt_project && ./run_local.sh
+cd skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project && ./run_local.sh
 ```
 
 DuckDB, no credentials, ~20 seconds: seeds, source freshness, every model, 40 data tests,
