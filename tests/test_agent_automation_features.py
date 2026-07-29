@@ -98,6 +98,16 @@ def test_labeling_workflows_request_write_permissions():
     assert "issues: write" in quality_workflow
 
 
+def test_review_workflow_applies_contextual_labels():
+    review_workflow = (REPO_ROOT / ".github/workflows/claude-code-review.yml").read_text(encoding="utf-8")
+
+    assert "Apply contextual labels" in review_workflow
+    assert "chore\\(deps\\):\\ bump" in review_workflow
+    assert "dependabot[bot]" in review_workflow
+    assert "dependencies" in review_workflow
+    assert "github_actions" in review_workflow
+
+
 def test_skills_index_covers_all_primary_git_intents():
     index_doc = (REPO_ROOT / ".claude/commands/skills-index.md").read_text(encoding="utf-8").lower()
 
