@@ -25,23 +25,29 @@ def test_required_agent_commands_and_workflows_exist():
         ".claude/commands/setup-pre-commit.md",
         ".claude/commands/resolve-conflicts.md",
         ".claude/commands/write-docs.md",
+        ".claude/commands/setup-git-guardrails.md",
         ".claude/commands/review.md",
         ".claude/commands/ship.md",
         ".claude/commands/sync-submodule.md",
+        ".claude/hooks/block-dangerous-git.sh",
         ".claude/skills/git-flow-branch-planner/SKILL.md",
         ".claude/skills/github-pr-merge-ceremony/SKILL.md",
         ".claude/skills/setup-pre-commit-hooks/SKILL.md",
         ".claude/skills/resolve-merge-conflicts/SKILL.md",
         ".claude/skills/documentation-writer-diataxis/SKILL.md",
+        ".claude/skills/git-guardrails-claude-code/SKILL.md",
         ".claude/agents/repo-maintainer.md",
         ".claude/agents/skill-author.md",
         ".claude/agents/submodule-integrator.md",
         "skill-packs/github-skills/.claude/commands/skills-index.md",
+        "skill-packs/github-skills/.claude/commands/setup-git-guardrails.md",
+        "skill-packs/github-skills/.claude/hooks/block-dangerous-git.sh",
         "skill-packs/github-skills/.claude/skills/git-flow-branch-planner/SKILL.md",
         "skill-packs/github-skills/.claude/skills/github-pr-merge-ceremony/SKILL.md",
         "skill-packs/github-skills/.claude/skills/setup-pre-commit-hooks/SKILL.md",
         "skill-packs/github-skills/.claude/skills/resolve-merge-conflicts/SKILL.md",
         "skill-packs/github-skills/.claude/skills/documentation-writer-diataxis/SKILL.md",
+        "skill-packs/github-skills/.claude/skills/git-guardrails-claude-code/SKILL.md",
         ".github/workflows/ci.yml",
         ".github/workflows/claude-code-review.yml",
         ".github/workflows/pr-issue-auto-close.yml",
@@ -76,3 +82,13 @@ def test_skills_index_covers_all_primary_git_intents():
     assert "branch" in index_doc
     assert "docs" in index_doc
     assert "conflict" in index_doc
+
+
+def test_copilot_instructions_enforce_ai_core_and_guardrails():
+    copilot_doc = (REPO_ROOT / ".github/copilot-instructions.md").read_text(encoding="utf-8").lower()
+
+    assert "rtk" in copilot_doc
+    assert "graphify" in copilot_doc
+    assert "agentmemory" in copilot_doc
+    assert "scripts/sync_context.sh" in copilot_doc
+    assert "block-dangerous-git.sh" in copilot_doc

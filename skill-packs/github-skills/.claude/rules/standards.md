@@ -7,11 +7,13 @@ This repository is designed to behave as an independent, reusable module that ca
 - Preserve a consistent Git workflow with Conventional Commits and branch naming.
 - Favor focused changes, explicit documentation, and auditable review steps.
 - Keep shared github-skills discoverable and intent-based through `skills-index.md`.
+- Use RTK wrappers, Graphify snapshots, and AgentMemory updates for material workflow changes.
 
 ## Git rules
 - Do not commit directly to main or master.
 - Use branch names matching the form `<type>/<ticket>-<description>`.
 - Use commit messages matching the form `type: summary`.
+- Keep `.claude/hooks/block-dangerous-git.sh` enabled through `.claude/settings.json` PreToolUse hooks.
 
 ## Review rules
 - Review the diff before merging.
@@ -23,3 +25,4 @@ This repository is designed to behave as an independent, reusable module that ca
 - Every new shared git skill must be indexed by intent in `.claude/commands/skills-index.md`.
 - Tests must verify presence of required shared git skill files and playbooks.
 - CI workflows must validate the shared-pack scaffold and active stack activation.
+- CI must validate guardrail hook script existence and shell syntax.

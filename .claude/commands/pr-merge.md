@@ -11,7 +11,9 @@ Merge a PR safely.
    - checks passing,
    - comments addressed,
    - changelog policy satisfied (when applicable).
-3. Show checklist summary.
-4. Ask explicit confirmation.
-5. Execute merge with repository merge strategy.
-6. Sync base branch locally and report outcome.
+3. Confirm guardrail hook is enabled in `.claude/settings.json`.
+4. Show checklist summary.
+5. Ask explicit confirmation.
+6. Execute merge with repository merge strategy.
+7. Sync base branch locally and report outcome.
+8. Run `scripts/sync_context.sh "post merge sync"` to checkpoint RTK/Graphify/AgentMemory state.

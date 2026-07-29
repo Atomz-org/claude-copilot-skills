@@ -24,6 +24,8 @@ jobs:
           test -f skill-packs/github-skills/.claude/skills/setup-pre-commit-hooks/SKILL.md
           test -f skill-packs/github-skills/.claude/skills/resolve-merge-conflicts/SKILL.md
           test -f skill-packs/github-skills/.claude/skills/documentation-writer-diataxis/SKILL.md
+          test -f skill-packs/github-skills/.claude/skills/git-guardrails-claude-code/SKILL.md
+          test -f skill-packs/github-skills/.claude/hooks/block-dangerous-git.sh
           test -f src/ai-core/rtk-setup.ts
           test -f src/ai-core/graph-manager.ts
           test -f src/ai-core/memory-store.ts
@@ -37,6 +39,7 @@ jobs:
           bash -n .claude/commands/infra/git-standard.sh
           bash -n .claude/commands/infra/update-memory.sh
           bash -n .claude/commands/infra/lint-and-graph.sh
+          bash -n skill-packs/github-skills/.claude/hooks/block-dangerous-git.sh
 
       - name: Sync active stack from skill packs
         run: |

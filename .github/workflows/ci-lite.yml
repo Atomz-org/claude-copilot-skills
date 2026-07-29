@@ -31,6 +31,11 @@ jobs:
           chmod +x scripts/activate_skill_stack.sh
           ./scripts/activate_skill_stack.sh dbt-skills
 
+      - name: Validate guardrail hook
+        run: |
+          test -f .claude/hooks/block-dangerous-git.sh
+          bash -n .claude/hooks/block-dangerous-git.sh
+
       - name: Run tests
         run: |
           pytest -q

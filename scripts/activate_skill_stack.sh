@@ -18,17 +18,24 @@ if [[ ! -d "${domain_pack}" ]]; then
   exit 1
 fi
 
-mkdir -p "${live_claude}/commands" "${live_claude}/agents" "${live_claude}/skills" "${live_claude}/rules"
+mkdir -p "${live_claude}/commands" "${live_claude}/agents" "${live_claude}/skills" "${live_claude}/rules" "${live_claude}/hooks"
 
 # Keep backward compatibility by layering shared first, then domain.
 cp -R "${shared_pack}/commands/." "${live_claude}/commands/"
 cp -R "${shared_pack}/agents/." "${live_claude}/agents/"
 cp -R "${shared_pack}/rules/." "${live_claude}/rules/"
 cp -R "${shared_pack}/skills/." "${live_claude}/skills/"
+if [[ -d "${shared_pack}/hooks" ]]; then
+  cp -R "${shared_pack}/hooks/." "${live_claude}/hooks/"
+fi
 
 cp -R "${domain_pack}/commands/." "${live_claude}/commands/"
 cp -R "${domain_pack}/agents/." "${live_claude}/agents/"
 cp -R "${domain_pack}/rules/." "${live_claude}/rules/"
 cp -R "${domain_pack}/skills/." "${live_claude}/skills/"
+
+if [[ -f "${live_claude}/hooks/block-dangerous-git.sh" ]]; then
+  chmod +x "${live_claude}/hooks/block-dangerous-git.sh"
+fi
 
 echo "Activated stack '${stack}' with shared github-skills base."

@@ -12,3 +12,7 @@ description: Create or refine repository skills, commands, and agent guidance.
 	- corresponding command playbook in `.claude/commands/`
 	- repository tests that enforce required paths
 	- CI workflow checks that verify scaffold completeness
+- Ensure guardrail assets are included when relevant:
+	- `.claude/hooks/block-dangerous-git.sh`
+	- `.claude/commands/setup-git-guardrails.md`
+	- `.claude/skills/git-guardrails-claude-code/SKILL.md`

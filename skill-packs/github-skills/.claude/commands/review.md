@@ -17,18 +17,21 @@ If unsure which workflow to use first, open `.claude/commands/skills-index.md`.
    - `git diff` (or `git diff --cached`)
 3. Run repository checks:
    - `./.claude/commands/lint-and-graph.sh`
-4. Check consistency with `.claude/CLAUDE.md` and `.claude/rules/standards.md`.
-5. Report findings in concise format:
+4. Confirm guardrail hook is present:
+   - `.claude/hooks/block-dangerous-git.sh`
+5. Check consistency with `.claude/CLAUDE.md` and `.claude/rules/standards.md`.
+6. Report findings in concise format:
    - `🔴 bug`: broken behavior or likely incident.
    - `🟡 risk`: fragile behavior or missing guardrails.
    - `🔵 nit`: low-impact cleanup.
    - `❓ q`: question requiring author confirmation.
-6. For each finding, include:
+7. For each finding, include:
    - location (`file` and line or symbol),
    - concrete problem,
    - concrete fix.
-7. Summarize readiness:
+8. Summarize readiness:
    - `Ready`, `Ready with follow-ups`, or `Not ready`.
    - include top 1-3 blockers if not ready.
+9. Run `scripts/sync_context.sh "review pass"` before handing off to preserve AgentMemory and Graphify state.
 
 If anything fails, fix it before continuing.

@@ -10,6 +10,8 @@ Use this index to find the right playbook fast.
 
 - `git-commit-quality` skill
 - `git-standard.sh` command (supports `--dry-run`)
+- `git-guardrails-claude-code` skill
+- `setup-git-guardrails.md` command
 
 ## Review intent
 
@@ -48,6 +50,7 @@ Use this index to find the right playbook fast.
 - `lint-and-graph.sh` command
 - `sync-submodule.md` command
 - `focused-fix.md` command
+- `scripts/sync_context.sh` (RTK + Graphify + AgentMemory sync)
 
 ## Recommended workflow
 
