@@ -10,7 +10,7 @@ wrong grain for a consumer who never asked for it.
 
 ## Output
 
-`use-cases/<slug>/use-case-spec.md`, from
+`skill-packs/dbt-skills/use-cases/<slug>/use-case-spec.md`, from
 [templates/use-case-spec.md](../../../templates/use-case-spec.md). Nothing gets modeled
 until this exists and the verdict is Build.
 

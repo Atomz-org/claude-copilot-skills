@@ -5,7 +5,7 @@ argument-hint: <subject area or business process>
 
 Design the data model for: **$ARGUMENTS**
 
-Load the `data-modeling` skill. Write to `use-cases/<slug>/`:
+Load the `data-modeling` skill. Write to `skill-packs/dbt-skills/use-cases/<slug>/`:
 
 - [templates/data-model-canvas.md](../../templates/data-model-canvas.md) — one per subject area
 - [templates/bus-matrix.md](../../templates/bus-matrix.md) — if more than one business process

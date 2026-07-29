@@ -15,7 +15,7 @@ A use-case spec with a decision sentence, a named consumer, and a stated grain. 
 grain, stop and get one — every other decision depends on it.
 
 For a fact, dimension, or bridge, the grain comes from the **data model canvas**, not from
-you. Read `use-cases/<slug>/data-model-canvas.md` and copy the row: grain, primary key,
+you. Read `skill-packs/dbt-skills/use-cases/<slug>/data-model-canvas.md` and copy the row: grain, primary key,
 SCD type, and the dimensions this fact references. If there is no canvas and the subject
 area needs more than one model, hand back to `data-modeler` rather than inventing the
 model shape — inventing it is exactly how a second definition of "customer" gets created.

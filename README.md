@@ -3,7 +3,7 @@
 This repository is a merged standalone scaffold that combines:
 
 - Git automation and reusable workflow infrastructure from `git-skills`
-- End-to-end dbt Core analytics engineering framework from `senior-analytics-engineer`
+- End-to-end dbt Core analytics engineering framework from `dbt-skill` (compat alias: `senior-analytics-engineer`)
 
 It keeps all major assets from both repositories: agents, skills, commands, rules,
 scripts, templates, references, CI workflows, and tests.
@@ -55,6 +55,11 @@ Skills are now separated into reusable packs so new domains can be added cleanly
 - Domain pack (current): `skill-packs/dbt-skills/`
 
 The shared GitHub pack is intended to be common across all domain packs.
+
+Canonical dbt skill entrypoint:
+
+- `dbt-skill` in `skill-packs/dbt-skills/.claude/skills/dbt-skill/SKILL.md`
+- Backward-compatible alias: `senior-analytics-engineer`
 
 ### Use-case ownership by skill pack
 

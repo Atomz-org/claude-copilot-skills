@@ -6,7 +6,7 @@ argument-hint: <the data request, in the requester's words>
 Frame this data request: **$ARGUMENTS**
 
 Load the `analytics-request-framing` skill. Write
-`use-cases/<slug>/use-case-spec.md` from
+`skill-packs/dbt-skills/use-cases/<slug>/use-case-spec.md` from
 [templates/use-case-spec.md](../../templates/use-case-spec.md).
 
 ---

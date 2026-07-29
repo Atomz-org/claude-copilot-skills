@@ -1,9 +1,13 @@
 ---
-name: senior-analytics-engineer
+name: dbt-skill
 description: Turn a data request into a working, tested, documented dbt Core implementation — request framing, conceptual and dimensional data modeling (entities, ERDs, keys, grain, bus matrix, star schemas, SCD types), source contracts, staging/intermediate/mart design, incremental and snapshot strategy, data tests and unit tests, MetricFlow semantic models and metrics, contracts/versions/access governance, CLI and node selection, state-based slim CI, performance and cost tuning, failure triage, and migrations. Routes to the focused skills in .claude/skills/. Use for anything involving dbt, dbt Core, dbt build/run/test, ref(), source(), staging models, marts, incremental models, snapshots, schema.yml, dbt tests, dbt docs, manifest.json, MetricFlow, metrics, semantic models, dbt packages, dbt macros, model contracts, or a warehouse transformation layer. Also for data modeling questions — entity design, ERD, star schema, conformed dimensions, slowly changing dimensions, normalization, Kimball/Inmon/Data Vault.
 ---
 
-# Senior Analytics Engineer
+# dbt Skill
+
+Canonical entrypoint skill name: `dbt-skill`.
+
+Compatibility alias: `senior-analytics-engineer`.
 
 Entry point for this scaffold. The method is split across fourteen focused skills; load
 the one that matches the stage you are in rather than all of them.

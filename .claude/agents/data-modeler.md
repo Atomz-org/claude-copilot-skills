@@ -168,7 +168,7 @@ do not have.
 
 ## Output
 
-- the canvas, bus matrix, and star schema spec(s), written to `use-cases/<slug>/`;
+- the canvas, bus matrix, and star schema spec(s), written to `skill-packs/dbt-skills/use-cases/<slug>/`;
 - the ERD as a Mermaid block, in chat as well as in the file;
 - the grain matrix — one row per table, ready to become blueprints;
 - conformance conflicts, each with the named person who must resolve it;

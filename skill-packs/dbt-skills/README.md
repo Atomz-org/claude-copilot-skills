@@ -11,6 +11,11 @@ Contents:
 
 This pack is designed to be layered on top of `skill-packs/github-skills`.
 
+Canonical skill entrypoint:
+
+- `dbt-skill` in `.claude/skills/dbt-skill/SKILL.md`
+- Compatibility alias: `.claude/skills/senior-analytics-engineer/SKILL.md`
+
 Use-case artifacts for dbt agents belong under:
 
 - `skill-packs/dbt-skills/use-cases/<slug>/`

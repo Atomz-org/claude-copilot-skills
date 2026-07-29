@@ -22,6 +22,8 @@ Rules:
 
 ## Agent and command topology
 
+Canonical dbt skill entrypoint: `dbt-skill` (compatibility alias: `senior-analytics-engineer`).
+
 - Agents: `.claude/agents/`
 	- Meta: `repo-maintainer`, `skill-author`, `submodule-integrator`
 	- Analytics: `senior-analytics-engineer`, `data-modeler`, `dbt-model-designer`, `data-contract-owner`, `analytics-quality-guardian`, `semantic-layer-architect`, `dbt-troubleshooter`

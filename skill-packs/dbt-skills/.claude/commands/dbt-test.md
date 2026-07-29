@@ -23,7 +23,7 @@ A model with only unit tests breaks the day the source starts sending nulls.
 
 ## 2. Work from the spec, not the SQL
 
-Every material assumption in `use-cases/<slug>/use-case-spec.md` becomes a test:
+Every material assumption in `skill-packs/dbt-skills/use-cases/<slug>/use-case-spec.md` becomes a test:
 
 | Assumption | Test |
 |---|---|

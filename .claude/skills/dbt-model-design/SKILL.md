@@ -12,7 +12,7 @@ stated grain. Without a grain, go back to
 ## Where the grain comes from
 
 For a fact, dimension, or bridge, you do not invent the grain here — you implement one
-already decided in the data model canvas. Check `use-cases/<slug>/data-model-canvas.md`
+already decided in the data model canvas. Check `skill-packs/dbt-skills/use-cases/<slug>/data-model-canvas.md`
 first.
 
 | You have | Do |

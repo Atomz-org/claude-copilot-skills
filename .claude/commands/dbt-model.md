@@ -14,7 +14,7 @@ none, run `/new-use-case` first — do not skip it because the request sounds we
 The gap is almost always the grain or the consumer.
 
 **If this model is a fact, dimension, or bridge**, it must also trace to a row in a data
-model canvas. Check `use-cases/<slug>/data-model-canvas.md`:
+model canvas. Check `skill-packs/dbt-skills/use-cases/<slug>/data-model-canvas.md`:
 
 | Situation | Do |
 |---|---|
@@ -39,7 +39,7 @@ than building a second one for the same source table.
 
 Load the `dbt-model-design` skill. Fill
 [templates/model-blueprint.md](../../templates/model-blueprint.md) into
-`use-cases/<slug>/model-blueprint.md`. Every row must be filled before you write SQL —
+`skill-packs/dbt-skills/use-cases/<slug>/model-blueprint.md`. Every row must be filled before you write SQL —
 especially:
 
 - **Data model row** — which canvas entry this implements, and the model's kind (fact
