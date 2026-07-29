@@ -5,6 +5,11 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   quality-gate:
     runs-on: ubuntu-latest
@@ -29,10 +34,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr edit "${{ github.event.pull_request.number || github.run_id }}" --repo "${{ github.repository }}" --add-label "status: ready" --remove-label "status: in-review" || true
+          pr_number="${{ github.event.pull_request.number || github.run_id }}"
+          if gh pr edit "$pr_number" --repo "${{ github.repository }}" --add-label "status: ready" --remove-label "status: in-review"; then
+            echo "Applied readiness label to PR #$pr_number"
+          else
+            echo "Warning: unable to apply readiness labels to PR #$pr_number. The workflow will continue without labels."
+          fi
 
       - name: Run Python tests
         run: python -m pytest -q
+
+      - name: Report final PR label state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr_number="${{ github.event.pull_request.number || github.run_id }}"
+          echo "Current labels for PR #$pr_number:"
+          gh pr view "$pr_number" --repo "${{ github.repository }}" --json labels --jq '.labels[].name' || true
 
       - name: Validate shell scripts
         run: |

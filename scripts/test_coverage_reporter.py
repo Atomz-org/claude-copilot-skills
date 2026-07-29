@@ -24,12 +24,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _manifest import (  # noqa: E402
     Colors,
     Manifest,
+    collect_tested_columns,
     has_primary_key_tests,
     header,
     layer_of,
     section,
     table,
-    tested_columns,
 )
 
 # Whitespace-flexible: `case\n    when` is the common formatting, so a plain
@@ -63,7 +63,7 @@ class ModelCoverage:
         ]
         self.unit = [t for t in tests if t.get("resource_type") == "unit_test"]
         self.has_pk = has_primary_key_tests(tests)
-        self.tested_cols = tested_columns(tests)
+        self.tested_cols = collect_tested_columns(tests)
 
         raw = node.get("raw_code") or node.get("raw_sql") or ""
         self.has_logic = bool(LOGIC_RE.search(raw))
