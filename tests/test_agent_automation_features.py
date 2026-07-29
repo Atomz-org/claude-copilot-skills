@@ -86,6 +86,18 @@ def test_workflows_include_expected_git_and_agent_triggers():
     assert "pytest" in quality_workflow.lower() or "lint" in quality_workflow.lower()
 
 
+def test_labeling_workflows_request_write_permissions():
+    review_workflow = (REPO_ROOT / ".github/workflows/claude-code-review.yml").read_text(encoding="utf-8")
+    quality_workflow = (REPO_ROOT / ".github/workflows/ci-quality-gate.yml").read_text(encoding="utf-8")
+
+    assert "permissions:" in review_workflow
+    assert "pull-requests: write" in review_workflow
+    assert "issues: write" in review_workflow
+    assert "permissions:" in quality_workflow
+    assert "pull-requests: write" in quality_workflow
+    assert "issues: write" in quality_workflow
+
+
 def test_skills_index_covers_all_primary_git_intents():
     index_doc = (REPO_ROOT / ".claude/commands/skills-index.md").read_text(encoding="utf-8").lower()
 

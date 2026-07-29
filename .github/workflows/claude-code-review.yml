@@ -21,11 +21,24 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr edit "${{ github.event.pull_request.number || github.run_id }}" --repo "${{ github.repository }}" --add-label "status: in-review" --remove-label "status: ready" --add-label "P2" || true
+          pr_number="${{ github.event.pull_request.number || github.run_id }}"
+          if gh pr edit "$pr_number" --repo "${{ github.repository }}" --add-label "status: in-review" --remove-label "status: ready" --add-label "P2"; then
+            echo "Applied review labels to PR #$pr_number"
+          else
+            echo "Warning: unable to apply review labels to PR #$pr_number. The workflow will continue without labels."
+          fi
 
       - name: Summarize PR context for Claude review
         run: |
           echo "Claude review scaffold ready for PR ${{ github.event.pull_request.number || github.run_id }}"
           echo "Repository: ${{ github.repository }}"
           echo "Branch: ${{ github.head_ref || github.ref_name }}"
-          echo "Automation summary: review label assigned, workflow is ready for Claude-assisted analysis"
+          echo "Automation summary: review label attempt completed, workflow is ready for Claude-assisted analysis"
+
+      - name: Report final PR label state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr_number="${{ github.event.pull_request.number || github.run_id }}"
+          echo "Current labels for PR #$pr_number:"
+          gh pr view "$pr_number" --repo "${{ github.repository }}" --json labels --jq '.labels[].name' || true
