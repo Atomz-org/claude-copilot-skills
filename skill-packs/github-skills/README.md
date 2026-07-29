@@ -36,3 +36,4 @@ This pack includes reusable command docs for frequent git workflows:
 - `.claude/commands/setup-pre-commit.md`
 - `.claude/commands/resolve-conflicts.md`
 - `.claude/commands/write-docs.md`
+- `.claude/commands/skills-index.md`
