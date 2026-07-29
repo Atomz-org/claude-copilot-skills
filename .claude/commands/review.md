@@ -4,6 +4,8 @@ description: Run a local review pass before committing or opening a PR.
 
 Perform a lightweight review pass for this repository before committing or pushing.
 
+If unsure which workflow to use first, open `.claude/commands/skills-index.md`.
+
 1. Pick review scope:
    - `branch`: committed work vs base branch.
    - `working`: uncommitted changes vs `HEAD`.

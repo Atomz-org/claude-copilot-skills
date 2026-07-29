@@ -7,3 +7,8 @@ description: Create or refine repository skills, commands, and agent guidance.
 - Keep instructions concise, practical, and aligned with the shared AI core wrappers.
 - Prefer reusable patterns, examples, and clear validation steps over large narrative documents.
 - Update related docs when behavior, interfaces, or repository conventions change.
+- When adding a shared git skill, also update:
+	- `.claude/commands/skills-index.md`
+	- corresponding command playbook in `.claude/commands/`
+	- repository tests that enforce required paths
+	- CI workflow checks that verify scaffold completeness

@@ -20,6 +20,11 @@ jobs:
       - name: Install test dependencies
         run: pip install -q pytest
 
+      - name: Activate stack from shared packs
+        run: |
+          chmod +x scripts/activate_skill_stack.sh
+          ./scripts/activate_skill_stack.sh dbt-skills
+
       - name: Apply readiness label for review
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,9 +36,11 @@ jobs:
 
       - name: Validate shell scripts
         run: |
+          bash -n scripts/activate_skill_stack.sh
           bash -n .claude/commands/git-standard.sh
           bash -n .claude/commands/update-memory.sh
           bash -n .claude/commands/lint-and-graph.sh
+          test -f .claude/commands/skills-index.md
 
       - name: Validate workflow files
         run: |

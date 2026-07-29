@@ -4,6 +4,8 @@ description: Prepare a change for delivery and verify the release readiness of t
 
 Prepare the current work for delivery.
 
+If unsure which merge/release helper to run, consult `.claude/commands/skills-index.md`.
+
 1. Confirm the branch follows the repository convention.
 2. Ensure commit history is reviewable:
 	- one logical change per commit where practical,

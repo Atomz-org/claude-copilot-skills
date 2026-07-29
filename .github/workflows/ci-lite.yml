@@ -26,6 +26,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
 
+      - name: Activate stack from shared packs
+        run: |
+          chmod +x scripts/activate_skill_stack.sh
+          ./scripts/activate_skill_stack.sh dbt-skills
+
       - name: Run tests
         run: |
           pytest -q

@@ -16,20 +16,32 @@ jobs:
       - name: Verify scaffold files
         run: |
           test -f .claude/memory.md
+          test -f .claude/commands/skills-index.md
           test -f .github/copilot-instructions.md
           test -f docs/WAY_OF_WORKING.md
+          test -f skill-packs/github-skills/.claude/skills/git-flow-branch-planner/SKILL.md
+          test -f skill-packs/github-skills/.claude/skills/github-pr-merge-ceremony/SKILL.md
+          test -f skill-packs/github-skills/.claude/skills/setup-pre-commit-hooks/SKILL.md
+          test -f skill-packs/github-skills/.claude/skills/resolve-merge-conflicts/SKILL.md
+          test -f skill-packs/github-skills/.claude/skills/documentation-writer-diataxis/SKILL.md
           test -f src/ai-core/rtk-setup.ts
           test -f src/ai-core/graph-manager.ts
           test -f src/ai-core/memory-store.ts
 
       - name: Validate shell scripts
         run: |
+          bash -n scripts/activate_skill_stack.sh
           bash -n .claude/commands/git-standard.sh
           bash -n .claude/commands/update-memory.sh
           bash -n .claude/commands/lint-and-graph.sh
           bash -n .claude/commands/infra/git-standard.sh
           bash -n .claude/commands/infra/update-memory.sh
           bash -n .claude/commands/infra/lint-and-graph.sh
+
+      - name: Sync active stack from skill packs
+        run: |
+          chmod +x scripts/activate_skill_stack.sh
+          ./scripts/activate_skill_stack.sh dbt-skills
 
       - name: Install test dependencies
         run: |
