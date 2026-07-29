@@ -10,3 +10,7 @@ Contents:
 - `.claude/rules/analytics-engineering-rules.md`: dbt non-negotiables
 
 This pack is designed to be layered on top of `skill-packs/github-skills`.
+
+Use-case artifacts for dbt agents belong under:
+
+- `skill-packs/dbt-skills/use-cases/<slug>/`

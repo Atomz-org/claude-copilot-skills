@@ -45,6 +45,15 @@ jobs:
           test -f .claude/commands/setup-git-guardrails.md
           test -f .claude/skills/git-guardrails-claude-code/SKILL.md
 
+      - name: Assert guardrail blocks dangerous git command
+        run: |
+          set +e
+          output_file="$(mktemp)"
+          echo '{"tool_input":{"command":"git push origin main"}}' | .claude/hooks/block-dangerous-git.sh >"${output_file}" 2>&1
+          exit_code=$?
+          grep -q "BLOCKED" "${output_file}"
+          test "${exit_code}" -eq 2
+
       - name: Validate workflow files
         run: |
           test -f .github/workflows/claude-code-review.yml

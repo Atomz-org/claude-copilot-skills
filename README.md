@@ -56,6 +56,12 @@ Skills are now separated into reusable packs so new domains can be added cleanly
 
 The shared GitHub pack is intended to be common across all domain packs.
 
+### Use-case ownership by skill pack
+
+- New use-cases must be created inside the owning pack path: `skill-packs/<pack>/use-cases/<slug>/`.
+- For dbt work and dbt agents, create use-cases in `skill-packs/dbt-skills/use-cases/<slug>/`.
+- Keep legacy root `use-cases/` examples as historical references unless explicitly migrated.
+
 To activate a stack into live `.claude/` paths:
 
 ```bash

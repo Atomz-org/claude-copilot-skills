@@ -42,7 +42,7 @@ equivalent (artifacts in `target/`, the `mf` CLI, your own orchestrator) and mov
 9. **Ship** — impact check against the production manifest, slim CI selector, rollback
    path, named owner.
 
-Work in the current use-case directory: `use-cases/<slug>/`, and in the dbt project itself.
+Work in the current use-case directory: `skill-packs/dbt-skills/use-cases/<slug>/`, and in the dbt project itself.
 Templates live in [templates/](../../templates/).
 
 ## Delegation

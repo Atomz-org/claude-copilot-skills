@@ -26,3 +26,4 @@ This repository is designed to behave as an independent, reusable module that ca
 - Tests must verify presence of required shared git skill files and playbooks.
 - CI workflows must validate the shared-pack scaffold and active stack activation.
 - CI must validate guardrail hook script existence and shell syntax.
+- Use-case artifacts must be stored under the owning skill pack path: `skill-packs/<pack>/use-cases/<slug>/`.

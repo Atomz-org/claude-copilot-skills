@@ -48,6 +48,8 @@ def test_required_agent_commands_and_workflows_exist():
         "skill-packs/github-skills/.claude/skills/resolve-merge-conflicts/SKILL.md",
         "skill-packs/github-skills/.claude/skills/documentation-writer-diataxis/SKILL.md",
         "skill-packs/github-skills/.claude/skills/git-guardrails-claude-code/SKILL.md",
+        "skill-packs/dbt-skills/use-cases/.gitkeep",
+        "skill-packs/github-skills/use-cases/.gitkeep",
         ".github/workflows/ci.yml",
         ".github/workflows/claude-code-review.yml",
         ".github/workflows/pr-issue-auto-close.yml",
@@ -92,3 +94,11 @@ def test_copilot_instructions_enforce_ai_core_and_guardrails():
     assert "agentmemory" in copilot_doc
     assert "scripts/sync_context.sh" in copilot_doc
     assert "block-dangerous-git.sh" in copilot_doc
+
+
+def test_dbt_usecases_are_pack_local():
+    dbt_agent = (REPO_ROOT / "skill-packs/dbt-skills/.claude/agents/senior-analytics-engineer.md").read_text(encoding="utf-8")
+    dbt_rules = (REPO_ROOT / "skill-packs/dbt-skills/.claude/rules/analytics-engineering-rules.md").read_text(encoding="utf-8")
+
+    assert "skill-packs/dbt-skills/use-cases/<slug>/" in dbt_agent
+    assert "skill-packs/dbt-skills/use-cases/<slug>/use-case-spec.md" in dbt_rules

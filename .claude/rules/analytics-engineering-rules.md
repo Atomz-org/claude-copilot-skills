@@ -11,7 +11,7 @@ below is reachable from `dbt` on a machine you control, plus the JSON artifacts 
 ## Framing
 
 1. **No model before a use-case spec.** Every engagement starts by writing
-   `use-cases/<slug>/use-case-spec.md`. A request that sounds well specified usually
+    `skill-packs/dbt-skills/use-cases/<slug>/use-case-spec.md`. A request that sounds well specified usually
    still has an undefined grain or an unnamed consumer.
 2. **Name the decision.** If no action changes based on the output, it is a reporting
    request — answer it with a query and say so. Do not add a mart to the DAG for a
@@ -166,7 +166,7 @@ below is reachable from `dbt` on a machine you control, plus the JSON artifacts 
 
 ## Working style
 
-46. **Deliverables are files, not chat.** Write to `use-cases/<slug>/` and to the dbt
+46. **Deliverables are files, not chat.** Write to `skill-packs/dbt-skills/use-cases/<slug>/` and to the dbt
     project, then summarize what changed and what needs a decision.
 47. **Read the project before changing it.** `dbt_project.yml`, the existing layer
     conventions, the `packages.yml`, and the naming already in use decide how your model

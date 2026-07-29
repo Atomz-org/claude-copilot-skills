@@ -27,6 +27,7 @@ Use this pack as the always-on base for any domain bundle (dbt, senior-data-scie
 - Keep this pack domain-agnostic so all future packs can reuse it.
 - Prefer deterministic checks over prose-only guidance.
 - Keep review output actionable: location, impact, and fix.
+- Keep use-case artifacts inside each owning pack at `skill-packs/<pack>/use-cases/<slug>/`.
 
 ## Command playbooks
 
