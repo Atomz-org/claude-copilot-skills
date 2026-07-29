@@ -80,3 +80,8 @@ Original root manuals from both source repositories are preserved in:
 - Keep changes scoped and documented.
 - Keep dbt rules and git rules consistent with `.claude/rules/`.
 - For architecture questions, use graph-first flow described in `CLAUDE.md`.
+
+## Governance and release
+
+- Branch protection recommendations: `.github/BRANCH_PROTECTION_RECOMMENDATIONS.md`
+- Manual release workflow: `.github/workflows/release.yml`
