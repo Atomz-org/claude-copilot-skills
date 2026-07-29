@@ -109,8 +109,8 @@ Original root manuals from both source repositories are preserved in:
 
 - `docs/source-manuals/README.git-skills.md`
 - `docs/source-manuals/CLAUDE.git-skills.md`
-- `docs/source-manuals/README.senior-analytics-engineer.md`
-- `docs/source-manuals/CLAUDE.senior-analytics-engineer.md`
+- `docs/source-manuals/README.dbt-skill.md`
+- `docs/source-manuals/CLAUDE.dbt-skill.md`
 
 ## Contributing
 

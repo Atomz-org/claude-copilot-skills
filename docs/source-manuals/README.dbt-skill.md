@@ -33,7 +33,7 @@ agents, skills, and commands from `.claude/` at your **project root** or in
 cp -r code-skills/.claude   /path/to/your-dbt-project/
 cp -r code-skills/scripts   /path/to/your-dbt-project/
 cp -r code-skills/templates /path/to/your-dbt-project/
-cp -r code-skills/references /path/to/your-dbt-project/
+cp -r code-skills/skill-packs/dbt-skills/references /path/to/your-dbt-project/
 ```
 
 **Option B — make it available everywhere**
@@ -199,7 +199,7 @@ credentials:
 python3 -m venv .venv
 .venv/bin/pip install 'dbt-core~=1.9.0' 'dbt-duckdb~=1.9.0'
 
-cd use-cases/example-order-revenue-mart/dbt_project
+cd skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project
 ./run_local.sh
 ```
 
@@ -271,7 +271,7 @@ Then: `data-modeler` for the canvas → `dbt-model-designer` for the SQL →
 It will **not** write SQL. That is the next agent's job, and doing it here skips the
 blueprint.
 
-See [use-cases/example-order-revenue-mart/data-model-canvas.md](use-cases/example-order-revenue-mart/data-model-canvas.md)
+See [skill-packs/dbt-skills/use-cases/example-order-revenue-mart/data-model-canvas.md](skill-packs/dbt-skills/use-cases/example-order-revenue-mart/data-model-canvas.md)
 for a filled-in one, including the entities that were *rejected* and why.
 
 ### 3. A failure
@@ -437,7 +437,7 @@ next to it — a hardcoded `merge` strategy that DuckDB rejects on the *second* 
 failures from uncast aggregates, a Jinja block-assignment trap, Jinja rendering SQL
 comments, macros being unavailable in property YAML, and a seeds-as-sources race. The full
 list is in
-[use-cases/example-order-revenue-mart/README.md](use-cases/example-order-revenue-mart/README.md#what-the-real-run-teaches).
+[skill-packs/dbt-skills/use-cases/example-order-revenue-mart/README.md](skill-packs/dbt-skills/use-cases/example-order-revenue-mart/README.md#what-the-real-run-teaches).
 
 The same project runs on BigQuery and Snowflake via the portability layer in
 `macros/cross_db.sql`. Only the DuckDB path has been executed here; the other two are
@@ -461,7 +461,7 @@ old 29–34 is now 36–41, old 35–38 is now 42–45.
 | [.claude/rules/analytics-engineering-rules.md](.claude/rules/analytics-engineering-rules.md) | The 47 rules |
 | [scripts/](scripts/) | 11 analyzers + 2 shared helpers |
 | [templates/](templates/) | 10 deliverable shapes — specs, canvas, blueprints, runbooks, checklists |
-| [references/](references/) | 15 deep references, loaded on demand |
+| [../../skill-packs/dbt-skills/references/](../../skill-packs/dbt-skills/references/) | 15 deep references, loaded on demand |
 | [use-cases/](use-cases/) | One directory per data request |
 | [SKILL.md](SKILL.md) | Stage → skill routing table |
 | [CLAUDE.md](CLAUDE.md) | Project instructions Claude reads automatically |

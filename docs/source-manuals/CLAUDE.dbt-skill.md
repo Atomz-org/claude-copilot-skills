@@ -17,7 +17,7 @@ service, this scaffold documents the Core equivalent and names the gap explicitl
 | Rules | [.claude/rules/analytics-engineering-rules.md](.claude/rules/analytics-engineering-rules.md) | what is never negotiable |
 | Commands | [.claude/commands/](.claude/commands/) | `/new-use-case`, `/data-model`, `/dbt-model`, `/dbt-build`, `/dbt-test`, `/dbt-audit`, `/dbt-debug`, `/dbt-semantic` |
 | Templates | [templates/](templates/) | the deliverable shapes — specs, blueprints, YAML and SQL patterns, runbooks |
-| References | [references/](references/) | method and syntax depth, loaded on demand |
+| References | [../../skill-packs/dbt-skills/references/](../../skill-packs/dbt-skills/references/) | method and syntax depth, loaded on demand |
 | Scripts | [scripts/](scripts/) | eleven artifact-driven analyzers |
 | Use cases | [skill-packs/dbt-skills/use-cases/](skill-packs/dbt-skills/use-cases/) | one directory per data request |
 
@@ -132,7 +132,7 @@ python scripts/dimensional_model_validator.py --manifest target/manifest.json --
 9. **Ship** — slim CI with `state:modified+`, breaking-change check against production,
    stated rollback path, named owner.
 
-Stuck? [references/troubleshooting.md](references/troubleshooting.md) maps symptoms to
+Stuck? [../../skill-packs/dbt-skills/references/troubleshooting.md](../../skill-packs/dbt-skills/references/troubleshooting.md) maps symptoms to
 causes for dbt, the warehouse, and these tools.
 
 ## The rules that override everything
