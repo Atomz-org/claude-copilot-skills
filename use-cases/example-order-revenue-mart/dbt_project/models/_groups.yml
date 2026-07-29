@@ -1,0 +1,11 @@
+version: 2
+
+# A group must be declared before any model can reference it. Groups plus `access:`
+# are how a dbt Core project draws internal boundaries — see the dbt-mesh-governance
+# skill. The owner email must resolve to a real destination; an unowned public model
+# is an outage with nobody to call.
+groups:
+  - name: finance
+    owner:
+      name: Finance Analytics
+      email: finance-analytics@example.com

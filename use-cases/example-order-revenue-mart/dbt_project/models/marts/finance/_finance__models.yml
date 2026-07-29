@@ -1,0 +1,146 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: >
+      One row per order at its current status. Excludes internal test accounts
+      (`is_test_order`). Amounts are USD at the order-date rate. Guest checkouts have a
+      null `customer_id` and a null `region` — they are included in revenue.
+    config:
+      contract: {enforced: true}
+      group: finance
+      access: public
+      tags: [finance, daily]
+    columns:
+      - name: order_id
+        description: Primary key. Shopify order id.
+        data_type: varchar
+        constraints:
+          - type: not_null
+        data_tests: [unique, not_null]
+
+      - name: customer_id
+        description: FK to dim_customers. Null for guest checkouts (~3% of orders).
+        data_type: varchar
+        data_tests:
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+              config:
+                where: "customer_id is not null"   # guest checkouts are legitimate nulls
+
+      - name: region
+        description: >
+          {{ doc('region') }}
+
+          AS-IS, NOT AS-WAS. This is the customer's region at the time this model last
+          built, denormalized from dim_customers so a dashboard need not join. Because
+          dim_customers is SCD Type 1 (overwrite), a customer who moves has ALL of their
+          historical orders re-attributed to the new region on the next run.
+
+          Finance accepted that: they report on where a customer is now. If you need
+          revenue attributed to the region the customer was in when the order was placed,
+          join fct_orders to customers_snapshot on the half-open dbt_valid_from /
+          dbt_valid_to interval instead — that is what the snapshot exists for.
+        data_type: varchar
+
+      - name: order_status
+        description: "{{ doc('order_status') }}"
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [pending, paid, fulfilled, refunded, cancelled, unknown]
+
+      - name: line_item_count
+        description: Number of line items. Zero for orders with no lines (data defect upstream).
+        data_type: integer
+
+      - name: order_amount_usd
+        description: Gross order amount in USD, before refunds. Includes tax and shipping.
+        data_type: numeric(28,6)
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+              config:
+                severity: warn      # negative values occur during refund reprocessing
+
+      - name: net_line_amount_usd
+        description: Sum of line amounts less discounts, USD. Excludes tax and shipping.
+        data_type: numeric(28,6)
+
+      - name: ordered_at
+        description: Order creation timestamp, UTC.
+        data_type: timestamp
+        data_tests: [not_null]
+
+      - name: ordered_date
+        description: Order creation date, UTC. Clustering key.
+        data_type: date
+
+    data_tests:
+      - dbt_utils.expression_is_true:
+          expression: "net_line_amount_usd <= order_amount_usd"
+          config:
+            severity: warn
+
+  - name: dim_customers
+    description: >
+      One row per customer, current state. Region is derived from the Shopify
+      country_code; customers with an unmapped country fall into 'OTHER'.
+    columns:
+      - name: customer_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+      - name: customer_email
+        description: Contact email. PII — masked outside prod.
+      - name: country_code
+        description: ISO-3166 alpha-2, lowercased.
+      - name: region
+        description: "{{ doc('region') }}"
+        data_tests:
+          - accepted_values:
+              values: [EMEA, AMER, OTHER]
+      - name: first_seen_at
+        description: Timestamp of the customer's first Shopify record.
+
+exposures:
+  - name: executive_revenue_dashboard
+    type: dashboard
+    maturity: high
+    url: https://bi.example.com/dashboards/42
+    owner:
+      name: Priya Raman
+      email: priya@example.com
+    description: >
+      Board-level weekly revenue, read by the exec team every Monday 08:00 UTC.
+      Breaking this is a P1.
+    depends_on:
+      - ref('fct_orders')
+      - ref('dim_customers')
+
+unit_tests:
+  # The region CASE is business policy owned by Finance Analytics, not a data property.
+  # A data test can only assert that the values land in {EMEA, AMER, OTHER}; it cannot
+  # tell you 'fr' was mapped to AMER. Only fixed input -> fixed expected output can.
+  - name: test_region_mapping_covers_each_branch
+    model: dim_customers
+    description: One country per branch, plus an unmapped one, plus a null.
+    given:
+      - input: ref('stg_shopify__customers')
+        rows:
+          - {customer_id: 'c1', country_code: 'fr',  customer_email: 'a@x.com'}
+          - {customer_id: 'c2', country_code: 'us',  customer_email: 'b@x.com'}
+          - {customer_id: 'c3', country_code: 'jp',  customer_email: 'c@x.com'}
+          - {customer_id: 'c4', country_code: null,  customer_email: 'd@x.com'}
+    expect:
+      rows:
+        - {customer_id: 'c1', region: 'EMEA'}
+        - {customer_id: 'c2', region: 'AMER'}
+        # An unmapped country and a null country both land in OTHER, never null. This is
+        # what lets the accepted_values test on `region` stay error-severity: a new market
+        # shows up as an OTHER row to investigate, not as a red build nobody can fix.
+        - {customer_id: 'c3', region: 'OTHER'}
+        - {customer_id: 'c4', region: 'OTHER'}

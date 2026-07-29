@@ -1,0 +1,128 @@
+version: 2
+
+models:
+  - name: int_orders_with_line_totals
+    description: >
+      One row per non-test order, with line-item totals collapsed to the order grain
+      BEFORE the join. This is the model that resolves the line-item fan-out — summing
+      across the fanned-out join instead would inflate every revenue total.
+      Orders with no line items get zeroes, not nulls.
+    columns:
+      - name: order_id
+        description: Primary key. The grain survives the line-item join because
+          `line_totals` is aggregated to one row per order first.
+        data_tests: [unique, not_null]
+      - name: order_status
+        description: >
+          Business status. A refund overrides any fulfillment state. An unrecognised
+          Shopify status becomes 'unknown' rather than null, so accepted_values fails
+          loudly instead of a not_null test failing on an unrelated column.
+        data_tests:
+          - not_null
+          # error: the closed domain. Breaking this means the CASE has a bug.
+          - accepted_values:
+              values: [pending, paid, fulfilled, refunded, cancelled, unknown]
+          # warn: 'unknown' is legal but should be rare. This is the test that actually
+          # tells you Shopify shipped a new status, without turning the build red for
+          # something no one can fix before the next deploy.
+          - accepted_values:
+              values: [pending, paid, fulfilled, refunded, cancelled]
+              config:
+                severity: warn
+                error_if: ">50"
+                warn_if: ">0"
+                where: "order_status is not null"
+      - name: line_item_count
+        description: Number of line items. Zero — never null — for the ~0.3% of orders
+          with no lines.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+
+unit_tests:
+  # This model is the reason unit tests exist in this project: the CASE statement is
+  # business logic that data tests cannot verify. A wrong branch would produce a
+  # perfectly plausible status that passes accepted_values.
+  - name: test_refund_overrides_fulfilled_status
+    model: int_orders_with_line_totals
+    description: A refunded order reports 'refunded' even when fulfillment succeeded.
+    given:
+      - input: ref('stg_shopify__orders')
+        rows:
+          - {order_id: '1', payment_status: 'refunded', is_test_order: false, customer_id: 'c1'}
+          - {order_id: '2', payment_status: 'paid',     is_test_order: false, customer_id: 'c1'}
+      - input: ref('stg_shopify__order_lines')
+        rows: []          # every ref must be mocked, even when empty
+    expect:
+      rows:               # written by hand from the requirement, not from the SQL
+        - {order_id: '1', order_status: 'refunded'}
+        - {order_id: '2', order_status: 'paid'}
+
+  - name: test_unknown_status_falls_through_to_unknown
+    model: int_orders_with_line_totals
+    description: >
+      An unrecognised Shopify status becomes 'unknown' — and so does a null. Shopify has
+      added enum values twice. Collapsing both cases keeps the column's domain closed so
+      a new enum value cannot break the contract; the warn-severity test below is what
+      makes it visible.
+    given:
+      - input: ref('stg_shopify__orders')
+        rows:
+          - {order_id: '1', payment_status: 'partially_refunded', is_test_order: false, customer_id: 'c1'}
+          - {order_id: '2', payment_status: null, is_test_order: false, customer_id: 'c1'}
+      - input: ref('stg_shopify__order_lines')
+        rows: []
+    expect:
+      rows:
+        - {order_id: '1', order_status: 'unknown'}
+        - {order_id: '2', order_status: 'unknown'}
+
+  - name: test_orders_with_no_lines_get_zero_not_null
+    model: int_orders_with_line_totals
+    description: >
+      ~0.3% of orders have no line items (upstream defect). They must appear with zero
+      totals, not be dropped and not carry nulls. This is the assumption the original
+      spec missed — see use-case-spec.md section 11.
+    given:
+      - input: ref('stg_shopify__orders')
+        rows:
+          - {order_id: '1', payment_status: 'paid', is_test_order: false, customer_id: 'c1'}
+      - input: ref('stg_shopify__order_lines')
+        rows: []
+    expect:
+      rows:
+        - {order_id: '1', line_item_count: 0, gross_line_amount: 0, discount_amount: 0}
+
+  - name: test_line_fanout_does_not_duplicate_orders
+    model: int_orders_with_line_totals
+    description: >
+      One order with three line items produces exactly ONE row. This is the fan-out
+      guard — the single most common way a revenue mart silently doubles.
+    given:
+      - input: ref('stg_shopify__orders')
+        rows:
+          - {order_id: '1', payment_status: 'paid', is_test_order: false, customer_id: 'c1'}
+      - input: ref('stg_shopify__order_lines')
+        rows:
+          - {order_line_id: 'l1', order_id: '1', line_amount: 10.00, discount_amount: 1.00, quantity: 1}
+          - {order_line_id: 'l2', order_id: '1', line_amount: 20.00, discount_amount: 0.00, quantity: 2}
+          - {order_line_id: 'l3', order_id: '1', line_amount: 30.00, discount_amount: 5.00, quantity: 1}
+    expect:
+      rows:
+        - {order_id: '1', line_item_count: 3, gross_line_amount: 60.00, discount_amount: 6.00}
+
+  - name: test_test_orders_excluded
+    model: int_orders_with_line_totals
+    description: Orders flagged `is_test_order` never reach the mart.
+    given:
+      - input: ref('stg_shopify__orders')
+        rows:
+          - {order_id: '1', payment_status: 'paid', is_test_order: true,  customer_id: 'c1'}
+          - {order_id: '2', payment_status: 'paid', is_test_order: false, customer_id: 'c1'}
+      - input: ref('stg_shopify__order_lines')
+        rows: []
+    expect:
+      rows:
+        - {order_id: '2'}

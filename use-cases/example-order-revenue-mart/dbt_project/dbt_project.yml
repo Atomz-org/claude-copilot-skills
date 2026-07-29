@@ -1,0 +1,66 @@
+name: analytics
+version: "1.0.0"
+config-version: 2
+
+profile: analytics
+
+model-paths:    ["models"]
+seed-paths:     ["seeds"]
+snapshot-paths: ["snapshots"]
+macro-paths:    ["macros"]
+test-paths:     ["tests"]
+analysis-paths: ["analyses"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Lookback for the incremental fact, in days. Sized from the measured p99 arrival lag
+  # of 38h (use-case spec section 4), doubled. Overridable for a backfill:
+  #   dbt build --select fct_orders --vars '{order_lookback_days: 30}'
+  order_lookback_days: 3
+
+  # --- Schema isolation. Read macros/generate_schema_name.sql before changing these. ---
+  #
+  # Targets whose environment is a separate DATABASE, and which may therefore write
+  # verbatim schema names (`marts`, not `main_marts`). A target NOT listed here gets
+  # dbt's <target_schema>_<custom_schema> prefixing — the safe default. Adding a target
+  # to profiles.yml gives it no verbatim access until its name is added here.
+  isolated_database_targets:
+    - duckdb_dev      # dev.duckdb
+    - duckdb_ci       # ci.duckdb
+    - duckdb_prod     # prod.duckdb
+    - bigquery        # a dev GCP project; prod is a different project
+    - snowflake       # a dev Snowflake database; prod is a different database
+  # The databases that hold production data. A target above that resolves to one of
+  # these, and is not `production_target`, aborts the run at parse time rather than
+  # writing into production. Add your real BigQuery project / Snowflake database here.
+  production_databases:
+    - prod
+  production_target: duckdb_prod
+
+seeds:
+  analytics:
+    +schema: raw
+    +quote_columns: false
+
+models:
+  analytics:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: ephemeral
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+
+snapshots:
+  analytics:
+    +target_schema: snapshots
+
+tests:
+  analytics:
+    +store_failures: true
+    +schema: dbt_test_failures

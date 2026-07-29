@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: metricflow_time_spine
+    description: >
+      Daily calendar spine, 2019-01-01 through two years ahead of the current date.
+      Required by cumulative metrics, offset_window, and join_to_timespine.
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        description: Calendar date. One row per day, no gaps.
+        granularity: day
+        data_tests:
+          - unique
+          - not_null

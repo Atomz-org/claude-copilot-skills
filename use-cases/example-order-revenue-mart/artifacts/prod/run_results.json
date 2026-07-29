@@ -1,0 +1,565 @@
+{
+ "metadata": {
+  "dbt_version": "1.9.0",
+  "generated_at": "2026-07-26T09:05:00.000000Z",
+  "invocation_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+ },
+ "results": [
+  {
+   "unique_id": "model.analytics.stg_shopify__orders",
+   "status": "success",
+   "execution_time": 4.2,
+   "message": null,
+   "failures": null,
+   "adapter_response": {
+    "_message": "SUCCESS",
+    "rows_affected": 12043
+   },
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "model.analytics.stg_shopify__order_lines",
+   "status": "success",
+   "execution_time": 6.8,
+   "message": null,
+   "failures": null,
+   "adapter_response": {
+    "_message": "SUCCESS",
+    "rows_affected": 12043
+   },
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "model.analytics.stg_shopify__customers",
+   "status": "success",
+   "execution_time": 2.1,
+   "message": null,
+   "failures": null,
+   "adapter_response": {
+    "_message": "SUCCESS",
+    "rows_affected": 12043
+   },
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "model.analytics.stg_netsuite__revenue_postings",
+   "status": "success",
+   "execution_time": 1.4,
+   "message": null,
+   "failures": null,
+   "adapter_response": {
+    "_message": "SUCCESS",
+    "rows_affected": 12043
+   },
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "model.analytics.dim_customers",
+   "status": "success",
+   "execution_time": 8.5,
+   "message": null,
+   "failures": null,
+   "adapter_response": {
+    "_message": "SUCCESS",
+    "rows_affected": 12043
+   },
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "model.analytics.fct_orders",
+   "status": "success",
+   "execution_time": 58.1,
+   "message": null,
+   "failures": null,
+   "adapter_response": {
+    "_message": "SUCCESS",
+    "rows_affected": 12043
+   },
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "model.analytics.fct_order_line_detail",
+   "status": "success",
+   "execution_time": 59.8,
+   "message": null,
+   "failures": null,
+   "adapter_response": {
+    "_message": "SUCCESS",
+    "rows_affected": 12043
+   },
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "model.analytics.metricflow_time_spine",
+   "status": "success",
+   "execution_time": 3.0,
+   "message": null,
+   "failures": null,
+   "adapter_response": {
+    "_message": "SUCCESS",
+    "rows_affected": 12043
+   },
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.unique_stg_shopify__orders_order_id",
+   "status": "pass",
+   "execution_time": 5.5,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.not_null_stg_shopify__orders_order_id",
+   "status": "pass",
+   "execution_time": 1.8,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.unique_stg_shopify__order_lines_order_line_id",
+   "status": "pass",
+   "execution_time": 5.5,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.not_null_stg_shopify__order_lines_order_line_id",
+   "status": "pass",
+   "execution_time": 1.8,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.unique_stg_shopify__customers_customer_id",
+   "status": "pass",
+   "execution_time": 5.5,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.not_null_stg_shopify__customers_customer_id",
+   "status": "pass",
+   "execution_time": 1.8,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.unique_dim_customers_customer_id",
+   "status": "pass",
+   "execution_time": 5.5,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.not_null_dim_customers_customer_id",
+   "status": "pass",
+   "execution_time": 1.8,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.accepted_values_dim_customers_region",
+   "status": "pass",
+   "execution_time": 1.8,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.unique_fct_orders_order_id",
+   "status": "pass",
+   "execution_time": 5.5,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.not_null_fct_orders_order_id",
+   "status": "pass",
+   "execution_time": 1.8,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.relationships_fct_orders_customer_id",
+   "status": "pass",
+   "execution_time": 28.4,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.accepted_values_fct_orders_order_status",
+   "status": "pass",
+   "execution_time": 1.8,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.unique_int_orders_with_line_totals_order_id",
+   "status": "pass",
+   "execution_time": 5.5,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "test.analytics.not_null_int_orders_with_line_totals_order_id",
+   "status": "pass",
+   "execution_time": 1.8,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "unit_test.analytics.int_orders_with_line_totals.test_refund_overrides_status",
+   "status": "pass",
+   "execution_time": 0.4,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  },
+  {
+   "unique_id": "unit_test.analytics.int_orders_with_line_totals.test_unknown_status_falls_through",
+   "status": "pass",
+   "execution_time": 0.4,
+   "message": null,
+   "failures": 0,
+   "adapter_response": {},
+   "timing": [
+    {
+     "name": "compile",
+     "started_at": "2026-07-27T09:00:00Z",
+     "completed_at": "2026-07-27T09:00:01Z"
+    },
+    {
+     "name": "execute",
+     "started_at": "2026-07-27T09:00:01Z",
+     "completed_at": "2026-07-27T09:00:02Z"
+    }
+   ],
+   "thread_id": "Thread-1"
+  }
+ ],
+ "elapsed_time": 104.9,
+ "args": {
+  "which": "build",
+  "target": "prod",
+  "threads": 8,
+  "select": []
+ }
+}

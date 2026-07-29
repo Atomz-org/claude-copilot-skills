@@ -1,0 +1,1331 @@
+{
+ "metadata": {
+  "dbt_schema_version": "https://schemas.getdbt.com/dbt/manifest/v12.json",
+  "dbt_version": "1.9.0",
+  "generated_at": "2026-07-20T09:00:00.000000Z",
+  "project_name": "analytics",
+  "adapter_type": "snowflake"
+ },
+ "nodes": {
+  "model.analytics.stg_shopify__orders": {
+   "unique_id": "model.analytics.stg_shopify__orders",
+   "name": "stg_shopify__orders",
+   "resource_type": "model",
+   "package_name": "analytics",
+   "path": "staging/shopify/stg_shopify__orders.sql",
+   "original_file_path": "models/staging/shopify/stg_shopify__orders.sql",
+   "database": "ANALYTICS",
+   "schema": "staging",
+   "alias": "stg_shopify__orders",
+   "description": "One row per Shopify order, renamed and cast. Soft deletes excluded.",
+   "raw_code": "with source as (\n    select * from {{ source('shopify', 'orders') }}\n),\nrenamed as (\n    select\n        id                            as order_id,\n        customer_id,\n        lower(trim(financial_status)) as payment_status,\n        cast(total_price as numeric)  as order_amount,\n        coalesce(test, false)         as is_test_order,\n        cast(created_at as timestamp) as ordered_at,\n        _fivetran_synced              as _loaded_at\n    from source\n    where not coalesce(_fivetran_deleted, false)\n)\nselect * from renamed",
+   "columns": {
+    "order_id": {
+     "description": "Primary key. Shopify order id.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "customer_id": {
+     "description": "FK to customers. Null for guest checkouts.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "payment_status": {
+     "description": "Lowercased financial_status.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "order_amount": {
+     "description": "Gross order amount, source currency.",
+     "data_type": "numeric(28,6)",
+     "meta": {},
+     "tags": []
+    },
+    "is_test_order": {
+     "description": "True for Shopify test orders.",
+     "data_type": "boolean",
+     "meta": {},
+     "tags": []
+    },
+    "ordered_at": {
+     "description": "Order creation timestamp, UTC.",
+     "data_type": "timestamp",
+     "meta": {},
+     "tags": []
+    },
+    "_loaded_at": {
+     "description": "Fivetran sync timestamp.",
+     "data_type": "timestamp",
+     "meta": {},
+     "tags": []
+    }
+   },
+   "config": {
+    "materialized": "view",
+    "tags": [
+     "staging"
+    ],
+    "enabled": true
+   },
+   "depends_on": {
+    "nodes": [
+     "source.analytics.shopify.orders"
+    ],
+    "macros": []
+   },
+   "tags": [
+    "staging"
+   ]
+  },
+  "model.analytics.stg_shopify__order_lines": {
+   "unique_id": "model.analytics.stg_shopify__order_lines",
+   "name": "stg_shopify__order_lines",
+   "resource_type": "model",
+   "package_name": "analytics",
+   "path": "staging/shopify/stg_shopify__order_lines.sql",
+   "original_file_path": "models/staging/shopify/stg_shopify__order_lines.sql",
+   "database": "ANALYTICS",
+   "schema": "staging",
+   "alias": "stg_shopify__order_lines",
+   "description": "One row per order line item.",
+   "raw_code": "with source as (\n    select * from {{ source('shopify', 'order_lines') }}\n)\nselect\n    id                  as order_line_id,\n    order_id,\n    product_id,\n    quantity,\n    cast(price as numeric) as line_amount,\n    cast(discount as numeric) as discount_amount\nfrom source",
+   "columns": {
+    "order_line_id": {
+     "description": "Primary key.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "order_id": {
+     "description": "FK to stg_shopify__orders.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "product_id": {
+     "description": "FK to products.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "quantity": {
+     "description": "Units ordered.",
+     "data_type": "integer",
+     "meta": {},
+     "tags": []
+    },
+    "line_amount": {
+     "description": "Line total before discount.",
+     "data_type": "numeric(28,6)",
+     "meta": {},
+     "tags": []
+    },
+    "discount_amount": {
+     "description": "Discount applied to this line.",
+     "data_type": "numeric(28,6)",
+     "meta": {},
+     "tags": []
+    }
+   },
+   "config": {
+    "materialized": "view",
+    "tags": [
+     "staging"
+    ],
+    "enabled": true
+   },
+   "depends_on": {
+    "nodes": [
+     "source.analytics.shopify.order_lines"
+    ],
+    "macros": []
+   },
+   "tags": [
+    "staging"
+   ]
+  },
+  "model.analytics.stg_shopify__customers": {
+   "unique_id": "model.analytics.stg_shopify__customers",
+   "name": "stg_shopify__customers",
+   "resource_type": "model",
+   "package_name": "analytics",
+   "path": "staging/shopify/stg_shopify__customers.sql",
+   "original_file_path": "models/staging/shopify/stg_shopify__customers.sql",
+   "database": "ANALYTICS",
+   "schema": "staging",
+   "alias": "stg_shopify__customers",
+   "description": "",
+   "raw_code": "select\n    id           as customer_id,\n    email        as customer_email,\n    lower(country_code) as country_code,\n    cast(created_at as timestamp) as first_seen_at\nfrom {{ source('shopify', 'customers') }}",
+   "columns": {
+    "customer_id": {
+     "description": "",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "customer_email": {
+     "description": "",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "country_code": {
+     "description": "",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "first_seen_at": {
+     "description": "",
+     "data_type": "timestamp",
+     "meta": {},
+     "tags": []
+    }
+   },
+   "config": {
+    "materialized": "view",
+    "tags": [
+     "staging"
+    ],
+    "enabled": true
+   },
+   "depends_on": {
+    "nodes": [
+     "source.analytics.shopify.customers"
+    ],
+    "macros": []
+   },
+   "tags": [
+    "staging"
+   ]
+  },
+  "model.analytics.stg_netsuite__revenue_postings": {
+   "unique_id": "model.analytics.stg_netsuite__revenue_postings",
+   "name": "stg_netsuite__revenue_postings",
+   "resource_type": "model",
+   "package_name": "analytics",
+   "path": "staging/netsuite/stg_netsuite__revenue_postings.sql",
+   "original_file_path": "models/staging/netsuite/stg_netsuite__revenue_postings.sql",
+   "database": "ANALYTICS",
+   "schema": "staging",
+   "alias": "stg_netsuite__revenue_postings",
+   "description": "Finance ledger revenue postings, used for reconciliation.",
+   "raw_code": "select\n    posting_id,\n    cast(posting_date as date) as posting_date,\n    cast(amount as numeric)    as amount_usd\nfrom raw.netsuite.revenue_postings",
+   "columns": {
+    "posting_id": {
+     "description": "Primary key.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "posting_date": {
+     "description": "Ledger posting date.",
+     "data_type": "date",
+     "meta": {},
+     "tags": []
+    },
+    "amount_usd": {
+     "description": "Posted amount, USD.",
+     "data_type": "numeric(28,6)",
+     "meta": {},
+     "tags": []
+    }
+   },
+   "config": {
+    "materialized": "view",
+    "tags": [
+     "staging"
+    ],
+    "enabled": true
+   },
+   "depends_on": {
+    "nodes": [],
+    "macros": []
+   },
+   "tags": [
+    "staging"
+   ]
+  },
+  "model.analytics.int_orders_with_line_totals": {
+   "unique_id": "model.analytics.int_orders_with_line_totals",
+   "name": "int_orders_with_line_totals",
+   "resource_type": "model",
+   "package_name": "analytics",
+   "path": "intermediate/finance/int_orders_with_line_totals.sql",
+   "original_file_path": "models/intermediate/finance/int_orders_with_line_totals.sql",
+   "database": "ANALYTICS",
+   "schema": "intermediate",
+   "alias": "int_orders_with_line_totals",
+   "description": "One row per non-test order, with line-item totals collapsed to the order grain before joining. Resolves the line-item fan-out.",
+   "raw_code": "with orders as (\n    select * from {{ ref('stg_shopify__orders') }}\n),\nline_items as (\n    select * from {{ ref('stg_shopify__order_lines') }}\n),\nline_totals as (\n    select\n        order_id,\n        count(*)             as line_item_count,\n        sum(line_amount)     as gross_line_amount,\n        sum(discount_amount) as discount_amount\n    from line_items\n    group by 1\n),\nfinal as (\n    select\n        orders.order_id,\n        orders.customer_id,\n        orders.ordered_at,\n        orders.order_amount,\n        case\n            when orders.payment_status = 'refunded' then 'refunded'\n            when orders.payment_status = 'paid'     then 'paid'\n            when orders.payment_status is null      then 'unknown'\n            else orders.payment_status\n        end as order_status,\n        coalesce(line_totals.line_item_count, 0)   as line_item_count,\n        coalesce(line_totals.gross_line_amount, 0) as gross_line_amount,\n        coalesce(line_totals.discount_amount, 0)   as discount_amount\n    from orders\n    left join line_totals on orders.order_id = line_totals.order_id\n    where not orders.is_test_order\n)\nselect * from final",
+   "columns": {
+    "order_id": {
+     "description": "Primary key.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "customer_id": {
+     "description": "FK to dim_customers.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "ordered_at": {
+     "description": "Order timestamp, UTC.",
+     "data_type": "timestamp",
+     "meta": {},
+     "tags": []
+    },
+    "order_amount": {
+     "description": "Gross order amount.",
+     "data_type": "numeric(28,6)",
+     "meta": {},
+     "tags": []
+    },
+    "order_status": {
+     "description": "Business status; refund overrides fulfillment.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "line_item_count": {
+     "description": "Number of line items.",
+     "data_type": "integer",
+     "meta": {},
+     "tags": []
+    },
+    "gross_line_amount": {
+     "description": "Sum of line amounts.",
+     "data_type": "numeric(28,6)",
+     "meta": {},
+     "tags": []
+    },
+    "discount_amount": {
+     "description": "Sum of line discounts.",
+     "data_type": "numeric(28,6)",
+     "meta": {},
+     "tags": []
+    }
+   },
+   "config": {
+    "materialized": "ephemeral",
+    "tags": [
+     "intermediate"
+    ],
+    "enabled": true
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.stg_shopify__orders",
+     "model.analytics.stg_shopify__order_lines"
+    ],
+    "macros": []
+   },
+   "tags": [
+    "intermediate"
+   ]
+  },
+  "model.analytics.dim_customers": {
+   "unique_id": "model.analytics.dim_customers",
+   "name": "dim_customers",
+   "resource_type": "model",
+   "package_name": "analytics",
+   "path": "marts/finance/dim_customers.sql",
+   "original_file_path": "models/marts/finance/dim_customers.sql",
+   "database": "ANALYTICS",
+   "schema": "marts",
+   "alias": "dim_customers",
+   "description": "One row per customer, current state. Region derived from country_code.",
+   "raw_code": "with customers as (\n    select * from {{ ref('stg_shopify__customers') }}\n),\nfinal as (\n    select\n        customer_id,\n        customer_email,\n        country_code,\n        case when country_code in ('gb','fr','de','es','it') then 'EMEA'\n             when country_code in ('us','ca','mx') then 'AMER'\n             else 'OTHER' end as region,\n        first_seen_at\n    from customers\n)\nselect * from final",
+   "columns": {
+    "customer_id": {
+     "description": "Primary key.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "customer_email": {
+     "description": "Contact email. PII \u2014 masked in non-prod.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "country_code": {
+     "description": "ISO-2 country code, lowercased.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "region": {
+     "description": "EMEA | AMER | OTHER, derived from country_code.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "first_seen_at": {
+     "description": "First seen timestamp.",
+     "data_type": "timestamp",
+     "meta": {},
+     "tags": []
+    }
+   },
+   "config": {
+    "materialized": "table",
+    "tags": [
+     "marts"
+    ],
+    "enabled": true
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.stg_shopify__customers"
+    ],
+    "macros": []
+   },
+   "tags": [
+    "marts"
+   ]
+  },
+  "model.analytics.fct_orders": {
+   "unique_id": "model.analytics.fct_orders",
+   "name": "fct_orders",
+   "resource_type": "model",
+   "package_name": "analytics",
+   "path": "marts/finance/fct_orders.sql",
+   "original_file_path": "models/marts/finance/fct_orders.sql",
+   "database": "ANALYTICS",
+   "schema": "marts",
+   "alias": "fct_orders",
+   "description": "One row per order at its current status. Excludes internal test accounts. Amounts are USD at the order-date rate.",
+   "raw_code": "with orders as (\n    select * from {{ ref('int_orders_with_line_totals') }}\n    {% if is_incremental() %}\n    where ordered_at >= (select dateadd(day, -3, max(ordered_at)) from {{ this }})\n    {% endif %}\n),\ncustomers as (\n    select * from {{ ref('dim_customers') }}\n),\nfinal as (\n    select\n        orders.order_id,\n        orders.customer_id,\n        orders.order_status,\n        orders.line_item_count,\n        orders.order_amount                                as order_amount_usd,\n        orders.gross_line_amount - orders.discount_amount  as net_line_amount_usd,\n        orders.ordered_at,\n        cast(orders.ordered_at as date)                    as ordered_date\n    from orders\n    left join customers on orders.customer_id = customers.customer_id\n)\nselect * from final",
+   "columns": {
+    "order_id": {
+     "description": "Primary key. Shopify order id.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "customer_id": {
+     "description": "FK to dim_customers. Null for guest checkouts.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "order_status": {
+     "description": "pending|paid|fulfilled|refunded|cancelled",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    },
+    "line_item_count": {
+     "description": "Number of line items.",
+     "data_type": "integer",
+     "meta": {},
+     "tags": []
+    },
+    "order_amount_usd": {
+     "description": "Gross order amount, USD.",
+     "data_type": "numeric",
+     "meta": {},
+     "tags": []
+    },
+    "net_line_amount_usd": {
+     "description": "Line totals less discounts, USD.",
+     "data_type": "numeric(28,6)",
+     "meta": {},
+     "tags": []
+    },
+    "ordered_at": {
+     "description": "Order timestamp, UTC.",
+     "data_type": "timestamp",
+     "meta": {},
+     "tags": []
+    },
+    "ordered_date": {
+     "description": "Order date, UTC.",
+     "data_type": "date",
+     "meta": {},
+     "tags": []
+    },
+    "currency_code": {
+     "description": "ISO currency code.",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    }
+   },
+   "config": {
+    "materialized": "incremental",
+    "tags": [
+     "marts"
+    ],
+    "enabled": true,
+    "incremental_strategy": "merge",
+    "unique_key": "order_id",
+    "on_schema_change": "append_new_columns",
+    "cluster_by": [
+     "ordered_date"
+    ],
+    "access": "public",
+    "contract": {
+     "enforced": true
+    }
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.int_orders_with_line_totals",
+     "model.analytics.dim_customers"
+    ],
+    "macros": []
+   },
+   "tags": [
+    "marts"
+   ]
+  },
+  "model.analytics.metricflow_time_spine": {
+   "unique_id": "model.analytics.metricflow_time_spine",
+   "name": "metricflow_time_spine",
+   "resource_type": "model",
+   "package_name": "analytics",
+   "path": "marts/metricflow_time_spine.sql",
+   "original_file_path": "models/marts/metricflow_time_spine.sql",
+   "database": "ANALYTICS",
+   "schema": "marts",
+   "alias": "metricflow_time_spine",
+   "description": "Daily calendar spine for MetricFlow cumulative metrics and offsets.",
+   "raw_code": "{{ dbt_utils.date_spine(datepart='day', start_date=\"cast('2019-01-01' as date)\", end_date=\"dateadd(year, 2, current_date)\") }}",
+   "columns": {
+    "date_day": {
+     "description": "Calendar date, one row per day.",
+     "data_type": "date",
+     "meta": {},
+     "tags": []
+    }
+   },
+   "config": {
+    "materialized": "table",
+    "tags": [
+     "marts"
+    ],
+    "enabled": true
+   },
+   "depends_on": {
+    "nodes": [],
+    "macros": []
+   },
+   "tags": [
+    "marts"
+   ]
+  },
+  "test.analytics.unique_stg_shopify__orders_order_id": {
+   "unique_id": "test.analytics.unique_stg_shopify__orders_order_id",
+   "name": "unique_stg_shopify__orders_order_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "unique_stg_shopify__orders_order_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "order_id",
+   "attached_node": "model.analytics.stg_shopify__orders",
+   "test_metadata": {
+    "name": "unique",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.stg_shopify__orders"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.not_null_stg_shopify__orders_order_id": {
+   "unique_id": "test.analytics.not_null_stg_shopify__orders_order_id",
+   "name": "not_null_stg_shopify__orders_order_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "not_null_stg_shopify__orders_order_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "order_id",
+   "attached_node": "model.analytics.stg_shopify__orders",
+   "test_metadata": {
+    "name": "not_null",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.stg_shopify__orders"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.unique_stg_shopify__order_lines_order_line_id": {
+   "unique_id": "test.analytics.unique_stg_shopify__order_lines_order_line_id",
+   "name": "unique_stg_shopify__order_lines_order_line_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "unique_stg_shopify__order_lines_order_line_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "order_line_id",
+   "attached_node": "model.analytics.stg_shopify__order_lines",
+   "test_metadata": {
+    "name": "unique",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.stg_shopify__order_lines"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.not_null_stg_shopify__order_lines_order_line_id": {
+   "unique_id": "test.analytics.not_null_stg_shopify__order_lines_order_line_id",
+   "name": "not_null_stg_shopify__order_lines_order_line_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "not_null_stg_shopify__order_lines_order_line_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "order_line_id",
+   "attached_node": "model.analytics.stg_shopify__order_lines",
+   "test_metadata": {
+    "name": "not_null",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.stg_shopify__order_lines"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.unique_stg_shopify__customers_customer_id": {
+   "unique_id": "test.analytics.unique_stg_shopify__customers_customer_id",
+   "name": "unique_stg_shopify__customers_customer_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "unique_stg_shopify__customers_customer_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "customer_id",
+   "attached_node": "model.analytics.stg_shopify__customers",
+   "test_metadata": {
+    "name": "unique",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.stg_shopify__customers"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.not_null_stg_shopify__customers_customer_id": {
+   "unique_id": "test.analytics.not_null_stg_shopify__customers_customer_id",
+   "name": "not_null_stg_shopify__customers_customer_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "not_null_stg_shopify__customers_customer_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "customer_id",
+   "attached_node": "model.analytics.stg_shopify__customers",
+   "test_metadata": {
+    "name": "not_null",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.stg_shopify__customers"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.unique_dim_customers_customer_id": {
+   "unique_id": "test.analytics.unique_dim_customers_customer_id",
+   "name": "unique_dim_customers_customer_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "unique_dim_customers_customer_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "customer_id",
+   "attached_node": "model.analytics.dim_customers",
+   "test_metadata": {
+    "name": "unique",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.dim_customers"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.not_null_dim_customers_customer_id": {
+   "unique_id": "test.analytics.not_null_dim_customers_customer_id",
+   "name": "not_null_dim_customers_customer_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "not_null_dim_customers_customer_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "customer_id",
+   "attached_node": "model.analytics.dim_customers",
+   "test_metadata": {
+    "name": "not_null",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.dim_customers"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.accepted_values_dim_customers_region": {
+   "unique_id": "test.analytics.accepted_values_dim_customers_region",
+   "name": "accepted_values_dim_customers_region",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "accepted_values_dim_customers_region.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "region",
+   "attached_node": "model.analytics.dim_customers",
+   "test_metadata": {
+    "name": "accepted_values",
+    "kwargs": {
+     "values": [
+      "EMEA",
+      "AMER",
+      "OTHER"
+     ]
+    }
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.dim_customers"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.unique_fct_orders_order_id": {
+   "unique_id": "test.analytics.unique_fct_orders_order_id",
+   "name": "unique_fct_orders_order_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "unique_fct_orders_order_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "order_id",
+   "attached_node": "model.analytics.fct_orders",
+   "test_metadata": {
+    "name": "unique",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.fct_orders"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.not_null_fct_orders_order_id": {
+   "unique_id": "test.analytics.not_null_fct_orders_order_id",
+   "name": "not_null_fct_orders_order_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "not_null_fct_orders_order_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "order_id",
+   "attached_node": "model.analytics.fct_orders",
+   "test_metadata": {
+    "name": "not_null",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.fct_orders"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.relationships_fct_orders_customer_id": {
+   "unique_id": "test.analytics.relationships_fct_orders_customer_id",
+   "name": "relationships_fct_orders_customer_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "relationships_fct_orders_customer_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "customer_id",
+   "attached_node": "model.analytics.fct_orders",
+   "test_metadata": {
+    "name": "relationships",
+    "kwargs": {
+     "to": "ref('dim_customers')",
+     "field": "customer_id"
+    }
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.fct_orders"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.accepted_values_fct_orders_order_status": {
+   "unique_id": "test.analytics.accepted_values_fct_orders_order_status",
+   "name": "accepted_values_fct_orders_order_status",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "accepted_values_fct_orders_order_status.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "order_status",
+   "attached_node": "model.analytics.fct_orders",
+   "test_metadata": {
+    "name": "accepted_values",
+    "kwargs": {
+     "values": [
+      "pending",
+      "paid",
+      "fulfilled",
+      "refunded",
+      "cancelled"
+     ]
+    }
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.fct_orders"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.unique_int_orders_with_line_totals_order_id": {
+   "unique_id": "test.analytics.unique_int_orders_with_line_totals_order_id",
+   "name": "unique_int_orders_with_line_totals_order_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "unique_int_orders_with_line_totals_order_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "order_id",
+   "attached_node": "model.analytics.int_orders_with_line_totals",
+   "test_metadata": {
+    "name": "unique",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.int_orders_with_line_totals"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "test.analytics.not_null_int_orders_with_line_totals_order_id": {
+   "unique_id": "test.analytics.not_null_int_orders_with_line_totals_order_id",
+   "name": "not_null_int_orders_with_line_totals_order_id",
+   "resource_type": "test",
+   "package_name": "analytics",
+   "path": "not_null_int_orders_with_line_totals_order_id.sql",
+   "original_file_path": "models/marts/_schema.yml",
+   "column_name": "order_id",
+   "attached_node": "model.analytics.int_orders_with_line_totals",
+   "test_metadata": {
+    "name": "not_null",
+    "kwargs": {}
+   },
+   "depends_on": {
+    "nodes": [
+     "model.analytics.int_orders_with_line_totals"
+    ],
+    "macros": []
+   },
+   "config": {
+    "severity": "ERROR",
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "unit_test.analytics.int_orders_with_line_totals.test_refund_overrides_status": {
+   "unique_id": "unit_test.analytics.int_orders_with_line_totals.test_refund_overrides_status",
+   "name": "test_refund_overrides_status",
+   "resource_type": "unit_test",
+   "package_name": "analytics",
+   "model": "int_orders_with_line_totals",
+   "path": "_unit_tests.yml",
+   "original_file_path": "models/intermediate/finance/_unit_tests.yml",
+   "depends_on": {
+    "nodes": [
+     "model.analytics.int_orders_with_line_totals"
+    ],
+    "macros": []
+   },
+   "config": {
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  },
+  "unit_test.analytics.int_orders_with_line_totals.test_unknown_status_falls_through": {
+   "unique_id": "unit_test.analytics.int_orders_with_line_totals.test_unknown_status_falls_through",
+   "name": "test_unknown_status_falls_through",
+   "resource_type": "unit_test",
+   "package_name": "analytics",
+   "model": "int_orders_with_line_totals",
+   "path": "_unit_tests.yml",
+   "original_file_path": "models/intermediate/finance/_unit_tests.yml",
+   "depends_on": {
+    "nodes": [
+     "model.analytics.int_orders_with_line_totals"
+    ],
+    "macros": []
+   },
+   "config": {
+    "enabled": true
+   },
+   "columns": {},
+   "description": ""
+  }
+ },
+ "sources": {
+  "source.analytics.shopify.orders": {
+   "unique_id": "source.analytics.shopify.orders",
+   "name": "orders",
+   "source_name": "shopify",
+   "resource_type": "source",
+   "package_name": "analytics",
+   "database": "RAW",
+   "schema": "shopify",
+   "identifier": "orders",
+   "path": "models/staging/shopify/_shopify__sources.yml",
+   "original_file_path": "models/staging/shopify/_shopify__sources.yml",
+   "loaded_at_field": "_fivetran_synced",
+   "freshness": {
+    "warn_after": {
+     "count": 1,
+     "period": "hour"
+    },
+    "error_after": {
+     "count": 6,
+     "period": "hour"
+    },
+    "filter": null
+   },
+   "columns": {
+    "id": {
+     "description": "Shopify order id",
+     "data_type": "varchar",
+     "meta": {},
+     "tags": []
+    }
+   },
+   "description": "",
+   "config": {
+    "enabled": true
+   },
+   "unrendered_config": {
+    "freshness": {
+     "warn_after": {
+      "count": 1,
+      "period": "hour"
+     },
+     "error_after": {
+      "count": 6,
+      "period": "hour"
+     },
+     "filter": null
+    }
+   },
+   "depends_on": {
+    "nodes": [],
+    "macros": []
+   }
+  },
+  "source.analytics.shopify.order_lines": {
+   "unique_id": "source.analytics.shopify.order_lines",
+   "name": "order_lines",
+   "source_name": "shopify",
+   "resource_type": "source",
+   "package_name": "analytics",
+   "database": "RAW",
+   "schema": "shopify",
+   "identifier": "order_lines",
+   "path": "models/staging/shopify/_shopify__sources.yml",
+   "original_file_path": "models/staging/shopify/_shopify__sources.yml",
+   "loaded_at_field": "_fivetran_synced",
+   "freshness": {
+    "warn_after": {
+     "count": 1,
+     "period": "hour"
+    },
+    "error_after": {
+     "count": 6,
+     "period": "hour"
+    },
+    "filter": null
+   },
+   "columns": {},
+   "description": "",
+   "config": {
+    "enabled": true
+   },
+   "unrendered_config": {
+    "freshness": {
+     "warn_after": {
+      "count": 1,
+      "period": "hour"
+     },
+     "error_after": {
+      "count": 6,
+      "period": "hour"
+     },
+     "filter": null
+    }
+   },
+   "depends_on": {
+    "nodes": [],
+    "macros": []
+   }
+  },
+  "source.analytics.shopify.customers": {
+   "unique_id": "source.analytics.shopify.customers",
+   "name": "customers",
+   "source_name": "shopify",
+   "resource_type": "source",
+   "package_name": "analytics",
+   "database": "RAW",
+   "schema": "shopify",
+   "identifier": "customers",
+   "path": "models/staging/shopify/_shopify__sources.yml",
+   "original_file_path": "models/staging/shopify/_shopify__sources.yml",
+   "loaded_at_field": "_fivetran_synced",
+   "freshness": {
+    "warn_after": {
+     "count": 12,
+     "period": "hour"
+    },
+    "error_after": {
+     "count": 24,
+     "period": "hour"
+    },
+    "filter": null
+   },
+   "columns": {},
+   "description": "",
+   "config": {
+    "enabled": true
+   },
+   "unrendered_config": {
+    "freshness": {
+     "warn_after": {
+      "count": 12,
+      "period": "hour"
+     },
+     "error_after": {
+      "count": 24,
+      "period": "hour"
+     },
+     "filter": null
+    }
+   },
+   "depends_on": {
+    "nodes": [],
+    "macros": []
+   }
+  },
+  "source.analytics.netsuite.revenue_postings": {
+   "unique_id": "source.analytics.netsuite.revenue_postings",
+   "name": "revenue_postings",
+   "source_name": "netsuite",
+   "resource_type": "source",
+   "package_name": "analytics",
+   "database": "RAW",
+   "schema": "netsuite",
+   "identifier": "revenue_postings",
+   "path": "models/staging/netsuite/_netsuite__sources.yml",
+   "original_file_path": "models/staging/netsuite/_netsuite__sources.yml",
+   "loaded_at_field": null,
+   "freshness": null,
+   "columns": {},
+   "description": "",
+   "config": {
+    "enabled": true
+   },
+   "unrendered_config": {},
+   "depends_on": {
+    "nodes": [],
+    "macros": []
+   }
+  }
+ },
+ "exposures": {
+  "exposure.analytics.executive_revenue_dashboard": {
+   "unique_id": "exposure.analytics.executive_revenue_dashboard",
+   "name": "executive_revenue_dashboard",
+   "resource_type": "exposure",
+   "type": "dashboard",
+   "maturity": "high",
+   "url": "https://bi.example.com/dashboards/42",
+   "owner": {
+    "name": "Priya Raman",
+    "email": "priya@example.com"
+   },
+   "description": "Board-level weekly revenue, read every Monday 08:00 UTC.",
+   "depends_on": {
+    "nodes": [
+     "model.analytics.fct_orders",
+     "model.analytics.dim_customers"
+    ],
+    "macros": []
+   },
+   "package_name": "analytics",
+   "path": "marts/finance/_finance__models.yml",
+   "original_file_path": "models/marts/finance/_finance__models.yml",
+   "config": {
+    "enabled": true
+   },
+   "columns": {}
+  }
+ },
+ "metrics": {},
+ "semantic_models": {},
+ "saved_queries": {},
+ "macros": {},
+ "docs": {},
+ "selectors": {},
+ "parent_map": {
+  "model.analytics.stg_shopify__orders": [
+   "source.analytics.shopify.orders"
+  ],
+  "model.analytics.stg_shopify__order_lines": [
+   "source.analytics.shopify.order_lines"
+  ],
+  "model.analytics.stg_shopify__customers": [
+   "source.analytics.shopify.customers"
+  ],
+  "model.analytics.stg_netsuite__revenue_postings": [],
+  "model.analytics.int_orders_with_line_totals": [
+   "model.analytics.stg_shopify__orders",
+   "model.analytics.stg_shopify__order_lines"
+  ],
+  "model.analytics.dim_customers": [
+   "model.analytics.stg_shopify__customers"
+  ],
+  "model.analytics.fct_orders": [
+   "model.analytics.int_orders_with_line_totals",
+   "model.analytics.dim_customers"
+  ],
+  "model.analytics.metricflow_time_spine": [],
+  "test.analytics.unique_stg_shopify__orders_order_id": [
+   "model.analytics.stg_shopify__orders"
+  ],
+  "test.analytics.not_null_stg_shopify__orders_order_id": [
+   "model.analytics.stg_shopify__orders"
+  ],
+  "test.analytics.unique_stg_shopify__order_lines_order_line_id": [
+   "model.analytics.stg_shopify__order_lines"
+  ],
+  "test.analytics.not_null_stg_shopify__order_lines_order_line_id": [
+   "model.analytics.stg_shopify__order_lines"
+  ],
+  "test.analytics.unique_stg_shopify__customers_customer_id": [
+   "model.analytics.stg_shopify__customers"
+  ],
+  "test.analytics.not_null_stg_shopify__customers_customer_id": [
+   "model.analytics.stg_shopify__customers"
+  ],
+  "test.analytics.unique_dim_customers_customer_id": [
+   "model.analytics.dim_customers"
+  ],
+  "test.analytics.not_null_dim_customers_customer_id": [
+   "model.analytics.dim_customers"
+  ],
+  "test.analytics.accepted_values_dim_customers_region": [
+   "model.analytics.dim_customers"
+  ],
+  "test.analytics.unique_fct_orders_order_id": [
+   "model.analytics.fct_orders"
+  ],
+  "test.analytics.not_null_fct_orders_order_id": [
+   "model.analytics.fct_orders"
+  ],
+  "test.analytics.relationships_fct_orders_customer_id": [
+   "model.analytics.fct_orders"
+  ],
+  "test.analytics.accepted_values_fct_orders_order_status": [
+   "model.analytics.fct_orders"
+  ],
+  "test.analytics.unique_int_orders_with_line_totals_order_id": [
+   "model.analytics.int_orders_with_line_totals"
+  ],
+  "test.analytics.not_null_int_orders_with_line_totals_order_id": [
+   "model.analytics.int_orders_with_line_totals"
+  ],
+  "unit_test.analytics.int_orders_with_line_totals.test_refund_overrides_status": [
+   "model.analytics.int_orders_with_line_totals"
+  ],
+  "unit_test.analytics.int_orders_with_line_totals.test_unknown_status_falls_through": [
+   "model.analytics.int_orders_with_line_totals"
+  ],
+  "source.analytics.shopify.orders": [],
+  "source.analytics.shopify.order_lines": [],
+  "source.analytics.shopify.customers": [],
+  "source.analytics.netsuite.revenue_postings": [],
+  "exposure.analytics.executive_revenue_dashboard": [
+   "model.analytics.fct_orders",
+   "model.analytics.dim_customers"
+  ]
+ },
+ "child_map": {
+  "model.analytics.stg_shopify__orders": [
+   "model.analytics.int_orders_with_line_totals",
+   "test.analytics.unique_stg_shopify__orders_order_id",
+   "test.analytics.not_null_stg_shopify__orders_order_id"
+  ],
+  "model.analytics.stg_shopify__order_lines": [
+   "model.analytics.int_orders_with_line_totals",
+   "test.analytics.unique_stg_shopify__order_lines_order_line_id",
+   "test.analytics.not_null_stg_shopify__order_lines_order_line_id"
+  ],
+  "model.analytics.stg_shopify__customers": [
+   "model.analytics.dim_customers",
+   "test.analytics.unique_stg_shopify__customers_customer_id",
+   "test.analytics.not_null_stg_shopify__customers_customer_id"
+  ],
+  "model.analytics.stg_netsuite__revenue_postings": [],
+  "model.analytics.int_orders_with_line_totals": [
+   "model.analytics.fct_orders",
+   "test.analytics.unique_int_orders_with_line_totals_order_id",
+   "test.analytics.not_null_int_orders_with_line_totals_order_id",
+   "unit_test.analytics.int_orders_with_line_totals.test_refund_overrides_status",
+   "unit_test.analytics.int_orders_with_line_totals.test_unknown_status_falls_through"
+  ],
+  "model.analytics.dim_customers": [
+   "model.analytics.fct_orders",
+   "test.analytics.unique_dim_customers_customer_id",
+   "test.analytics.not_null_dim_customers_customer_id",
+   "test.analytics.accepted_values_dim_customers_region",
+   "exposure.analytics.executive_revenue_dashboard"
+  ],
+  "model.analytics.fct_orders": [
+   "test.analytics.unique_fct_orders_order_id",
+   "test.analytics.not_null_fct_orders_order_id",
+   "test.analytics.relationships_fct_orders_customer_id",
+   "test.analytics.accepted_values_fct_orders_order_status",
+   "exposure.analytics.executive_revenue_dashboard"
+  ],
+  "model.analytics.metricflow_time_spine": [],
+  "test.analytics.unique_stg_shopify__orders_order_id": [],
+  "test.analytics.not_null_stg_shopify__orders_order_id": [],
+  "test.analytics.unique_stg_shopify__order_lines_order_line_id": [],
+  "test.analytics.not_null_stg_shopify__order_lines_order_line_id": [],
+  "test.analytics.unique_stg_shopify__customers_customer_id": [],
+  "test.analytics.not_null_stg_shopify__customers_customer_id": [],
+  "test.analytics.unique_dim_customers_customer_id": [],
+  "test.analytics.not_null_dim_customers_customer_id": [],
+  "test.analytics.accepted_values_dim_customers_region": [],
+  "test.analytics.unique_fct_orders_order_id": [],
+  "test.analytics.not_null_fct_orders_order_id": [],
+  "test.analytics.relationships_fct_orders_customer_id": [],
+  "test.analytics.accepted_values_fct_orders_order_status": [],
+  "test.analytics.unique_int_orders_with_line_totals_order_id": [],
+  "test.analytics.not_null_int_orders_with_line_totals_order_id": [],
+  "unit_test.analytics.int_orders_with_line_totals.test_refund_overrides_status": [],
+  "unit_test.analytics.int_orders_with_line_totals.test_unknown_status_falls_through": [],
+  "source.analytics.shopify.orders": [
+   "model.analytics.stg_shopify__orders"
+  ],
+  "source.analytics.shopify.order_lines": [
+   "model.analytics.stg_shopify__order_lines"
+  ],
+  "source.analytics.shopify.customers": [
+   "model.analytics.stg_shopify__customers"
+  ],
+  "source.analytics.netsuite.revenue_postings": [],
+  "exposure.analytics.executive_revenue_dashboard": []
+ },
+ "group_map": {},
+ "disabled": {}
+}

@@ -1,0 +1,71 @@
+version: 2
+
+semantic_models:
+  - name: orders
+    description: Order facts. One row per order.
+    model: ref('fct_orders')
+    defaults:
+      agg_time_dimension: ordered_at
+
+    entities:
+      - name: order          # primary — this model's grain
+        type: primary
+        expr: order_id
+      - name: customer       # foreign — joins to the customers semantic model
+        type: foreign
+        expr: customer_id
+
+    dimensions:
+      - name: ordered_at
+        type: time
+        type_params:
+          time_granularity: day      # required on every time dimension
+      - name: order_status
+        type: categorical
+        description: Business status. A refund overrides any fulfillment state.
+      - name: is_multi_line_order
+        type: categorical
+        expr: case when line_item_count > 1 then true else false end
+
+    measures:
+      - name: order_total
+        description: Gross order amount, USD.
+        agg: sum
+        expr: order_amount_usd
+        agg_time_dimension: ordered_at
+      - name: net_line_total
+        agg: sum
+        expr: net_line_amount_usd
+      - name: order_count
+        agg: count
+        expr: order_id
+      - name: distinct_customers
+        agg: count_distinct
+        expr: customer_id
+
+  - name: customers
+    description: Customer dimension. One row per customer, current state.
+    model: ref('dim_customers')
+    defaults:
+      agg_time_dimension: first_seen_at
+
+    entities:
+      - name: customer
+        type: primary
+        expr: customer_id
+
+    dimensions:
+      - name: region
+        type: categorical
+        description: EMEA | AMER | OTHER, derived from country_code.
+      - name: country_code
+        type: categorical
+      - name: first_seen_at
+        type: time
+        type_params:
+          time_granularity: day
+
+    measures:
+      - name: customer_count
+        agg: count
+        expr: customer_id

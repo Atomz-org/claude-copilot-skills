@@ -1,0 +1,41 @@
+name: Repository Baseline
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify scaffold files
+        run: |
+          test -f .claude/memory.md
+          test -f .github/copilot-instructions.md
+          test -f docs/WAY_OF_WORKING.md
+          test -f src/ai-core/rtk-setup.ts
+          test -f src/ai-core/graph-manager.ts
+          test -f src/ai-core/memory-store.ts
+
+      - name: Validate shell scripts
+        run: |
+          bash -n .claude/commands/git-standard.sh
+          bash -n .claude/commands/update-memory.sh
+          bash -n .claude/commands/lint-and-graph.sh
+          bash -n .claude/commands/infra/git-standard.sh
+          bash -n .claude/commands/infra/update-memory.sh
+          bash -n .claude/commands/infra/lint-and-graph.sh
+
+      - name: Install test dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pytest
+
+      - name: Run Python tests
+        run: |
+          python3 -m pytest -q

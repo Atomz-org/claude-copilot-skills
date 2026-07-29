@@ -1,0 +1,49 @@
+version: 2
+
+# Explicit column types. Without these, dbt infers from the CSV and the inference differs
+# per warehouse — a numeric that becomes a string on one adapter and a double on another
+# is a portability bug you find in production.
+#
+# Note the literal `numeric(28,6)` rather than `{{ money_type() }}`. Property files are
+# rendered in a restricted Jinja context that does NOT include project macros, so a macro
+# call here fails at parse with "'money_type' is undefined". Macros work inside models;
+# in YAML you get vars, env_var, and target only. `numeric(28,6)` is accepted by DuckDB,
+# BigQuery, and Snowflake alike, which is why it is safe to hardcode.
+seeds:
+  - name: raw_orders
+    description: Stands in for the Fivetran-landed `raw.shopify.orders` table.
+    config:
+      column_types:
+        id: varchar
+        customer_id: varchar
+        financial_status: varchar
+        currency: varchar
+        total_price: numeric(28,6)
+        test: boolean
+        created_at: timestamp
+        _fivetran_synced: timestamp
+        _fivetran_deleted: boolean
+
+  - name: raw_order_lines
+    description: Stands in for `raw.shopify.order_lines`.
+    config:
+      column_types:
+        id: varchar
+        order_id: varchar
+        product_id: varchar
+        quantity: integer
+        price: numeric(28,6)
+        discount: numeric(28,6)
+        _fivetran_synced: timestamp
+        _fivetran_deleted: boolean
+
+  - name: raw_customers
+    description: Stands in for `raw.shopify.customers`.
+    config:
+      column_types:
+        id: varchar
+        email: varchar
+        country_code: varchar
+        created_at: timestamp
+        _fivetran_synced: timestamp
+        _fivetran_deleted: boolean

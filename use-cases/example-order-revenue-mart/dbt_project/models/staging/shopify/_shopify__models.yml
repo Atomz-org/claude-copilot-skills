@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: stg_shopify__orders
+    description: >
+      One row per Shopify order, renamed and cast. Soft-deleted rows are excluded here;
+      test orders are NOT — they carry `is_test_order` and are filtered in the
+      intermediate layer, because a downstream QA model legitimately needs them.
+    columns:
+      - name: order_id
+        description: Primary key. Shopify order id.
+        data_tests: [unique, not_null]
+      - name: customer_id
+        description: FK to stg_shopify__customers. Null for guest checkouts (~3%).
+        data_tests:
+          - dbt_utils.not_null_proportion:
+              at_least: 0.90     # assumption 7: guest-checkout share should not spike
+      - name: payment_status
+        description: Shopify `financial_status`, lowercased and trimmed.
+      - name: order_amount
+        description: Gross order total in the order's own currency, before conversion.
+        data_tests: [not_null]
+      - name: is_test_order
+        description: True for Shopify test orders. Filtered out in intermediate.
+        data_tests: [not_null]
+      - name: ordered_at
+        description: Order creation timestamp, UTC.
+        data_tests: [not_null]
+      - name: _loaded_at
+        description: Fivetran sync timestamp. Used for freshness and arrival-lag measurement.
+
+  - name: stg_shopify__order_lines
+    description: >
+      One row per line item on an order. Roughly 0.3% of orders have no lines — a known
+      upstream defect, which is why the intermediate model coalesces line totals to zero
+      rather than assuming a match.
+    columns:
+      - name: order_line_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+      - name: order_id
+        description: FK to stg_shopify__orders.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('stg_shopify__orders')
+              field: order_id
+      - name: line_amount
+        description: Line total before discount, order currency.
+      - name: discount_amount
+        description: Discount applied to this line. Always positive.
+
+  - name: stg_shopify__customers
+    description: >
+      One row per customer, current state. The source is mutable — plan tier and country
+      overwrite in place — so history is captured separately in `shopify_orders_snapshot`
+      rather than being recoverable from here.
+    columns:
+      - name: customer_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+      - name: customer_email
+        description: Contact email. PII — masked outside prod.
+      - name: country_code
+        description: ISO-3166 alpha-2, lowercased.
+      - name: first_seen_at
+        description: Timestamp of the customer's first Shopify record.

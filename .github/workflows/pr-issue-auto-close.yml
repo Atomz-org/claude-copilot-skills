@@ -1,0 +1,32 @@
+name: PR Issue Auto-Close
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  close-linked-issues:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close linked issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          body='${{ github.event.pull_request.body }}'
+          echo "$body" | grep -oE '#[0-9]+' | tr -d '#' | while read -r issue; do
+            gh issue edit "$issue" --repo "${{ github.repository }}" --add-label "status: done" --remove-label "status: in-review" || true
+            gh issue close "$issue" --repo "${{ github.repository }}" --reason completed || true
+          done
+
+      - name: Mark the pull request as shipped
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr edit "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --add-label "status: done" || true

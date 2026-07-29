@@ -1,0 +1,33 @@
+name: Smart Sync
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled, unlabeled]
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Synchronize issue status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          issue_number='${{ github.event.issue.number || github.run_id }}'
+          echo "Smart sync scaffold enabled for issue #$issue_number"
+
+          # Apply a default triage state if the issue has no status label yet.
+          gh issue edit "$issue_number" --repo "${{ github.repository }}" --add-label "status: triage" --remove-label "status: done" --add-label "P2" || true
+
+      - name: Add priority and type labels when missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          issue_number='${{ github.event.issue.number || github.run_id }}'
+          gh issue edit "$issue_number" --repo "${{ github.repository }}" --add-label "P2" --add-label "type: enhancement" || true

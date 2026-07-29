@@ -1,0 +1,33 @@
+snapshots:
+  - name: customers_snapshot
+    description: >
+      SCD Type 2 history of the customer record. The Shopify source is mutable — country
+      and email overwrite in place — so "what region was this customer in when the order
+      was placed" is unanswerable without this table.
+
+      Snapshots the RAW SOURCE, not stg_shopify__customers. If it snapshotted the staging
+      model, a change to the staging logic would silently rewrite history that has already
+      been reported on.
+    relation: source('shopify', 'customers')
+    config:
+      unique_key: id
+      strategy: check
+      # `check` rather than `timestamp`: the connector's _fivetran_synced moves on every
+      # sync whether or not the row changed, so a timestamp strategy would create a new
+      # version every hour for every customer.
+      check_cols: [email, country_code]
+      # dbt 2.0. Without this, a hard-deleted customer's last row stays `dbt_valid_to is
+      # null` forever and looks current.
+      hard_deletes: new_record
+    columns:
+      - name: id
+        description: Customer business key. Not unique in this table — see the test below.
+      - name: dbt_valid_from
+        description: Inclusive start of the interval this version was current.
+      - name: dbt_valid_to
+        description: Exclusive end. Null on the current version — always coalesce it.
+    data_tests:
+      # The PK of an SCD2 table is (business key, valid_from), never the business key
+      # alone. Testing `unique` on `id` here would fail the moment history exists.
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [id, dbt_valid_from]

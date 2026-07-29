@@ -1,0 +1,60 @@
+{
+ "metadata": {
+  "dbt_version": "1.9.0",
+  "generated_at": "2026-07-27T09:00:00.000000Z"
+ },
+ "elapsed_time": 4.1,
+ "results": [
+  {
+   "unique_id": "source.analytics.shopify.orders",
+   "status": "pass",
+   "max_loaded_at": "2026-07-27T08:40:00+00:00",
+   "snapshotted_at": "2026-07-27T09:00:00+00:00",
+   "max_loaded_at_time_ago_in_s": 1200,
+   "criteria": {
+    "warn_after": {
+     "count": 1,
+     "period": "hour"
+    },
+    "error_after": {
+     "count": 6,
+     "period": "hour"
+    }
+   }
+  },
+  {
+   "unique_id": "source.analytics.shopify.order_lines",
+   "status": "warn",
+   "max_loaded_at": "2026-07-27T05:00:00+00:00",
+   "snapshotted_at": "2026-07-27T09:00:00+00:00",
+   "max_loaded_at_time_ago_in_s": 14400,
+   "criteria": {
+    "warn_after": {
+     "count": 1,
+     "period": "hour"
+    },
+    "error_after": {
+     "count": 6,
+     "period": "hour"
+    }
+   }
+  },
+  {
+   "unique_id": "source.analytics.shopify.customers",
+   "status": "error",
+   "max_loaded_at": "2026-07-25T18:00:00+00:00",
+   "snapshotted_at": "2026-07-27T09:00:00+00:00",
+   "max_loaded_at_time_ago_in_s": 140400,
+   "criteria": {
+    "warn_after": {
+     "count": 12,
+     "period": "hour"
+    },
+    "error_after": {
+     "count": 24,
+     "period": "hour"
+    }
+   }
+  }
+ ]
+}

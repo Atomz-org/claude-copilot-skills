@@ -1,0 +1,99 @@
+version: 2
+
+metrics:
+  # --- simple ---------------------------------------------------------------
+  - name: revenue
+    label: Revenue
+    description: >
+      Gross order revenue in USD, excluding cancelled orders and internal test
+      accounts. Verified against the NetSuite ledger for 2026-06 (0.02% variance).
+      NOT net of refunds — use net_revenue for that.
+    type: simple
+    type_params:
+      measure:
+        name: order_total
+        fill_nulls_with: 0
+        join_to_timespine: true
+    filter: "{{ Dimension('order__order_status') }} != 'cancelled'"
+
+  - name: order_count
+    label: Orders
+    description: Count of non-cancelled orders, excluding internal test accounts.
+    type: simple
+    type_params:
+      measure: order_count
+    filter: "{{ Dimension('order__order_status') }} != 'cancelled'"
+
+  # --- ratio ----------------------------------------------------------------
+  - name: average_order_value
+    label: Average Order Value
+    description: Revenue divided by order count, both excluding cancelled orders.
+    type: ratio
+    type_params:
+      numerator: revenue
+      denominator: order_count
+
+  - name: emea_revenue_share
+    label: EMEA Revenue Share
+    description: Share of revenue from EMEA customers. Guest checkouts have no region
+      and are excluded from the numerator but included in the denominator.
+    type: ratio
+    type_params:
+      numerator:
+        name: revenue
+        filter: "{{ Dimension('customer__region') }} = 'EMEA'"
+        alias: emea_revenue
+      denominator: revenue
+
+  # --- derived --------------------------------------------------------------
+  - name: revenue_growth_mom
+    label: Revenue Growth MoM (%)
+    description: Month-over-month revenue growth, percent. Null for the first month
+      in the series.
+    type: derived
+    type_params:
+      expr: (revenue - revenue_prev_month) * 100.0 / nullif(revenue_prev_month, 0)
+      metrics:
+        - name: revenue
+        - name: revenue
+          alias: revenue_prev_month
+          offset_window: 1 month
+
+  # --- cumulative -----------------------------------------------------------
+  - name: revenue_trailing_28d
+    label: Revenue (Trailing 28 Days)
+    description: Rolling 28-day revenue. Requires the metricflow_time_spine model.
+    type: cumulative
+    type_params:
+      measure: order_total
+      # dbt 2.0: window and grain_to_date nest under cumulative_type_params. The flat
+      # form still parses but is deprecated — it warns on every run until moved.
+      cumulative_type_params:
+        window: 28 days
+
+  - name: revenue_mtd
+    label: Revenue (Month to Date)
+    description: Revenue accumulated from the start of the calendar month.
+    type: cumulative
+    type_params:
+      measure: order_total
+      cumulative_type_params:
+        grain_to_date: month
+
+saved_queries:
+  - name: weekly_revenue_by_region
+    description: >
+      Feeds the executive revenue dashboard. Exported to bi_marts on dbt Core, since
+      the hosted Semantic Layer API is dbt Cloud only.
+    query_params:
+      metrics: [revenue, order_count, average_order_value]
+      group_by:
+        - TimeDimension('metric_time', 'week')
+        - Dimension('customer__region')
+      where:
+        - "{{ Dimension('customer__region') }} is not null"
+    exports:
+      - name: weekly_revenue_by_region
+        config:
+          export_as: table
+          schema: bi_marts

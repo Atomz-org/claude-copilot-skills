@@ -1,0 +1,49 @@
+version: 2
+
+sources:
+  - name: shopify
+    description: Raw Shopify tables landed by Fivetran. Schema managed by the connector.
+    # In this worked example the "raw" tables are seeds, so `schema` is the seed schema
+    # and `identifier` maps the source name onto the seed's relation name. In a real
+    # project you would drop `identifier` and point `database`/`schema` at the connector's
+    # landing area. Nothing downstream changes either way — that is the point of source().
+    #
+    # One consequence, and it is the reason run_local.sh seeds in its own step: dbt
+    # identifies a source by schema + identifier, not by a ref(), so there is NO
+    # dependency edge from these source tests to the seeds that populate them. Run
+    # `dbt build` with threads > 1 and it will recreate a seed while a source test reads
+    # it. Seed first, then `dbt build --exclude resource_type:seed`.
+    schema: raw
+    loaded_at_field: _fivetran_synced
+    freshness:
+      warn_after:  {count: 12, period: hour}
+      error_after: {count: 24, period: hour}
+    tables:
+      - name: orders
+        identifier: raw_orders
+        description: One row per order. `_fivetran_deleted = true` marks soft deletes.
+        loaded_at_field: _fivetran_synced
+        freshness:
+          warn_after:  {count: 1, period: hour}
+          error_after: {count: 6, period: hour}
+        columns:
+          - name: id
+            description: Shopify order id. Primary key.
+            data_tests: [unique, not_null]
+
+      - name: order_lines
+        identifier: raw_order_lines
+        description: One row per line item on an order.
+        freshness:
+          warn_after:  {count: 1, period: hour}
+          error_after: {count: 6, period: hour}
+        columns:
+          - name: id
+            data_tests: [unique, not_null]
+
+      - name: customers
+        identifier: raw_customers
+        description: One row per customer, current state. Mutable — snapshotted separately.
+        columns:
+          - name: id
+            data_tests: [unique, not_null]

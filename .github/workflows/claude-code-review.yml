@@ -1,0 +1,31 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Apply review labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr edit "${{ github.event.pull_request.number || github.run_id }}" --repo "${{ github.repository }}" --add-label "status: in-review" --remove-label "status: ready" --add-label "P2" || true
+
+      - name: Summarize PR context for Claude review
+        run: |
+          echo "Claude review scaffold ready for PR ${{ github.event.pull_request.number || github.run_id }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.head_ref || github.ref_name }}"
+          echo "Automation summary: review label assigned, workflow is ready for Claude-assisted analysis"
