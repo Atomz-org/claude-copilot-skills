@@ -28,13 +28,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _manifest import (  # noqa: E402
     Colors,
     Manifest,
+    collect_tested_columns,
     header,
     layer_of,
     load_json,
     section,
     severity_tag,
     table,
-    tested_columns,
 )
 
 RULES: Dict[str, Tuple[str, str]] = {
@@ -209,7 +209,7 @@ def validate(man: Manifest, catalog: Dict[str, Any],
         cols = column_names(node, cat)
         types = column_types(cat)
         tests = tests_by_model.get(uid, [])
-        by_column = tested_columns(tests)
+        by_column = collect_tested_columns(tests)
         n_down = blast(uid)
 
         # fact_refs_fact

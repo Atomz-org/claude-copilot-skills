@@ -35,13 +35,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _manifest import (  # noqa: E402
     Colors,
     Manifest,
+    collect_tested_columns,
     die,
     header,
     layer_of,
     load_json,
     section,
     table,
-    tested_columns,
 )
 
 FK_SUFFIXES = ("_id", "_sk", "_key", "_fk")
@@ -167,7 +167,7 @@ def build(man: Manifest, catalog: Dict[str, Any], layers: Set[str],
         name = node.get("name", "")
         tests = tests_by_model.get(uid, [])
         not_null_cols = {
-            col for col, names in tested_columns(tests).items() if "not_null" in names
+            col for col, names in collect_tested_columns(tests).items() if "not_null" in names
         }
         for test in tests:
             meta = test.get("test_metadata") or {}
@@ -207,7 +207,7 @@ def build(man: Manifest, catalog: Dict[str, Any], layers: Set[str],
             pass
         tests = tests_by_model.get(uid, [])
         not_null_cols = {
-            col for col, names in tested_columns(tests).items() if "not_null" in names
+            col for col, names in collect_tested_columns(tests).items() if "not_null" in names
         }
         for column, _dtype, _desc in collect_columns(node, catalog_nodes.get(uid, {})):
             lowered = column.lower()
@@ -246,7 +246,7 @@ def primary_key_columns(man: Manifest, selected: Dict[str, Dict[str, Any]]) -> D
     out: Dict[str, Set[str]] = {}
     for uid, node in selected.items():
         keys = {
-            col for col, names in tested_columns(tests_by_model.get(uid, [])).items()
+            col for col, names in collect_tested_columns(tests_by_model.get(uid, [])).items()
             if "unique" in names and "not_null" in names
         }
         if keys:

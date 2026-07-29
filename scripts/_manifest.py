@@ -301,7 +301,7 @@ def test_names_for(tests: Iterable[Dict[str, Any]]) -> Set[str]:
     return names
 
 
-def tested_columns(tests: Iterable[Dict[str, Any]]) -> Dict[str, Set[str]]:
+def collect_tested_columns(tests: Iterable[Dict[str, Any]]) -> Dict[str, Set[str]]:
     """Map column name -> set of generic test names applied to it."""
     out: Dict[str, Set[str]] = {}
     for test in tests:
@@ -317,7 +317,7 @@ def has_primary_key_tests(tests: Iterable[Dict[str, Any]]) -> bool:
     """True when some single column carries both `unique` and `not_null`, or when a
     composite-grain test (unique_combination_of_columns) is present."""
     tests = list(tests)
-    by_column = tested_columns(tests)
+    by_column = collect_tested_columns(tests)
     for names in by_column.values():
         if "unique" in names and "not_null" in names:
             return True

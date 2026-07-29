@@ -25,13 +25,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _manifest import (  # noqa: E402
     Colors,
     Manifest,
+    collect_tested_columns,
     has_primary_key_tests,
     header,
     layer_of,
     section,
     severity_tag,
     table,
-    tested_columns,
 )
 
 # Rule id -> (severity, one-line description)
@@ -168,7 +168,7 @@ def audit(man: Manifest, only: Optional[List[str]], skip: List[str]) -> List[Fin
         if enabled("no_tests") and not tests:
             findings.append(Finding("no_tests", name, "no tests attached", n_down))
         elif enabled("missing_pk_test") and not has_primary_key_tests(tests):
-            cols = tested_columns(tests)
+            cols = collect_tested_columns(tests)
             detail = (
                 "tested columns: " + ", ".join(sorted(cols)) if cols else "no column tests"
             )
