@@ -56,6 +56,12 @@ Skills are now separated into reusable packs so new domains can be added cleanly
 
 The shared GitHub pack is intended to be common across all domain packs.
 
+Pack portability features (inspired by multi-harness marketplace patterns):
+
+- Plugin-style pack manifests: `skill-packs/*/.claude-plugin/plugin.json`
+- Portability validation script: `scripts/marketplace_portability_check.sh`
+- Shared portability skill and command in `skill-packs/github-skills/.claude/`
+
 Canonical dbt skill entrypoint:
 
 - `dbt-skill` in `skill-packs/dbt-skills/.claude/skills/dbt-skill/SKILL.md`

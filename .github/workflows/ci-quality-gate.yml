@@ -41,9 +41,17 @@ jobs:
           bash -n .claude/commands/update-memory.sh
           bash -n .claude/commands/lint-and-graph.sh
           bash -n .claude/hooks/block-dangerous-git.sh
+          bash -n scripts/marketplace_portability_check.sh
           test -f .claude/commands/skills-index.md
           test -f .claude/commands/setup-git-guardrails.md
+          test -f .claude/commands/marketplace-portability.md
           test -f .claude/skills/git-guardrails-claude-code/SKILL.md
+          test -f .claude/skills/marketplace-portability-patterns/SKILL.md
+
+      - name: Run portability checks
+        run: |
+          chmod +x scripts/marketplace_portability_check.sh
+          ./scripts/marketplace_portability_check.sh
 
       - name: Assert guardrail blocks dangerous git command
         run: |

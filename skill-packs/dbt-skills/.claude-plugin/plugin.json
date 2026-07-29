@@ -1,0 +1,15 @@
+{
+  "name": "dbt-skills",
+  "version": "1.0.0",
+  "description": "dbt Core domain plugin pack with framed use-case workflow and analytics engineering guardrails.",
+  "sourceOfTruth": "skill-packs/dbt-skills/.claude",
+  "components": {
+    "agents": "skill-packs/dbt-skills/.claude/agents",
+    "commands": "skill-packs/dbt-skills/.claude/commands",
+    "skills": "skill-packs/dbt-skills/.claude/skills",
+    "rules": "skill-packs/dbt-skills/.claude/rules"
+  },
+  "harnessTargets": ["claude", "copilot", "cursor", "codex", "gemini"],
+  "canonicalEntrySkill": "dbt-skill",
+  "useCaseRoot": "skill-packs/dbt-skills/use-cases"
+}

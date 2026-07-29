@@ -19,6 +19,8 @@ Contents:
 - `.claude/skills/resolve-merge-conflicts/`: resolve conflicts while preserving intent
 - `.claude/skills/documentation-writer-diataxis/`: produce docs via Diataxis workflow
 - `.claude/skills/git-guardrails-claude-code/`: PreToolUse hook guardrails for destructive git commands
+- `.claude/skills/marketplace-portability-patterns/`: multi-harness portability conventions for pack content
+- `.claude-plugin/plugin.json`: plugin-style manifest for harness portability metadata
 
 Use this pack as the always-on base for any domain bundle (dbt, senior-data-scientist, principal-data-engineer, and future packs).
 
@@ -40,3 +42,4 @@ This pack includes reusable command docs for frequent git workflows:
 - `.claude/commands/write-docs.md`
 - `.claude/commands/skills-index.md`
 - `.claude/commands/setup-git-guardrails.md`
+- `.claude/commands/marketplace-portability.md`

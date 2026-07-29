@@ -11,6 +11,11 @@ It also uses a pack-based skill layout:
 - shared: `skill-packs/github-skills/`
 - domain: `skill-packs/dbt-skills/`
 
+Marketplace-inspired portability metadata:
+
+- `skill-packs/github-skills/.claude-plugin/plugin.json`
+- `skill-packs/dbt-skills/.claude-plugin/plugin.json`
+
 ## 1. RTK integration
 
 Core files:
@@ -100,3 +105,13 @@ Use:
 ```
 
 This layers shared GitHub skills first, then overlays the selected domain pack.
+
+## 8. Portability checks
+
+Use:
+
+```bash
+./scripts/marketplace_portability_check.sh
+```
+
+This validates plugin manifests and checks large SKILL.md portability constraints.

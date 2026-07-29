@@ -1,0 +1,14 @@
+{
+  "name": "github-skills",
+  "version": "1.0.0",
+  "description": "Shared repository workflow plugin pack with git guardrails and review/delivery playbooks.",
+  "sourceOfTruth": "skill-packs/github-skills/.claude",
+  "components": {
+    "agents": "skill-packs/github-skills/.claude/agents",
+    "commands": "skill-packs/github-skills/.claude/commands",
+    "skills": "skill-packs/github-skills/.claude/skills",
+    "rules": "skill-packs/github-skills/.claude/rules"
+  },
+  "harnessTargets": ["claude", "copilot", "cursor", "codex", "gemini"],
+  "useCaseRoot": "skill-packs/github-skills/use-cases"
+}

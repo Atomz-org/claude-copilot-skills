@@ -27,3 +27,5 @@ This repository is designed to behave as an independent, reusable module that ca
 - CI workflows must validate the shared-pack scaffold and active stack activation.
 - CI must validate guardrail hook script existence and shell syntax.
 - Use-case artifacts must be stored under the owning skill pack path: `skill-packs/<pack>/use-cases/<slug>/`.
+- Each skill pack must include `.claude-plugin/plugin.json` for portability metadata.
+- Portability checks should run with `scripts/marketplace_portability_check.sh`.

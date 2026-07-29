@@ -36,6 +36,11 @@ jobs:
           test -f .claude/hooks/block-dangerous-git.sh
           bash -n .claude/hooks/block-dangerous-git.sh
 
+      - name: Run portability checks
+        run: |
+          chmod +x scripts/marketplace_portability_check.sh
+          ./scripts/marketplace_portability_check.sh
+
       - name: Run tests
         run: |
           pytest -q

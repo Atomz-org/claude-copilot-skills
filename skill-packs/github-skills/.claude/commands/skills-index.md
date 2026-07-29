@@ -46,10 +46,12 @@ Use this index to find the right playbook fast.
 ## Foundation and operations
 
 - `github-foundation` skill
+- `marketplace-portability-patterns` skill
 - `update-memory.sh` command
 - `lint-and-graph.sh` command
 - `sync-submodule.md` command
 - `focused-fix.md` command
+- `marketplace-portability.md` command
 - `scripts/sync_context.sh` (RTK + Graphify + AgentMemory sync)
 
 ## Recommended workflow
