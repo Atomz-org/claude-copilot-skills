@@ -6,6 +6,11 @@ This repository ships three integration layers:
 - Graphify-assisted codebase navigation and relationship analysis
 - AgentMemory-compatible persistent memory workflows
 
+It also uses a pack-based skill layout:
+
+- shared: `skill-packs/github-skills/`
+- domain: `skill-packs/dbt-skills/`
+
 ## 1. RTK integration
 
 Core files:
@@ -85,3 +90,13 @@ This command:
 2. Run `./scripts/sync_context.sh "<summary>"`.
 3. Include any generated mermaid output from `scripts/model_dependency_analyzer.py --mermaid` in PR notes.
 4. Run tests (`pytest -q`).
+
+## 7. Activating a skill stack
+
+Use:
+
+```bash
+./scripts/activate_skill_stack.sh dbt-skills
+```
+
+This layers shared GitHub skills first, then overlays the selected domain pack.

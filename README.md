@@ -47,6 +47,26 @@ cd use-cases/example-order-revenue-mart/dbt_project
 - Canonical analytics command set: `.claude/commands/analytics/`
 - Backward compatibility: original command files remain in `.claude/commands/`.
 
+## Skill-pack architecture
+
+Skills are now separated into reusable packs so new domains can be added cleanly:
+
+- Shared base pack: `skill-packs/github-skills/`
+- Domain pack (current): `skill-packs/dbt-skills/`
+
+The shared GitHub pack is intended to be common across all domain packs.
+
+To activate a stack into live `.claude/` paths:
+
+```bash
+./scripts/activate_skill_stack.sh dbt-skills
+```
+
+Future packs can follow the same pattern, for example:
+
+- `skill-packs/senior-data-scientist/`
+- `skill-packs/principal-data-engineer-skills/`
+
 ## RTK, Graphify, and AgentMemory
 
 - RTK integration layer: `src/ai-core/` and `src/ai-core/dbt-integration.ts`
