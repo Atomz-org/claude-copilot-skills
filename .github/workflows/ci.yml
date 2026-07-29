@@ -13,6 +13,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Verify scaffold files
         run: |
           test -f .claude/memory.md
@@ -56,9 +61,9 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install pytest
+          python -m pip install --upgrade pip
+          python -m pip install pytest
 
       - name: Run Python tests
         run: |
-          python3 -m pytest -q
+          python -m pytest -q
