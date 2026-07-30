@@ -5,15 +5,22 @@
 {% macro get_latest_source_timestamp() %}
     {#- Get project-level variables from dbt_project.yml and environment variables -#}
     {% set uid = var('uid') %}
-    {% set available_sources = var('available_sources', []) %}
-    {% if available_sources is none %}
-        {% set available_sources = [] %}
-    {% endif %}
+
+    {#- The connector list comes from global_configs('all_available_sources') — the same
+        registry erp_union(), model_is_provided(), and add_erp_fields() read. It used to
+        come from a separate `available_sources` var, which meant onboarding a connector
+        required remembering a second list; forget it and this view silently reports NULL
+        forever, so Cube's refreshKey never fires.
+
+        Setting `available_sources` explicitly still overrides the registry, for a run that
+        needs to scope the freshness probe to a subset. -#}
+    {% set override = var('available_sources', []) or [] %}
+    {% set all_sources = global_configs('all_available_sources') %}
+    {% set available_sources = override if override | length > 0 else all_sources.keys() | list %}
 
     {#- Initialize an empty list to hold the SQL queries for each source -#}
     {% set max_ts_queries = [] %}
 
-    {#- Loop through all potential source systems defined in dbt_project.yml -#}
     {% for source_name in available_sources %}
         {#- Check if the current source is enabled for this specific dbt run -#}
         {% if var('is_' ~ source_name ~ '_enabled', false) %}

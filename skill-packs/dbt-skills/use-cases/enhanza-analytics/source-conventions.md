@@ -21,10 +21,18 @@ This guidance captures the source-handling pattern implied by the Enhanza reposi
 - Avoid hard-coding project or dataset names where the same model should be portable across environments.
 - Make freshness and contract expectations visible in the source configuration so downstream models can depend on them.
 
-## Example source naming
+## Source naming
 
-- `source('fortnox', 'invoices')`
-- `source('tripletex', 'accounts')`
-- `source('erp', 'sales_transactions')`
+The source name carries an `_api` suffix and resolves to a per-tenant BigQuery dataset:
 
-These names are examples and should be adapted to the actual upstream systems in the target project.
+```sql
+{{ source('fortnox_api', 'invoices') }}      -- fortnox_api_<uid>.invoices
+{{ source('tripletex_api', 'accounts') }}    -- tripletex_api_<uid>.accounts
+```
+
+The suffix is not optional. `source('fortnox', 'invoices')` does not resolve — every entry
+in [dbt_project/models/sources.yml](dbt_project/models/sources.yml) is named `<source>_api`,
+and the `_demo` variants are `<source>_api_demo`.
+
+There is no `erp` source. `erp_bi_*` is a modeling layer built by unioning each connector's
+adapter models, not an upstream system — see [CONNECTORS.md](CONNECTORS.md).

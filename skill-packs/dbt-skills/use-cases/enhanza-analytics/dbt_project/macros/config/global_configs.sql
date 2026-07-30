@@ -1,9 +1,43 @@
 --Purpose: this macro hosts all exceptions, special cases, and other variables to make it more manageable.
 --Usage: called in other macros. Return a value (list, string etc.) based on the requested key
 
+{#-
+    all_available_sources is the connector registry — the single source of truth for which
+    source systems exist and which concepts each one supplies. Five readers depend on it:
+    erp_union(), model_is_provided(), any_source_enabled(), add_erp_fields(), and
+    source_is_enabled(). A connector with adapter models but no entry here is invisible to
+    the unified layer; a concept claimed here with no adapter on disk fails at parse time.
+    tests/test_enhanza_connector_registry.py enforces both directions.
+
+    Sources are listed alphabetically. To add one, see CONNECTORS.md.
+
+    Note: comments cannot appear inside the `{% set config = {...} %}` expression below —
+    Jinja rejects `{#- -#}` inside a tag — so per-entry notes live here.
+
+      favrit  — `default_currency` deliberately absent. Favrit is multi-currency and the
+                tenant default has not been confirmed. add_erp_fields() emits a NULL
+                DefaultCurrency for sources without one, same as Tempo. [NEEDS INPUT]
+
+      xledger — `fact_vouchers` was claimed but no xledger_erp_bi_fact_vouchers model
+                exists, so erp_bi_fact_vouchers never unioned Xledger while
+                model_is_provided('fact_vouchers') answered true for an Xledger-only
+                tenant. The claim is removed so the registry matches what is built.
+                Restore it in the same commit that adds the adapter.
+                [NEEDS INPUT: does Xledger supply vouchers, and should it?]
+-#}
 {% macro global_configs(key) %}
     {% set config = {
         'all_available_sources': {
+            'favrit': {
+                'name': 'Favrit',
+                'enabled': var('is_favrit_enabled', 'False') | as_bool,
+                'included_models': [
+                    'dim_accounting',
+                    'dim_ratings',
+                    'dim_user_locations',
+                    'fact_order_rows'
+                ]
+            },
             'fortnox': {
                 'name': 'Fortnox',
                 'default_currency': 'SEK',
@@ -160,8 +194,7 @@
                     'dim_accounts',
                     'dim_cost_centers',
                     'dim_financial_years',
-                    'dim_projects',
-                    'fact_vouchers'
+                    'dim_projects'
                 ]
             }
         },

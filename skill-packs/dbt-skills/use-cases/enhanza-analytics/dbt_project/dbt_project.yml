@@ -1,4 +1,4 @@
-name: 'enhanza_ported_package'
+name: 'enhanza_analytics'
 version: '1.0.0'
 config-version: 2
 profile: 'enhanza_sample'
@@ -16,6 +16,103 @@ clean-targets:
 
 require-dbt-version: [">=1.9.0", "<2.0.0"]
 
+# ---------------------------------------------------------------------------------------
+# Connector switches
+# ---------------------------------------------------------------------------------------
+# Enhanza is multi-tenant: one project builds every customer's warehouse, and each customer
+# connects a different subset of sources. `is_<source>_enabled` is how a run says which.
+#
+# Every key here MUST have a matching entry in global_configs('all_available_sources') and
+# vice versa — tests/test_enhanza_connector_registry.py enforces it. Declaring the defaults
+# here rather than leaving them to `var('is_x_enabled', 'False')` call sites means a typo in
+# a `--vars` override is visible in one place instead of silently disabling a connector.
+#
+# Enable per run, not here:
+#   dbt build --vars '{"uid": "acme", "is_fortnox_enabled": true, "is_erp_enabled": true}'
+# ---------------------------------------------------------------------------------------
+vars:
+  # `uid` is the tenant identifier that resolves every source schema (fortnox_api_<uid>).
+  # Deliberately has no default: a run without it must fail loudly rather than build
+  # against a schema named after nothing.
+
+  is_erp_enabled: false          # gates the unified erp_bi and logic_bi layers
+  is_favrit_enabled: false
+  is_fortnox_enabled: false
+  is_seventime_enabled: false
+  is_tempo_enabled: false
+  is_tripletex_enabled: false
+  is_upsales_enabled: false
+  is_visma_eaccounting_enabled: false
+  is_visma_economic_enabled: false
+  is_xledger_enabled: false
+
+  # Optional per-tenant overrides, empty by default.
+  available_sources: []          # read by get_latest_source_timestamp()
+  start_years: {}                # {org_id: 'YYYY-MM-DD'} floor, read by fortnox_start_year_filter()
+
+# ---------------------------------------------------------------------------------------
+# Layer configuration
+# ---------------------------------------------------------------------------------------
+# Tags mirror the layer and the owning connector so a connector can be built, tested, and
+# rolled back in isolation:
+#   dbt build --select tag:fortnox        # everything Fortnox contributes, all layers
+#   dbt build --select tag:unified+       # the unified layer and everything downstream
+#   dbt build --exclude tag:scaffold      # skip the starter placeholder models
+# ---------------------------------------------------------------------------------------
 models:
-  enhanza_ported_package:
+  enhanza_analytics:
     +materialized: view
+
+    # Loose starter models left over from the initial scaffold. Not part of the Enhanza
+    # DAG; tagged so a real build can exclude them.
+    dim_customers_scaffold:
+      +tags: ['scaffold']
+    orders_mart_scaffold:
+      +tags: ['scaffold']
+
+    app:
+      +tags: ['app']
+
+    demo:
+      +tags: ['demo']
+
+    staging:
+      +tags: ['staging']
+      erp:
+        +tags: ['unified', 'erp']
+      favrit:
+        +tags: ['favrit']
+      fortnox:
+        +tags: ['fortnox']
+      seventime:
+        +tags: ['seventime']
+      tempo:
+        +tags: ['tempo']
+      tripletex:
+        +tags: ['tripletex']
+      upsales:
+        +tags: ['upsales']
+      visma_eaccounting:
+        +tags: ['visma_eaccounting']
+      visma_economic:
+        +tags: ['visma_economic']
+      xledger:
+        +tags: ['xledger']
+
+    favrit_bi:
+      +tags: ['favrit', 'bi']
+
+    fortnox:
+      +tags: ['fortnox']
+      fortnox_bi:
+        +tags: ['bi']
+      fortnox_flat:
+        +tags: ['flat']
+      fortnox_reports:
+        +tags: ['reports']
+
+    tripletex_bi:
+      +tags: ['tripletex', 'bi']
+
+    logic_bi:
+      +tags: ['logic', 'mart']
