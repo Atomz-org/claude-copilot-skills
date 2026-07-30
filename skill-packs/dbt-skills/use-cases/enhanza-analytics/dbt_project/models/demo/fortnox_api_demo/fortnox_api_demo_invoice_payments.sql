@@ -1,0 +1,1 @@
+{{ demo_blank_table() }}

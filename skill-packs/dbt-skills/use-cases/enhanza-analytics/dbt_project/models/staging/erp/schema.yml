@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: erp_bi_dim_accounts
+  - name: erp_bi_dim_articles
+  - name: erp_bi_dim_company
+  - name: erp_bi_dim_cost_centers
+  - name: erp_bi_dim_customers
+  - name: erp_bi_dim_employees
+  - name: erp_bi_dim_financial_years
+  - name: erp_bi_dim_projects
+  - name: erp_bi_dim_stockpoints_staging
+  - name: erp_bi_dim_supplier_invoice_files
+  - name: erp_bi_dim_suppliers
+  - name: erp_bi_fact_absence_transactions
+  - name: erp_bi_fact_attendance_transactions
+  - name: erp_bi_fact_budgets
+  - name: erp_bi_fact_employee_wages_staging
+  - name: erp_bi_fact_incoming_goods
+  - name: erp_bi_fact_invoice_payments_staging
+  - name: erp_bi_fact_invoice_rows
+  - name: erp_bi_fact_invoices
+  - name: erp_bi_fact_offers
+  - name: erp_bi_fact_order_rows
+  - name: erp_bi_fact_orders
+  - name: erp_bi_fact_purchase_orders
+  - name: erp_bi_fact_salary_transactions
+  - name: erp_bi_fact_stockbalance
+  - name: erp_bi_fact_stocktakings
+  - name: erp_bi_fact_supplier_invoice_rows
+  - name: erp_bi_fact_supplier_invoices
+  - name: erp_bi_fact_time_reporting_registrations
+  - name: erp_bi_fact_vouchers

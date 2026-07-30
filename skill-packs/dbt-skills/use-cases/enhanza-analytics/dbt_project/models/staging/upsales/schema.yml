@@ -1,0 +1,14 @@
+version: 2
+
+models:
+
+  - name: upsales_erp_bi_dim_articles
+  - name: upsales_erp_bi_dim_company
+  - name: upsales_erp_bi_dim_customers
+  - name: upsales_erp_bi_dim_financial_years
+  - name: upsales_bi_fact_activities_staging
+  - name: upsales_bi_fact_appointments_staging
+  - name: upsales_bi_fact_opportunities_staging
+  - name: upsales_bi_fact_opportunity_rows_staging
+  - name: upsales_erp_bi_fact_order_rows
+  - name: upsales_erp_bi_fact_orders

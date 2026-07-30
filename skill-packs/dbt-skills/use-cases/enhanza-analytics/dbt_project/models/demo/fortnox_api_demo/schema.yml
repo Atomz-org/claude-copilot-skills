@@ -1,0 +1,45 @@
+version: 2
+
+models:
+
+  - name: fortnox_api_demo_absence_causecodes
+  - name: fortnox_api_demo_absence_transactions
+  - name: fortnox_api_demo_accounts
+  - name: fortnox_api_demo_articles
+  - name: fortnox_api_demo_assets
+  - name: fortnox_api_demo_assets_types
+  - name: fortnox_api_demo_attendance_transactions
+  - name: fortnox_api_demo_budgets
+  - name: fortnox_api_demo_company_settings
+  - name: fortnox_api_demo_contracts
+  - name: fortnox_api_demo_cost_centers
+  - name: fortnox_api_demo_customers
+  - name: fortnox_api_demo_employees
+  - name: fortnox_api_demo_expenses
+  - name: fortnox_api_demo_financial_years
+  - name: fortnox_api_demo_incominggoods
+  - name: fortnox_api_demo_invoice_accruals
+  - name: fortnox_api_demo_invoice_payments
+  - name: fortnox_api_demo_itemsuppliers
+  - name: fortnox_api_demo_labels
+  - name: fortnox_api_demo_lockedperiod
+  - name: fortnox_api_demo_pricelists
+  - name: fortnox_api_demo_prices
+  - name: fortnox_api_demo_production_orders
+  - name: fortnox_api_demo_projects
+  - name: fortnox_api_demo_purchaseorders
+  - name: fortnox_api_demo_salary_transactions
+  - name: fortnox_api_demo_stockbalance
+  - name: fortnox_api_demo_stockpoints
+  - name: fortnox_api_demo_stocktakings
+  - name: fortnox_api_demo_supplier_invoice_accruals
+  - name: fortnox_api_demo_supplier_invoice_file_connections
+  - name: fortnox_api_demo_supplier_invoices
+  - name: fortnox_api_demo_suppliers
+  - name: fortnox_api_demo_time_reporting_articles
+  - name: fortnox_api_demo_time_reporting_registrations
+  - name: fortnox_api_demo_v2_invoices
+  - name: fortnox_api_demo_v2_offers
+  - name: fortnox_api_demo_v2_orders
+  - name: fortnox_api_demo_voucher_series
+  - name: fortnox_api_demo_vouchers

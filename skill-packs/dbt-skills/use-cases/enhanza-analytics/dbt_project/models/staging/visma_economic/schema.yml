@@ -1,0 +1,14 @@
+version: 2
+
+models:
+
+  - name: visma_economic_erp_bi_dim_accounts
+  - name: visma_economic_erp_bi_dim_articles
+  - name: visma_economic_erp_bi_dim_company
+  - name: visma_economic_erp_bi_dim_customers
+  - name: visma_economic_erp_bi_dim_financial_years
+  - name: visma_economic_erp_bi_dim_suppliers
+  - name: visma_economic_erp_bi_fact_invoice_rows
+  - name: visma_economic_erp_bi_fact_invoices
+  - name: visma_economic_erp_bi_fact_orders
+  - name: visma_economic_erp_bi_fact_vouchers

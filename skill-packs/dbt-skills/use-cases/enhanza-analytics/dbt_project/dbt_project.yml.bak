@@ -1,0 +1,76 @@
+name: 'dbt_views'
+version: '1.0.0'
+vars:
+  available_sources: ['fortnox', 'seventime', 'tempo', 'tripletex', 'upsales', 'visma_eaccounting', 'visma_economic', 'xledger']
+
+  uid: 'cglXKtOJd6W5Mhz9BLTx'
+
+  is_erp_enabled: true
+  is_fortnox_enabled: false
+  is_seventime_enabled: false
+  is_tripletex_enabled: false
+  is_tempo_enabled: false
+  is_upsales_enabled: false
+  is_visma_eaccounting_enabled: false
+  is_visma_economic_enabled: false
+  is_xledger_enabled: false
+
+  demo_uid: 'GAtGDz6xlV29oJOsrJKA'
+  is_demo_enabled: false
+profile: 'enhanza'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Directories to be removed by `dbt clean`
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+require-dbt-version: [">=1.9.0", "<2.0.0"]
+
+# Configuring models. Full documentation: https://docs.getdbt.com/docs/configuring-models
+models:
+  +materialized: view
+  +persist_docs:
+    relation: true
+    columns: true
+  dbt_views:
+
+    app:
+      +schema: app_{{ var('uid', env_var('uid', 'cglXKtOJd6W5Mhz9BLTx')) }}
+      +enabled: true
+
+    demo:
+      fortnox_api_demo:
+        +schema: fortnox_api_demo
+        +enabled: "{{ var('is_demo_enabled', 'False') | as_bool }}"
+        +materialized: table
+
+    logic_bi:
+      +schema: logic_bi_{{ var('uid', env_var('uid', 'cglXKtOJd6W5Mhz9BLTx')) }}
+      +enabled: "{{ var('is_erp_enabled', 'True') | as_bool }}"
+
+    staging:
+      +schema: staging_{{ var('uid', env_var('uid', 'cglXKtOJd6W5Mhz9BLTx')) }}
+
+    fortnox:
+      +enabled: "{{ var('is_fortnox_enabled', 'False') | as_bool }}"
+      fortnox_bi:
+        +schema: fortnox_bi_{{ var('uid', env_var('uid', 'cglXKtOJd6W5Mhz9BLTx')) }}
+      fortnox_flat:
+        +schema: fortnox_flat_{{ var('uid', env_var('uid', 'cglXKtOJd6W5Mhz9BLTx')) }}
+      fortnox_reports:
+        +schema: fortnox_reports_{{ var('uid', env_var('uid', 'cglXKtOJd6W5Mhz9BLTx')) }}
+
+    tripletex_bi:
+      +enabled: "{{ var('is_tripletex_enabled', 'False') | as_bool }}"
+      +schema: tripletex_bi_{{ var('uid', env_var('uid', 'cglXKtOJd6W5Mhz9BLTx')) }}
+
+flags:
+  require_generic_test_arguments_property: true
