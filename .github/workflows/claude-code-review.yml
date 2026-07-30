@@ -41,16 +41,52 @@ jobs:
           fi
 
           changed_files="$(gh pr view "$pr_number" --repo "${{ github.repository }}" --json files --jq '.files[].path' 2>/dev/null || true)"
-          if printf '%s\n' "$changed_files" | grep -Eq '^\.github/workflows/'; then
-            labels+=("github_actions")
-          fi
+          while IFS= read -r changed_file; do
+            case "$changed_file" in
+              .github/workflows/*)
+                labels+=("github_actions")
+                ;;
+              skill-packs/*)
+                pack="$(printf '%s' "$changed_file" | cut -d/ -f2)"
+                labels+=("$pack")
+                if [[ "$changed_file" =~ ^skill-packs/[^/]+/use-cases/([^/]+)/ ]]; then
+                  labels+=("${BASH_REMATCH[1]}")
+                fi
+                ;;
+              src/*)
+                labels+=("src")
+                ;;
+              docs/*)
+                labels+=("docs")
+                ;;
+              tests/*)
+                labels+=("tests")
+                ;;
+              scripts/*)
+                labels+=("scripts")
+                ;;
+              .claude/*)
+                labels+=("claude")
+                ;;
+            esac
+          done <<< "$changed_files"
 
           if (( ${#labels[@]} == 0 )); then
             echo "No contextual labels matched for PR #$pr_number"
             exit 0
           fi
 
+          unique_labels=()
           for label in "${labels[@]}"; do
+            if [[ -z "$(printf '%s\n' "${unique_labels[@]}" | grep -xF -- "$label")" ]]; then
+              unique_labels+=("$label")
+            fi
+          done
+
+          for label in "${unique_labels[@]}"; do
+            if ! gh label view "$label" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+              gh label create "$label" --repo "${{ github.repository }}" --color "bfdadc" --description "Auto-generated label for changed path $label" || true
+            fi
             if gh pr edit "$pr_number" --repo "${{ github.repository }}" --add-label "$label"; then
               echo "Applied contextual label '$label' to PR #$pr_number"
             else

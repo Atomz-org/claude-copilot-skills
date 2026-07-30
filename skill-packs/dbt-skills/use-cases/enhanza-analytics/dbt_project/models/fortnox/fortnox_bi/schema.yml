@@ -1,0 +1,1128 @@
+version: 2
+
+models:
+  - name: fortnox_bi_dim_accounts
+    description: 'List of BAS accounts used in Fortnox, only Active'
+    columns:
+      - name: Number
+        data_type: INTEGER
+        description: 'BAS account number, consists of four digits, e.g., 1234'
+      - name: AccountName
+        data_type: STRING
+        description: 'The name of the account in the chart of accounts'
+      - name: BalanceBroughtForward
+        data_type: FLOAT
+        description: 'Balance sheet at the beginning of the financial year'
+      - name: BalanceCarriedForward
+        data_type: FLOAT
+        description: 'Final current balance for the financial year'
+      - name: CostCenterId
+        data_type: STRING
+        description: 'Foreign key to dim_cost_centers'
+      - name: ProjectId
+        data_type: STRING
+        description: 'Foreign key to dim_projects'
+      - name: AccountClassId
+        data_type: STRING
+        description: "First account digit, e.g., 1xxx"
+      - name: AccountClass
+        data_type: STRING
+        description: "BAS account class defined by the first account digit"
+      - name: MainAccountId
+        data_type: STRING
+        description: 'First two digits, e.g., 12xx'
+      - name: MainAccount
+        data_type: STRING
+        description: 'BAS main account defined by first two account digits'
+      - name: SubAccountId
+        data_type: STRING
+        description: 'First three digits, e.g., 123x'
+      - name: SubAccount
+        data_type: STRING
+        description: 'BAS sub-account defined by first three account digits'
+      - name: AccountId
+        data_type: STRING
+        description: 'Unique Account identifier used as a primary key'
+        data_tests:
+          - unique
+          - not_null
+      - name: FinancialYearId
+        data_type: STRING
+        description: 'Foreign key to dim_financial_years'
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_financial_years')
+                field: FinancialYearId
+  - name: fortnox_bi_dim_articles
+    description: "Datailed information on sold articles (items)"
+    columns:
+      - name: ArticleId
+        description: 'Unique Article identifier for the workspace'
+        data_tests:
+          - unique
+          - not_null
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: QuantityInStock
+        description: "Current amount in stock from fortnox_bi.fact_stockbalance"
+      - name: ReservedQuantity
+        description: "Difference between total amount in stock and available stock"
+      - name: isBundleSubItem
+        description: "TRUE if the article is part of a bundle"
+  - name: fortnox_bi_dim_assets_types
+    description: "Detailed information on assets types"
+    columns:
+      - name: AssetTypeId
+        description: "Unique identifier of assets types"
+        data_tests:
+          - unique
+          - not_null
+      - name: AssetType
+        description: "Type of the asset"
+        data_tests:
+          - not_null
+      - name: AccountAsset
+        description: "The general ledger account where the asset’s acquisition value is recorded"
+      - name: AccountDepreciation
+        description: "The account used to record depreciation expenses for this asset"
+      - name: AccountRevaluation
+        description: "The account used if the asset is revalued (increase/decrease in book value)"
+      - name: AccountSaleLoss
+        description: "Account for recording losses if the asset is sold below book value"
+      - name: AccountSaleWin
+        description: "Account for recording gains if the asset is sold above book value"
+      - name: AccountValueLoss
+        description: "Account used when the asset’s value is impaired or written down"
+      - name: AccountWriteDown
+        description: "The account for reducing the asset’s book value"
+      - name: AccountWriteDownAck
+        description: "The account used to acknowledge or finalize a previous write-down of an asset"
+      - name: AssetTypeUrl
+        description: "A link to additional documentation or reference related to this asset type"
+      - name: Description
+        description: "Text description of the asset type"
+      - name: InUse
+        description: "Boolean indicating whether this asset type is actively used in the system"
+      - name: Notes
+        description: "Additional notes for internal reference"
+      - name: Number
+        description: "BAS account number"
+      - name: OrgId
+        description: "Unique identifier of your organisation that can be found in the Enhanza app"
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+  - name: fortnox_bi_dim_bundle_articles
+    description: "Information on bundle (parent) articles"
+    columns:
+      - name: ArticleId
+        description: "Unique identifier of bundle sub items, link to fortnox_bi.dim_articles"
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: BundleArticleId
+        description: "Unique identifier of a bundle (parent) article"
+        data_tests:
+          - not_null
+  - name: fortnox_bi_dim_company
+    description: "Detailed information about connected organisations"
+    columns:
+      - name: OrgId
+        description: "Unique identifier of your organisation that can be found in the Enhanza app"
+        data_tests:
+          - unique
+          - not_null
+      - name: FortnoxId
+        description: "Organisation database number in Fortnox"
+  - name: fortnox_bi_dim_cost_centers
+    description: "Detailed information on cost centers (departments)"
+    columns:
+      - name: CostCenterId
+        description: "Cost center unique identifyer"
+        data_tests:
+          - unique
+          - not_null
+  - name: fortnox_bi_dim_customers
+    description: "Detailed information on customers, default pricelists and delivery details"
+    columns:
+      - name: CustomerId
+        description: "Unique identifyer of a customer in your workspace"
+        data_tests:
+          - unique
+          - not_null
+      - name: CostCenterId
+      - name: PriceListId
+        description: "Customer's default price list ID, no relationship since it's a deprecated dimension"
+      - name: DefaultTemplate
+        description: "Customer's default invoice template"
+      - name: Address
+        description: "Address1 field in Fortnox"
+      - name: TemplateReference
+        description: "Address2 field in Fortnox"
+      - name: DefaultDeliveryType
+        description: "Customer's default invoice delivery type"
+      - name: AdditionalPhone
+        description: "Phone2 field in Fortnox"
+      - name: Website
+        description: "WWW field in Fortnox"
+      - name: DefaultVATType
+        description: "VATType field in Fortnox"
+  - name: fortnox_bi_dim_employees
+    description: "Detailed information on registered employees"
+    columns:
+      - name: EmployeeId
+        description: "Unique employee identifier in your workspace"
+        data_tests:
+          - unique
+          - not_null
+      - name: EmployeeName
+        description: "Employee's full name"
+      - name: HiringDate
+        description: "Employment date"
+      - name: FiringDate
+        description: "Date the employee is employed to"
+      - name: CurrentMonthlySalary
+        description: "Monthly salary valid at the last sync date"
+      - name: CurrentHourlyPay
+        description: "Hourly payment valid at the last sync date"
+      - name: Address
+        description: "Address1 field in Fortnox"
+      - name: Phone
+        description: "Phone1 or Phone2 field in Fortnox depending on availability"
+      - name: CurrentScheduleCode
+        description: "Schedule (code) valid at the last sync date, all schedules can be found in fortnox_bi.fact_employee_schedules"
+      - name: ScheduleChangeDate
+        description: "Date when current schedule came into force"
+  - name: fortnox_bi_dim_expenses
+    columns:
+      - name: ExpenseId
+        data_tests:
+          - unique
+          - not_null
+  - name: fortnox_bi_dim_financial_years
+    description: "Detailed information on pre-selected financial years"
+    columns:
+      - name: FinancialYearId
+        data_tests:
+          - unique
+          - not_null
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: FinancialYear
+        description: "From and to dates of the financial year in a format ymd-ymd"
+      - name: FyCounter
+        description: "Calculated field, 0 for current financial year, -1 for previous etc."
+  - name: fortnox_bi_dim_labels
+    description: "Detailed information on document labels. For offers, orders and invoices one label per document is available in corresponding tables"
+    columns:
+      - name: LableId
+        data_tests:
+          - unique
+          - not_null
+  - name: fortnox_bi_dim_meta_data
+    description: "Health check data on all available API endpoints"
+  - name: fortnox_bi_dim_pricelists
+    columns:
+      - name: PriceListId
+        data_tests:
+          - unique
+          - not_null
+  - name: fortnox_bi_dim_prices
+    columns:
+      - name: PriceListId
+        description: "Unique price list identifier, no reference since it's a deprecated dimension"
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+  - name: fortnox_bi_dim_projects
+    description: "Detailed information on registered projects"
+    columns:
+      - name: ProjectId
+        description: "Unique project identifyier in your workspace"
+        data_tests:
+          - unique
+          - not_null
+  - name: fortnox_bi_dim_stockpoints
+    description: "Detailed information on stock points (warehouses)"
+    columns:
+      - name: StockPointId
+        description: "Unique warehouse (stock point) identifyier for youe workspace"
+        data_tests:
+          - unique
+          - not_null
+  - name: fortnox_bi_dim_supplier_invoice_files
+    description: "Links to PDF documents associated with supplier invoices"
+    columns:
+      - name: SupplierInvoiceId
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_fact_supplier_invoices')
+                field: SupplierInvoiceId
+  - name: fortnox_bi_dim_supplier_items
+    columns:
+      - name: ArticleId
+        description: "Article id based on article number assigned by your organisation"
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: SupplierId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_suppliers')
+                field: SupplierId
+      - name: SupplierArticleNo
+        description: "Article number assigned by supplier"
+  - name: fortnox_bi_dim_suppliers
+    description: "Detailed information on suppliers"
+    columns:
+      - name: CostCenterId
+      - name: ProjectId
+      - name: SupplierId
+        description: "Unique supplier's identifiyer for your workspace"
+        data_tests:
+          - unique
+          - not_null
+  - name: fortnox_bi_dim_voucher_series
+    columns:
+      - name: VoucherSeriesId
+        description: "Unique voucher series identifyer based on financial year"
+        data_tests:
+          - unique
+          - not_null
+  - name: fortnox_bi_fact_absence_transactions
+    columns:
+      - name: CostCenterId
+      - name: EmployeeId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_employees')
+                field: EmployeeId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+  - name: fortnox_bi_fact_asset_rows
+    columns:
+      - name: AssetId
+        description: "Unique asset's identifiyer for your workspace"
+        data_tests:
+          - not_null
+      - name: CostCenterId
+      - name: FinancialYearId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_financial_years')
+                field: FinancialYearId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+  - name: fortnox_bi_fact_assets
+    columns:
+      - name: AssetId
+        description: "Unique asset's identifier for your workspace"
+        data_tests:
+          - unique
+          - not_null
+      - name: AssetTypeId
+        description: "Unique identifier of asset type"
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_assets_types')
+                field: AssetTypeId
+      - name: CostCenterId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+  - name: fortnox_bi_fact_attendance_transactions
+    columns:
+      - name: CostCenterId
+      - name: EmployeeId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_employees')
+                field: EmployeeId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+  - name: fortnox_bi_fact_budgets
+    description: "Budget is calculated and presented on monthly based"
+    columns:
+      - name: AccountId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_accounts')
+                field: AccountId
+      - name: CostCenterId
+      - name: FinancialYearId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_financial_years')
+                field: FinancialYearId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: BudgetDate
+        description: "Month is represented by its last calendar day"
+  - name: fortnox_bi_fact_contracts
+    description: "Contract transaction details, document level"
+    columns:
+      - name: ContractId
+        data_tests:
+          - not_null
+      - name: CostCenterId
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: PriceListId
+        description: "Unique price list identifier, no relationship since it's a deprecated dimension"
+      - name: ProjectId
+  - name: fortnox_bi_fact_contract_rows
+    description: "Contract transaction details, article level. Only rows with specified Price included"
+    columns:
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: ContractId
+        data_tests:
+          - not_null
+      - name: CostCenterId
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: Currency
+        description: "Original transaction currency used in Fortnox"
+      - name: SalesValue
+        description: "Net value in SEK, discounts applied"
+  - name: fortnox_bi_fact_employee_schedules
+    description: "Historical records of employee work schedules"
+    columns:
+      - name: CostCenterId
+      - name: EmployeeId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_employees')
+                field: EmployeeId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: ScheduleId
+        data_tests:
+          - not_null
+      - name: isCurrentSchedule
+        description: "TRUE is this schedule is valid at the date of the last sync"
+      - name: ScheduleChangeDate
+        description: "Date on which the schedule comes into force"
+  - name: fortnox_bi_fact_employee_wages
+    description: "Historical records of employee payment amounts"
+    columns:
+      - name: CostCenterId
+      - name: EmployeeId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_employees')
+                field: EmployeeId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: WageChangeDate
+        description: "Date on which this payment amount came into force"
+  - name: fortnox_bi_fact_incoming_goods
+    description: "Items received to the warehouse"
+    columns:
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: CostCenterId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: purchaseOrderId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_fact_purchase_orders')
+                field: purchaseOrderId
+      - name: stockPointId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_stockpoints')
+                field: StockPointId
+      - name: SupplierId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_suppliers')
+                field: SupplierId
+  - name: fortnox_bi_fact_invoice_accruals
+    description: "Net in SEK"
+    columns:
+      - name: CostCenterId
+      - name: InvoiceId
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_fact_invoices')
+                field: InvoiceId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+  - name: fortnox_bi_fact_invoice_payments
+    description: "Net in SEK"
+    columns:
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: VoucherSeriesId
+        description: "Unique identifier of Voucher series, , no reference since it's a deprecated dimension"
+  - name: fortnox_bi_fact_invoice_rows
+    description: "Invoice detailed to sold articles, all values in SEK, only not cancelled and with article details. See Document-level info in fortnox_bi.fact_invocies"
+    columns:
+      - name: AccountId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_accounts')
+                field: AccountId
+              config:
+                where: "InvoiceDate >= '2017-05-01'"
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: CostCenterId
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: FinancialYearId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_financial_years')
+                field: FinancialYearId
+      - name: InvoiceId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_fact_invoices')
+                field: InvoiceId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: Currency
+        description: "Original currency used in Fortnox"
+      - name: CurrencyRate
+        description: "Exchange rate from Fortnox, used to convert all values to SEK"
+      - name: DiscountType
+        description: "PERCENT or AMOUNT"
+      - name: PriceAfterDiscount
+        description: "NET price in SEK after all discounts applied"
+      - name: SalesValue
+        description: "NET value in SEK, discounts applied"
+  - name: fortnox_bi_fact_invoices
+    description: "Invoice detailed to individual documents, all values in SEK, only not cancelled. See Article-level info in fortnox_bi.fact_invoice_rows"
+    columns:
+      - name: CostCenterId
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: FinancialYearId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_financial_years')
+                field: FinancialYearId
+      - name: InvoiceId
+        data_tests:
+          - unique
+          - not_null
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: IsDue
+        description: "TRUE if invoice balance is not 0 and due date has already passed"
+      - name: DueStatus
+        description: "Calculated field, shows how many days the invoice is overdue if applicable"
+      - name: Currency
+        description: "Original currency used in Fortnox"
+      - name: CurrencyRate
+        description: "Exchange rate from Fortnox, used to convert all values to SEK"
+      - name: RecipientEmail
+        description: "Additional email details, EmailAddressTo"
+      - name: RecipientPhone
+        description: "Phone1 field in Fortnox"
+      - name: Labels
+        description: "Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels"
+  - name: fortnox_bi_fact_locked_period
+    description: "Date before which all financial transactions are locked"
+    columns:
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+  - name: fortnox_bi_fact_offer_rows
+    description: "Offer detailed to sold articles, all values in SEK, only not cancelled and with article details. See Document-level info in fortnox_bi.fact_offers"
+    columns:
+      - name: AccountId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_accounts')
+                field: AccountId
+                config:
+                  where: "OfferDate >= '2017-05-01'"
+                  # needs to be deleted after the bug ED-1441 (https://enhanza.atlassian.net/browse/ED-1441) is fixed
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: CostCenterId
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: Currency
+        description: "Original currency used in Fortnox"
+      - name: CurrencyRate
+        description: "Exchange rate from Fortnox, used to convert all values to SEK"
+      - name: isVATIncluded
+        description: "TRUE is VAT is originally included in article price. Already used in calculations"
+      - name: DiscountType
+        description: "PERCENT or AMOUNT"
+      - name: PriceAfterDiscount
+        description: "NET price in SEK after all discounts applied"
+      - name: SalesValue
+        description: "NET value in SEK, discounts applied"
+  - name: fortnox_bi_fact_offers
+    description: "Offer detailed to individual documents, all values in SEK, only not cancelled. See Article-level info in fortnox_bi.fact_offer_rows"
+    columns:
+      - name: CostCenterId
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: Currency
+        description: "Original currency used in Fortnox"
+      - name: CurrencyRate
+        description: "Exchange rate from Fortnox, used to convert all values to SEK"
+      - name: RecipientEmail
+        description: "Additional email details, EmailAddressTo"
+      - name: RecipientPhone
+        description: "Phone1 field in Fortnox"
+      - name: Labels
+        description: "Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels"
+      - name: OrderReference
+        description: "0 if no order is created for this offer yet"
+  - name: fortnox_bi_fact_order_rows
+    description: "Order detailed to sold articles, all values in SEK, only not cancelled. See Document-level info in fortnox_bi.fact_orders"
+    columns:
+      - name: AccountId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_accounts')
+                field: AccountId
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: CostCenterId
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: OrderNum
+        data_tests:
+          - not_null
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: Currency
+        description: "Original currency used in Fortnox"
+      - name: CurrencyRate
+        description: "Exchange rate from Fortnox, used to convert all values to SEK"
+      - name: isVATIncluded
+        description: "TRUE is VAT is originally included in article price. Already used in calculations"
+      - name: DiscountType
+        description: "PERCENT or AMOUNT"
+      - name: PriceAfterDiscount
+        description: "NET price in SEK after all discounts applied"
+      - name: SalesValue
+        description: "NET value in SEK, discounts applied"
+      - name: OrderedValue
+        description: "Potential NET value in SEK, discounts applied of the total ordered quantity"
+      - name: InvoiceReference
+        description: "0 if no invoice is created for this order yet"
+  - name: fortnox_bi_fact_orders
+    description: "Order detailed to individual documents, all values in SEK, only not cancelled. See Article-level info in fortnox_bi.fact_order_rows"
+    columns:
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: OrderNo
+        data_tests:
+          - not_null
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: StockPointId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_stockpoints')
+                field: StockPointId
+      - name: Currency
+        description: "Original currency used in Fortnox"
+      - name: CurrencyRate
+        description: "Exchange rate from Fortnox, used to convert all values to SEK"
+      - name: RecipientEmail
+        description: "Additional email details, EmailAddressTo"
+      - name: RecipientPhone
+        description: "Phone1 field in Fortnox"
+      - name: Labels
+        description: "Order label, only one label per document is supported. For more details, use fortnox_bi.dim_labels"
+      - name: InvoiceReference
+        description: "0 if no invoice is created for this order yet"
+  - name: fortnox_bi_fact_production_orders
+    description: "Details on orders sent to manufacturing, only completed or without document status"
+    columns:
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: CostCenterId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProductionOrderId
+        data_tests:
+          - not_null
+      - name: ProjectId
+      - name: StockPointId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_stockpoints')
+                field: stockPointId
+  - name: fortnox_bi_fact_purchase_orders
+    description: "Details on orders sent to suppliers"
+    columns:
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: CostCenterId
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: purchaseOrderId
+        data_tests:
+          - not_null
+      - name: stockPointId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_stockpoints')
+                field: stockPointId
+      - name: SupplierId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_suppliers')
+                field: SupplierId
+  - name: fortnox_bi_fact_salary_transactions
+    description: "Details on salry transactions per employee"
+    columns:
+      - name: AccountId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_accounts')
+                field: AccountId
+      - name: CostCenterId
+      - name: EmployeeId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_employees')
+                field: EmployeeId
+      - name: ExpenseId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_expenses')
+                field: ExpenseId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+  - name: fortnox_bi_fact_stockbalance
+    description: "Balance of article stock, valid at the date of latest sync. Articles with 0 in stock will not appear in Fortnox API"
+    columns:
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: stockPointId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_stockpoints')
+                field: stockPointId
+  - name: fortnox_bi_fact_stocktakings
+    description: "Adjustments to stock balance per request"
+    columns:
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: CostCenterId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: StockPointId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_stockpoints')
+                field: StockPointId
+      - name: StockTakingId
+        data_tests:
+          - not_null
+          - unique
+  - name: fortnox_bi_fact_supplier_invoice_accruals
+    columns:
+      - name: CostCenterId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: SupplierInvoiceId
+        data_tests:
+          - not_null
+  - name: fortnox_bi_fact_supplier_invoice_rows
+    description: "Supplier invoice detailed to purchased articles, all values in SEK. See Document-level info in fortnox_bi.fact_supplier_invoices"
+    columns:
+      - name: AccountId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_accounts')
+                field: AccountId
+      - name: ArticleId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: CostCenterId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: SupplierId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_suppliers')
+                field: SupplierId
+      - name: Currency
+        description: "Original currency used in Fortnox"
+      - name: CurrencyRate
+        description: "Exchange rate from Fortnox, used to convert all values to SEK"
+      - name: SupplierInvoiceNo
+        description: "GivenNumber field in Fortnox"
+      - name: Balance
+        description: "Calculated field from difference between Credit and Debit"
+  - name: fortnox_bi_fact_supplier_invoices
+    description: "Supplier invoice detailed to individual documents, all values in SEK, only not cancelled. See Article-level info in fortnox_bi.fact_supplier_invoice_rows"
+    columns:
+      - name: CostCenterId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: SupplierId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_suppliers')
+                field: SupplierId
+      - name: SupplierInvoiceId
+        data_tests:
+          - not_null
+          - unique
+      - name: DueStatus
+        description: "Calculated field, shows how many days the invoice is overdue if applicable"
+      - name: SupplierInvoiceNo
+        description: "GivenNumber field in Fortnox"
+      - name: Currency
+        description: "Original currency used in Fortnox"
+  - name: fortnox_bi_time_reporting_registrations
+    description: "Reporting time spent in Fortnox"
+    columns:
+      - name: ArticleId
+        description: "Service to which time registration is linked"
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_articles')
+                field: ArticleId
+      - name: CostCenterId
+      - name: CustomerId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_customers')
+                field: CustomerId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: UserNo
+        description: "UserId available in Fortnox UI only"
+  - name: fortnox_bi_fact_vouchers
+    description: "Financial voucher information, all values in SEK, daily basis"
+    columns:
+      - name: AccountId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_accounts')
+                field: AccountId
+      - name: CostCenterId
+      - name: FinancialYearId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_financial_years')
+                field: FinancialYearId
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: ProjectId
+      - name: VoucherSeriesId
+        description: "Unique identifier of Voucher series, no reference since it's a deprecated dimension"
+      - name: Balance
+        description: "Calculated field from difference between Credit and Debit"
+  - name: fortnox_bi_fact_rolling_sum
+    columns:
+      - name: OrgId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_company')
+                field: OrgId
+      - name: FinancialYearId
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fortnox_bi_dim_financial_years')
+                field: FinancialYearId
+      - name: AccountId
+#        data_tests:
+#          - relationships:
+#              arguments:
+#                to: ref('fortnox_bi_dim_accounts')
+#                field: AccountId
+#      rolling_sum takes into account 11 months that may cover several financial years that created discrepancy with dim_accounts
+      - name: CostCenterId

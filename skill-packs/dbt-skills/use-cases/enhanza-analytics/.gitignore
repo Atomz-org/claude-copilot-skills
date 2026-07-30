@@ -1,0 +1,57 @@
+# dbt build output
+target/
+dbt_packages/
+logs/
+.user.yml
+
+# Credentials. A real project's profiles.yml lives in ~/.dbt/ and is never committed.
+profiles.yml
+.env
+*.pem
+*.p8
+
+# ...with one deliberate exception, named by its exact path. The worked example's
+# profiles.yml IS committed: every value in it is either a local file path or an
+# env_var() reference, and it is the file that documents how to point the same project at
+# DuckDB, BigQuery, or Snowflake. Read its header before copying the pattern.
+#
+# The path is written out in full rather than as `use-cases/**/dbt_project/profiles.yml`
+# on purpose. A glob would silently un-ignore the profiles.yml of every use-case added
+# later, removing the backstop exactly where a real credential is most likely to be typed.
+# A new use case that genuinely needs its profile committed adds its own line here, which
+# is a reviewable diff.
+!use-cases/example-order-revenue-mart/dbt_project/profiles.yml
+
+# DuckDB databases created by the worked example
+*.duckdb
+*.duckdb.wal
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv-dbt/
+venv/
+.pytest_cache/
+
+
+# OS
+.DS_Store
+
+# NOTE: package-lock.yml SHOULD be committed, so CI resolves the same package versions
+#       you did.
+# NOTE: the synthetic artifacts under use-cases/example-order-revenue-mart/artifacts/ are
+#       committed on purpose — they are the worked example's fixtures, not build output,
+#       and are excluded from the target/ rule by their path.
+!use-cases/**/artifacts/target/
+!use-cases/**/artifacts/target/*.json
+
+# Graphify
+graphify-out/
+# graphify-out/cost.json      # local only
+# graphify-out/cache/         # optional: commit for speed, skip to keep repo small
+
+# Local agentmemory artifacts for this scaffold
+.claude/agentmemory.json
+.claude/graph-state.json
+.claude/checkpoints/

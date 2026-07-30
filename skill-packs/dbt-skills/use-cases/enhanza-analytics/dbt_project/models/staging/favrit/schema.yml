@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: favrit_bi_dim_user_locations_staging
+  - name: favrit_bi_fact_order_rows_staging
+  - name: favrit_bi_dim_accounting_staging
+  - name: favrit_bi_dim_ratings_staging
+  - name: favrit_erp_bi_fact_order_rows

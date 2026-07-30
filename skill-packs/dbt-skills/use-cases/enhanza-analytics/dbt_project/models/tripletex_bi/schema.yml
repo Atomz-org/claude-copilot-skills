@@ -1,0 +1,13 @@
+version: 2
+
+models:
+
+  - name: tripletex_bi_dim_accounts
+  - name: tripletex_bi_dim_company
+  - name: tripletex_bi_dim_cost_centers
+  - name: tripletex_bi_dim_customers
+  - name: tripletex_bi_dim_financial_years
+  - name: tripletex_bi_dim_projects
+  - name: tripletex_bi_dim_suppliers
+  - name: tripletex_bi_fact_invoices
+  - name: tripletex_bi_fact_vouchers

@@ -1,0 +1,6 @@
+version: 2
+
+models:
+
+  - name: tempo_bi_fact_time_reporting_registrations_staging
+  - name: tempo_erp_bi_fact_time_reporting_registrations

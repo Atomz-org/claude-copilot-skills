@@ -1,0 +1,8 @@
+version: 2
+
+models:
+
+  - name: xledger_erp_bi_dim_accounts
+  - name: xledger_erp_bi_dim_cost_centers
+  - name: xledger_erp_bi_dim_financial_years
+  - name: xledger_erp_bi_dim_projects
