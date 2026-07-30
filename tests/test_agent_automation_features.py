@@ -106,6 +106,17 @@ def test_review_workflow_applies_contextual_labels():
     assert "dependabot[bot]" in review_workflow
     assert "dependencies" in review_workflow
     assert "github_actions" in review_workflow
+    assert "gh label view" in review_workflow
+    assert "gh label create" in review_workflow
+    assert "skill-packs/*" not in review_workflow or "cut -d/ -f2" in review_workflow
+
+
+def test_review_workflow_applies_skill_packs_use_case_labels():
+    review_workflow = (REPO_ROOT / ".github/workflows/claude-code-review.yml").read_text(encoding="utf-8")
+
+    assert "skill-packs/*" not in review_workflow or "cut -d/ -f2" in review_workflow
+    assert "use-cases/([^/]+)/" in review_workflow or "BASH_REMATCH" in review_workflow
+    assert "skill-packs/[^/]+/use-cases/([^/]+)/" in review_workflow
 
 
 def test_skills_index_covers_all_primary_git_intents():
