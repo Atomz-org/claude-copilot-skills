@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: fortnox_reports_balance_sheet
+    description: ''
+    columns:
+      - name: OrgId
+        data_type: STRING
+        description: 'Organization ID of your company(s) in Fortnox'
+      - name: OrgName
+        data_type: STRING
+        description: 'Your company(s) in Fortnox'
+      - name: FinancialYear
+        data_type: STRING
+        description: 'The period of the financial year of the transaction in a format yymmdd-yymmdd'
+      - name: FyCounter
+        data_type: INTEGER
+        description: 'Current financial year is "0", previous is "-1" and so on'
+      - name: Month
+        data_type: DATE
+        description: 'The date of the transaction, e.g. 2023-02-14'
+      - name: AccountNumber
+        data_type: INTEGER
+        description: 'BAS account number, consists of four digits, e.g. 1234'
+      - name: AccountName
+        data_type: STRING
+        description: 'The name of the account in the chart of accounts'
+      - name: AccountClass
+        data_type: STRING
+        description: 'BAS account class defined by first account digit'
+      - name: MainAccount
+        data_type: STRING
+        description: 'BAS main account defined by first two account digits'
+      - name: BalanceBroughtForward
+        data_type: FLOAT
+        description: 'Balance sheet at the beginning of the financial year'
+      - name: PeriodOpeningBalance
+        data_type: FLOAT
+        description: 'Balance at the beginning of the month'
+      - name: PeriodBalance
+        data_type: FLOAT
+        description: 'Change during the period'
+      - name: BalanceCarriedForward
+        data_type: FLOAT
+        description: 'Final current balance for the financial year'
+  - name: fortnox_reports_contracts
+  - name: fortnox_reports_contribution_suppliers
+  - name: fortnox_reports_liquidity
+  - name: fortnox_reports_rolling_sum_report
+  - name: fortnox_reports_vouchers_budgets

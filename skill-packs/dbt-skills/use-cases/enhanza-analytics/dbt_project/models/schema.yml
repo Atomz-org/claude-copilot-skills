@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: stg_sales_orders_scaffold
+    description: Starter staging scaffold model for the Enhanza use case.
+  - name: dim_customers_scaffold
+    description: Starter logic scaffold model that derives a simple customer dimension.
+  - name: orders_mart_scaffold
+    description: Starter semantic scaffold model for a simple orders mart.

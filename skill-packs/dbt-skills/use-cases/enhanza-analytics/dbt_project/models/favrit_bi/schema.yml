@@ -1,0 +1,7 @@
+version: 2
+
+models:
+  - name: favrit_bi_dim_user_locations
+  - name: favrit_bi_dim_accounting
+  - name: favrit_bi_dim_ratings
+  - name: favrit_bi_fact_order_rows

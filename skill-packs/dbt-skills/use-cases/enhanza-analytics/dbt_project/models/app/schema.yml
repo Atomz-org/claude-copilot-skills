@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: categories_x_mapping
+  - name: dimension_categories
+  - name: dimension_mapping_dbt
+  - name: latest_source_sync
+    description: "This view provides the latest available 'last_modified_time' in all tables in dataset that have '_api_' in their name. The outcome is used by Cube pre-aggregation with refreshKey:sql."

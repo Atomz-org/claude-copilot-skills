@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: tripletex_bi_dim_accounts_staging
+  - name: tripletex_bi_dim_company_staging
+  - name: tripletex_bi_dim_cost_centers_staging
+  - name: tripletex_bi_dim_customers_staging
+  - name: tripletex_bi_dim_financial_years_staging
+  - name: tripletex_bi_dim_projects_staging
+  - name: tripletex_bi_dim_suppliers_staging
+  - name: tripletex_bi_fact_invoices_staging
+  - name: tripletex_bi_fact_vouchers_staging
+  - name: tripletex_erp_bi_dim_accounts
+  - name: tripletex_erp_bi_dim_company
+  - name: tripletex_erp_bi_dim_cost_centers
+  - name: tripletex_erp_bi_dim_customers
+  - name: tripletex_erp_bi_dim_financial_years
+  - name: tripletex_erp_bi_dim_projects
+  - name: tripletex_erp_bi_dim_suppliers
+  - name: tripletex_erp_bi_fact_invoices
+  - name: tripletex_erp_bi_fact_vouchers

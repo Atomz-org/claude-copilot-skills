@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: fortnox_flat_article_prices
+    description: "Overview of Articles available in Fortnox with their respective prices. NOTE: Articles are listed multiple times if they're available in different stocks"
+    columns:
+      - name: OrgId
+        data_type: STRING
+        description: 'Organization ID of your company(s) in Fortnox'
+      - name: OrgName
+        data_type: STRING
+        description: 'Your company(s) in Fortnox'
+      - name: ArticleNumber
+        data_type: STRING
+        description: 'The article number indicated on the line where applicable'
+      - name: Description
+        data_type: STRING
+        description: 'Article name retrieved from the article register for the specified article number'
+      - name: Supplier
+        data_type: STRING
+        description: 'Name of the supplier, taken from the supplier register, who sent the item'
+      - name: Active
+        data_type: BOOLEAN
+        description: 'Whether the article in Fortnox is marked as active or inactive'
+      - name: Note
+        data_type: STRING
+        description: 'Short note made on article'
+      - name: PurchasePrice
+        data_type: FLOAT
+        description: 'Estimated price of the item. The value of the item line is used'
+      - name: SalesPrice
+        data_type: FLOAT
+        description: 'Net price at which the item is sold'
+      - name: DirectCost
+        data_type: FLOAT
+        description: 'Used for automatically suggesting a purchase price when registering with this article'
+      - name: Pricelist
+        data_type: STRING
+        description: ''
+      - name: FromQuantity
+        data_type: FLOAT
+        description: 'Identify the from quantity for the price'
+      - name: Price
+        data_type: FLOAT
+        description: 'Price from Price list'
+      - name: Comments
+        data_type: STRING
+        description: 'Short comment about the article'
+      - name: PreselectedPricelist
+        data_type: BOOLEAN
+        description: ''
+  - name: fortnox_flat_articles_stockbalance
+    description: "NOTE: articles are listed multiple times if they're available in different stocks"
+  - name: fortnox_flat_contract_rows
+  - name: fortnox_flat_contracts
+  - name: fortnox_flat_incoming_goods
+  - name: fortnox_flat_invoice_rows
+  - name: fortnox_flat_invoices
+  - name: fortnox_flat_offers
+  - name: fortnox_flat_order_rows
+  - name: fortnox_flat_orders
+  - name: fortnox_flat_purchaseorders
+  - name: fortnox_flat_supplier_invoice_rows
+  - name: fortnox_flat_supplier_invoices
+  - name: fortnox_flat_time_reporting_registrations
+  - name: fortnox_flat_vouchers

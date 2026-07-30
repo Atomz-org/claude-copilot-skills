@@ -1,0 +1,1087 @@
+version: 2
+
+models:
+  - name: logic_bi_dim_accounts
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: AccountId
+        data_type: STRING
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: AccountIdForGrouping
+        data_type: STRING
+        description: "Technical field for easy in-app grouping"
+      - name: AccountNumber
+        data_type: INTEGER
+        description: "BAS account number, consists of four digits, e.g. 1234"
+      - name: AccountName
+        data_type: STRING
+        description: 'The name of the account in the chart of accounts'
+      - name: Account
+        data_type: STRING
+        description: 'BAS account number, consists of four digits, e.g. 1234, and the name of the account in the chart of accounts'
+      - name: FinancialYear
+        data_type: STRING
+        description: "Financial year dates for this account"
+      - name: AccountCategoryBreakdownID
+        data_type: STRING
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      - name: AccountGroup
+        data_type: STRING
+      - name: AccountSubGroup
+        data_type: STRING
+      - name: AccountSubSubGroup
+        data_type: STRING
+      - name: AccountClass
+        data_type: STRING
+        description: 'BAS account class defined by first account digit'
+      - name: AccountCategory
+        data_type: STRING
+        description: 'BAS account category defined by first two account digits'
+      - name: AccountSubClass
+        data_type: STRING
+        description: 'BAS sub-category defined by first three account digits'
+      - name: AccountCategoryId
+        data_type: STRING
+      - name: AccountGroupId
+        data_type: STRING
+      - name: AccountSubGroupId
+        data_type: STRING
+      - name: AccountSubSubGroupId
+        data_type: STRING
+      - name: AccountClassId
+        data_type: STRING
+      - name: AccountSubClassId
+        data_type: STRING
+      - name: AccountNameLatest
+        data_type: STRING
+  
+  
+  - name: logic_bi_dim_articles
+    description: 'List of all Articles (items) and their purchase price'
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: ArticleId
+        description: 'Unique Article identifier used as a primary key'
+        data_type: STRING
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: ArticleName
+        data_type: STRING
+        description: 'Description of the article (including its number)'
+      - name: ArticleNumber
+        data_type: STRING
+      - name: ArticlePurchasePrice
+        data_type: FLOAT
+        description: 'Price at which the article is purchased from the supplier'
+      - name: Manufacturer
+        data_type: STRING
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from'
+      - name: isActive
+        data_type: BOOLEAN
+        description: 'Indicates whether the article is currently active' 
+      - name: ArticleGroup
+        data_type: STRING
+      - name: ArticleSubGroup
+        data_type: STRING
+      - name: ArticleSubSubGroup
+        data_type: STRING
+      - name: ArticleGroupId
+        data_type: STRING
+      - name: ArticleSubGroupId
+        data_type: STRING
+      - name: ArticleSubSubGroupId
+        data_type: STRING
+  
+  
+  - name: logic_bi_dim_cost_centers
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: CostCenterId
+        data_type: STRING
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: CostCenter
+        data_type: STRING
+        description: 'Cost Center / Department name (and code)'
+      - name: CostCenterNumber
+        data_type: STRING
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      - name: isActive
+        data_type: BOOLEAN
+        description: 'Indicates whether the article is currently active' 
+      - name: CostCenterGroup
+        data_type: STRING
+      - name: CostCenterSubGroup
+        data_type: STRING
+      - name: CostCenterSubSubGroup
+        data_type: STRING
+      - name: CostCenterGroupId
+        data_type: STRING
+      - name: CostCenterSubGroupId
+        data_type: STRING
+      - name: CostCenterSubSubGroupId
+        data_type: STRING
+
+
+  - name: logic_bi_dim_customers_suppliers
+    description: "Details on Customers and Suppliers, grouped"
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: TargetType
+        data_type: STRING
+        description: "'Customer' or 'Supplier' accordingly"
+      - name: TargetId
+        description: 'Unique Customer/Supplier identifier used as a primary key'
+        data_type: STRING
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: Name
+        data_type: STRING
+        description: 'Full customer/supplier name and number'
+      - name: City
+        data_type: STRING
+        description: "Customer and Supplier's address, city"
+      - name: Country
+        data_type: STRING
+        description: "Customer and Supplier's address, country"
+      - name: SalesRepCustomer
+        data_type: STRING
+        description: 'Sales representative assigned to the customer'
+      - name: SalesRepCustomerGroup
+        data_type: STRING
+      - name: SalesRepCustomerSubGroup
+        data_type: STRING
+      - name: SalesRepCustomerSubSubGroup
+        data_type: STRING
+      - name: SalesRepCustomerGroupId
+        data_type: STRING
+      - name: SalesRepCustomerSubGroupId
+        data_type: STRING
+      - name: SalesRepCustomerSubSubGroupId
+        data_type: STRING
+      - name: FirstInvoiceDate
+        data_type: DATE
+        description: 'The earliest invoice date for the customer / supplier available in your synced data'
+      - name: NameGroup
+        data_type: STRING
+      - name: NameSubGroup
+        data_type: STRING
+      - name: NameSubSubGroup
+        data_type: STRING
+      - name: NameGroupId
+        data_type: STRING
+      - name: NameSubGroupId
+        data_type: STRING
+      - name: NameSubSubGroupId
+        data_type: STRING
+      - name: CityGroup
+        data_type: STRING
+      - name: CitySubGroup
+        data_type: STRING
+      - name: CitySubSubGroup
+        data_type: STRING
+      - name: CityGroupId
+        data_type: STRING
+      - name: CitySubGroupId
+        data_type: STRING
+      - name: CitySubSubGroupId
+        data_type: STRING
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      - name: isActive
+        data_type: BOOLEAN
+        description: "Marks if the customer/supplier is currently active"
+  - name: logic_bi_dim_employees
+    description: 'List of all registered employees and their personal and corporate details'
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: EmployeeId
+        data_type: STRING
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: EmployeeName
+        data_type: STRING
+        description: 'First and last employee name'
+      - name: HiringDate
+        data_type: DATE
+        description: 'The date the person has been employed'
+      - name: FiringDate
+        data_type: DATE
+        description: 'If not null, the date the person has left the job'
+      - name: EmploymentForm
+        data_type: STRING
+        description: 'Abbreviation of applicable employment form, i.e. TV, PRO, TID'
+      - name: EmployeeSalaryForm
+        data_type: STRING
+        description: 'Abbreviation of salary form, MAN or TIM'
+      - name: JobTitle
+        data_type: STRING
+        description: "Employee's current posistion title"
+      - name: PersonelType
+        data_type: STRING
+        description: 'TJM for salaried employees and ARB for hourly-based workers'
+      - name: CurrentMonthlySalary
+        data_type: FLOAT
+        description: 'Latest available monthly salary'
+      - name: CurrentHourlyPay
+        data_type: FLOAT
+        description: 'Latest available hourly rate'
+      - name: PersonalIdentityNumber
+        data_type: STRING
+        description: 'Unique code assigned by employers to individual employees'
+      - name: EmployeeCity
+        data_type: STRING
+        description: "Employee's address, city"
+      - name: EmployeeCountry
+        data_type: STRING
+        description: "Employee's address, country"
+      - name: ForaType
+        data_type: STRING
+        description: 'The insurance agreement that a company signs with Fora'
+      - name: TaxAllowance
+        data_type: STRING
+        description: 'Deduction reducing taxable income based on specific criteria'
+      - name: ClearingNo
+        data_type: STRING
+        description: "Identifies the bank and branch for an employee's bank account"
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      - name: isActive
+        data_type: BOOLEAN
+        description: 'Marks if employee is currently active'
+      - name: EmployeeGroup
+        data_type: STRING
+      - name: EmployeeSubGroup
+        data_type: STRING
+      - name: EmployeeSubSubGroup
+        data_type: STRING
+      - name: EmployeeGroupId
+        data_type: STRING
+      - name: EmployeeSubGroupId
+        data_type: STRING
+      - name: EmployeeSubSubGroupId
+        data_type: STRING
+
+
+  - name: logic_bi_dim_files
+    description: 'List of file URLs associated with supplier invoices, customer invoices and vouchers'
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: DocumentType
+        data_type: STRING
+        description: "Based on document the file is linked to"
+      - name: DocumentId
+        data_type: STRING
+      - name: DocumentNo
+        data_type: STRING
+        description: 'Supplier/customer invoice document or voucher number'
+      - name: FileName
+        data_type: STRING
+        description: 'Name of the file in the system'
+      - name: FileURL
+        data_type: STRING
+        description: "Access the file in Enhanza app via the link"
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      
+
+  - name: logic_bi_dim_financial_years
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: FinancialYearId
+        data_type: STRING
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: FyDates
+        data_type: STRING
+        description: "Start and End dates of financial year, in format 'yyyy-mm-dd -> yyyy-mm-dd'"
+      - name: FyCounter
+        data_type: INTEGER
+        description: "Current financial year is '0', previous is '-1' and so on"
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from'
+  
+  
+  - name: logic_bi_dim_organisations
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: OrgId
+        data_type: STRING
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: OrganisationNumber
+        data_type: STRING
+        description: 'Organisation ID of your company(s) used as a primary key'
+        data_tests:
+          - not_null
+      - name: OrganisationName
+        data_type: STRING
+        description: 'Registered name of your company(s)'
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+  
+  
+  - name: logic_bi_dim_projects
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: ProjectId
+        data_type: STRING
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: Project
+        data_type: STRING
+        description: 'Project name (and number)'
+      - name: ProjectNumber
+        data_type: STRING
+      - name: ProjectManager
+        data_type: STRING
+        description: 'Project leader, employee name'
+      - name: ProjectManagerGroup
+        data_type: STRING
+      - name: ProjectManagerSubGroup
+        data_type: STRING
+      - name: ProjectManagerSubSubGroup
+        data_type: STRING
+      - name: ProjectManagerGroupId
+        data_type: STRING
+      - name: ProjectManagerSubGroupId
+        data_type: STRING
+      - name: ProjectManagerSubSubGroupId
+        data_type: STRING
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      - name: ProjectGroup
+        data_type: STRING
+      - name: ProjectSubGroup
+        data_type: STRING
+      - name: ProjectSubSubGroup
+        data_type: STRING
+      - name: ProjectGroupId
+        data_type: STRING
+      - name: ProjectSubGroupId
+        data_type: STRING
+      - name: ProjectSubSubGroupId
+        data_type: STRING
+  
+
+  - name: logic_bi_dim_suppliers
+    description: 'List of suppliers'
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: SupplierId
+        description: 'Unique Supplier identifier used as a primary key'
+        data_type: STRING
+        constraints:
+          - type: primary_key
+            warn_unenforced: False
+            warn_unsupported: False
+          - type: not_null
+            warn_unsupported: False
+        data_tests:
+          - unique
+      - name: SupplierName
+        data_type: STRING
+        description: 'Supplier name (and number)'
+      - name: isActive
+        data_type: BOOLEAN
+        description: 'Marks if supplier is currently active'
+      - name: SupplierCity
+        data_type: STRING
+      - name: SupplierCountry
+        data_type: STRING
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      - name: SupplierGroup
+        data_type: STRING
+      - name: SupplierSubGroup
+        data_type: STRING
+      - name: SupplierSubSubGroup
+        data_type: STRING
+      - name: SupplierGroupId
+        data_type: STRING
+      - name: SupplierSubGroupId
+        data_type: STRING
+      - name: SupplierSubSubGroupId
+        data_type: STRING
+      - name: CityGroup
+        data_type: STRING
+      - name: CitySubGroup
+        data_type: STRING
+      - name: CitySubSubGroup
+        data_type: STRING
+      - name: CityGroupId
+        data_type: STRING
+      - name: CitySubGroupId
+        data_type: STRING
+      - name: CitySubSubGroupId
+        data_type: STRING
+  
+  
+  - name: logic_bi_fact_balance
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: Month
+        data_type: DATE
+        description: "Month presented by it's last calendar day"
+      - name: TransactionDate
+        data_type: DATE
+        description: "Transaction Date"
+      - name: PeriodOpeningBalance
+        data_type: FLOAT
+        description: 'Balance at the beginning of the month'
+      - name: PeriodBalance
+        data_type: FLOAT
+        description: 'Change during the period'
+      - name: BalanceCarriedForward  
+        data_type: FLOAT
+        description: 'Final current balance for the financial year'
+      - name: VoucherSeries
+        data_type: STRING
+      - name: VoucherNumber
+        data_type: INTEGER
+      - name: TransactionInformation
+        data_type: STRING
+      - name: DescriptionRows
+        data_type: STRING
+      - name: Description
+        data_type: STRING
+      - name: OrgId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_organisations')
+            to_columns: [OrgId]
+            warn_unenforced: False
+            warn_unsupported: False
+        data_tests:
+          - not_null
+      - name: AccountId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_accounts')
+            to_columns: [AccountId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: AccountCategoryBreakdownID
+        data_type: STRING
+      - name: FinancialYearId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_financial_years')
+            to_columns: [FinancialYearId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      - name: DefaultCurrency
+        data_type: STRING
+        description: 'Default currency based on the connected ERP system(s)'
+  
+  - name: logic_bi_fact_invoices
+    description: 'Combined data on supplier and customer invoices'
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: InvoiceNo
+        data_type: STRING
+        description: 'Document number'
+      - name: InvoiceId
+        data_type: STRING
+      - name: InvoiceType
+        data_type: STRING
+        description: "'Sales' for Customer invoices, 'Supplier' for Supplier invoices"
+      - name: InvoiceDate
+        data_type: DATE
+        description: 'Date the document is issued'
+      - name: DueDate
+        data_type: DATE
+        description: 'Date on which the document is due'
+      - name: DueStatus
+        data_type: STRING
+        description: 'Whether the document is sent, paid, or overdue'
+      - name: Due
+        data_type: string
+        description: "Indicates if an invoice is overdue (isDue) or not (NotDue)"
+      - name: FinalPayDate
+        data_type: DATE
+        description: 'Final payment deadline for the document'
+      - name: Net
+        data_type: FLOAT
+        description: 'Sales value of delivered items excluding VAT'
+      - name: AdministrationFee
+        data_type: FLOAT 
+      - name: Freight
+        data_type: FLOAT
+      - name: TotalVAT
+        data_type: FLOAT 
+      - name: TotalToPay
+        data_type: FLOAT 
+      - name: Balance
+        data_type: FLOAT 
+      - name: TargetId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_customers_suppliers')
+            to_columns: [TargetId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: OrgId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_organisations')
+            to_columns: [OrgId]
+            warn_unenforced: False
+            warn_unsupported: False
+        data_tests:
+          - not_null
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from'
+      - name: DefaultCurrency
+        data_type: STRING
+        description: 'Default currency based on the connected ERP system(s)'
+
+  - name: logic_bi_fact_profit_loss
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: OrgId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_organisations')
+            to_columns: [OrgId]
+            warn_unenforced: False
+            warn_unsupported: False
+        data_tests:
+          - not_null
+      - name: AccountId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_accounts')
+            to_columns: [AccountId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: CostCenterId
+        data_type: STRING
+      - name: ProjectId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_projects')
+            to_columns: [ ProjectId ]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: FinancialYearId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_financial_years')
+            to_columns: [FinancialYearId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: TransactionDate
+        data_type: DATE
+        description: 'The date of the transaction, e.g. 2023-02-14'
+      - name: VoucherSeries
+        data_type: STRING
+      - name: VoucherNumber
+        data_type: INTEGER
+      - name: TransactionInformation
+        data_type: STRING
+      - name: DescriptionRows
+        data_type: STRING
+      - name: Description
+        data_type: STRING
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      - name: DefaultCurrency
+        data_type: STRING
+        description: 'Default currency based on the connected ERP system(s)'
+      - name: ReferenceType
+        data_type: STRING
+        description: 'Type of associated transaction, e.g. Invoice payment, Supplier invoice etc.'
+      - name: ReferenceNumber
+        data_type: STRING
+        description: 'Associated transaction document number'
+      - name: Amount
+        data_type: FLOAT
+        description: 'Profit & Loss: Aggregation of Credit and Debit'
+      - name: ReferenceTargetName
+        data_type: STRING
+        description: 'Name of the customer or supplier for the associated transaction'
+      - name: BudgetAmount
+        data_type: FLOAT
+        description: 'Budget: monthly budgeted amount per account and department'
+      - name: SalesRep
+        data_type: STRING
+      - name: SalesRepCustomer
+        data_type: STRING
+  
+  
+  - name: logic_bi_fact_salaries
+    description: 'Overview of salary, absence and attendance transactions'
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: TransactionType
+        data_type: STRING
+        description: 'Filter on salary payments or absence/attendance'
+      - name: Date
+        data_type: DATE
+        description: 'Transaction date, i.e. 2024-03-25'
+      - name: SalaryCode
+        data_type: STRING
+        description: 'Salary: Standard unique slary type identifier'
+      - name: NumberOfUnits
+        data_type: FLOAT
+        description: 'Salary: Number of days, hours etc. the employee is paid for'
+      - name: AmountPerUnit
+        data_type: FLOAT
+        description: 'Salary: Price per unit (day, hour etc.)'
+      - name: TotalSalary
+        data_type: FLOAT
+        description: 'Salary: Final wage the employee is paid'
+      - name: SalaryVat
+        data_type: FLOAT
+        description: 'Salary: The amount of VAT applied to the paid wage'
+      - name: Comments
+        data_type: STRING
+        description: 'Salary: Comments to the salary transactions if any'
+      - name: RegisteredHours
+        data_type: FLOAT
+        description: 'Absence/attendance: registered amount of hours'
+      - name: CauseCode
+        data_type: STRING
+        description: 'Absence/attendance: standard abbreviation of absence/attendance reason'
+      - name: CauseCodeName
+        data_type: STRING
+        description: 'Absence/attendance: detailed explanation of absence/attendance reason'
+      - name: OrgId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_organisations')
+            to_columns: [OrgId]
+            warn_unenforced: False
+            warn_unsupported: False
+        data_tests:
+          - not_null
+      - name: EmployeeId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_employees')
+            to_columns: [EmployeeId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: CostCenterId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_cost_centers')
+            to_columns: [CostCenterId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: ProjectId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_projects')
+            to_columns: [ProjectId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from' 
+      - name: DefaultCurrency
+        data_type: STRING
+        description: 'Default currency based on the connected ERP system(s)'
+
+  
+  - name: logic_bi_fact_sales
+    description: 'Full overview of sales transaction from opportunity/quote to invoice'
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: Date
+        data_type: DATE
+        description: 'Date of quote / order / invoice'
+      - name: DocumentType
+        data_type: STRING
+        description: 'Filter between opportunities, quotes, orders and invoices'
+      - name: DocumentId
+        data_type: STRING
+      - name: DocumentNumber
+        data_type: STRING
+        description: 'Unique number of selected document type'
+      - name: SalesRep
+        data_type: STRING
+        description: 'The contact person in your organization for the current document. Enter the seller to track it'
+      - name: SalesRepGroup
+        data_type: STRING
+      - name: SalesRepSubGroup
+        data_type: STRING
+      - name: SalesRepSubSubGroup
+        data_type: STRING
+      - name: SalesRepGroupId
+        data_type: STRING
+      - name: SalesRepSubGroupId
+        data_type: STRING
+      - name: SalesRepSubSubGroupId
+        data_type: STRING
+      - name: SalesValue
+        data_type: FLOAT
+        description: 'The total value of the selected document type line in SEK after discounts'
+      - name: ContributionValue
+        data_type: FLOAT
+        description: 'Sold value minus estimated price of the item. The item row value is used'
+      - name: Quantity
+        data_type: FLOAT
+        description: 'The number of items invoiced/ordered'
+      - name: PriceAfterDiscount
+        data_type: FLOAT
+      - name: PriceBeforeDiscount
+        data_type: FLOAT
+      - name: isNewCustomer
+        data_type: BOOLEAN
+      - name: Labels
+        data_type: STRING
+      - name: SupplierId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_customers_suppliers')
+            to_columns: [TargetId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: OrgId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_organisations')
+            to_columns: [OrgId]
+            warn_unenforced: False
+            warn_unsupported: False
+        data_tests:
+          - not_null
+      - name: ArticleId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_articles')
+            to_columns: [ArticleId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: CustomerId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_customers_suppliers')
+            to_columns: [TargetId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: CostCenterId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_cost_centers')
+            to_columns: [CostCenterId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: ProjectId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_projects')
+            to_columns: [ ProjectId ]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: FinancialYearId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_financial_years')
+            to_columns: [FinancialYearId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: AccountId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_accounts')
+            to_columns: [ AccountId ]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from'
+      - name: DefaultCurrency
+        data_type: STRING
+        description: 'Default currency based on the connected ERP system(s)'
+
+  - name: logic_bi_fact_time_reporting
+    columns:
+      - name: RegisteredType
+        data_type: STRING
+        description: 'Filter work or absence registration'
+      - name: RegisteredSubType
+        data_type: STRING
+      - name: isInvoicable
+        data_type: BOOLEAN
+        description: 'TRUE if transaction is invoicable'
+      - name: UserId
+        data_type: STRING
+        description: 'Unique identifier of ERP user who registered the transaction'
+      - name: UserGroup
+        data_type: STRING
+      - name: UserSubGroup
+        data_type: STRING
+      - name: UserSubSubGroup
+        data_type: STRING
+      - name: UserGroupId
+        data_type: STRING
+      - name: UserSubGroupId
+        data_type: STRING
+      - name: UserSubSubGroupId
+        data_type: STRING
+      - name: IssueCategory1
+        data_type: STRING
+      - name: RegisteredDate
+        data_type: DATE
+      - name: StartTime
+        data_type: TIMESTAMP
+        description: 'Date and time the work/absence started'
+      - name: EndTime
+        data_type: TIMESTAMP
+        description: 'Date and time the work/absence ended'
+      - name: WorkedHours
+        data_type: FLOAT
+      - name: ChargeHours
+        data_type: FLOAT
+      - name: UnitCost
+        data_type: FLOAT
+      - name: UnitPrice
+        data_type: FLOAT
+      - name: OrgId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_organisations')
+            to_columns: [OrgId]
+            warn_unenforced: False
+            warn_unsupported: False
+        data_tests:
+          - not_null
+      - name: CostCenterId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_cost_centers')
+            to_columns: [ CostCenterId ]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: ProjectId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_projects')
+            to_columns: [ ProjectId ]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: CustomerId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_customers_suppliers')
+            to_columns: [TargetId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: ArticleId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_articles')
+            to_columns: [ArticleId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: DocumentNo
+        data_type: STRING
+      - name: DocumentType
+        data_type: STRING
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from'
+      - name: DefaultCurrency
+        data_type: STRING
+        description: 'Default currency based on the connected ERP system(s)'  
+  
+  - name: logic_bi_fact_warehouses
+    description: 'Article balance in warehouses at given date'
+    columns:
+      - name: TransactionDate 
+        data_type: DATE
+        description: 'Transaction date, i.e. 2024-03-25'
+      - name: ArticleId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_articles')
+            to_columns: [ArticleId]
+            warn_unenforced: False
+            warn_unsupported: False
+      - name: OpeningQty
+        data_type: FLOAT
+        description: 'Available quantity at the beginning of the period'
+      - name: SoldQty
+        data_type: FLOAT
+        description: 'Number of items sold during the period'
+      - name: ReceivedQty
+        data_type: FLOAT
+        description: 'Number of items received from suppliers during the period'
+      - name: StockTakingQty
+        data_type: FLOAT
+        description: 'Number of items dismissed during the period'
+      - name: TotalPeriodChangeQty
+        data_type: FLOAT
+        description: 'Difference between opening and closing balance'
+      - name: ClosingQty
+        data_type: FLOAT
+        description: 'Available quantity at the end of the period'
+      - name: OpeningValue
+        data_type: FLOAT
+        description: 'Available value at the beginning of the period'
+      - name: SoldValue
+        data_type: FLOAT
+        description: 'Value of items sold during the period'
+      - name: ReceivedValue
+        data_type: FLOAT
+        description: 'Value of items received from suppliers during the period'
+      - name: StockTakingValue
+        data_type: FLOAT
+        description: 'Value of items dismissed during the period'
+      - name: TotalPeriodChangeValue
+        data_type: FLOAT
+        description: 'Difference between opening and closing balance'
+      - name: ClosingValue
+        data_type: FLOAT
+        description: 'Available stock value at the end of the period'
+      - name: OrgId
+        data_type: STRING
+        constraints:
+          - type: foreign_key
+            to: ref('logic_bi_dim_organisations')
+            to_columns: [OrgId]
+            warn_unenforced: False
+            warn_unsupported: False
+        data_tests:
+          - not_null
+      - name: DataSource
+        data_type: STRING
+        description: 'Name of ERP system where the data came from'
+      - name: DefaultCurrency
+        data_type: STRING
+        description: 'Default currency based on the connected ERP system(s)' 

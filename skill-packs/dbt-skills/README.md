@@ -20,3 +20,8 @@ Canonical skill entrypoint:
 Use-case artifacts for dbt agents belong under:
 
 - `skill-packs/dbt-skills/use-cases/<slug>/`
+
+Current use cases:
+
+- `skill-packs/dbt-skills/use-cases/example-order-revenue-mart/`
+- `skill-packs/dbt-skills/use-cases/enhanza-analytics/`

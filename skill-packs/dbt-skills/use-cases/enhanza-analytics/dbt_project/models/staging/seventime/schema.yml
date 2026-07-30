@@ -1,0 +1,12 @@
+version: 2
+
+models:
+
+  - name: seventime_erp_bi_dim_articles
+  - name: seventime_erp_bi_dim_company
+  - name: seventime_erp_bi_dim_customers
+  - name: seventime_erp_bi_dim_financial_years
+  - name: seventime_erp_bi_fact_invoice_rows
+  - name: seventime_erp_bi_fact_invoices
+  - name: seventime_erp_bi_fact_offers
+  - name: seventime_erp_bi_fact_time_reporting_registrations
