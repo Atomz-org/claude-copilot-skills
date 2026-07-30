@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: app
     description: 'Data coming directly from Enhanza app'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: app_{{ var('uid') }}
     tables:
       - name: dimension_categories
@@ -11,7 +11,7 @@ sources:
     
   - name: fortnox_api
     description: 'FORTNOX raw data'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: fortnox_api_{{ var('uid') }}
     tables:
       - name: absence_causecodes
@@ -61,8 +61,8 @@ sources:
 
   - name: fortnox_api_demo
     description: 'Fortnox DEMO raw data'
-    database: "{{ target.project }}"
-    schema: fortnox_api_{{ var('demo_uid') }}
+    database: "{{ target.project | default(target.database) }}"
+    schema: fortnox_api_{{ var('demo_uid', var('uid')) }}
     tables:
       - name: absence_causecodes
       - name: absence_transactions
@@ -111,7 +111,7 @@ sources:
   
   - name: global_ds_chart_of_accounts
     description: 'Pre-defined categories for different charts of accounts'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: global_ds_chart_of_accounts
     tables:
       - name: account_grouping
@@ -120,7 +120,7 @@ sources:
   
   - name: global_ds_currencies_api
     description: 'Currency exchange rates, RiksBank'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: global_ds_currencies_api
     tables:
       - name: rate_series
@@ -128,7 +128,7 @@ sources:
 
   - name: global_ds_kolada
     description: 'KOLADA economic and political KPIs for Sweden, raw data'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: global_ds_kolada
     tables:
       - name: kpi
@@ -141,14 +141,14 @@ sources:
 
   - name: global_ds_kolada_bi
     description: 'KOLADA economic and political KPIs for Sweden'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: global_ds_kolada_bi
     tables:
       - name: kolada_kpis
 
   - name: public
     description: 'Access free sources'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: public
     tables:
       - name: bas_account_chart
@@ -159,7 +159,7 @@ sources:
 
   - name: seventime_api
     description: 'Seventime raw data'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: seventime_api_{{ var('uid') }}
     tables:
       - name: companyinformation
@@ -173,14 +173,14 @@ sources:
 
   - name: tempo_api
     description: 'Tempo raw data'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: tempo_api_{{ var('uid') }}
     tables:
       - name: worklogs
 
   - name: tripletex_api
     description: 'Tripletex raw data'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: tripletex_api_{{ var('uid') }}
     tables:
       - name: account
@@ -218,9 +218,29 @@ sources:
       - name: timesheet_allocated
       - name: voucher_type
 
+  - name: favrit_api
+    description: 'FAVRIT raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: favrit_api_{{ var('uid') }}
+    tables:
+      - name: user_location
+      - name: orderline
+      - name: accounting
+      - name: ratings
+
+  - name: favrit_api_demo
+    description: 'FAVRIT DEMO raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: favrit_api_{{ var('demo_uid', var('uid')) }}
+    tables:
+      - name: user_location
+      - name: orderline
+      - name: accounting
+      - name: ratings
+
   - name: upsales_api
     description: 'Upsales raw data'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: upsales_api_{{ var('uid') }}
     tables:
       - name: accounts
@@ -233,7 +253,7 @@ sources:
 
   - name: visma_eaccounting_api
     description: 'Visma eAccounting raw data'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: visma_eaccounting_api_{{ var('uid') }}
     tables:
       - name: accounts
@@ -250,7 +270,7 @@ sources:
   
   - name: visma_economic_api
     description: 'Visma e-conomic raw data'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: visma_economic_api_{{ var('uid') }}
     tables:
       - name: accounting_years
@@ -271,7 +291,7 @@ sources:
 
   - name: xledger_api
     description: 'Xledger raw data'
-    database: "{{ target.project }}"
+    database: "{{ target.project | default(target.database) }}"
     schema: xledger_api_{{ var('uid') }}
     tables:
       - name: accounts

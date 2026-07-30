@@ -1,6 +1,6 @@
 {{ config(
     alias=(model_alias(model.name)),
-    enabled = any_source_enabled(['fortnox', 'seventime', 'visma_eaccounting', 'upsales'])
+    enabled = any_source_enabled(['fortnox', 'seventime', 'visma_eaccounting', 'upsales', 'favrit'])
 ) }}
 
 {% set invoice_rows_enabled = model_is_provided('fact_invoice_rows') %}

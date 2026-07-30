@@ -1,3 +1,4 @@
 {
-    "chat.useClaudeHooks": true
+    "chat.useClaudeHooks": true,
+    "claudeCode.useTerminal": true
 }

@@ -5,7 +5,10 @@
 {% macro get_latest_source_timestamp() %}
     {#- Get project-level variables from dbt_project.yml and environment variables -#}
     {% set uid = var('uid') %}
-    {% set available_sources = var('available_sources') %}
+    {% set available_sources = var('available_sources', []) %}
+    {% if available_sources is none %}
+        {% set available_sources = [] %}
+    {% endif %}
 
     {#- Initialize an empty list to hold the SQL queries for each source -#}
     {% set max_ts_queries = [] %}
