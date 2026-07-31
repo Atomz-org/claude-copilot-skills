@@ -1,0 +1,140 @@
+version: 2
+
+models:
+  # ---------------------------------------------------------------------------------
+  # Staging — quarantines shopify_api. One model per raw table, columns enumerated.
+  # ---------------------------------------------------------------------------------
+  - name: shopify_bi_dim_customers_staging
+    description: >
+      One row per Shopify customer. Keys are the raw Shopify `id` with no OrgId prefix —
+      Shopify has no organisation concept and `id` is unique within a shop. Cross-source
+      uniqueness comes from the `-ds_shopify` suffix add_erp_fields() appends downstream.
+      Carries the customer's `default_address` as both the postal and the delivery address.
+    columns:
+      - name: CustomerId
+        description: Shopify customer id, cast to string. Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: Email
+        description: Customer email. Nullable — Shopify permits phone-only customers.
+      - name: isActive
+        description: True when Shopify customer `state` is 'enabled'.
+
+  - name: shopify_bi_fact_orders_staging
+    description: >
+      One row per Shopify order, excluding orders cancelled in Shopify (`cancelled_at` set)
+      and orders older than five years. The five-year window mirrors the same filter in
+      fortnox_bi_fact_orders_staging. Amounts are in the shop's own currency, so no FX
+      conversion is applied.
+    columns:
+      - name: OrderId
+        description: Shopify order id, cast to string. Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: CustomerId
+        description: >
+          Owning customer. Nullable — Shopify guest checkout produces orders with no
+          customer. The relationships test ignores nulls by design.
+        data_tests:
+          - relationships:
+              to: ref('shopify_bi_dim_customers_staging')
+              field: CustomerId
+      - name: OrderDate
+        description: Order creation date, from `created_at`.
+        data_tests:
+          - not_null
+      - name: FinancialStatus
+        description: Shopify payment state. Closed domain defined by the Shopify API.
+        data_tests:
+          - accepted_values:
+              values:
+                - pending
+                - authorized
+                - partially_paid
+                - paid
+                - partially_refunded
+                - refunded
+                - voided
+
+  - name: shopify_bi_fact_order_rows_staging
+    description: >
+      One row per line item on a non-cancelled Shopify order. Joins back to
+      shopify_api.orders for order-level context, the same way the Fortnox equivalent joins
+      articles and financial_years. PriceBeforeDiscount strips VAT when the order is stored
+      VAT-inclusive; Discount is a line-level amount, never a percentage.
+    columns:
+      - name: OrderRowId
+        description: Shopify line item id, cast to string. Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: OrderId
+        description: Parent order.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('shopify_bi_fact_orders_staging')
+              field: OrderId
+      - name: ArticleId
+        description: >
+          Shopify variant id. Nullable — a custom line item carries no variant. The
+          relationships test ignores nulls by design.
+        data_tests:
+          - relationships:
+              to: ref('shopify_bi_dim_articles_staging')
+              field: ArticleId
+      - name: CustomerId
+        description: Owning customer, carried from the order. Nullable for guest checkout.
+        data_tests:
+          - relationships:
+              to: ref('shopify_bi_dim_customers_staging')
+              field: CustomerId
+      - name: OrderedQuantity
+        description: Line quantity ordered.
+        data_tests:
+          - not_null
+
+  - name: shopify_bi_dim_articles_staging
+    description: >
+      One row per Shopify product variant. Variant grain, not product grain, because an
+      order line references a variant — a product-grain dimension would fan out when joined
+      to fact_order_rows. Product attributes repeat across a product's variants.
+    columns:
+      - name: ArticleId
+        description: Shopify variant id, cast to string. Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: ArticleNumber
+        description: Variant SKU. Nullable — Shopify does not require one.
+      - name: Active
+        description: True when the parent product `status` is 'active'.
+
+  # ---------------------------------------------------------------------------------
+  # Adapters — ephemeral, unioned into erp_bi_* by the registry. Column list, order, and
+  # count are copied from the Fortnox adapter for the same concept; union_queries() emits
+  # a positional UNION ALL, so position is part of the contract.
+  # ---------------------------------------------------------------------------------
+  - name: shopify_erp_bi_dim_customers
+    description: >
+      Shopify customers adapted to the common ERP customer schema. 44 columns matching
+      fortnox_erp_bi_dim_customers; the columns Shopify has no equivalent for are typed
+      NULL.
+  - name: shopify_erp_bi_dim_articles
+    description: >
+      Shopify product variants adapted to the common ERP article schema. 10 columns
+      matching fortnox_erp_bi_dim_articles. PurchasePrice is NULL — Shopify exposes no cost
+      price on the REST product resource.
+  - name: shopify_erp_bi_fact_orders
+    description: >
+      Shopify orders adapted to the common ERP order schema. 49 columns matching
+      fortnox_erp_bi_fact_orders. CurrencyRate is 1.0 because Shopify amounts are already
+      in shop currency, which makes the amount columns comparable across sources.
+  - name: shopify_erp_bi_fact_order_rows
+    description: >
+      Shopify order lines adapted to the common ERP order-row schema. 28 columns matching
+      fortnox_erp_bi_fact_order_rows. Note that favrit_erp_bi_fact_order_rows emits 30
+      columns in a different order — that divergence is pre-existing and is not resolved
+      here.

@@ -39,6 +39,7 @@ vars:
   is_favrit_enabled: false
   is_fortnox_enabled: false
   is_seventime_enabled: false
+  is_shopify_enabled: false
   is_tempo_enabled: false
   is_tripletex_enabled: false
   is_upsales_enabled: false
@@ -86,6 +87,8 @@ models:
         +tags: ['fortnox']
       seventime:
         +tags: ['seventime']
+      shopify:
+        +tags: ['shopify']
       tempo:
         +tags: ['tempo']
       tripletex:
@@ -101,6 +104,9 @@ models:
 
     favrit_bi:
       +tags: ['favrit', 'bi']
+
+    shopify_bi:
+      +tags: ['shopify', 'bi']
 
     fortnox:
       +tags: ['fortnox']
