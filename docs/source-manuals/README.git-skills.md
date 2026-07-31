@@ -1,3 +1,9 @@
+> **Frozen provenance copy — not live guidance.** The original README from the
+> `git-skills` source repository, preserved for history per
+> [README.md § Feature provenance](../../README.md). It may contradict current behavior and
+> must not be followed or edited to match. The live documentation is
+> [README.md](../../README.md).
+
 # GIT Skills
 
 This repository acts as a reusable, standards-oriented module for automation, documentation, and workflow scaffolding.
