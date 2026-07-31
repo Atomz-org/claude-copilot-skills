@@ -61,3 +61,5 @@ graphify-out/
 .claude/agentmemory.json
 .claude/graph-state.json
 .claude/checkpoints/
+# Rust TOON serializer build output (scripts/build_toon_rs.sh)
+rust/toon/bin/

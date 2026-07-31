@@ -30,9 +30,42 @@ CLI behavior, verified against the installed graphify:
 - `--budget N` is the working lever. Raise it when output reports `TRUNCATED`, or narrow the
   question instead.
 
-Enforcement is automatic, not manual: `.claude/settings.json` registers `graphify hook-guard`
-as a `PreToolUse` hook on `Bash|Grep` and `Read|Glob`, which injects the reminder at call
-time. Do not add a second enforcement mechanism.
+### TOON context pipeline
+
+Graph output that is carried forward into LLM context is serialized as TOON
+(Token-Oriented Object Notation, https://github.com/toon-format/spec), which declares
+fields once and streams uniform rows instead of repeating keys per record:
+
+```bash
+# build the serializer once per clone (plain rustc -O, no cargo)
+./scripts/build_toon_rs.sh
+
+graphify query "<question>" --budget 800 | rust/toon/bin/graph_to_toon      # text → TOON
+rust/toon/bin/graph_to_toon --graph graphify-out/graph.json --community "<x>"  # graph.json → TOON
+... | rust/toon/bin/graph_to_toon --decode                                  # TOON → JSON for machines
+```
+
+The serializer is `rust/toon/graph_to_toon.rs`; its full functionality contract lives as
+comments in that file, and `tests/test_toon_serializer.py` pins the behavior at the CLI
+level (`tests/conftest.py` builds the binary on demand where `rustc` exists). TypeScript
+call sites route through `src/ai-core/toon-serializer.ts` (`GraphManager.snapshotToToon()`).
+
+### Enforcement
+
+Enforcement is automatic, not manual — `.claude/settings.json` registers all of it; do not
+add duplicate mechanisms:
+
+- `graphify hook-guard` (`PreToolUse` on `Bash|Grep` and `Read|Glob`) injects the
+  graph-first reminder at call time.
+- `scripts/hooks/toon_graphify_pipe.py` (`PreToolUse` on `Bash`) rewrites bare
+  `graphify query|path|explain` commands to pipe through
+  `rust/toon/bin/graph_to_toon --passthrough`, and stays silent when the binary is not
+  built. Composed commands (existing pipes, redirects) are left alone; `--passthrough`
+  forwards unrecognized output unchanged, so the rewrite can never break a command.
+- `scripts/hooks/toon_prompt_context.sh` (`UserPromptSubmit`) asserts the pipeline once
+  per prompt.
+
+Hook behavior is pinned by `tests/test_toon_pipeline_hooks.py`.
 
 ## Agent and command topology
 
