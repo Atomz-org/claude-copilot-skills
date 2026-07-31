@@ -1,5 +1,5 @@
 ---
-name: new-connector
+name: connector-onboarding
 description: Onboard a new source system (Shopify, HubSpot, NetSuite, Spiris, Fortnox, Tripletex, …) into an existing use-case's dbt Core project. Detects the project's own connector conventions and follows them, scaffolds staging/adapter/source-aligned models from the connector's raw tables, and finishes through the repository git skill. Use when asked to "add a connector", "onboard <system>", "connect <system> to <use-case>", or when a new upstream API needs to reach an existing DAG.
 ---
 

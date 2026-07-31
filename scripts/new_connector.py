@@ -28,7 +28,7 @@ Usage:
     python3 scripts/new_connector.py shopify --use-case enhanza-analytics \\
         --tables customers --dry-run
 
-See .claude/skills/new-connector/SKILL.md for the full procedure.
+See .claude/skills/connector-onboarding/SKILL.md for the full procedure.
 """
 
 from __future__ import annotations

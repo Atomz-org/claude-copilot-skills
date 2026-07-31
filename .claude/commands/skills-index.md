@@ -46,8 +46,8 @@ Use this index to find the right playbook fast.
 ## Data onboarding intent
 
 - `new-use-case` command — frame a request before any model exists
-- `new-connector` skill and command — onboard a source system into an existing use-case,
-  then commit through `git-standard.sh`
+- `new-connector` command → `connector-onboarding` skill — onboard a source system into an
+  existing use-case, then commit through `git-standard.sh`
 - `scripts/new_connector.py` (detects the target project's conventions; `--dry-run` first)
 
 ## Foundation and operations

@@ -54,8 +54,8 @@ COMMAND_COPIES = [
     "skill-packs/dbt-skills/.claude/commands/new-connector.md",
 ]
 SKILL_COPIES = [
-    ".claude/skills/new-connector/SKILL.md",
-    "skill-packs/dbt-skills/.claude/skills/new-connector/SKILL.md",
+    ".claude/skills/connector-onboarding/SKILL.md",
+    "skill-packs/dbt-skills/.claude/skills/connector-onboarding/SKILL.md",
 ]
 
 
@@ -69,7 +69,7 @@ def test_skill_declares_frontmatter(rel):
     text = (REPO / rel).read_text(encoding="utf-8")
     assert text.startswith("---\n"), f"{rel} has no frontmatter"
     front = text.split("---", 2)[1]
-    assert "name: new-connector" in front
+    assert "name: connector-onboarding" in front
     assert "description:" in front
 
 
@@ -106,8 +106,8 @@ def test_oversized_skill_splits_into_references(rel):
 
 def test_pack_skill_copy_matches_the_root_one():
     """The two copies are duplicates by design; drift between them is a defect."""
-    root = REPO / ".claude/skills/new-connector"
-    pack = REPO / "skill-packs/dbt-skills/.claude/skills/new-connector"
+    root = REPO / ".claude/skills/connector-onboarding"
+    pack = REPO / "skill-packs/dbt-skills/.claude/skills/connector-onboarding"
     root_files = {p.relative_to(root): p.read_bytes() for p in root.rglob("*.md")}
     pack_files = {p.relative_to(pack): p.read_bytes() for p in pack.rglob("*.md")}
     assert root_files == pack_files
@@ -116,6 +116,58 @@ def test_pack_skill_copy_matches_the_root_one():
 def test_indexed_by_intent():
     index = (REPO / ".claude/commands/skills-index.md").read_text(encoding="utf-8")
     assert "new-connector" in index, "new-connector is not discoverable from skills-index.md"
+    assert "connector-onboarding" in index, "the skill it loads is not named in the index"
+
+
+def test_command_points_at_the_skill_by_name():
+    """The command is the entry point; the skill is what it loads. Keep the link explicit.
+
+    They are deliberately named differently — see
+    `test_no_command_shares_a_name_with_a_skill` — so nothing resolves the one from the
+    other. Only this string does.
+    """
+    for rel in COMMAND_COPIES:
+        text = (REPO / rel).read_text(encoding="utf-8")
+        assert "`connector-onboarding` skill" in text, f"{rel} does not name the skill it loads"
+
+
+def _skill_names(skills_dir: Path) -> set[str]:
+    return {p.parent.name for p in skills_dir.glob("*/SKILL.md")}
+
+
+def _command_names(commands_dir: Path) -> set[str]:
+    # Only the top level: a command in a subdirectory is namespaced (`/analytics:foo`) and
+    # cannot collide with a bare skill name.
+    return {p.stem for p in commands_dir.glob("*.md")} - {"skills-index"}
+
+
+def test_no_command_shares_a_name_with_a_skill():
+    """A command and a skill with the same name resolve to one `/name`, and the command loses.
+
+    This is what hid `/new-connector` from the slash-command list while `/new-use-case`
+    showed: `new-use-case` is a command whose skill is separately named
+    `analytics-request-framing`, so there was nothing to collide with. `new-connector` was a
+    command *and* a skill, the skill won the name, and the command became unreachable from
+    the menu. Renaming the skill to `connector-onboarding` restored parity.
+
+    The failure is silent — no error, the command simply stops being listed — so it needs a
+    test rather than a convention.
+    """
+    roots = [REPO / ".claude"] + sorted(REPO.glob("skill-packs/*/.claude"))
+    collisions = {}
+    for root in roots:
+        skills, commands = root / "skills", root / "commands"
+        if not (skills.is_dir() and commands.is_dir()):
+            continue
+        shared = _skill_names(skills) & _command_names(commands)
+        if shared:
+            collisions[str(root.relative_to(REPO))] = sorted(shared)
+
+    assert not collisions, (
+        "a command name is shadowed by a same-named skill, so the command will not be "
+        f"listed: {collisions}. Rename the skill and have the command load it by name, the "
+        "way /new-use-case loads `analytics-request-framing`."
+    )
 
 
 def test_scaffold_script_is_executable_python():
