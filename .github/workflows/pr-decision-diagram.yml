@@ -1,0 +1,131 @@
+# Runs the repository's merge-decision gates on every PR push and posts the
+# outcome as a Mermaid flowchart in a sticky PR comment (updated in place).
+# The same document lands in the step summary, which also renders Mermaid.
+#
+# This workflow REPORTS; ci-quality-gate.yml is what blocks. Keeping them
+# separate means a red gate here shows up as a red node in the diagram rather
+# than a second failing check for the same cause.
+#
+# Untrusted inputs (branch name, PR title) are passed through the environment,
+# never interpolated into run: scripts — see repository CI hardening pattern.
+name: PR Decision Diagram
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  decision-diagram:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run decision gates
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -u
+          : > decisions.txt
+          # record <gate> <status> <detail...> — pipes stripped so the
+          # renderer's field separator stays unambiguous
+          record() {
+            gate="$1"; status="$2"; shift 2
+            printf '%s|%s|%s\n' "$gate" "$status" "$(printf '%s' "$*" | tr -d '|' | head -c 200)" >> decisions.txt
+          }
+
+          # 1. Branch naming: <type>/<ticket>-<description>
+          if printf '%s' "$HEAD_REF" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)/[A-Za-z0-9._-]+'; then
+            record "branch naming" pass "$HEAD_REF"
+          else
+            record "branch naming" fail "$HEAD_REF does not match <type>/<ticket>-<description>"
+          fi
+
+          # 2. Conventional Commits on every non-merge commit in the PR
+          bad=$(git log --no-merges --format='%s' "$BASE_SHA".."$HEAD_SHA" \
+            | grep -Ev '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([A-Za-z0-9._/-]+\))?!?: .+' || true)
+          if [ -z "$bad" ]; then
+            n=$(git log --no-merges --oneline "$BASE_SHA".."$HEAD_SHA" | wc -l | tr -d ' ')
+            record "conventional commits" pass "$n commit(s) conform"
+          else
+            record "conventional commits" fail "$(printf '%s' "$bad" | head -1)"
+          fi
+
+          # 3. Generated-path drift: activation must leave the tree clean
+          if ./scripts/activate_skill_stack.sh dbt-skills >/dev/null 2>&1 && [ -z "$(git status --porcelain)" ]; then
+            record "activation drift" pass "pack and mirror in sync"
+          else
+            record "activation drift" fail "$(git status --porcelain | head -1) (edit the pack, not the mirror)"
+            git checkout -- . 2>/dev/null || true
+          fi
+
+          # 4. Marketplace portability
+          if out=$(./scripts/marketplace_portability_check.sh 2>&1); then
+            record "marketplace portability" pass "manifests and SKILL.md sizes OK"
+          else
+            record "marketplace portability" fail "$(printf '%s' "$out" | head -1)"
+          fi
+
+          # 5. TOON serializer build (gate skips on branches that predate it)
+          if [ -x scripts/build_toon_rs.sh ]; then
+            if out=$(./scripts/build_toon_rs.sh 2>&1); then
+              record "toon serializer build" pass "rustc -O clean"
+            else
+              record "toon serializer build" fail "$(printf '%s' "$out" | tail -1)"
+            fi
+          else
+            record "toon serializer build" skip "not present on this branch"
+          fi
+
+          # 6. Test suite (docs links, hooks, serializer behavior included)
+          if out=$(python -m pytest tests/ -q 2>&1); then
+            record "test suite" pass "$(printf '%s' "$out" | grep -Eo '[0-9]+ passed[^,]*' | head -1)"
+          else
+            record "test suite" fail "$(printf '%s' "$out" | grep -E 'failed|error' | head -1)"
+          fi
+
+      - name: Render Mermaid diagram
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          python scripts/pr_decision_diagram.py \
+            --input decisions.txt \
+            --pr-number "$PR_NUMBER" \
+            --pr-title "$PR_TITLE" \
+            --head-ref "$HEAD_REF" \
+            --out diagram.md
+          cat diagram.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post or update sticky PR comment
+        # GITHUB_TOKEN is read-only on fork PRs; the step summary above still
+        # carries the diagram there.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          marker='<!-- pr-decision-diagram -->'
+          comment_id=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq "[.[] | select(.body | startswith(\"$marker\"))][0].id // empty")
+          if [ -n "$comment_id" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${comment_id}" \
+              -f "body=$(cat diagram.md)" >/dev/null
+          else
+            gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+              -f "body=$(cat diagram.md)" >/dev/null
+          fi
