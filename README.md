@@ -15,10 +15,14 @@ scripts, templates, references, CI workflows, and tests.
 - `.claude/commands/`: backward-compatible commands plus namespaced command packs.
 - `.claude/skills/`: original analytics skills plus dbt-labs-to-Core translated skills.
 - `.claude/rules/`: both standards and analytics non-negotiables.
-- `scripts/`: artifact-driven dbt analyzers.
-- `templates/`, `references/`, `use-cases/`: analytics design kit and runnable examples.
+- `scripts/`: artifact-driven dbt analyzers plus the stack activation and portability checks.
+- `templates/`, `references/`: analytics design kit, **generated** at the repository root by
+  `scripts/activate_skill_stack.sh` from the active pack. Edit the pack copy under
+  `skill-packs/<pack>/`, never the root mirror — activation overwrites it.
+- `use-cases/`: the directory a consuming repository fills in. Worked examples ship inside
+  the pack at `skill-packs/dbt-skills/use-cases/`.
 - `.github/`: CI and automation workflows.
-- `tests/`: tests from both source repositories.
+- `tests/`: tests from both source repositories, plus documentation-integrity checks.
 
 ## Quick start
 
@@ -32,14 +36,36 @@ For dbt worked example:
 
 ```bash
 .venv/bin/pip install 'dbt-core~=1.9.0' 'dbt-duckdb~=1.9.0'
-cd use-cases/example-order-revenue-mart/dbt_project
+cd skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project
 ./run_local.sh
 ```
 
+## Verifying a change
+
+```bash
+./scripts/activate_skill_stack.sh dbt-skills   # re-materialise .claude/, references/, templates/
+./scripts/marketplace_portability_check.sh     # pack manifests and SKILL.md structure
+pytest -q                                      # unit tests + documentation integrity
+git status --short                             # must be clean: drift means a root copy was hand-edited
+```
+
+That last check is the important one. `.claude/`, `references/`, and `templates/` are
+generated; if activation changes a tracked file, the edit was made in the wrong place.
+`tests/test_docs_links.py` asserts that every relative markdown link in the repository
+resolves and that each pack asset has a root mirror.
+
 ## Slash commands
 
-- dbt flow: `/new-use-case`, `/data-model`, `/dbt-model`, `/dbt-build`, `/dbt-test`, `/dbt-audit`, `/dbt-debug`, `/dbt-semantic`
-- repo flow: `/review`, `/ship`, `/sync-submodule`, `git-standard.sh`
+- dbt flow: `/new-use-case`, `/data-model`, `/dbt-model`, `/dbt-build`, `/dbt-test`,
+  `/dbt-audit`, `/dbt-debug`, `/dbt-semantic`, `/new-connector`, `/sync-context`
+- repo flow: `/review`, `/ship`, `/pr-ready`, `/pr-merge`, `/branch-plan`,
+  `/resolve-conflicts`, `/focused-fix`, `/write-docs`, `/sync-submodule`, `/skills-index`
+- setup: `/setup-git-guardrails`, `/setup-pre-commit`, `/marketplace-portability`
+- shell entrypoints: `.claude/commands/infra/git-standard.sh`, `update-memory.sh`,
+  `lint-and-graph.sh`
+
+`/new-connector` onboards a source system into an existing use-case's dbt project by
+detecting that project's own conventions; `scripts/new_connector.py` does the scaffolding.
 
 ## Command namespaces
 
@@ -71,7 +97,21 @@ Canonical dbt skill entrypoint:
 
 - New use-cases must be created inside the owning pack path: `skill-packs/<pack>/use-cases/<slug>/`.
 - For dbt work and dbt agents, create use-cases in `skill-packs/dbt-skills/use-cases/<slug>/`.
-- Keep legacy root `use-cases/` examples as historical references unless explicitly migrated.
+- Root `use-cases/` holds the working method only; the worked examples now live in the pack.
+
+### Where an asset lives
+
+The pack is the source of truth. Activation copies it into the paths agents actually load:
+
+| Asset | Source of truth | Materialised to |
+| --- | --- | --- |
+| agents, skills, commands, rules, hooks | `skill-packs/<pack>/.claude/` | `.claude/` |
+| `references/`, `templates/` | `skill-packs/<pack>/` | repository root |
+| use-cases | `skill-packs/<pack>/use-cases/` | not copied |
+
+Skills and agents link to these with one relative path — `../../references/x.md` — which is
+why both copies must exist: it resolves inside the pack *and* after activation. Editing a
+materialised copy directly is silently reverted on the next activation.
 
 To activate a stack into live `.claude/` paths:
 
@@ -109,8 +149,8 @@ Original root manuals from both source repositories are preserved in:
 
 - `docs/source-manuals/README.git-skills.md`
 - `docs/source-manuals/CLAUDE.git-skills.md`
-- `docs/source-manuals/README.dbt-skill.md`
-- `docs/source-manuals/CLAUDE.dbt-skill.md`
+- `docs/source-manuals/README.dbt-skills.md`
+- `docs/source-manuals/CLAUDE.dbt-skills.md`
 
 ## Contributing
 

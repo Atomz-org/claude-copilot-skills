@@ -36,6 +36,8 @@ jobs:
           test -f src/ai-core/rtk-setup.ts
           test -f src/ai-core/graph-manager.ts
           test -f src/ai-core/memory-store.ts
+          test -d skill-packs/dbt-skills/references
+          test -d skill-packs/dbt-skills/templates
 
       - name: Validate shell scripts
         run: |
@@ -58,6 +60,16 @@ jobs:
         run: |
           chmod +x scripts/activate_skill_stack.sh
           ./scripts/activate_skill_stack.sh dbt-skills
+
+      # .claude/, references/, and templates/ are generated from skill-packs/. If activation
+      # changes a tracked file, someone edited a generated copy instead of its pack source
+      # and the edit would be silently reverted on the next activation.
+      - name: Assert activation produces no drift
+        run: |
+          if ! git diff --exit-code --stat; then
+            echo "::error::Activation changed tracked files. Edit the pack source under skill-packs/, then re-run ./scripts/activate_skill_stack.sh dbt-skills and commit the result."
+            exit 1
+          fi
 
       - name: Install test dependencies
         run: |
