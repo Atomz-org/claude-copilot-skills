@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: hubspot_bi_dim_customers
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name.'
+    columns:
+      - name: '[NEEDS INPUT] primary key'
+        tests: [unique, not_null]
+  - name: hubspot_bi_dim_company
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name.'
+    columns:
+      - name: '[NEEDS INPUT] primary key'
+        tests: [unique, not_null]
+  - name: hubspot_bi_fact_deals
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name.'
+    columns:
+      - name: '[NEEDS INPUT] primary key'
+        tests: [unique, not_null]
+  - name: hubspot_bi_dim_pipelines
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name.'
+    columns:
+      - name: '[NEEDS INPUT] primary key'
+        tests: [unique, not_null]
+  - name: hubspot_bi_dim_deal_stages
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name.'
+    columns:
+      - name: '[NEEDS INPUT] primary key'
+        tests: [unique, not_null]
+  - name: hubspot_bi_dim_contacts
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name.'
+    columns:
+      - name: '[NEEDS INPUT] primary key'
+        tests: [unique, not_null]
+  - name: hubspot_bi_fact_tickets
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name.'
+    columns:
+      - name: '[NEEDS INPUT] primary key'
+        tests: [unique, not_null]
+  - name: hubspot_bi_fact_engagements
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name.'
+    columns:
+      - name: '[NEEDS INPUT] primary key'
+        tests: [unique, not_null]

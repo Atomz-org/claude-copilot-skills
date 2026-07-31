@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: hubspot_bi_dim_customers_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot companies.'
+  - name: hubspot_bi_dim_company_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot account_details.'
+  - name: hubspot_bi_fact_deals_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot deals.'
+  - name: hubspot_bi_dim_pipelines_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot deal_pipelines.'
+  - name: hubspot_bi_dim_deal_stages_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot deal_stages.'
+  - name: hubspot_bi_dim_contacts_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot contacts.'
+  - name: hubspot_bi_fact_tickets_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot tickets.'
+  - name: hubspot_bi_fact_engagements_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot engagements.'
