@@ -10,6 +10,10 @@ This repository combines:
 
 ## Graphify-first rule
 
+**This section is the single source of truth for graph navigation in this repository.**
+Any other copy — a user-level protocol file, a source manual under `docs/source-manuals/` —
+is superseded by it. State the rule here or not at all.
+
 This project uses graph-based navigation when graph outputs are present.
 
 Rules:
@@ -19,6 +23,16 @@ Rules:
 - If `graphify-out/wiki/index.md` exists, use it for broad navigation first.
 - Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or when scoped queries are insufficient.
 - After meaningful code edits, run `graphify update .` to keep graph state current.
+
+CLI behavior, verified against the installed graphify:
+- Traversal is fixed at BFS depth=2. `--depth` is accepted and **silently ignored** — do not
+  rely on it to narrow a query.
+- `--budget N` is the working lever. Raise it when output reports `TRUNCATED`, or narrow the
+  question instead.
+
+Enforcement is automatic, not manual: `.claude/settings.json` registers `graphify hook-guard`
+as a `PreToolUse` hook on `Bash|Grep` and `Read|Glob`, which injects the reminder at call
+time. Do not add a second enforcement mechanism.
 
 ## Agent and command topology
 

@@ -1,3 +1,10 @@
+> **Frozen provenance copy — not live guidance.** The original root manual from the
+> `dbt-skills` source repository, preserved for history per
+> [README.md § Feature provenance](../../README.md). It may contradict current behavior and
+> must not be followed or edited to match. The live operating manual is
+> [CLAUDE.md](../../CLAUDE.md); the live dbt rules are
+> [.claude/rules/analytics-engineering-rules.md](../../.claude/rules/analytics-engineering-rules.md).
+
 # dbt Skill Scaffold
 
 A scaffold for turning any data request into a working, tested, documented **dbt Core**

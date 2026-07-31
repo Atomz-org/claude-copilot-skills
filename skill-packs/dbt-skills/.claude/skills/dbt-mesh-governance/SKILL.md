@@ -312,4 +312,63 @@ be surprised by.
   every coordination cost and none of the benefit.
 - Changing a model's grain without versioning, because "the columns didn't change".
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| "what breaks if I change this?" | The downstream list from the manifest, then version-or-coordinate — not a guess |
+| "stop people building on this model" | `access: private` plus a group with an owner, enforced at parse time |
+| "should we split into two projects?" | Usually no. Groups and access first; splitting buys coordination cost early |
+| "rename a column on a contracted model" | A new version with a `deprecation_date`, not an in-place edit |
+
+**Worked example**
+
+> "fct_orders needs `revenue` renamed to `net_revenue`"
+
+```bash
+python scripts/model_dependency_analyzer.py \
+    --manifest target/manifest.json --model fct_orders --direction down
+```
+
+```
+dim_customer_orders     in this project      → fixable in the same PR
+exposure: finance_dashboard                  → not fixable by us; needs a migration window
+package: marketing_dbt  ref('fct_orders')    → another team's release cycle
+```
+
+```yaml
+models:
+  - name: fct_orders
+    latest_version: 2
+    access: public                       # public means a promise; back it with a contract
+    group: finance
+    config:
+      contract: {enforced: true}
+    columns:
+      - name: order_id
+        data_type: varchar               # data_type is where this usually fails —
+        constraints: [{type: not_null}]  # numeric(38,2) ≠ number, and the build will say so
+      - {name: net_revenue, data_type: numeric(38,2)}
+    versions:
+      - v: 1
+        deprecation_date: 2026-10-01     # without a date, v1 lives forever
+        columns:
+          - {include: all, exclude: [net_revenue]}
+          - {name: revenue, data_type: numeric(38,2)}
+      - v: 2
+```
+
+```bash
+python scripts/contract_breaking_change_detector.py \
+    --base prod/manifest.json --head target/manifest.json --strict
+#   BREAKING: fct_orders.revenue removed — consumers: finance_dashboard, marketing_dbt
+#   Resolved by version v1 (deprecation_date 2026-10-01)
+```
+
+Consumers stay on `ref('fct_orders', v=1)` until the date. Note the case a contract does
+*not* catch: changing the model's grain while the columns stay identical. That is breaking
+too, and it needs a version just the same.
+
 Reference: [references/dbt_mesh_governance.md](../../../references/dbt_mesh_governance.md).

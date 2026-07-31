@@ -1,3 +1,10 @@
+> **Frozen provenance copy — not live guidance.** The original root manual from the
+> `git-skills` source repository, preserved for history per
+> [README.md § Feature provenance](../../README.md). It may contradict current behavior and
+> must not be followed or edited to match. The live graphify policy is
+> [CLAUDE.md § Graphify-first rule](../../CLAUDE.md); the live standards are
+> [.claude/rules/standards.md](../../.claude/rules/standards.md).
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

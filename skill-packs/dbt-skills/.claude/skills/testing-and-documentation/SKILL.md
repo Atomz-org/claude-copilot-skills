@@ -344,4 +344,69 @@ dbt build --select state:modified+ --defer --state prod/    # CI
 - Data tests as the only tests on a model full of business logic. They cannot catch a wrong
   formula that produces plausible values.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| `/dbt-test fct_orders` | The minimum bar confirmed, then a test per assumption in the use-case spec |
+| "what tests should this have?" | Tests derived from the model's assumptions — not `not_null` on all 40 columns |
+| "document this model" | A description that states the grain and what is excluded, and column docs via `{{ doc() }}` |
+| "this test fails on legitimate nulls" | `where:` scoping with the reason recorded, rather than `severity: warn` or deletion |
+
+**Worked example**
+
+> `/dbt-test fct_orders`
+
+```yaml
+models:
+  - name: fct_orders
+    description: >
+      One row per order. Excludes internal test accounts (customer_id in the
+      seed_internal_accounts seed). Refunds are aggregated to order grain, so
+      refund_amount is 0 rather than null for unrefunded orders.
+    columns:
+      - name: order_id
+        description: "{{ doc('order_id') }}"          # shared definition, cannot drift
+        data_tests: [unique, not_null]                # the minimum bar, always
+
+      - name: customer_id
+        data_tests:
+          - relationships:                            # assumption: every order has a customer
+              to: ref('dim_customers')
+              field: customer_id
+              config: {where: "customer_id is not null"}   # guest checkout is legitimate
+
+      - name: order_status
+        data_tests:
+          - accepted_values:                          # assumption: closed domain of five
+              values: [pending, paid, fulfilled, cancelled, refunded]
+              config: {store_failures: true}          # a sixth value must be inspectable
+
+      - name: refund_amount
+        data_tests:
+          - dbt_utils.accepted_range: {min_value: 0, inclusive: true}
+```
+
+```sql
+-- tests/assert_order_revenue_reconciles_to_ledger.sql
+-- Assumption from the use-case spec: revenue reconciles to finance within 0.5%.
+select date_trunc('month', ordered_at) as month
+from {{ ref('fct_orders') }} o
+join {{ ref('stg_netsuite__gl_revenue') }} g using (month)
+group by 1
+having abs(sum(o.total_amount) - max(g.amount)) / nullif(max(g.amount), 0) > 0.005
+```
+
+```bash
+dbt build --select fct_orders                 # tests run with the model, not after the DAG
+python scripts/test_coverage_reporter.py \
+    --manifest target/manifest.json --layer marts --min-coverage 0.9
+```
+
+Also add an `exposures:` entry — a mart with no exposure means nobody knows who breaks
+when it changes. And note what data tests cannot do: `fct_orders` has a CASE-based status
+rollup, so it still needs a unit test.
+
 Next: [dbt-unit-testing](../dbt-unit-testing/SKILL.md).

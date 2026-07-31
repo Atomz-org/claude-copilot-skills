@@ -134,4 +134,36 @@ and list every assumption at the top of the spec.
 - Assumptions are listed with their failure modes and the tests they become.
 - The verdict is one of the four, with evidence.
 
+## Examples
+
+| Ask Claude | What you get |
+|---|---|
+| `/new-use-case churn dashboard` | The four questions answered into a spec file, plus a verdict |
+| "can you pull last month's revenue?" | "Not a dbt problem" — a query and the numbers, no mart added |
+| "we need a table for X" | The grain and consumer settled first, even when the ask sounds complete |
+
+**Worked example**
+
+> "we need a customer churn table"
+
+```
+1. Decision  Every month, the retention lead will target win-back offers based on
+             customers who churned last month, instead of a manual CRM export.
+2. Consumer  Looker dashboard "Retention · Churn" → goes in exposures:
+3. Grain     One row per customer per month. PK: surrogate(customer_id, month).
+             Pressure test: churn dated at cancellation, or at paid-period end?
+             → [NEEDS INPUT] — the two differ by up to 30 days.
+4. Sources   raw.stripe.subscriptions [NEEDS INPUT: loaded_at_field], stg_customers ✓
+
+Assumptions → tests
+  Every subscription has a customer  → relationships
+  Status is one of five values       → accepted_values
+
+Verdict: Narrowed build. Ship monthly churn on cancellation date; the paid-period
+variant waits on the definition. Blocker owner: retention lead.
+```
+
+Both `[NEEDS INPUT]` markers stay in the spec. Guessing either one produces a number that
+looks right and reconciles to nothing.
+
 Next: [dbt-model-design](../dbt-model-design/SKILL.md).

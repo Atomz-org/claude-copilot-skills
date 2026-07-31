@@ -28,3 +28,49 @@ python scripts/contract_breaking_change_detector.py --base prod/manifest.json --
 ## dbt Core translation notes
 
 - Replace platform governance dashboards with manifest-driven checks and repository CI gates.
+
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| "what breaks if I drop this column?" | The downstream list from the manifest, then the version-or-coordinate decision |
+| "rename customer_id to customer_key" | On a contracted model: a new version, not an in-place edit |
+| "stop people building on this model" | `access: private` plus a group with an owner — enforced at parse time |
+
+**Worked example**
+
+> "fct_orders needs `revenue` renamed to `net_revenue`"
+
+```bash
+# 1. Who is on the other side of the change
+python scripts/model_dependency_analyzer.py \
+    --manifest target/manifest.json --model fct_orders --direction down
+#   dim_customer_orders (this project)  → we can fix in the same PR
+#   exposure: finance_dashboard         → we cannot; it needs a migration window
+```
+
+```yaml
+models:
+  - name: fct_orders
+    latest_version: 2
+    access: public
+    config: {contract: {enforced: true}}
+    columns:
+      - {name: order_id, data_type: varchar, constraints: [{type: not_null}]}
+      - {name: net_revenue, data_type: numeric(38,2)}
+    versions:
+      - v: 1
+        deprecation_date: 2026-10-01           # the migration window, stated
+        columns: [{include: all, exclude: [net_revenue]}, {name: revenue, data_type: numeric(38,2)}]
+      - v: 2
+```
+
+```bash
+python scripts/contract_breaking_change_detector.py \
+    --base prod/manifest.json --head target/manifest.json --strict
+```
+
+Consumers stay on `ref('fct_orders', v=1)` until the deprecation date. An in-place rename
+would break the finance dashboard at the next production run, with no failing test.

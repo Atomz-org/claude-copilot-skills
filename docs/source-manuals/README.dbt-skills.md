@@ -1,3 +1,9 @@
+> **Frozen provenance copy — not live guidance.** The original README from the
+> `dbt-skills` source repository, preserved for history per
+> [README.md § Feature provenance](../../README.md). It may contradict current behavior and
+> must not be followed or edited to match. The live documentation is
+> [README.md](../../README.md).
+
 # dbt Skill — How to Use It
 
 A scaffold that turns a business data request into working, tested, documented **dbt Core**
