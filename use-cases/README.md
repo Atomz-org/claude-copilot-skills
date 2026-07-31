@@ -66,7 +66,7 @@ the business question does not.
 
 ## Example
 
-[example-order-revenue-mart/](example-order-revenue-mart/) is a complete worked case on
+[example-order-revenue-mart/](../skill-packs/dbt-skills/use-cases/example-order-revenue-mart/) is a complete worked case on
 synthetic data: a filled-in spec, sources with freshness, staging/intermediate/mart SQL, a
 contracted `schema.yml`, semantic models with metrics, and synthetic dbt artifacts that
 every script in [scripts/](../scripts/) runs against.

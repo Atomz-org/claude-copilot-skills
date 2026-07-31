@@ -15,10 +15,10 @@ pytest -q
 
 ## Repository entry points
 
-- [Ways of Working](docs/WAY_OF_WORKING.md)
-- [Automation Workflow](docs/AUTOMATION_WORKFLOW.md)
-- [Automation Setup](.github/AUTOMATION_SETUP.md)
-- [Automation Test Notes](.github/AUTOMATION_TEST.md)
+- [Ways of Working](../../docs/WAY_OF_WORKING.md)
+- [Automation Workflow](../../docs/AUTOMATION_WORKFLOW.md)
+- [Automation Setup](../../.github/AUTOMATION_SETUP.md)
+- [Automation Test Notes](../../.github/AUTOMATION_TEST.md)
 
 ## Contribution workflow
 

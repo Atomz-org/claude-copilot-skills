@@ -7,7 +7,7 @@ Frame this data request: **$ARGUMENTS**
 
 Load the `analytics-request-framing` skill. Write
 `use-cases/<slug>/use-case-spec.md` from
-[templates/use-case-spec.md](../../templates/use-case-spec.md).
+[templates/use-case-spec.md](../../../templates/use-case-spec.md).
 
 ---
 
@@ -77,7 +77,7 @@ build time, review time, and trust on every single run.
 
 ## Rules that bind here
 
-[Rules 1–5](../rules/analytics-engineering-rules.md): no model before a use-case spec; name
+[Rules 1–5](../../rules/analytics-engineering-rules.md): no model before a use-case spec; name
 the decision; name the consumer before the model; declare the grain in one sentence; never
 invent a number or a name.
 

@@ -1,0 +1,101 @@
+# Profile for the worked example.
+#
+# Committed ON PURPOSE because every credential here is either a local file path or an
+# env_var() reference. A real project's profiles.yml lives in ~/.dbt/ and is gitignored —
+# see the note at the bottom.
+#
+#   dbt build                              -> duckdb_dev   (default, no credentials)
+#   dbt build --target duckdb_ci
+#   dbt build --target duckdb_prod
+#   dbt build --target bigquery
+#   dbt build --target snowflake
+#
+# The three DuckDB targets use separate database files, so dev never writes over prod.
+# That is the same isolation BigQuery gets from separate projects and Snowflake from
+# separate databases — which is what lets `generate_schema_name` return custom schema
+# names verbatim (`marts`, not `main_marts`) on all three.
+#
+# That isolation is a claim, and this file is where it gets broken: repoint
+# DBT_DUCKDB_PATH or DBT_BQ_PROJECT at production and a dev run writes into production's
+# `marts`. So the claim is not merely documented — each target must be named in the
+# `isolated_database_targets` var in dbt_project.yml to earn verbatim schemas, and any
+# such target that resolves to a database in `production_databases` aborts at parse time.
+# Adding a target below therefore gives it dbt's safe `<target_schema>_<custom_schema>`
+# prefixing until someone opts it in explicitly.
+
+analytics:
+  target: duckdb_dev
+
+  outputs:
+
+    # ---------------------------------------------------------------- DuckDB
+    # Zero setup: an embedded file, no server, no credentials. This is what makes the
+    # whole scaffold testable end to end on a laptop and in CI.
+    duckdb_dev:
+      type: duckdb
+      path: "{{ env_var('DBT_DUCKDB_PATH', 'dev.duckdb') }}"
+      schema: main
+      threads: 4
+
+    duckdb_ci:
+      # CI writes to a throwaway file so a failed run leaves nothing behind.
+      type: duckdb
+      path: "ci.duckdb"
+      schema: main
+      threads: 8
+
+    duckdb_prod:
+      type: duckdb
+      path: "prod.duckdb"
+      schema: main
+      threads: 8
+
+    # ---------------------------------------------------------------- BigQuery
+    # Auth options, in order of preference:
+    #   oauth               local dev, after `gcloud auth application-default login`
+    #   service-account     CI, with a key file
+    #   service-account-json  CI, with the key in an env var (no file on disk)
+    bigquery:
+      type: bigquery
+      method: "{{ env_var('DBT_BQ_METHOD', 'oauth') }}"
+      project: "{{ env_var('DBT_BQ_PROJECT') }}"
+      dataset: "{{ env_var('DBT_BQ_DATASET', 'analytics') }}"
+      location: "{{ env_var('DBT_BQ_LOCATION', 'US') }}"
+      threads: 8
+      timeout_seconds: 600
+      priority: interactive
+      # Fails the run rather than silently scanning a terabyte. Raise it deliberately.
+      maximum_bytes_billed: 100000000000   # 100 GB
+      # keyfile: "{{ env_var('DBT_BQ_KEYFILE', '') }}"   # method: service-account
+
+    # ---------------------------------------------------------------- Snowflake
+    # Key-pair auth is preferred over a password for anything automated. Never commit
+    # the private key; point at it with an env var.
+    snowflake:
+      type: snowflake
+      account: "{{ env_var('DBT_SF_ACCOUNT') }}"
+      user: "{{ env_var('DBT_SF_USER') }}"
+      # password: "{{ env_var('DBT_SF_PASSWORD') }}"
+      private_key_path: "{{ env_var('DBT_SF_PRIVATE_KEY_PATH', '') }}"
+      private_key_passphrase: "{{ env_var('DBT_SF_PRIVATE_KEY_PASSPHRASE', '') }}"
+      role: "{{ env_var('DBT_SF_ROLE', 'TRANSFORMER') }}"
+      warehouse: "{{ env_var('DBT_SF_WAREHOUSE', 'TRANSFORMING') }}"
+      database: "{{ env_var('DBT_SF_DATABASE', 'ANALYTICS') }}"
+      schema: "{{ env_var('DBT_SF_SCHEMA', 'MAIN') }}"
+      threads: 8
+      client_session_keep_alive: false
+      # Kills a runaway query instead of burning credits until someone notices.
+      query_tag: dbt
+      retry_on_database_errors: true
+      connect_retries: 2
+
+# ---------------------------------------------------------------------------
+# In a real project:
+#
+#   - This file lives at ~/.dbt/profiles.yml and is NOT in the repo.
+#   - Every secret is env_var(). A committed password is a credential rotation, not a
+#     code review comment.
+#   - env_var() with no default fails the parse when the variable is missing, which is
+#     what you want: a missing credential should stop the run, not silently connect
+#     somewhere else.
+#   - Verify with `dbt debug --target <name>` before running anything that writes.

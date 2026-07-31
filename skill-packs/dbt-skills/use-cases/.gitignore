@@ -20,7 +20,7 @@ profiles.yml
 # later, removing the backstop exactly where a real credential is most likely to be typed.
 # A new use case that genuinely needs its profile committed adds its own line here, which
 # is a reviewable diff.
-!use-cases/example-order-revenue-mart/dbt_project/profiles.yml
+!example-order-revenue-mart/dbt_project/profiles.yml
 
 # DuckDB databases created by the worked example
 *.duckdb
@@ -43,8 +43,8 @@ venv/
 # NOTE: the synthetic artifacts under use-cases/example-order-revenue-mart/artifacts/ are
 #       committed on purpose — they are the worked example's fixtures, not build output,
 #       and are excluded from the target/ rule by their path.
-!use-cases/**/artifacts/target/
-!use-cases/**/artifacts/target/*.json
+!**/artifacts/target/
+!**/artifacts/target/*.json
 
 # Graphify
 graphify-out/

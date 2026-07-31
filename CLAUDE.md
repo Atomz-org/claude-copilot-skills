@@ -34,6 +34,31 @@ Canonical dbt skill entrypoint: `dbt-skill` (compatibility alias: `senior-analyt
 		- Analytics: `.claude/commands/analytics/`
 	- Backward compatibility command files remain in `.claude/commands/`
 
+## Generated paths — edit the pack, not the mirror
+
+`scripts/activate_skill_stack.sh` materialises the active pack into the paths agents load.
+These roots are **generated output**, and a direct edit is reverted on the next activation:
+
+- `.claude/agents/`, `.claude/skills/`, `.claude/commands/`, `.claude/rules/`, `.claude/hooks/`
+	- Source: `skill-packs/<pack>/.claude/`
+- `references/`, `templates/`
+	- Source: `skill-packs/<pack>/`
+
+Both the pack copy and the root mirror must exist: skills and agents link to these assets
+with a single relative path (`../../references/x.md`) that has to resolve in the pack *and*
+after activation.
+
+Exceptions maintained directly at repository level, because no pack owns them:
+`.claude/commands/analytics/`, `.claude/commands/infra/`.
+
+After changing any pack asset:
+
+```bash
+./scripts/activate_skill_stack.sh dbt-skills && git status --short
+```
+
+Unexpected modifications in that output mean an edit landed in a generated path.
+
 ## RTK and memory integration
 
 - RTK registry and routes: `src/ai-core/rtk-setup.ts` and `src/ai-core/dbt-integration.ts`
