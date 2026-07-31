@@ -16,7 +16,10 @@ set -euo pipefail
 
 TARGET="${1:-duckdb_dev}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCAFFOLD="$(cd "$HERE/../../.." && pwd)"
+# The scaffold root owns .venv/ and scripts/. This file lives five levels below it, at
+# skill-packs/<pack>/use-cases/<slug>/dbt_project/ — it was three before the worked
+# example moved into the pack, which left the script looking for dbt inside the pack.
+SCAFFOLD="$(cd "$HERE/../../../../.." && pwd)"
 DBT="${DBT_BIN:-$SCAFFOLD/.venv/bin/dbt}"
 cd "$HERE"
 
