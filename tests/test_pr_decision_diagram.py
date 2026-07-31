@@ -13,6 +13,7 @@ load-bearing and pinned here:
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -114,3 +115,71 @@ def test_workflow_exists_and_is_wired_safely():
             raise AssertionError("github.head_ref interpolated directly into a run script")
     assert "pr_decision_diagram.py" in text
     assert "GITHUB_STEP_SUMMARY" in text
+
+
+# ---------------------------------------------------------------------------
+# Runs alongside the other PR workflows, on every PR commit
+# ---------------------------------------------------------------------------
+
+WORKFLOWS = REPO / ".github" / "workflows"
+PR_WORKFLOWS = [
+    WORKFLOWS / "pr-decision-diagram.yml",
+    WORKFLOWS / "ci-quality-gate.yml",
+    WORKFLOWS / "claude-code-review.yml",
+]
+
+
+def _pull_request_types(path: Path) -> set[str]:
+    """Extract the `pull_request: types: [...]` set from a workflow file."""
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"pull_request:\s*\n\s*types:\s*\[([^\]]*)\]", text)
+    assert match, f"{path.name} has no pull_request types block"
+    return {t.strip() for t in match.group(1).split(",") if t.strip()}
+
+
+def test_pr_workflows_fire_on_identical_triggers():
+    """The diagram must run alongside the other PR workflows, not on a subset.
+
+    Pinning the three trigger sets together means adding an event type to the
+    quality gate later fails this test until the diagram gets it too.
+    """
+    sets = {p.name: _pull_request_types(p) for p in PR_WORKFLOWS}
+    reference = sets["ci-quality-gate.yml"]
+    assert "synchronize" in reference, "synchronize is what makes it run per commit"
+    for name, types in sets.items():
+        assert types == reference, f"{name} triggers {sorted(types)} != {sorted(reference)}"
+    for path in PR_WORKFLOWS:
+        assert "workflow_dispatch:" in path.read_text(encoding="utf-8"), path.name
+
+
+def test_diagram_is_serialized_per_pr():
+    """A superseded run must not overwrite the sticky comment with a stale verdict."""
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "concurrency:" in text
+    assert "cancel-in-progress: true" in text
+    assert "group: pr-decision-diagram-" in text
+
+
+def test_test_gate_has_pytest_installed():
+    """pytest is not preinstalled on the runner; without it the gate always fails."""
+    text = WORKFLOW.read_text(encoding="utf-8")
+    install = text.index("pip install -q pytest")
+    assert install < text.index("Run decision gates")
+
+
+def test_scratch_files_stay_out_of_the_work_tree():
+    """The drift gate reads `git status --porcelain`; scratch files would dirty it."""
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "git status --porcelain" in text
+    assert '"$RUNNER_TEMP/decisions.txt"' in text
+    assert ": > decisions.txt" not in text
+    for artifact in ("decisions.txt", "diagram.md", "pr_title.txt", "pr.json"):
+        for line in text.splitlines():
+            stripped = line.strip()
+            if artifact in stripped and not stripped.startswith("#"):
+                assert "RUNNER_TEMP" in stripped, f"{artifact} written into the work tree: {stripped}"
+
+
+def test_quality_gate_asserts_the_diagram_workflow_is_present():
+    quality = (WORKFLOWS / "ci-quality-gate.yml").read_text(encoding="utf-8")
+    assert "test -f .github/workflows/pr-decision-diagram.yml" in quality
