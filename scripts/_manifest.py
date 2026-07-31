@@ -1,7 +1,15 @@
 """Shared manifest helpers for the dbt Core analytics-engineering scripts.
 
-Standard library only. Every script here reads dbt's JSON artifacts; none connect to a
-warehouse. Run any dbt command (`dbt parse` is enough) to produce `target/manifest.json`.
+Runs on the standard library alone. Every script here reads dbt's JSON artifacts; none
+connect to a warehouse. Run any dbt command (`dbt parse` is enough) to produce
+`target/manifest.json`.
+
+JSON parsing prefers `orjson` when it happens to be importable and falls back to the
+standard library otherwise — the same shape as `_miniyaml.load`, which prefers PyYAML.
+The example artifacts in this repository parse in well under a millisecond, so the
+accelerator is pointless at that size; a production `manifest.json` runs to hundreds of
+megabytes, where the parse stops being free. Either way the install stays optional,
+which is the whole point of a no-install-step scaffold.
 """
 
 from __future__ import annotations
@@ -11,7 +19,34 @@ import os
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
+try:  # optional accelerator — absence is the normal case, not an error
+    import orjson as _orjson
+except ImportError:  # pragma: no cover - depends on the environment
+    _orjson = None  # type: ignore[assignment]
+
 # ---------------------------------------------------------------- loading
+
+
+def using_orjson() -> bool:
+    """True when the optional orjson accelerator is parsing artifacts."""
+    return _orjson is not None
+
+
+def json_parser_name() -> str:
+    """Human-readable name of the active JSON parser, for `--verbose` output."""
+    return "orjson" if using_orjson() else "bundled standard-library json"
+
+
+def loads(raw: bytes) -> Any:
+    """Parse UTF-8 JSON bytes with orjson when available, else the standard library.
+
+    Bytes rather than str on purpose: both parsers decode UTF-8 internally, so handing
+    them the raw bytes skips a separate decode pass over the whole artifact. Both raise
+    a `ValueError` subclass on malformed input, so callers catch one exception type.
+    """
+    if _orjson is not None:
+        return _orjson.loads(raw)
+    return json.loads(raw)
 
 
 def load_json(path: str, what: str = "artifact") -> Dict[str, Any]:
@@ -25,9 +60,9 @@ def load_json(path: str, what: str = "artifact") -> Dict[str, Any]:
             f"  writes catalog.json."
         )
     try:
-        with open(path, "r", encoding="utf-8") as fh:
-            return json.load(fh)
-    except json.JSONDecodeError as exc:
+        with open(path, "rb") as fh:
+            return loads(fh.read())
+    except ValueError as exc:  # json.JSONDecodeError and orjson.JSONDecodeError both
         die(f"{what} at {path} is not valid JSON: {exc}")
     return {}  # unreachable; keeps type checkers quiet
 
