@@ -38,6 +38,7 @@ vars:
   is_erp_enabled: false          # gates the unified erp_bi and logic_bi layers
   is_favrit_enabled: false
   is_fortnox_enabled: false
+  is_hubspot_enabled: false      # CRM. Contact PII handling unresolved — keep false until ruled on
   is_seventime_enabled: false
   is_shopify_enabled: false
   is_tempo_enabled: false
@@ -85,6 +86,8 @@ models:
         +tags: ['favrit']
       fortnox:
         +tags: ['fortnox']
+      hubspot:
+        +tags: ['hubspot']
       seventime:
         +tags: ['seventime']
       shopify:
@@ -107,6 +110,9 @@ models:
 
     shopify_bi:
       +tags: ['shopify', 'bi']
+
+    hubspot_bi:
+      +tags: ['hubspot', 'bi']
 
     fortnox:
       +tags: ['fortnox']
