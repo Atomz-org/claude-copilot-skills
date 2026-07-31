@@ -323,5 +323,62 @@ every one of them in CI. There is no reason to scope them.
 - Testing the happy path only.
 - Real production values in fixtures — fixtures are committed to git and read by everyone.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| "unit test int_orders_categorized" | Fixtures covering the boundaries, with expected output written by hand |
+| "does this need a unit test?" | Yes if the SQL has a CASE, window, regex, date math, or a fan-out-resolving join |
+| "test the incremental branch" | `this` mocked and `is_incremental` overridden — otherwise the branch never runs |
+| "my unit test passes but production is wrong" | The usual cause: the expectation was derived from the model's own expression |
+
+**Worked example**
+
+> "unit test the order size buckets and the incremental filter"
+
+```yaml
+unit_tests:
+  - name: test_order_size_boundaries
+    model: int_orders_categorized
+    given:
+      - input: ref('stg_shopify__orders')
+        rows:
+          - {order_id: 1, total_amount: 99.99,  ordered_at: '2026-01-15'}  # just under
+          - {order_id: 2, total_amount: 100.00, ordered_at: '2026-01-15'}  # exactly at
+          - {order_id: 3, total_amount: null,   ordered_at: '2026-01-15'}  # null path
+    expect:
+      rows:                                    # only the columns this test asserts
+        - {order_id: 1, size_bucket: 'small'}
+        - {order_id: 2, size_bucket: 'medium'}
+        - {order_id: 3, size_bucket: 'unknown'}
+
+  - name: test_incremental_lookback_keeps_late_rows
+    model: fct_orders
+    overrides:
+      macros:
+        is_incremental: true                   # without this the branch is never exercised
+    given:
+      - input: ref('stg_shopify__orders')
+        rows:
+          - {order_id: 10, updated_at: '2026-01-10'}   # inside the 3-day lookback
+          - {order_id: 11, updated_at: '2026-01-01'}   # outside it
+      - input: this                            # mock the existing table
+        rows:
+          - {order_id: 99, updated_at: '2026-01-09'}
+    expect:
+      rows:
+        - {order_id: 10}                       # late-arriving row is picked up
+```
+
+```bash
+dbt test --select int_orders_categorized,test_type:unit
+dbt test --select test_type:unit              # all unit tests — fast, no warehouse data
+```
+
+Row 2 is the one that catches `>` written where `>=` was meant. Deriving either expected
+value with the model's own CASE proves only that the expression equals itself.
+
 Next: [semantic-layer-metricflow](../semantic-layer-metricflow/SKILL.md) or
 [ops-and-deployment](../ops-and-deployment/SKILL.md).

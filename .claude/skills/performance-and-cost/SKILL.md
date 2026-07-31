@@ -280,4 +280,59 @@ models:
 - Never running a full refresh, so nobody notices the incremental result diverged.
 - Optimizing before measuring. The slow model is rarely the one people assume.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| "the build got slow" | `run_results.json` measured first — critical path, not total time |
+| "make dbt faster" | The lever with the largest payoff for *this* project, not a list of general tips |
+| "the warehouse bill went up" | Attribution by model via query tags, then the specific models responsible |
+| "should I add threads?" | No, if wall-clock already equals the critical path — threads cannot beat the longest chain |
+
+**Worked example**
+
+> "our nightly build went from 20 to 55 minutes"
+
+```bash
+python scripts/run_results_analyzer.py \
+    --run-results target/run_results.json --manifest target/manifest.json --top 20
+```
+
+```
+Total model time   142 min across 8 threads
+Wall clock          55 min
+Critical path       51 min   ← the ceiling; threads cannot go below this
+
+Longest nodes
+  fct_events            31.4 min   table, full rebuild, 2.1 B rows        ON critical path
+  int_sessions          14.8 min   ephemeral, inlined into 3 models       ON critical path
+  dim_products           9.2 min   table, 40 K rows                       off critical path
+  assert_revenue_recon    6.1 min   test, full-table join, every CI run   off critical path
+```
+
+```
+Diagnosis and order of work
+  1. fct_events    Full rebuild of an append-only table. Incremental on event_at with a
+                   3-day lookback → ~31 min becomes ~2 min. Biggest single win.
+  2. int_sessions  Ephemeral, so its 14.8 min is recomputed inside all three consumers.
+                   Materialize as a table: computed once.
+  3. dim_products  Off the critical path. Optimizing it changes wall-clock by zero.
+                   Leave it.
+  4. The test      Move the full reconciliation to a nightly tag; keep a scoped
+                   `where: ordered_at >= dateadd(day, -7, current_date)` version in CI.
+
+Projected: 55 min → ~22 min. Re-measure rather than assume — re-run the analyzer after
+each change.
+```
+
+```bash
+# Cost attribution, so the next regression has an owner
+# dbt_project.yml → +query_tag: "dbt:finance"  (Snowflake: shows in QUERY_HISTORY)
+```
+
+Step 3 is the discipline: `dim_products` is the slowest-looking model people reach for
+first, and improving it changes nothing. Measure, then optimize what is on the path.
+
 Reference: [references/performance_and_cost.md](../../../references/performance_and_cost.md).

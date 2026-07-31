@@ -217,4 +217,58 @@ test, a new freshness block, or a written reason why neither was possible.
   involved.
 - Fixing the symptom in the mart when the defect is in the source system.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| `/dbt-debug` | `run_results.json` read first — the failing node, its error, its timing, its blast radius |
+| "just re-run it" | A pushback: re-running blind costs a full build and discards the evidence |
+| "this Jinja error makes no sense" | `target/compiled/` read, not the model file — the error is in the rendered SQL |
+| "the numbers changed and nothing was deployed" | Source freshness and the incremental invariant checked before any code is touched |
+
+**Worked example**
+
+> "last night's build failed"
+
+```bash
+python scripts/run_results_analyzer.py \
+    --run-results target/run_results.json --manifest target/manifest.json --top 20
+```
+
+```
+FAIL  test  unique_fct_orders_order_id     0.4s    142 failing rows
+SKIP  model dim_customer_orders                    (dependent on the failed test)
+PASS  model fct_orders                    48.2s    ← the SQL ran fine; the data is wrong
+```
+
+```sql
+-- store_failures wrote the offending rows to a table. Query it instead of guessing.
+select order_id, count(*) from analytics_dbt_test__audit.unique_fct_orders_order_id
+group by 1 order by 2 desc limit 10;
+--   4471 | 2      ← every duplicate has exactly 2 rows
+```
+
+```bash
+# Upstream or here? Check the staging model's own PK.
+dbt build --select stg_shopify__orders
+#   unique_stg_shopify__orders_order_id → FAIL, same 142 keys.
+#   The defect is a double load upstream, not the mart.
+
+python scripts/model_dependency_analyzer.py \
+    --manifest target/manifest.json --model fct_orders --direction down
+```
+
+```
+Diagnosis  Duplicate source load on 2026-07-30; 142 order_ids landed twice.
+Fix        Deduplicate in staging on (order_id, _loaded_at) — and raise the double load
+           with the EL owner. A mart-level distinct would hide it.
+Prevention unique test on stg_shopify__orders, plus a freshness block on the source.
+Verify     dbt build --select stg_shopify__orders+
+```
+
+The last two lines are the ones that change the future. An investigation that ends without
+a new test, a new freshness block, or a written reason why neither was possible will repeat.
+
 Reference: [references/troubleshooting.md](../../../references/troubleshooting.md).

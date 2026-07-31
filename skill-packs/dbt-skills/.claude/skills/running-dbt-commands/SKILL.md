@@ -258,5 +258,51 @@ run to S3/GCS, and download them in CI.
 - `--exclude` used to work around a broken test instead of fixing or scoping the test.
 - Ignoring `dbt ls` and discovering the scope from the build log.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| `/dbt-build` | The selector, the acceptance bar, and the cost — agreed before anything runs |
+| "rebuild what my change affects" | `dbt ls` first to show the scope, then `dbt build --select <model>+` |
+| "my selector matched nothing" | The resolved config via `dbt ls --output json`, and the flag that makes it fail loudly |
+| "re-run just the failures" | `dbt retry`, or `--select result:error+` against the last `run_results.json` |
+
+**Worked example**
+
+> "I changed stg_shopify__orders — what do I need to rebuild?"
+
+```bash
+# 1. See the scope before spending warehouse time on it
+dbt ls --select stg_shopify__orders+ --output name
+#   stg_shopify__orders
+#   int_orders_categorized
+#   fct_orders
+#   dim_customer_orders            ← the one people forget is downstream
+
+# 2. Cheapest validation first — no data scanned
+dbt compile --select stg_shopify__orders+
+
+# 3. Build the path, with tests interleaved
+dbt build --select stg_shopify__orders+
+
+# 4. Something failed — re-run only the failures, not the DAG
+dbt retry
+#   or, explicitly, from the stored artifacts:
+dbt build --select result:error+ --state target/
+```
+
+For CI, the selector is `state:modified+` against a deferred production manifest, with
+missing-node detection turned into an error:
+
+```bash
+dbt build --select state:modified+ --defer --state prod/ \
+    --warn-error-options '{"error":["NoNodesForSelectionCriteria"]}'
+```
+
+Without that flag a typo in the selector exits 0 having built nothing, which reads as a
+green CI run.
+
 Next: [ops-and-deployment](../ops-and-deployment/SKILL.md).
 Reference: [references/dbt_core_cli.md](../../../references/dbt_core_cli.md).

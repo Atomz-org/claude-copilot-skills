@@ -33,3 +33,34 @@ Expected result: non-zero exit and BLOCKED message.
 
 - Do not disable this hook in shared stacks.
 - Adjust blocked patterns only with explicit repository approval.
+
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| `/setup-git-guardrails` | Hook script and settings entry installed, existing hooks merged, then a live payload test |
+| "are the guardrails actually on?" | The verification run, not a reading of the config file |
+| "unblock git push" | The change refused by default in a shared stack; explicit repository approval is required |
+
+**Worked example**
+
+> `/setup-git-guardrails`
+
+```
+.claude/hooks/block-dangerous-git.sh   present, mode 644 → chmod +x
+.claude/settings.json                  1 existing PreToolUse entry (formatter) → merged, not replaced
+
+Verify — blocked path
+  $ echo '{"tool_input":{"command":"git push --force origin main"}}' | .claude/hooks/block-dangerous-git.sh
+  BLOCKED: git push
+  exit 2
+
+Verify — allowed path
+  $ echo '{"tool_input":{"command":"git status --porcelain"}}' | .claude/hooks/block-dangerous-git.sh
+  exit 0
+```
+
+Both probes matter. A hook that blocks everything, and a hook that blocks nothing, both
+exit cleanly on the first probe alone.
