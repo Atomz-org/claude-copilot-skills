@@ -5,7 +5,7 @@ argument-hint: <connector> --use-case <slug> --tables <t1,t2,...> [--unified-con
 
 Add this connector: **$ARGUMENTS**
 
-Load the `new-connector` skill. Scaffold with
+Load the `connector-onboarding` skill. Scaffold with
 `scripts/new_connector.py` at the repository root, then commit through
 `.claude/commands/infra/git-standard.sh`.
 
