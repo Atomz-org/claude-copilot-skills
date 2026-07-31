@@ -1,3 +1,9 @@
+> **Frozen provenance copy — not live guidance.** The original README from the
+> `git-skills` source repository, preserved for history per
+> [README.md § Feature provenance](../../README.md). It may contradict current behavior and
+> must not be followed or edited to match. The live documentation is
+> [README.md](../../README.md).
+
 # GIT Skills
 
 This repository acts as a reusable, standards-oriented module for automation, documentation, and workflow scaffolding.
@@ -15,10 +21,10 @@ pytest -q
 
 ## Repository entry points
 
-- [Ways of Working](docs/WAY_OF_WORKING.md)
-- [Automation Workflow](docs/AUTOMATION_WORKFLOW.md)
-- [Automation Setup](.github/AUTOMATION_SETUP.md)
-- [Automation Test Notes](.github/AUTOMATION_TEST.md)
+- [Ways of Working](../../docs/WAY_OF_WORKING.md)
+- [Automation Workflow](../../docs/AUTOMATION_WORKFLOW.md)
+- [Automation Setup](../../.github/AUTOMATION_SETUP.md)
+- [Automation Test Notes](../../.github/AUTOMATION_TEST.md)
 
 ## Contribution workflow
 

@@ -1,3 +1,9 @@
+> **Frozen provenance copy — not live guidance.** The original README from the
+> `dbt-skills` source repository, preserved for history per
+> [README.md § Feature provenance](../../README.md). It may contradict current behavior and
+> must not be followed or edited to match. The live documentation is
+> [README.md](../../README.md).
+
 # dbt Skill — How to Use It
 
 A scaffold that turns a business data request into working, tested, documented **dbt Core**
@@ -271,7 +277,7 @@ Then: `data-modeler` for the canvas → `dbt-model-designer` for the SQL →
 It will **not** write SQL. That is the next agent's job, and doing it here skips the
 blueprint.
 
-See [skill-packs/dbt-skills/use-cases/example-order-revenue-mart/data-model-canvas.md](skill-packs/dbt-skills/use-cases/example-order-revenue-mart/data-model-canvas.md)
+See [skill-packs/dbt-skills/use-cases/example-order-revenue-mart/data-model-canvas.md](../../skill-packs/dbt-skills/use-cases/example-order-revenue-mart/data-model-canvas.md)
 for a filled-in one, including the entities that were *rejected* and why.
 
 ### 3. A failure
@@ -437,7 +443,7 @@ next to it — a hardcoded `merge` strategy that DuckDB rejects on the *second* 
 failures from uncast aggregates, a Jinja block-assignment trap, Jinja rendering SQL
 comments, macros being unavailable in property YAML, and a seeds-as-sources race. The full
 list is in
-[skill-packs/dbt-skills/use-cases/example-order-revenue-mart/README.md](skill-packs/dbt-skills/use-cases/example-order-revenue-mart/README.md#what-the-real-run-teaches).
+[skill-packs/dbt-skills/use-cases/example-order-revenue-mart/README.md](../../skill-packs/dbt-skills/use-cases/example-order-revenue-mart/README.md#what-the-real-run-teaches).
 
 The same project runs on BigQuery and Snowflake via the portability layer in
 `macros/cross_db.sql`. Only the DuckDB path has been executed here; the other two are
@@ -455,20 +461,20 @@ old 29–34 is now 36–41, old 35–38 is now 42–45.
 
 | Path | What |
 |---|---|
-| [.claude/agents/](.claude/agents/) | The 7 agents |
-| [.claude/skills/](.claude/skills/) | 14 skills, loaded on demand |
-| [.claude/commands/](.claude/commands/) | 8 slash commands |
-| [.claude/rules/analytics-engineering-rules.md](.claude/rules/analytics-engineering-rules.md) | The 47 rules |
-| [scripts/](scripts/) | 11 analyzers + 2 shared helpers |
-| [templates/](templates/) | 10 deliverable shapes — specs, canvas, blueprints, runbooks, checklists |
+| [.claude/agents/](../../.claude/agents/) | The 7 agents |
+| [.claude/skills/](../../.claude/skills/) | 14 skills, loaded on demand |
+| [.claude/commands/](../../.claude/commands/) | 8 slash commands |
+| [.claude/rules/analytics-engineering-rules.md](../../.claude/rules/analytics-engineering-rules.md) | The 47 rules |
+| [scripts/](../../scripts/) | 11 analyzers + 2 shared helpers |
+| [templates/](../../templates/) | 10 deliverable shapes — specs, canvas, blueprints, runbooks, checklists |
 | [../../skill-packs/dbt-skills/references/](../../skill-packs/dbt-skills/references/) | 15 deep references, loaded on demand |
-| [use-cases/](use-cases/) | One directory per data request |
-| [SKILL.md](SKILL.md) | Stage → skill routing table |
-| [CLAUDE.md](CLAUDE.md) | Project instructions Claude reads automatically |
+| [use-cases/](../../use-cases/) | One directory per data request |
+| [SKILL.md](../../SKILL.md) | Stage → skill routing table |
+| [CLAUDE.md](../../CLAUDE.md) | Project instructions Claude reads automatically |
 
 ## The five rules that matter most
 
-Full list in [.claude/rules/analytics-engineering-rules.md](.claude/rules/analytics-engineering-rules.md).
+Full list in [.claude/rules/analytics-engineering-rules.md](../../.claude/rules/analytics-engineering-rules.md).
 
 - **No model before a use-case spec, no mart without a named consumer.**
 - **Declare the grain in one sentence** before writing SQL.

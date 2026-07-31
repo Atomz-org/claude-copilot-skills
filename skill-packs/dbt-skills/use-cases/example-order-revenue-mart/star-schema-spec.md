@@ -118,7 +118,7 @@ erDiagram
     FCT_ORDERS }o--o| DIM_CUSTOMERS : "customer_id (optional - guest checkout)"
 ```
 
-Matches what [erd_generator.py](../../scripts/erd_generator.py) produces from the built
+Matches what [erd_generator.py](../../../../scripts/erd_generator.py) produces from the built
 manifest — the `o|` on the right is the optionality, derived from the absent `not_null`
 test rather than from intent.
 

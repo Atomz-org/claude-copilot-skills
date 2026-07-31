@@ -18,9 +18,13 @@ jobs:
       - name: Close linked issues
         env:
           GH_TOKEN: ${{ github.token }}
+          # Passed as an environment variable rather than interpolated into the script.
+          # Inline interpolation puts the body inside single quotes, so a PR description
+          # containing an apostrophe ends the quote and the step dies on a syntax error
+          # before closing anything — and a crafted body could run arbitrary commands.
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          body='${{ github.event.pull_request.body }}'
-          echo "$body" | grep -oE '#[0-9]+' | tr -d '#' | while read -r issue; do
+          printf '%s' "$PR_BODY" | grep -oE '#[0-9]+' | tr -d '#' | while read -r issue; do
             gh issue edit "$issue" --repo "${{ github.repository }}" --add-label "status: done" --remove-label "status: in-review" || true
             gh issue close "$issue" --repo "${{ github.repository }}" --reason completed || true
           done

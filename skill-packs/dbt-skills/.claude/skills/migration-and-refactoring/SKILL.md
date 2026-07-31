@@ -263,4 +263,55 @@ and `time_spine:` config (1.7–1.9 depending on the feature).
 - Forgetting to regenerate the production manifest after a dbt upgrade, silently breaking
   slim CI.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| "convert this stored procedure to dbt" | An inventory and a slice plan — not one enormous model translated line by line |
+| "refactor fct_orders" | Equivalence proved with `audit_helper`, behavior unchanged, in its own commit |
+| "we're moving from Redshift to Snowflake" | The dialect differences that actually bite, and a cutover plan with a rollback |
+| "upgrade dbt Core" | One minor version at a time, and the production manifest regenerated afterwards |
+
+**Worked example**
+
+> "refactor fct_orders — it's a 400-line model"
+
+```sql
+-- analyses/audit_fct_orders.sql — written BEFORE the refactor
+{{ audit_helper.compare_all_columns(
+     a_relation=api.Relation.create(schema='audit', identifier='fct_orders_before'),
+     b_relation=ref('fct_orders'),
+     primary_key='order_id'
+) }}
+```
+
+```bash
+# 1. Snapshot the current output as the baseline
+create table analytics.audit.fct_orders_before as select * from analytics.marts.fct_orders;
+
+# 2. Refactor — structure only, no behavior change in this commit
+#    400 lines → int_order_lines_by_order, int_refunds_by_order, fct_orders
+
+# 3. Prove equivalence, per column
+dbt build --select fct_orders
+dbt compile --select audit_fct_orders
+# run target/compiled/.../audit_fct_orders.sql in the warehouse
+```
+
+```
+column           match_rate
+order_id            100.0%
+total_amount        100.0%
+refund_amount        99.7%   ← not equivalent. 312 orders differ.
+                              The old model used an inner join and dropped unrefunded
+                              orders' zero rows. Which behavior is correct is a business
+                              question — answer it before merging, in its own commit.
+```
+
+`compare_all_columns` localizes the difference to one column in seconds; a row-level diff
+would have shown 312 mismatched rows and no cause. And "it looks right" would have shipped
+a 0.3% revenue change nobody chose.
+
 Reference: [references/migration_playbooks.md](../../../references/migration_playbooks.md).

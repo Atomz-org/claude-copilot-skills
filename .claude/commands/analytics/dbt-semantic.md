@@ -64,7 +64,7 @@ common validation failure.
 
 ### 3. Write it
 
-Patterns: [templates/dbt-patterns.md](../../templates/dbt-patterns.md).
+Patterns: [templates/dbt-patterns.md](../../../templates/dbt-patterns.md).
 
 Details that cause most of the failures:
 
@@ -137,7 +137,7 @@ six months.
 
 ## Rules that bind here
 
-[Rules 42–45](../rules/analytics-engineering-rules.md): a metric is defined once, in the
+[Rules 42–45](../../rules/analytics-engineering-rules.md): a metric is defined once, in the
 semantic layer; semantic models sit on marts; every semantic model declares its primary
 entity, `agg_time_dimension`, and every time dimension's granularity; metrics validate
 before they ship.

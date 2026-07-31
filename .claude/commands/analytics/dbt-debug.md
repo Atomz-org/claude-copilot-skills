@@ -93,7 +93,7 @@ Escalate rather than guessing when:
 ## 8. Record it
 
 For anything over fifteen minutes or that reached production, fill
-[templates/incident-investigation.md](../../templates/incident-investigation.md).
+[templates/incident-investigation.md](../../../templates/incident-investigation.md).
 
 Section 8 — **the test that would have caught this** — is the only field that changes the
 future. Every investigation ends with a new test, a new freshness block, or a written
@@ -103,8 +103,8 @@ reason why neither is possible. "We'll be more careful" is not a reason.
 
 ## Rules that bind here
 
-[Rule 41](../rules/analytics-engineering-rules.md): failures are diagnosed from artifacts,
-not by re-running blindly. [Rule 23](../rules/analytics-engineering-rules.md): an
+[Rule 41](../../rules/analytics-engineering-rules.md): failures are diagnosed from artifacts,
+not by re-running blindly. [Rule 23](../../rules/analytics-engineering-rules.md): an
 incremental model whose full refresh differs from its incremental result is corrupt.
 
 ## Output

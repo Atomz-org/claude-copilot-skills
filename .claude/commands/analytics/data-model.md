@@ -7,9 +7,9 @@ Design the data model for: **$ARGUMENTS**
 
 Load the `data-modeling` skill. Write to `use-cases/<slug>/`:
 
-- [templates/data-model-canvas.md](../../templates/data-model-canvas.md) — one per subject area
-- [templates/bus-matrix.md](../../templates/bus-matrix.md) — if more than one business process
-- [templates/star-schema-spec.md](../../templates/star-schema-spec.md) — one per business process
+- [templates/data-model-canvas.md](../../../templates/data-model-canvas.md) — one per subject area
+- [templates/bus-matrix.md](../../../templates/bus-matrix.md) — if more than one business process
+- [templates/star-schema-spec.md](../../../templates/star-schema-spec.md) — one per business process
 
 ---
 
@@ -88,19 +88,19 @@ optionality of a key relationship, and whether history matters. Ask them **in on
 ## 7. Hand off
 
 Each row of the grain matrix becomes a
-[model blueprint](../../templates/model-blueprint.md), then `dbt-model-design` writes the
+[model blueprint](../../../templates/model-blueprint.md), then `dbt-model-design` writes the
 SQL. Do not write SQL from this command.
 
 ---
 
 ## Rules that bind here
 
-[Rules 6–12](../rules/analytics-engineering-rules.md): conceptual model before physical;
+[Rules 6–12](../../rules/analytics-engineering-rules.md): conceptual model before physical;
 one entity, one definition, one table; cardinality and optionality are explicit; keys are
 never hashed from mutable attributes; grain is declared per table before columns;
 additivity is recorded per measure; the SCD type is chosen, not defaulted.
 
-Plus [rules 1, 4, 5](../rules/analytics-engineering-rules.md): no model before a spec,
+Plus [rules 1, 4, 5](../../rules/analytics-engineering-rules.md): no model before a spec,
 declare the grain, never invent a name.
 
 ## Output

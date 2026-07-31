@@ -34,6 +34,20 @@ cp -R "${domain_pack}/agents/." "${live_claude}/agents/"
 cp -R "${domain_pack}/rules/." "${live_claude}/rules/"
 cp -R "${domain_pack}/skills/." "${live_claude}/skills/"
 
+# Reference docs and artifact templates ship at the pack root, not under .claude/. Skills,
+# agents, and commands link to them as ../../references/<file>.md and ../../templates/<file>.md
+# (one level deeper from skills/). Those paths resolve to the pack root while the file lives
+# in the pack, and to the repository root once the pack is activated. Materialising both
+# directories here keeps a single relative link valid in both locations.
+for pack in "${shared_pack%/.claude}" "${domain_pack%/.claude}"; do
+  for asset in references templates; do
+    if [[ -d "${pack}/${asset}" ]]; then
+      mkdir -p "${root}/${asset}"
+      cp -R "${pack}/${asset}/." "${root}/${asset}/"
+    fi
+  done
+done
+
 if [[ -f "${live_claude}/hooks/block-dangerous-git.sh" ]]; then
   chmod +x "${live_claude}/hooks/block-dangerous-git.sh"
 fi

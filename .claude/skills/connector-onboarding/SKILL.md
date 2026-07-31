@@ -155,3 +155,53 @@ quarantine), [19–21, 25](../../rules/analytics-engineering-rules.md) (layer di
 stated PK, no `select *`), [28, 33](../../rules/analytics-engineering-rules.md) (tests,
 documentation), [36, 40, 47](../../rules/analytics-engineering-rules.md) (`dbt build`,
 rollback, read the project first).
+
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| `/new-connector stripe enhanza-analytics` | The project's own conventions detected and printed, then a dry-run scaffold |
+| "onboard Fortnox" with no use-case slug | A stop, and `/new-use-case` — a connector needs a project to enter |
+| "add HubSpot to the unified layer" | The source-aligned vs unified question settled before any file is written |
+
+**Worked example**
+
+> `/new-connector stripe enhanza-analytics`
+
+```
+Read first
+  CONNECTORS.md, dbt_project.yml, staging/shopify/ (busiest existing connector), macros/registry.sql
+
+Four questions, asked in one batch
+  1. Raw tables?        customers, charges
+  2. Unified layer?     yes — charges must reach fct_transactions
+  3. Model names?       customers=dim_customers, charges=fact_transactions
+  4. Currency?          [NEEDS INPUT] — not guessed
+```
+
+```bash
+python3 scripts/new_connector.py stripe \
+    --use-case enhanza-analytics \
+    --tables customers=dim_customers,charges=fact_transactions \
+    --unified-concepts dim_customers,fact_transactions \
+    --dry-run
+```
+
+```
+Detected conventions   staging infix __, source suffix _api, adapter prefix adapter_
+                       ← check these against staging/shopify/ before re-running for real
+Printed, not written   sources.yml block, registry entry, dbt_project.yml var + tags
+                       ← paste by hand; a reviewer must see these three
+```
+
+```bash
+# The check that matters: build alongside an existing connector, because a
+# UNION ALL with one branch never tests the column contract
+dbt build --select tag:unified+ \
+  --vars '{"uid": "acme", "is_stripe_enabled": true, "is_shopify_enabled": true}'
+```
+
+If there is no warehouse or profile here, say which checks ran and which did not. An unrun
+build is never reported as passing.

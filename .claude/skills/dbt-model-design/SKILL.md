@@ -364,5 +364,71 @@ column-list generation, per-adapter dispatch. Details in
 - Deeply nested subqueries instead of CTEs.
 - A `dim_` used where the consumer actually needed history.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| `/dbt-model fct_orders` | Blueprint before SQL — grain, PK, join plan with cardinalities, materialization and its reason |
+| "why does this model duplicate rows?" | The fan-out located in the join plan, not `distinct` bolted onto the final select |
+| "where should this logic go?" | A layer verdict: staging quarantines the source, intermediate holds reusable joins, marts express meaning |
+| "view or table?" | View by default; table when it is read more than it is built — with the reason written down |
+
+**Worked example**
+
+> "why is fct_orders returning more rows than orders?"
+
+```
+Grain claimed : one row per order. PK: order_id.
+Actual        : dbt test --select fct_orders → unique_fct_orders_order_id, 312 failures.
+
+Join plan, written out — this is the step that was skipped
+  stg_shopify__orders        1 row per order          base
+  stg_shopify__customers     1 per customer   N:1     safe
+  stg_shopify__order_lines   N per order      1:N     ← the fan-out
+  stg_shopify__refunds       N per order      1:N     ← and a second one
+
+Two 1:N joins against an order-grain base multiply, not add: an order with 3 lines and
+2 refunds becomes 6 rows. Every column still looks plausible.
+
+Fix — resolve each 1:N to the base grain before joining
+  int_order_lines_by_order   sum(line_amount), count(*) as line_count   → 1:1
+  int_refunds_by_order       sum(refund_amount)                         → 1:1
+  fct_orders joins both 1:1. Grain preserved by construction, not by distinct.
+```
+
+```sql
+-- models/marts/fct_orders.sql
+{{ config(materialized='table') }}  -- read hourly by BI, built nightly
+
+with orders as (select * from {{ ref('stg_shopify__orders') }}),
+     lines  as (select * from {{ ref('int_order_lines_by_order') }}),
+     refunds as (select * from {{ ref('int_refunds_by_order') }}),
+
+final as (
+    select
+        orders.order_id,                                  -- PK, enumerated: no select *
+        orders.customer_id,
+        orders.ordered_at,
+        lines.line_count,
+        orders.total_amount,
+        coalesce(refunds.refund_amount, 0) as refund_amount
+    from orders
+    left join lines   on orders.order_id = lines.order_id     -- LEFT: an order may have no lines
+    left join refunds on orders.order_id = refunds.order_id
+)
+
+select * from final
+```
+
+```bash
+dbt build --select int_order_lines_by_order+ 
+dbt test --select fct_orders        # unique + not_null on order_id must pass
+```
+
+`distinct` on the original would have removed the duplicate rows and kept the wrong
+totals — the failure mode that passes review.
+
 Next: [testing-and-documentation](../testing-and-documentation/SKILL.md), or
 [incremental-and-snapshots](../incremental-and-snapshots/SKILL.md) if the table is large.

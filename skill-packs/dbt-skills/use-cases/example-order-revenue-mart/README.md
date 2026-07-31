@@ -2,7 +2,7 @@
 
 A complete dbt Core use case that **actually runs**, on DuckDB, with no warehouse account
 and no credentials. Read it to calibrate the expected level of specificity, and run it to
-see what each tool in [scripts/](../../scripts/) outputs against a real manifest.
+see what each tool in [scripts/](../../../../scripts/) outputs against a real manifest.
 
 ## Run it
 

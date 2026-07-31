@@ -15,12 +15,16 @@ profiles.yml
 # env_var() reference, and it is the file that documents how to point the same project at
 # DuckDB, BigQuery, or Snowflake. Read its header before copying the pattern.
 #
-# The path is written out in full rather than as `use-cases/**/dbt_project/profiles.yml`
-# on purpose. A glob would silently un-ignore the profiles.yml of every use-case added
-# later, removing the backstop exactly where a real credential is most likely to be typed.
-# A new use case that genuinely needs its profile committed adds its own line here, which
-# is a reviewable diff.
-!use-cases/example-order-revenue-mart/dbt_project/profiles.yml
+# The path is written out in full rather than as `**/dbt_project/profiles.yml` on purpose.
+# A glob would silently un-ignore the profiles.yml of every use-case added later, removing
+# the backstop exactly where a real credential is most likely to be typed. A new use case
+# that genuinely needs its profile committed adds its own line here, which is a reviewable
+# diff.
+#
+# Keep this path in step with where the example actually lives. It moved into the pack, and
+# the stale `use-cases/...` form matched nothing — which silently un-committed the file and
+# left a fresh clone unable to run the example at all.
+!skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project/profiles.yml
 
 # DuckDB databases created by the worked example
 *.duckdb
@@ -45,8 +49,8 @@ venv/
 # NOTE: the synthetic artifacts under use-cases/example-order-revenue-mart/artifacts/ are
 #       committed on purpose — they are the worked example's fixtures, not build output,
 #       and are excluded from the target/ rule by their path.
-!use-cases/**/artifacts/target/
-!use-cases/**/artifacts/target/*.json
+!**/artifacts/target/
+!**/artifacts/target/*.json
 
 # Graphify
 graphify-out/

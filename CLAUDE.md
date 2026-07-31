@@ -10,6 +10,10 @@ This repository combines:
 
 ## Graphify-first rule
 
+**This section is the single source of truth for graph navigation in this repository.**
+Any other copy — a user-level protocol file, a source manual under `docs/source-manuals/` —
+is superseded by it. State the rule here or not at all.
+
 This project uses graph-based navigation when graph outputs are present.
 
 Rules:
@@ -19,6 +23,12 @@ Rules:
 - If `graphify-out/wiki/index.md` exists, use it for broad navigation first.
 - Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or when scoped queries are insufficient.
 - After meaningful code edits, run `graphify update .` to keep graph state current.
+
+CLI behavior, verified against the installed graphify:
+- Traversal is fixed at BFS depth=2. `--depth` is accepted and **silently ignored** — do not
+  rely on it to narrow a query.
+- `--budget N` is the working lever. Raise it when output reports `TRUNCATED`, or narrow the
+  question instead.
 
 ### TOON context pipeline
 
@@ -37,10 +47,16 @@ rust/toon/bin/graph_to_toon --graph graphify-out/graph.json --community "<x>"  #
 
 The serializer is `rust/toon/graph_to_toon.rs`; its full functionality contract lives as
 comments in that file, and `tests/test_toon_serializer.py` pins the behavior at the CLI
-level (`tests/conftest.py` builds the binary on demand where `rustc` exists).
+level (`tests/conftest.py` builds the binary on demand where `rustc` exists). TypeScript
+call sites route through `src/ai-core/toon-serializer.ts` (`GraphManager.snapshotToToon()`).
 
-Enforcement is automatic, via hooks registered in `.claude/settings.json`:
+### Enforcement
 
+Enforcement is automatic, not manual — `.claude/settings.json` registers all of it; do not
+add duplicate mechanisms:
+
+- `graphify hook-guard` (`PreToolUse` on `Bash|Grep` and `Read|Glob`) injects the
+  graph-first reminder at call time.
 - `scripts/hooks/toon_graphify_pipe.py` (`PreToolUse` on `Bash`) rewrites bare
   `graphify query|path|explain` commands to pipe through
   `rust/toon/bin/graph_to_toon --passthrough`, and stays silent when the binary is not
@@ -49,8 +65,7 @@ Enforcement is automatic, via hooks registered in `.claude/settings.json`:
 - `scripts/hooks/toon_prompt_context.sh` (`UserPromptSubmit`) asserts the pipeline once
   per prompt.
 
-Hook behavior is pinned by `tests/test_toon_pipeline_hooks.py`. TypeScript call sites
-route through `src/ai-core/toon-serializer.ts` (`GraphManager.snapshotToToon()`).
+Hook behavior is pinned by `tests/test_toon_pipeline_hooks.py`.
 
 ## Agent and command topology
 
@@ -65,6 +80,31 @@ Canonical dbt skill entrypoint: `dbt-skill` (compatibility alias: `senior-analyt
 		- Infra: `.claude/commands/infra/`
 		- Analytics: `.claude/commands/analytics/`
 	- Backward compatibility command files remain in `.claude/commands/`
+
+## Generated paths — edit the pack, not the mirror
+
+`scripts/activate_skill_stack.sh` materialises the active pack into the paths agents load.
+These roots are **generated output**, and a direct edit is reverted on the next activation:
+
+- `.claude/agents/`, `.claude/skills/`, `.claude/commands/`, `.claude/rules/`, `.claude/hooks/`
+	- Source: `skill-packs/<pack>/.claude/`
+- `references/`, `templates/`
+	- Source: `skill-packs/<pack>/`
+
+Both the pack copy and the root mirror must exist: skills and agents link to these assets
+with a single relative path (`../../references/x.md`) that has to resolve in the pack *and*
+after activation.
+
+Exceptions maintained directly at repository level, because no pack owns them:
+`.claude/commands/analytics/`, `.claude/commands/infra/`.
+
+After changing any pack asset:
+
+```bash
+./scripts/activate_skill_stack.sh dbt-skills && git status --short
+```
+
+Unexpected modifications in that output mean an edit landed in a generated path.
 
 ## RTK and memory integration
 

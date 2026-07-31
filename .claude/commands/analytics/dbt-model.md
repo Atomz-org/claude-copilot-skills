@@ -38,7 +38,7 @@ than building a second one for the same source table.
 ## 2. Blueprint before SQL
 
 Load the `dbt-model-design` skill. Fill
-[templates/model-blueprint.md](../../templates/model-blueprint.md) into
+[templates/model-blueprint.md](../../../templates/model-blueprint.md) into
 `use-cases/<slug>/model-blueprint.md`. Every row must be filled before you write SQL —
 especially:
 
@@ -66,7 +66,7 @@ dbt build --select fct_<entity>
 **Never write three layers then run once.** Each layer's failure is cheap to diagnose in
 isolation and expensive to diagnose together.
 
-Patterns to copy: [templates/dbt-patterns.md](../../templates/dbt-patterns.md).
+Patterns to copy: [templates/dbt-patterns.md](../../../templates/dbt-patterns.md).
 
 ## 4. Tests and docs
 
@@ -126,7 +126,7 @@ If refactoring an existing model, prove equivalence rather than asserting it:
 
 ## Rules that bind here
 
-[Rules 4, 18–27](../rules/analytics-engineering-rules.md): declare the grain first; one
+[Rules 4, 18–27](../../rules/analytics-engineering-rules.md): declare the grain first; one
 concept one model; layer discipline; a tested primary key on every model; materialization
 is a decision with a reason; incremental models must be idempotent; `select *` does not
 survive into a mart.
