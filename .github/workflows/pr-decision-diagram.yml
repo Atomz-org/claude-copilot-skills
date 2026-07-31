@@ -1,0 +1,206 @@
+# Runs the repository's merge-decision gates on every PR push and posts the
+# outcome as a Mermaid flowchart in a sticky PR comment (updated in place).
+# The same document lands in the step summary, which also renders Mermaid.
+#
+# Triggers are deliberately in lockstep with the other PR-time workflows
+# (ci-quality-gate.yml, claude-code-review.yml) so all three fire on the same
+# events for every commit pushed to a PR. tests/test_pr_decision_diagram.py
+# compares the three trigger blocks and fails if that parity is ever broken.
+#
+# This workflow REPORTS; ci-quality-gate.yml is what blocks. Keeping them
+# separate means a red gate here shows up as a red node in the diagram rather
+# than a second failing check for the same cause.
+#
+# Untrusted inputs (branch name, PR title) are passed through the environment,
+# never interpolated into run: scripts.
+name: PR Decision Diagram
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to re-render the decision diagram for'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+# One diagram per PR. Without this, two quick pushes race and the slower,
+# older run finishes last — overwriting the sticky comment with a stale verdict.
+concurrency:
+  group: pr-decision-diagram-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  decision-diagram:
+    runs-on: ubuntu-latest
+    steps:
+      # Resolves PR metadata from the event payload, or from the API when the
+      # run was dispatched by hand. Everything downstream reads these outputs,
+      # so the gates behave identically on both triggers.
+      - name: Resolve PR context
+        id: ctx
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR: ${{ inputs.pr_number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            PR_NUMBER="$INPUT_PR"
+            gh api "repos/${REPO}/pulls/${PR_NUMBER}" > "$RUNNER_TEMP/pr.json"
+            PR_TITLE=$(jq -r '.title' "$RUNNER_TEMP/pr.json")
+            HEAD_REF=$(jq -r '.head.ref' "$RUNNER_TEMP/pr.json")
+            BASE_SHA=$(jq -r '.base.sha' "$RUNNER_TEMP/pr.json")
+            HEAD_SHA=$(jq -r '.head.sha' "$RUNNER_TEMP/pr.json")
+          fi
+          # The title is attacker-controlled and may contain newlines, so it
+          # goes to a file rather than $GITHUB_OUTPUT, which is line-based and
+          # therefore injectable. The rest are shas, a number, and a git ref.
+          printf '%s' "$PR_TITLE" > "$RUNNER_TEMP/pr_title.txt"
+          {
+            printf 'number=%s\n' "$PR_NUMBER"
+            printf 'head_ref=%s\n' "$HEAD_REF"
+            printf 'base_sha=%s\n' "$BASE_SHA"
+            printf 'head_sha=%s\n' "$HEAD_SHA"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # pull_request keeps the default merge ref — the tree that would
+          # actually land. A manual re-run has no merge ref, so it takes the
+          # PR head instead; an empty value means "checkout default".
+          ref: ${{ github.event_name == 'workflow_dispatch' && steps.ctx.outputs.head_sha || '' }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # pytest is not preinstalled on the runner; without this the test-suite
+      # gate below reports a false failure on every PR.
+      - name: Install test dependencies
+        run: python -m pip install -q pytest
+
+      - name: Run decision gates
+        env:
+          HEAD_REF: ${{ steps.ctx.outputs.head_ref }}
+          BASE_SHA: ${{ steps.ctx.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
+        run: |
+          set -u
+          # Kept outside the work tree on purpose: an untracked scratch file in
+          # the repo root makes the activation-drift gate below see a dirty
+          # tree and fail against itself.
+          DECISIONS="$RUNNER_TEMP/decisions.txt"
+          : > "$DECISIONS"
+          # record <gate> <status> <detail...> — pipes stripped so the
+          # renderer's field separator stays unambiguous
+          record() {
+            gate="$1"; status="$2"; shift 2
+            printf '%s|%s|%s\n' "$gate" "$status" "$(printf '%s' "$*" | tr -d '|' | head -c 200)" >> "$DECISIONS"
+          }
+
+          # 1. Branch naming: <type>/<ticket>-<description>
+          if printf '%s' "$HEAD_REF" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)/[A-Za-z0-9._-]+'; then
+            record "branch naming" pass "$HEAD_REF"
+          else
+            record "branch naming" fail "$HEAD_REF does not match <type>/<ticket>-<description>"
+          fi
+
+          # 2. Conventional Commits on every non-merge commit in the PR
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=200 origin "$BASE_SHA" 2>/dev/null || true
+          fi
+          if git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            bad=$(git log --no-merges --format='%s' "$BASE_SHA".."$HEAD_SHA" \
+              | grep -Ev '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([A-Za-z0-9._/-]+\))?!?: .+' || true)
+            if [ -z "$bad" ]; then
+              n=$(git log --no-merges --oneline "$BASE_SHA".."$HEAD_SHA" | wc -l | tr -d ' ')
+              record "conventional commits" pass "$n commit(s) conform"
+            else
+              record "conventional commits" fail "$(printf '%s' "$bad" | head -1)"
+            fi
+          else
+            record "conventional commits" skip "base commit unavailable in this checkout"
+          fi
+
+          # 3. Generated-path drift: activation must leave the tree clean
+          if ./scripts/activate_skill_stack.sh dbt-skills >/dev/null 2>&1 && [ -z "$(git status --porcelain)" ]; then
+            record "activation drift" pass "pack and mirror in sync"
+          else
+            record "activation drift" fail "$(git status --porcelain | head -1) (edit the pack, not the mirror)"
+            git checkout -- . 2>/dev/null || true
+          fi
+
+          # 4. Marketplace portability
+          if out=$(./scripts/marketplace_portability_check.sh 2>&1); then
+            record "marketplace portability" pass "manifests and SKILL.md sizes OK"
+          else
+            record "marketplace portability" fail "$(printf '%s' "$out" | head -1)"
+          fi
+
+          # 5. TOON serializer build (gate skips on branches that predate it)
+          if [ -x scripts/build_toon_rs.sh ]; then
+            if out=$(./scripts/build_toon_rs.sh 2>&1); then
+              record "toon serializer build" pass "rustc -O clean"
+            else
+              record "toon serializer build" fail "$(printf '%s' "$out" | tail -1)"
+            fi
+          else
+            record "toon serializer build" skip "not present on this branch"
+          fi
+
+          # 6. Test suite — the same command ci-quality-gate.yml blocks on, so
+          #    the diagram cannot disagree with the blocking check.
+          if out=$(python -m pytest -q 2>&1); then
+            record "test suite" pass "$(printf '%s' "$out" | grep -Eo '[0-9]+ passed[^,]*' | head -1)"
+          else
+            record "test suite" fail "$(printf '%s' "$out" | grep -E 'failed|error' | head -1)"
+          fi
+
+      - name: Render Mermaid diagram
+        env:
+          PR_NUMBER: ${{ steps.ctx.outputs.number }}
+          HEAD_REF: ${{ steps.ctx.outputs.head_ref }}
+        run: |
+          set -eu
+          title=$(cat "$RUNNER_TEMP/pr_title.txt")
+          python scripts/pr_decision_diagram.py \
+            --input "$RUNNER_TEMP/decisions.txt" \
+            --pr-number "$PR_NUMBER" \
+            --pr-title "$title" \
+            --head-ref "$HEAD_REF" \
+            --out "$RUNNER_TEMP/diagram.md"
+          cat "$RUNNER_TEMP/diagram.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post or update sticky PR comment
+        # GITHUB_TOKEN is read-only on fork PRs; the step summary above still
+        # carries the diagram there.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.ctx.outputs.number }}
+        run: |
+          marker='<!-- pr-decision-diagram -->'
+          comment_id=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq "[.[] | select(.body | startswith(\"$marker\"))][0].id // empty")
+          if [ -n "$comment_id" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${comment_id}" \
+              -f "body=$(cat "$RUNNER_TEMP/diagram.md")" >/dev/null
+          else
+            gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+              -f "body=$(cat "$RUNNER_TEMP/diagram.md")" >/dev/null
+          fi

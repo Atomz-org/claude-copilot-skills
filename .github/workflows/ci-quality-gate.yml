@@ -86,3 +86,4 @@ jobs:
           test -f .github/workflows/pr-issue-auto-close.yml
           test -f .github/workflows/smart-sync.yml
           test -f .github/workflows/ci-quality-gate.yml
+          test -f .github/workflows/pr-decision-diagram.yml

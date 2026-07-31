@@ -66,6 +66,8 @@ def test_required_agent_commands_and_workflows_exist():
         ".github/workflows/pr-issue-auto-close.yml",
         ".github/workflows/smart-sync.yml",
         ".github/workflows/ci-quality-gate.yml",
+        ".github/workflows/pr-decision-diagram.yml",
+        "scripts/pr_decision_diagram.py",
     ]
 
     for relative_path in required_paths:
