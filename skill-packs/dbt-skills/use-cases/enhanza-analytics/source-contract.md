@@ -90,7 +90,8 @@ run, so it is worth deciding before the first tenant needs it.
 | SevenTime | `seventime` | SEK | 8 | 8 | — |
 | Upsales | `upsales` | SEK | 6 | 6 | — |
 | Xledger | `xledger` | NOK | 4 | 4 | `fact_vouchers` claim removed — no adapter exists. **[NEEDS INPUT]** does Xledger supply vouchers? |
-| Favrit | `favrit` | *(omitted)* | 1 | 1 | Multi-currency; tenant default unconfirmed. **[NEEDS INPUT]**. Supplies `fact_order_rows` with no `fact_orders` header. |
+| Shopify | `shopify` | SEK | 4 | 4 | E-commerce, not an ERP — adapters pad most of the common schema with typed NULLs. Raw column names assume the loader preserves Shopify REST Admin API field names. **[NEEDS INPUT]**. Only source with `freshness:` declared. |
+| Favrit | `favrit` | *(omitted)* | 1 | 1 | Multi-currency; tenant default unconfirmed. **[NEEDS INPUT]**. Supplies `fact_order_rows` with no `fact_orders` header. Its `fact_order_rows` adapter emits 30 columns against Fortnox's 28, in a different order — a Favrit+Fortnox tenant fails that union. **[NEEDS INPUT]** |
 | Tempo | `tempo` | *(omitted)* | 1 | 1 | Time tracking only |
 
 Counts are verified by `tests/test_enhanza_connector_registry.py`; a mismatch between the
@@ -114,7 +115,8 @@ arrives. What that means per layer:
 | A connector's registry entry matches its models on disk | Silent under- or over-counting in every unified fact | `tests/test_enhanza_connector_registry.py` ✅ |
 | Source-native ids are unique within a tenant dataset | Fan-out on every join through `<Column>ERP` | **none — [NEEDS INPUT]** |
 | Every connector aliases its org id to `ErpOrgId` | Rows drop out of company-scoped queries with no error | **none — add a `not_null` on `ErpOrgId` per adapter** |
-| Sources are loaded before the dbt run | Marts silently rebuild on stale data | **none — no `freshness:` declared** |
+| Sources are loaded before the dbt run | Marts silently rebuild on stale data | **`shopify_api` only** — every other source block still declares no `freshness:` |
+| Every source's adapter for a shared concept has the same columns in the same order | `union_queries()` emits a positional `UNION ALL`; a mismatched count fails the build, a mismatched order silently transposes data | **none — `favrit`/`fortnox` `fact_order_rows` already diverge (30 vs 28)** |
 | Currency codes in the registry match what the connector actually reports | Mis-valued revenue across the whole unified layer | **none — [NEEDS INPUT]** |
 
 The bottom three rows are the work this contract exists to schedule.

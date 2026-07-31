@@ -18,6 +18,11 @@
                 tenant default has not been confirmed. add_erp_fields() emits a NULL
                 DefaultCurrency for sources without one, same as Tempo. [NEEDS INPUT]
 
+      shopify — `default_currency` is 'SEK' by explicit decision, not by detection. Shopify
+                shops are multi-currency and each order carries its own `currency`; the
+                adapters pass that through to the Currency column, so DefaultCurrency is
+                the tenant fallback only. Revisit if a non-SEK shop is onboarded.
+
       xledger — `fact_vouchers` was claimed but no xledger_erp_bi_fact_vouchers model
                 exists, so erp_bi_fact_vouchers never unioned Xledger while
                 model_is_provided('fact_vouchers') answered true for an Xledger-only
@@ -109,6 +114,17 @@
                     'fact_offers',
                     'fact_time_reporting_registrations',
                     'fact_work_orders'
+                ]
+            },
+            'shopify': {
+                'name': 'Shopify',
+                'default_currency': 'SEK',
+                'enabled': var('is_shopify_enabled', 'False') | as_bool,
+                'included_models': [
+                    'dim_articles',
+                    'dim_customers',
+                    'fact_order_rows',
+                    'fact_orders'
                 ]
             },
             'tempo': {
