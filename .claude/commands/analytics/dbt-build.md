@@ -99,7 +99,7 @@ dashboard — green tests with a broken chart happens.
 
 ## Rules that bind here
 
-[Rules 36–41](../rules/analytics-engineering-rules.md): `dbt build`, not run-then-test;
+[Rules 36–41](../../rules/analytics-engineering-rules.md): `dbt build`, not run-then-test;
 CI runs only what changed and its children; production artifacts are stored; every
 deployment has a rollback path; failures are diagnosed from artifacts, not by re-running.
 

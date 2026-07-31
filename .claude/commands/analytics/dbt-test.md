@@ -110,7 +110,7 @@ that order — an untested model feeding six dashboards outranks twelve untested
 
 ## Rules that bind here
 
-[Rules 28–32](../rules/analytics-engineering-rules.md): no model merges without tests; test
+[Rules 28–32](../../rules/analytics-engineering-rules.md): no model merges without tests; test
 the business rule, not just the schema; unit tests cover the logic and data tests cover the
 data; severity is set intentionally; every failing test is reproducible.
 

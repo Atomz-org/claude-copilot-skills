@@ -1,8 +1,8 @@
 # dbt Skill Scaffold
 
 A scaffold for turning any data request into a working, tested, documented **dbt Core**
-transformation. The method lives in [.claude/](.claude/); the work lives in
-[skill-packs/dbt-skills/use-cases/](skill-packs/dbt-skills/use-cases/).
+transformation. The method lives in [.claude/](../../.claude/); the work lives in
+[skill-packs/dbt-skills/use-cases/](../../skill-packs/dbt-skills/use-cases/).
 
 Everything here is dbt Core — the open-source CLI, run on infrastructure you control,
 reading and writing the JSON artifacts in `target/`. Where dbt Cloud sells a hosted
@@ -12,14 +12,14 @@ service, this scaffold documents the Core equivalent and names the gap explicitl
 
 | Component | Location | Role |
 |---|---|---|
-| Agents | [.claude/agents/](.claude/agents/) | who does the work |
-| Skills | [.claude/skills/](.claude/skills/) | how each stage is done |
-| Rules | [.claude/rules/analytics-engineering-rules.md](.claude/rules/analytics-engineering-rules.md) | what is never negotiable |
-| Commands | [.claude/commands/](.claude/commands/) | `/new-use-case`, `/data-model`, `/dbt-model`, `/dbt-build`, `/dbt-test`, `/dbt-audit`, `/dbt-debug`, `/dbt-semantic` |
-| Templates | [templates/](templates/) | the deliverable shapes — specs, blueprints, YAML and SQL patterns, runbooks |
+| Agents | [.claude/agents/](../../.claude/agents/) | who does the work |
+| Skills | [.claude/skills/](../../.claude/skills/) | how each stage is done |
+| Rules | [.claude/rules/analytics-engineering-rules.md](../../.claude/rules/analytics-engineering-rules.md) | what is never negotiable |
+| Commands | [.claude/commands/](../../.claude/commands/) | `/new-use-case`, `/data-model`, `/dbt-model`, `/dbt-build`, `/dbt-test`, `/dbt-audit`, `/dbt-debug`, `/dbt-semantic` |
+| Templates | [templates/](../../templates/) | the deliverable shapes — specs, blueprints, YAML and SQL patterns, runbooks |
 | References | [../../skill-packs/dbt-skills/references/](../../skill-packs/dbt-skills/references/) | method and syntax depth, loaded on demand |
-| Scripts | [scripts/](scripts/) | eleven artifact-driven analyzers |
-| Use cases | [skill-packs/dbt-skills/use-cases/](skill-packs/dbt-skills/use-cases/) | one directory per data request |
+| Scripts | [scripts/](../../scripts/) | eleven artifact-driven analyzers |
+| Use cases | [skill-packs/dbt-skills/use-cases/](../../skill-packs/dbt-skills/use-cases/) | one directory per data request |
 
 ## Agents
 
@@ -137,7 +137,7 @@ causes for dbt, the warehouse, and these tools.
 
 ## The rules that override everything
 
-Full list in [.claude/rules/analytics-engineering-rules.md](.claude/rules/analytics-engineering-rules.md).
+Full list in [.claude/rules/analytics-engineering-rules.md](../../.claude/rules/analytics-engineering-rules.md).
 The five that matter most:
 
 - **No model before a use-case spec, no mart without a named consumer.** If nothing
@@ -157,7 +157,7 @@ The five that matter most:
 
 ## Example
 
-[skill-packs/dbt-skills/use-cases/example-order-revenue-mart/](skill-packs/dbt-skills/use-cases/example-order-revenue-mart/) is a
+[skill-packs/dbt-skills/use-cases/example-order-revenue-mart/](../../skill-packs/dbt-skills/use-cases/example-order-revenue-mart/) is a
 complete worked case that **runs**:
 
 ```bash

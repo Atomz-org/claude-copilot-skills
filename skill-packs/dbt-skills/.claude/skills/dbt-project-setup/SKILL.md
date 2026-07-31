@@ -153,8 +153,8 @@ analytics:
   schema for every target is only safe where each environment is a separate database; in a
   shared one it means a laptop `dbt build` overwrites production's `marts`. If several
   environments each need verbatim names, make the isolation an explicit per-target opt-in
-  and verify it, as in
-  [the worked example](../../../use-cases/example-order-revenue-mart/dbt_project/macros/generate_schema_name.sql).
+  and verify it, as in the worked example at
+  `skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project/macros/generate_schema_name.sql`.
 
 ## Directory layout
 
