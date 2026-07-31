@@ -29,8 +29,10 @@ profiles.yml
 # Python
 __pycache__/
 *.pyc
-.venv/
-.venv-dbt/
+# `.venv*/` rather than naming each one: a per-use-case env like `.venv-dbt/` is the normal
+# way to pin a dbt adapter, and the bare `.venv/` form silently lets 5k vendored files be
+# staged. Covers `.venv/` and `.venv-dbt/`, both previously listed by hand.
+.venv*/
 venv/
 .pytest_cache/
 
