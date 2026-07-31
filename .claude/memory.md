@@ -5,3 +5,4 @@
 - Architectural decisions should be documented here and in the agent memory store.
 - [2026-07-29T21:45:22Z] post-merge baseline sync
 - [2026-07-29T21:54:21Z] post-refactor validation
+- [2026-07-31T06:28:46Z] docs drift repair verification
