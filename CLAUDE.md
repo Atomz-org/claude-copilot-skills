@@ -20,6 +20,38 @@ Rules:
 - Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or when scoped queries are insufficient.
 - After meaningful code edits, run `graphify update .` to keep graph state current.
 
+### TOON context pipeline
+
+Graph output that is carried forward into LLM context is serialized as TOON
+(Token-Oriented Object Notation, https://github.com/toon-format/spec), which declares
+fields once and streams uniform rows instead of repeating keys per record:
+
+```bash
+# build the serializer once per clone (plain rustc -O, no cargo)
+./scripts/build_toon_rs.sh
+
+graphify query "<question>" --budget 800 | rust/toon/bin/graph_to_toon      # text → TOON
+rust/toon/bin/graph_to_toon --graph graphify-out/graph.json --community "<x>"  # graph.json → TOON
+... | rust/toon/bin/graph_to_toon --decode                                  # TOON → JSON for machines
+```
+
+The serializer is `rust/toon/graph_to_toon.rs`; its full functionality contract lives as
+comments in that file, and `tests/test_toon_serializer.py` pins the behavior at the CLI
+level (`tests/conftest.py` builds the binary on demand where `rustc` exists).
+
+Enforcement is automatic, via hooks registered in `.claude/settings.json`:
+
+- `scripts/hooks/toon_graphify_pipe.py` (`PreToolUse` on `Bash`) rewrites bare
+  `graphify query|path|explain` commands to pipe through
+  `rust/toon/bin/graph_to_toon --passthrough`, and stays silent when the binary is not
+  built. Composed commands (existing pipes, redirects) are left alone; `--passthrough`
+  forwards unrecognized output unchanged, so the rewrite can never break a command.
+- `scripts/hooks/toon_prompt_context.sh` (`UserPromptSubmit`) asserts the pipeline once
+  per prompt.
+
+Hook behavior is pinned by `tests/test_toon_pipeline_hooks.py`. TypeScript call sites
+route through `src/ai-core/toon-serializer.ts` (`GraphManager.snapshotToToon()`).
+
 ## Agent and command topology
 
 Canonical dbt skill entrypoint: `dbt-skill` (compatibility alias: `senior-analytics-engineer`).

@@ -41,6 +41,53 @@ graphify query "what models depend on fct_orders"
 graphify path "stg_shopify__orders" "fct_orders"
 ```
 
+### TOON serialization pipeline
+
+Graph output that is carried forward into LLM context is re-serialized as TOON
+(Token-Oriented Object Notation, https://github.com/toon-format/spec), which declares
+fields once and streams uniform rows instead of repeating keys per record:
+
+```text
+[ Graphify AST ] ─(JSON / NODE-EDGE text)→ [ graph_to_toon.py ] ─(TOON)→ [ LLM context ]
+[ LLM response ] ─(TOON)→ [ graph_to_toon.py --decode ] ─(JSON)→ [ machine-parsable app ]
+```
+
+```bash
+# build once per clone (plain rustc -O, no cargo; binary lands gitignored in rust/toon/bin/)
+./scripts/build_toon_rs.sh
+
+# graphify query text → TOON
+graphify query "what models depend on fct_orders" --budget 800 \
+  | rust/toon/bin/graph_to_toon --stats
+
+# graph.json slice → TOON (normalizes rows so they encode tabular)
+rust/toon/bin/graph_to_toon --graph graphify-out/graph.json \
+  --community "Enhanza" --relation contains
+
+# outbound leg: TOON from an LLM → strict JSON for machine consumers
+cat response.toon | rust/toon/bin/graph_to_toon --decode
+```
+
+Serializer: `rust/toon/graph_to_toon.rs` — a dependency-free, single-file binary whose
+functionality contract is documented in its own header comments. It is the sole runtime
+of the pipeline; behavior is pinned at the CLI level by `tests/test_toon_serializer.py`
+(cases ported from the TOON spec's normative rules), and `tests/conftest.py` builds the
+binary on demand wherever `rustc` exists. TypeScript call sites route through
+`src/ai-core/toon-serializer.ts` via `GraphManager.snapshotToToon()`.
+
+The pipeline is enforced per prompt by hooks in `.claude/settings.json`, so it does not
+depend on the agent remembering it:
+
+- `UserPromptSubmit` → `scripts/hooks/toon_prompt_context.sh` injects a one-line
+  pipeline assertion into context on every prompt.
+- `PreToolUse` (Bash) → `scripts/hooks/toon_graphify_pipe.py` auto-appends
+  `| rust/toon/bin/graph_to_toon --passthrough` to bare
+  `graphify query|path|explain` invocations, and stays silent when the binary has not
+  been built. `--passthrough` forwards anything the serializer does not recognize
+  unchanged, so the rewrite can never break a command.
+
+Hook behavior is pinned by `tests/test_toon_pipeline_hooks.py`.
+
 Fallback graph snapshot command in this repo:
 
 ```bash
