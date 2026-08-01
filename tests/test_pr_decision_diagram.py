@@ -617,3 +617,20 @@ def test_the_legend_sits_outside_the_mermaid_fence(tmp_path):
     """Inside the fence it would be parsed as diagram source and break it."""
     mermaid = _mermaid(_render(tmp_path, impact=_impact([("src/core.py", ["alpha()"])])))
     assert "🔵" not in mermaid
+
+
+def test_the_table_lists_every_symbol_not_the_first_six(tmp_path):
+    """The diagram is capped and grouped, so the table is the only full record."""
+    symbols = [f"sym_{i:02d}()" for i in range(20)]
+    out = _render(tmp_path, impact=_impact([("src/core.py", symbols)]))
+    for symbol in symbols:
+        assert symbol in out
+    assert "(+14)" not in out and "…" not in out.split("| Changed file |")[1]
+
+
+def test_the_table_lists_every_changed_file_even_when_the_diagram_groups(tmp_path):
+    changed = [(f"scripts/s{i:02d}.py", [f"fn_{i}()"]) for i in range(15)]
+    out = _render(tmp_path, impact=_impact(changed))
+    assert "scripts/<br/>15 files" in _mermaid(out), "diagram groups"
+    for path, (symbol,) in changed:
+        assert f"| {path} | {symbol} |" in out, "table stays per-file"

@@ -427,11 +427,14 @@ def render(
     lines += render_mermaid(impact, pr_number, head_ref, skill_map, changed_files)
 
     if impact.get("available"):
+        # Every changed file, and every symbol in it. The diagram is the
+        # summary — capped, grouped, and clipped to stay legible once GitHub
+        # scales it — so this table has to be the complete record, or the PR
+        # has no complete record anywhere. Individual names are still clipped:
+        # that bounds one pathological identifier, without dropping any.
         lines += ["| Changed file | Symbols touched |", "|---|---|"]
         for path, symbols in impact["changed"]:
-            shown = ", ".join(_escape(_clip(s, 40)) for s in sorted(symbols)[:6])
-            if len(symbols) > 6:
-                shown += f", … (+{len(symbols) - 6})"
+            shown = ", ".join(_escape(_clip(s, 40)) for s in sorted(symbols))
             lines.append(f"| {_escape(path)} | {shown or 'module scope'} |")
         lines.append("")
         if impact.get("dropped"):
