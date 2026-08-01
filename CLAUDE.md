@@ -67,6 +67,45 @@ add duplicate mechanisms:
 
 Hook behavior is pinned by `tests/test_toon_pipeline_hooks.py`.
 
+## Harness cartography — skill-map
+
+`graphify` maps the **code**; `skill-map` maps the **harness** — skills, commands,
+and agents as one graph, with name collisions, dead references, reserved-name
+shadowing, and per-node token weight. Two graphs, two purposes; neither
+substitutes for the other.
+
+```bash
+python scripts/skill_map_scan.py --summary                # counts + collisions
+python scripts/skill_map_scan.py --check --max-errors 1   # the CI gate form
+```
+
+Deterministic and LLM-free **by construction**, not by convention: upstream
+skill-map ships a probabilistic layer that queues LLM jobs, and the allowlist in
+`scripts/skill_map_scan.py` rejects all four of its verb families (`jobs`,
+`agent`, `findings`, `refresh`). `tests/test_skill_map_pack.py` fails if one is
+ever added. No API key; exit `3` and a recorded `skip` where Node is absent.
+
+A scan touches two paths, both already accounted for: `.skill-map/` (transient
+SQLite state) is gitignored, and `.skillmapignore` (which files become nodes) is
+**committed**, so the gate means the same thing in every checkout. It excludes
+`graphify-out/`, which CI builds immediately before scanning and a laptop
+usually lacks.
+
+Pack: `skill-packs/skill-map/` (skill `harness-mapping`, command `/skill-map`).
+Wraps `@skill-map/cli` at a pinned version rather than vendoring the upstream
+monorepo — analyzers decide which issues exist, so the pin is what keeps the
+gate's verdict stable.
+
+Two rules decide whether a reading of the output is correct:
+
+- **Every finding is doubled.** Pack and activated mirror are both scanned. A
+  finding in only one tree is drift, and a different problem.
+- **Fix the pack, never the mirror.**
+
+Accepted, do not re-report: the `senior-analytics-engineer` alias collision,
+`/review` shadowed by the Claude Code built-in, and agent `tools`-as-string
+warnings. Details in the pack's `references/findings.md`.
+
 ## Agent and command topology
 
 Canonical dbt skill entrypoint: `dbt-skill` (compatibility alias: `senior-analytics-engineer`).

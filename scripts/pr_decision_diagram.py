@@ -28,6 +28,7 @@ the PR's own tree, so they are escaped on the same path.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -49,6 +50,24 @@ _STATUS_CLASS = {"pass": "pass", "fail": "fail", "skip": "skip"}
 _STATUS_ICON = {"pass": "✅", "fail": "❌", "skip": "⏭️"}
 _MAX_LABEL = 60
 _DEFAULT_MAX_NEIGHBOURS = 10
+
+# Paths whose contents are the AI harness rather than application code. A PR
+# touching one of these gets the nested skill-map subgraph; a PR that only
+# changes Python or CI does not, because the harness map would be identical on
+# every such PR and a diagram that never varies carries no information.
+_HARNESS_PREFIXES = (".claude/", "skill-packs/")
+
+# The kinds that are actually dispatchable harness entry points. `markdown`
+# is deliberately excluded: every doc file is a node, and counting them here
+# would swamp the three numbers a reviewer is looking for.
+_ENTRY_KINDS = ("skill", "command", "agent")
+
+# Drawn in the harness subgraph's findings box, most-serious first. The first
+# two are `GATE_ANALYZERS` in scripts/skill_map_scan.py — the silent-failure
+# defects the gate budgets. `reference-broken` is shown but not budgeted; see
+# that module for why. Severity is not filtered on: frontmatter-parse-error is
+# only a `warn` upstream and still means a skill will not load.
+_SHOWN_ANALYZERS = ("name-collision", "frontmatter-parse-error", "reference-broken")
 
 
 def _escape(text: str) -> str:
@@ -151,8 +170,84 @@ def build_impact(
     return impact
 
 
-def render_mermaid(impact: dict, pr_number: str, head_ref: str) -> list[str]:
-    """The impact subgraph: changed nodes boxed, one hop of neighbours around."""
+def load_skill_map(path: Path | None) -> dict | None:
+    """Read the summary written by `skill_map_scan.py --summary-json`.
+
+    Absent or unreadable means the scan did not run on this PR (no Node on the
+    runner, say). That is a `skip`, not a failure, so every caller treats None
+    as "draw no harness subgraph" rather than raising.
+    """
+    if not path or not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def harness_files(changed_files: list[str]) -> list[str]:
+    """The changed paths that are harness assets rather than application code."""
+    return [p for p in changed_files if p.startswith(_HARNESS_PREFIXES)]
+
+
+def render_harness(summary: dict, touched: list[str], indent: str = "    ") -> list[str]:
+    """A nested subgraph describing the harness this PR just edited.
+
+    Nested rather than free-standing because it is a property *of* the change:
+    the outer box is the harness, and the two inner boxes are what it contains
+    and what is structurally wrong with it. Only drawn when the PR actually
+    touches `.claude/` or `skill-packs/`.
+    """
+    kinds = summary.get("kinds") or {}
+    entries = [(k, kinds[k]) for k in _ENTRY_KINDS if kinds.get(k)]
+    # by_analyzer keys are "<severity>:<analyzerId>"; collapse severities so one
+    # analyzer is one box, and order by _SHOWN_ANALYZERS rather than by count so
+    # a collision never sorts below 50 broken links.
+    by_analyzer = summary.get("by_analyzer") or {}
+    totals: dict[str, int] = {}
+    for key, count in by_analyzer.items():
+        analyzer = key.split(":", 1)[1] if ":" in key else key
+        if analyzer in _SHOWN_ANALYZERS:
+            totals[analyzer] = totals.get(analyzer, 0) + count
+    structural = [(a, totals[a]) for a in _SHOWN_ANALYZERS if a in totals]
+
+    n = len(touched)
+    title = f"Harness map — skill-map ({n} file{'s' if n != 1 else ''} touched)"
+    lines = [f'{indent}subgraph HARNESS["{_escape(title)}"]', f"{indent}    direction LR"]
+
+    if entries:
+        lines.append(f'{indent}    subgraph HKINDS["Entry points"]')
+        for i, (kind, count) in enumerate(entries):
+            lines.append(f'{indent}        HK{i}["{_escape(kind)}<br/>{count}"]:::harness')
+        lines.append(f"{indent}    end")
+
+    if structural:
+        lines.append(f'{indent}    subgraph HISSUES["Structural findings"]')
+        for i, (analyzer, count) in enumerate(structural):
+            lines.append(
+                f'{indent}        HI{i}["{_escape(analyzer)}<br/>{count}"]:::finding'
+            )
+        lines.append(f"{indent}    end")
+    else:
+        lines.append(f'{indent}    HI0["No structural findings"]:::harness')
+
+    lines.append(f"{indent}end")
+    return lines
+
+
+def render_mermaid(
+    impact: dict,
+    pr_number: str,
+    head_ref: str,
+    skill_map: dict | None = None,
+    changed_files: list[str] | None = None,
+) -> list[str]:
+    """The impact subgraph: changed nodes boxed, one hop of neighbours around.
+
+    When the PR touches harness files and a skill-map summary is available, a
+    nested `HARNESS` subgraph is drawn alongside and linked from the changed set.
+    """
     lines = [
         "```mermaid",
         "flowchart LR",
@@ -160,15 +255,23 @@ def render_mermaid(impact: dict, pr_number: str, head_ref: str) -> list[str]:
         "    classDef dependent fill:#bf3989,color:#ffffff,stroke:#99286e",
         "    classDef dependency fill:#6e7781,color:#ffffff,stroke:#57606a",
         "    classDef empty fill:#6e7781,color:#ffffff,stroke:#57606a",
+        "    classDef harness fill:#1f883d,color:#ffffff,stroke:#1a7f37",
+        "    classDef finding fill:#9a6700,color:#ffffff,stroke:#7d4e00",
     ]
+    hit = harness_files(changed_files or [])
+    harness = render_harness(skill_map, hit) if (skill_map and hit) else []
     if not impact.get("available"):
         reason = impact.get("reason") or "impact analysis not run"
         lines += [
             f'    PR["PR #{_escape(pr_number)}<br/>{_escape(_clip(head_ref))}"]:::changed',
             f'    PR --> X["No impact subgraph<br/>{_escape(_clip(reason, 70))}"]:::empty',
-            "```",
-            "",
         ]
+        # A harness-only PR often has no code-graph impact at all. The harness
+        # map is the whole story there, so it is drawn even on this branch.
+        if harness:
+            lines += harness
+            lines.append("    PR --> HARNESS")
+        lines += ["```", ""]
         return lines
 
     lines.append(f'    subgraph CHANGED["Changed by PR #{_escape(pr_number)}"]')
@@ -199,6 +302,9 @@ def render_mermaid(impact: dict, pr_number: str, head_ref: str) -> list[str]:
         lines.append(f"    CHANGED -->|{_relation_label(relations)}| U{i}")
     if not impact["dependents"] and not impact["dependencies"] and not internal:
         lines.append('    CHANGED --> N0["No cross-file dependents or dependencies"]:::empty')
+    if harness:
+        lines += harness
+        lines.append(f'    CHANGED -.->|"edits {len(hit)} harness file(s)"| HARNESS')
     lines += ["```", ""]
     return lines
 
@@ -209,6 +315,8 @@ def render(
     pr_title: str,
     head_ref: str,
     impact: dict | None = None,
+    skill_map: dict | None = None,
+    changed_files: list[str] | None = None,
 ) -> str:
     impact = impact or {"available": False, "reason": "impact analysis not run"}
     verdict_pass = all(r["status"] != "fail" for r in records)
@@ -220,7 +328,7 @@ def render(
         "### Impact graph",
         "",
     ]
-    lines += render_mermaid(impact, pr_number, head_ref)
+    lines += render_mermaid(impact, pr_number, head_ref, skill_map, changed_files)
 
     if impact.get("available"):
         lines += ["| Changed file | Symbols touched |", "|---|---|"]
@@ -277,6 +385,11 @@ def main(argv: list[str] | None = None) -> int:
         default=_DEFAULT_MAX_NEIGHBOURS,
         help="max dependent/dependency files drawn per direction",
     )
+    ap.add_argument(
+        "--skill-map",
+        type=Path,
+        help="skill_map_scan.py --summary-json output, for the nested harness subgraph",
+    )
     ap.add_argument("--out", type=Path, required=True, help="markdown output path")
     args = ap.parse_args(argv)
 
@@ -294,9 +407,14 @@ def main(argv: list[str] | None = None) -> int:
         ]
     diff_text = args.diff.read_text(encoding="utf-8") if args.diff and args.diff.is_file() else ""
     impact = build_impact(args.graph, changed_files, diff_text, args.max_neighbours)
+    skill_map = load_skill_map(args.skill_map)
 
     args.out.write_text(
-        render(records, args.pr_number, args.pr_title, args.head_ref, impact), encoding="utf-8"
+        render(
+            records, args.pr_number, args.pr_title, args.head_ref,
+            impact, skill_map, changed_files,
+        ),
+        encoding="utf-8",
     )
     return 0
 

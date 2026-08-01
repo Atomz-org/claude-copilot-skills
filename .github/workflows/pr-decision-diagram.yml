@@ -128,6 +128,25 @@ jobs:
         continue-on-error: true
         run: graphify update . --no-cluster
 
+      # skill-map maps the *harness* (skills, commands, agents) rather than the
+      # code, and feeds the nested Harness subgraph in the diagram. Deterministic
+      # by construction: scripts/skill_map_scan.py only reaches skill-map's
+      # scanner, never its LLM job queue. No API key is involved.
+      #
+      # Node is set up rather than assumed so the runner resolves `npx`; when the
+      # scan is unavailable anyway the wrapper exits 3, the gate records a skip,
+      # and the subgraph is simply not drawn.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Map the harness
+        continue-on-error: true
+        run: |
+          python scripts/skill_map_scan.py \
+            --summary-json "$RUNNER_TEMP/skill-map.json" \
+            --summary || true
+
       - name: Run decision gates
         env:
           HEAD_REF: ${{ steps.ctx.outputs.head_ref }}
@@ -205,6 +224,25 @@ jobs:
             record "test suite" fail "$(printf '%s' "$out" | grep -E 'failed|error' | head -1)"
           fi
 
+          # 7. Harness integrity. Budgets only name collisions and frontmatter
+          #    parse errors — the two failures that are silent at runtime and
+          #    that nothing else here checks. Broken references are excluded on
+          #    purpose; tests/test_docs_links.py owns those and is stricter.
+          #
+          #    The budget of 1 is the documented `senior-analytics-engineer`
+          #    alias, which is deliberately both an agent and a skill (CLAUDE.md).
+          #    A second collision means a real one was introduced.
+          if [ -f scripts/skill_map_scan.py ]; then
+            out=$(python scripts/skill_map_scan.py --check --max-errors 1 --summary 2>&1)
+            case $? in
+              0) record "skill map" pass "$(printf '%s' "$out" | head -1)" ;;
+              1) record "skill map" fail "$(printf '%s' "$out" | tail -1)" ;;
+              *) record "skill map" skip "scanner unavailable on this runner" ;;
+            esac
+          else
+            record "skill map" skip "not present on this branch"
+          fi
+
       - name: Render Mermaid diagram
         env:
           PR_NUMBER: ${{ steps.ctx.outputs.number }}
@@ -220,6 +258,7 @@ jobs:
             --graph graphify-out/graph.json \
             --changed "$RUNNER_TEMP/changed.txt" \
             --diff "$RUNNER_TEMP/pr.diff" \
+            --skill-map "$RUNNER_TEMP/skill-map.json" \
             --out "$RUNNER_TEMP/diagram.md"
           cat "$RUNNER_TEMP/diagram.md" >> "$GITHUB_STEP_SUMMARY"
 

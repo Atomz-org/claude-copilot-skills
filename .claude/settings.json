@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/Users/sswaminathan/Documents/claude-data-skills/code-skills/scripts/hooks/toon_graphify_pipe.py\""
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/toon_graphify_pipe.py\""
           }
         ]
       },
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/Users/sswaminathan/Documents/claude-data-skills/code-skills/scripts/hooks/toon_prompt_context.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hooks/toon_prompt_context.sh\""
           }
         ]
       }
