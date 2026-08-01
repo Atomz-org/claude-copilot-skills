@@ -93,12 +93,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
+          cache-dependency-path: .github/requirements/ci.txt
 
       # pytest is not preinstalled on the runner; without this the test-suite
       # gate below reports a false failure on every PR. graphifyy is the
       # graphify CLI, pinned so the impact graph cannot change shape under us.
       - name: Install test dependencies
-        run: python -m pip install -q pytest "graphifyy==0.9.31"
+        run: python -m pip install -q -r .github/requirements/ci.txt
 
       # What the impact graph is computed from. Collected before the gates run,
       # because the activation-drift gate below mutates and restores the tree.
