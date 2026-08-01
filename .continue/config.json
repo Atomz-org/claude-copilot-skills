@@ -1,0 +1,34 @@
+{
+  "mode": "local_only",
+  "local": {
+    "url": "http://127.0.0.1:8080/v1/chat/completions",
+    "model": "mlx-community/Qwen3.5-4B-MLX-8bit",
+    "timeout_seconds": 25
+  },
+  "limits": {
+    "preferred_input_tokens": 8000,
+    "hard_input_tokens": 12000,
+    "preferred_request_bytes": 750000,
+    "hard_request_bytes": 1000000,
+    "max_tool_chars_per_message": 4000,
+    "max_graphify_hits": 3,
+    "max_graphify_chars_per_hit": 1000,
+    "max_messages_before_summary": 10
+  },
+  "behavior": {
+    "trim_tool_outputs": true,
+    "summarize_old_history": true,
+    "disable_cloud_fallback": true,
+    "disable_stream_when_input_tokens_over": 6000
+  },
+  "on_limit_exceeded": {
+    "status_code": 413,
+    "error": "local_budget_exceeded",
+    "message": "Scope too large for local budget. Reduce to 1-3 files or one concept and retry."
+  },
+  "on_local_failure": {
+    "status_code": 429,
+    "error": "local_temporarily_unavailable",
+    "message": "Local model failed or timed out. Narrow scope and retry; cloud fallback is disabled."
+  }
+}
