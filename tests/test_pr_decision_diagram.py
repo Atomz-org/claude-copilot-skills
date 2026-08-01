@@ -492,3 +492,128 @@ def test_scratch_files_stay_out_of_the_work_tree():
 def test_quality_gate_asserts_the_diagram_workflow_is_present():
     quality = (WORKFLOWS / "ci-quality-gate.yml").read_text(encoding="utf-8")
     assert "test -f .github/workflows/pr-decision-diagram.yml" in quality
+
+
+# ---------------------------------------------------------------------------
+# Legibility on GitHub
+#
+# GitHub scales a Mermaid diagram down to the comment container's width, so the
+# widest rank decides whether any of it is readable. A 48-file PR rendered 49
+# nodes with 60-character labels, five of which were byte-identical to another
+# box. These pin the caps and the clipping that fixed that.
+# ---------------------------------------------------------------------------
+
+def _impact(changed, dependents=None, dependencies=None, internal=None) -> dict:
+    """A renderable impact structure, without going through the graph."""
+    return {
+        "available": True,
+        "reason": "",
+        "changed": changed,
+        "dependents": dependents or [],
+        "dependencies": dependencies or [],
+        "internal": internal or [],
+        "dropped": 0,
+        "unextracted": [],
+        "missing": [],
+    }
+
+
+def _changed_nodes(mermaid: str) -> list[str]:
+    return re.findall(r'C\d+\["([^"]+)"\]', mermaid)
+
+
+def test_changed_set_is_capped_and_the_remainder_is_counted(tmp_path):
+    """Nothing capped the changed set, so a 48-file PR drew 29 boxes."""
+    changed = [(f"src/mod_{i:02d}.py", ["alpha()"]) for i in range(11)]
+    mermaid = _mermaid(_render(tmp_path, impact=_impact(changed)))
+    assert len(_changed_nodes(mermaid)) == pdd._MAX_CHANGED_NODES
+    assert "+3 more files" in mermaid
+    # the full list is not lost — it is the table directly below the diagram
+    assert "src/mod_10.py" in _render(tmp_path, impact=_impact(changed))
+
+
+def test_a_large_pr_groups_by_top_level_area(tmp_path):
+    changed = (
+        [(f"scripts/s{i}.py", ["a()"]) for i in range(5)]
+        + [(f".claude/c{i}.md", []) for i in range(4)]
+        + [(f"tests/t{i}.py", ["b()"]) for i in range(4)]
+        + [("CLAUDE.md", [])]
+    )
+    mermaid = _mermaid(_render(tmp_path, impact=_impact(changed)))
+    labels = _changed_nodes(mermaid)
+    assert len(labels) == 4, "one box per area, not per file"
+    assert "scripts/<br/>5 files" in labels[0], "areas sort by file count"
+    assert any(".claude/<br/>4 files" == label for label in labels)
+    assert any("(repo root)<br/>1 file" == label for label in labels)
+    assert "s0.py" not in mermaid, "per-file boxes must be gone at this size"
+
+
+def test_small_prs_keep_per_file_detail(tmp_path):
+    """Grouping is for the illegible case only; a 3-file PR stays specific."""
+    changed = [(f"scripts/s{i}.py", ["a()"]) for i in range(3)]
+    mermaid = _mermaid(_render(tmp_path, impact=_impact(changed)))
+    assert "scripts/s0.py" in mermaid
+    assert "3 files" not in mermaid
+
+
+def test_clipping_keeps_both_ends_so_pack_and_mirror_stay_distinct():
+    """The pack and its generated mirror differ only at the head of the path."""
+    pack = pdd._clip_path("skill-packs/github-skills/.claude/commands/review.md")
+    mirror = pdd._clip_path(".claude/commands/review.md")
+    assert pack != mirror
+    assert pack.startswith("skill-packs/") and pack.endswith("review.md")
+
+
+def test_clipping_never_collapses_different_files_onto_one_label():
+    """Three files under one long directory rendered as three identical boxes."""
+    base = "skill-packs/skill-map/.claude/skills/harness-mapping/references"
+    labels = {pdd._clip_path(f"{base}/{n}.md") for n in ("findings", "verbs", "determinism")}
+    assert len(labels) == 3
+
+
+def test_clipping_drops_whole_segments_and_always_keeps_the_basename():
+    clipped = pdd._clip_path("a/very/deeply/nested/directory/tree/somewhere/target.md")
+    assert clipped.endswith("target.md")
+    assert "…" in clipped
+    # no partial segment survives: every piece is a real path component
+    assert all(part for part in clipped.split("/"))
+
+
+def test_short_paths_are_left_alone():
+    assert pdd._clip_path("scripts/x.py") == "scripts/x.py"
+
+
+def test_grouped_internal_edges_merge_instead_of_repeating(tmp_path):
+    """Many file pairs collapse onto one area pair; self-loops are dropped."""
+    changed = [(f"scripts/s{i}.py", ["a()"]) for i in range(9)] + [
+        (f"tests/t{i}.py", ["b()"]) for i in range(4)
+    ]
+    internal = [
+        (("tests/t0.py", "scripts/s0.py"), {"imports": 1}),
+        (("tests/t1.py", "scripts/s1.py"), {"imports": 1}),
+        (("scripts/s0.py", "scripts/s1.py"), {"calls": 1}),
+    ]
+    mermaid = _mermaid(_render(tmp_path, impact=_impact(changed, internal=internal)))
+    edges = re.findall(r"C\d+ -->\|([^|]+)\| C\d+", mermaid)
+    assert edges == ["imports ×2"], "two file pairs merge, the self-loop is dropped"
+
+
+def test_the_legend_lists_only_the_colours_actually_drawn(tmp_path):
+    changed = [("src/core.py", ["alpha()"])]
+    plain = _render(tmp_path, impact=_impact(changed))
+    assert "🔵 changed" in plain
+    assert "🟣" not in plain and "⚪" not in plain
+
+    both = _render(
+        tmp_path,
+        impact=_impact(changed, dependents=[("a.py", {"calls": 1})],
+                       dependencies=[("b.py", {"imports": 1})]),
+    )
+    assert "🟣 dependents" in both and "⚪ dependencies" in both
+    assert "🟢" not in both, "no harness subgraph was drawn"
+
+
+def test_the_legend_sits_outside_the_mermaid_fence(tmp_path):
+    """Inside the fence it would be parsed as diagram source and break it."""
+    mermaid = _mermaid(_render(tmp_path, impact=_impact([("src/core.py", ["alpha()"])])))
+    assert "🔵" not in mermaid

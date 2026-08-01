@@ -7,6 +7,7 @@ Used by .github/workflows/pr-decision-diagram.yml. The document contains:
   `graphify-out/graph.json` that this PR's diff actually touches, plus one hop
   of dependents and dependencies. Its shape is derived from the diff, so it
   differs per PR. `scripts/pr_impact_graph.py` does the graph work;
+- a colour legend for that flowchart, naming only the classes it drew;
 - a per-file table of touched symbols;
 - the merge-gate results (branch naming, Conventional Commits, activation
   drift, portability, TOON build, tests) as a table with a verdict;
@@ -17,7 +18,11 @@ PR — identical by construction, and therefore worthless as a diagram. The
 gates now render as a table, and the diagram carries PR-specific structure.
 
 GitHub renders ```mermaid fences natively in PR comments and in
-$GITHUB_STEP_SUMMARY, so the same document serves both.
+$GITHUB_STEP_SUMMARY, so the same document serves both. It also scales the
+rendered SVG down to the container width, which makes the widest rank — not
+any node limit — the thing that decides whether a diagram is readable at all.
+The changed set is therefore capped, grouped by area once a PR is large, and
+labelled with middle-clipped paths; the table below the diagram stays complete.
 
 Security note: PR titles and branch names are attacker-controlled on fork
 PRs. They reach this script via argv (passed from env in the workflow, never
@@ -50,6 +55,15 @@ _STATUS_CLASS = {"pass": "pass", "fail": "fail", "skip": "skip"}
 _STATUS_ICON = {"pass": "✅", "fail": "❌", "skip": "⏭️"}
 _MAX_LABEL = 60
 _DEFAULT_MAX_NEIGHBOURS = 10
+
+# GitHub scales a Mermaid diagram down to the width of the comment container,
+# so the binding constraint is the widest rank, not any hard node limit. These
+# three numbers keep a large PR legible; the per-file table rendered directly
+# below the diagram is what carries the complete list, so nothing capped here
+# is lost — it only stops the diagram from duplicating the table badly.
+_MAX_NODE_LABEL = 34
+_MAX_CHANGED_NODES = 8
+_GROUP_CHANGED_ABOVE = 12
 
 # Paths whose contents are the AI harness rather than application code. A PR
 # touching one of these gets the nested skill-map subgraph; a PR that only
@@ -86,6 +100,58 @@ def _escape(text: str) -> str:
 
 def _clip(text: str, limit: int = _MAX_LABEL) -> str:
     return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def _clip_path(text: str, limit: int = _MAX_NODE_LABEL) -> str:
+    """Clip the middle of a path, keeping the first segment and the basename.
+
+    Both ends carry identity and the middle rarely does. Clipping the tail
+    rendered three different files under
+    `skill-packs/skill-map/.claude/skills/harness-mapping/references/` as boxes
+    with byte-identical labels. Clipping only the head fixes that but loses the
+    root, which in this repository is exactly the pack-versus-mirror
+    distinction — `skill-packs/…/commands/review.md` and
+    `.claude/…/commands/review.md` are different files and must not read alike.
+
+    Whole segments are dropped, never partial ones, so the result still reads
+    as a path. The basename is always kept, even when it alone exceeds the
+    budget: a box that cannot be identified is worse than a wide one.
+    """
+    if len(text) <= limit:
+        return text
+    segments = text.split("/")
+    if len(segments) == 1:
+        return text[: limit - 1] + "…"
+    head, rest = segments[0], segments[1:]
+    kept: list[str] = []
+    for segment in reversed(rest):
+        candidate = [segment] + kept
+        if kept and len(head) + 3 + len("/".join(candidate)) > limit:
+            break
+        kept = candidate
+    return f"{head}/…/" + "/".join(kept)
+
+
+def _area(path: str) -> str:
+    """The top-level directory a changed file belongs to."""
+    head, sep, _ = path.partition("/")
+    return head + "/" if sep else "(repo root)"
+
+
+def _plural(count: int, noun: str) -> str:
+    return f"{count} {noun}" if count == 1 else f"{count} {noun}s"
+
+
+def _legend(impact: dict, harness: bool) -> str:
+    """A key for the classDef colours, listing only the ones actually drawn."""
+    parts = ["🔵 changed"]
+    if impact.get("dependents"):
+        parts.append("🟣 dependents (blast radius)")
+    if impact.get("dependencies"):
+        parts.append("⚪ dependencies")
+    if harness:
+        parts += ["🟢 harness entry points", "🟠 structural findings"]
+    return " · ".join(parts)
 
 
 def parse_records(path: Path) -> list[dict]:
@@ -271,41 +337,71 @@ def render_mermaid(
         if harness:
             lines += harness
             lines.append("    PR --> HARNESS")
+            lines += ["```", "", f"_{_legend(impact, True)}_", ""]
+            return lines
+        # Two nodes and no colour distinction worth explaining — no legend.
         lines += ["```", ""]
         return lines
 
+    changed = impact["changed"]
+    # Above the threshold, one box per top-level area rather than per file: at
+    # that size the per-file boxes are scaled below legibility, and five area
+    # boxes answer "what does this PR touch" better than thirty file boxes do.
+    grouped = len(changed) > _GROUP_CHANGED_ABOVE
     lines.append(f'    subgraph CHANGED["Changed by PR #{_escape(pr_number)}"]')
-    node_of = {}
-    for i, (path, symbols) in enumerate(impact["changed"]):
-        node_of[path] = f"C{i}"
-        touched = f"{len(symbols)} symbol(s) touched" if symbols else "module scope"
-        label = f"{_escape(_clip(path))}<br/>{touched}"
-        lines.append(f'        C{i}["{label}"]:::changed')
+    node_of: dict[str, str] = {}
+    if grouped:
+        areas: dict[str, int] = {}
+        for path, _symbols in changed:
+            area = _area(path)
+            areas[area] = areas.get(area, 0) + 1
+        for i, (area, count) in enumerate(sorted(areas.items(), key=lambda kv: (-kv[1], kv[0]))):
+            node_of[area] = f"C{i}"
+            label = f"{_escape(area)}<br/>{_plural(count, 'file')}"
+            lines.append(f'        C{i}["{label}"]:::changed')
+    else:
+        for i, (path, symbols) in enumerate(changed[:_MAX_CHANGED_NODES]):
+            node_of[path] = f"C{i}"
+            touched = _plural(len(symbols), "symbol") if symbols else "module scope"
+            label = f"{_escape(_clip_path(path))}<br/>{touched}"
+            lines.append(f'        C{i}["{label}"]:::changed')
+        overflow = len(changed) - _MAX_CHANGED_NODES
+        if overflow > 0:
+            label = f"+{_plural(overflow, 'more file')}<br/>see table below"
+            lines.append(f'        CMORE["{label}"]:::changed')
     lines.append("    end")
 
+    def _node_for(path: str) -> str | None:
+        return node_of.get(_area(path)) if grouped else node_of.get(path)
+
     # Edges the PR draws inside itself, e.g. a new test importing a new module.
-    internal = [
-        (node_of[src], node_of[tgt], relations)
-        for (src, tgt), relations in impact.get("internal", [])
-        if src in node_of and tgt in node_of
-    ]
-    for src, tgt, relations in internal:
+    # Grouping collapses several file pairs onto one area pair, so relations are
+    # merged; a pair that collapses onto itself is a self-loop and is dropped.
+    internal: dict[tuple[str, str], dict[str, int]] = {}
+    for (src, tgt), relations in impact.get("internal", []):
+        a, b = _node_for(src), _node_for(tgt)
+        if a is None or b is None or a == b:
+            continue
+        bucket = internal.setdefault((a, b), {})
+        for relation, count in relations.items():
+            bucket[relation] = bucket.get(relation, 0) + count
+    for (src, tgt), relations in internal.items():
         lines.append(f"    {src} -->|{_relation_label(relations)}| {tgt}")
 
     # Dependents point at the changed code — this is the blast radius.
     for i, (path, relations) in enumerate(impact["dependents"]):
-        lines.append(f'    D{i}["{_escape(_clip(path))}"]:::dependent')
+        lines.append(f'    D{i}["{_escape(_clip_path(path))}"]:::dependent')
         lines.append(f"    D{i} -->|{_relation_label(relations)}| CHANGED")
     # Dependencies are what the changed code now relies on.
     for i, (path, relations) in enumerate(impact["dependencies"]):
-        lines.append(f'    U{i}["{_escape(_clip(path))}"]:::dependency')
+        lines.append(f'    U{i}["{_escape(_clip_path(path))}"]:::dependency')
         lines.append(f"    CHANGED -->|{_relation_label(relations)}| U{i}")
     if not impact["dependents"] and not impact["dependencies"] and not internal:
         lines.append('    CHANGED --> N0["No cross-file dependents or dependencies"]:::empty')
     if harness:
         lines += harness
         lines.append(f'    CHANGED -.->|"edits {len(hit)} harness file(s)"| HARNESS')
-    lines += ["```", ""]
+    lines += ["```", "", f"_{_legend(impact, bool(harness))}_", ""]
     return lines
 
 
