@@ -20,19 +20,24 @@ fi
 
 mkdir -p "${live_claude}/commands" "${live_claude}/agents" "${live_claude}/skills" "${live_claude}/rules" "${live_claude}/hooks"
 
-# Keep backward compatibility by layering shared first, then domain.
-cp -R "${shared_pack}/commands/." "${live_claude}/commands/"
-cp -R "${shared_pack}/agents/." "${live_claude}/agents/"
-cp -R "${shared_pack}/rules/." "${live_claude}/rules/"
-cp -R "${shared_pack}/skills/." "${live_claude}/skills/"
-if [[ -d "${shared_pack}/hooks" ]]; then
-  cp -R "${shared_pack}/hooks/." "${live_claude}/hooks/"
-fi
+# A pack is not required to carry every component. skill-map, for instance,
+# ships skills/commands/rules and no agents/ — and an unconditional `cp -R` on a
+# missing directory aborts the whole activation under `set -e`, leaving .claude/
+# half-layered. Copy what exists and skip the rest.
+copy_component() {
+  local src="$1" dest="$2"
+  [[ -d "${src}" ]] && cp -R "${src}/." "${dest}/"
+  return 0
+}
 
-cp -R "${domain_pack}/commands/." "${live_claude}/commands/"
-cp -R "${domain_pack}/agents/." "${live_claude}/agents/"
-cp -R "${domain_pack}/rules/." "${live_claude}/rules/"
-cp -R "${domain_pack}/skills/." "${live_claude}/skills/"
+# Keep backward compatibility by layering shared first, then domain.
+for component in commands agents rules skills hooks; do
+  copy_component "${shared_pack}/${component}" "${live_claude}/${component}"
+done
+
+for component in commands agents rules skills; do
+  copy_component "${domain_pack}/${component}" "${live_claude}/${component}"
+done
 
 # Reference docs and artifact templates ship at the pack root, not under .claude/. Skills,
 # agents, and commands link to them as ../../references/<file>.md and ../../templates/<file>.md
