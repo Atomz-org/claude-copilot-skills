@@ -1,32 +1,21 @@
 #!/usr/bin/env python3
-"""PreToolUse hook: route graphify output through the TOON serializer, mechanically.
+"""PreToolUse hook: route graphify output through the TOON serializer.
 
-Registered in .claude/settings.json on the Bash matcher. When the model runs a
-bare `graphify query|path|explain ...` command, this hook rewrites it to append
+Default behavior (Claude/CI):
+- Rewrite bare `graphify query|path|explain ...` commands to append
+  `| rust/toon/bin/graph_to_toon --passthrough` when the serializer binary
+  exists, otherwise stay silent.
 
-    | <repo>/rust/toon/bin/graph_to_toon --passthrough
-
-so NODE/EDGE output enters the context as TOON without relying on the model
-remembering to pipe. The serializer is the Rust binary built by
-scripts/build_toon_rs.sh (~13ms per call); when it has not been built the hook
-stays silent and graphify output arrives unserialized — build once per clone.
-`--passthrough` guarantees the rewrite is harmless: input the serializer does
-not recognize (e.g. `graphify path` prose) is forwarded unchanged.
-
-The rewrite is deliberately conservative — it only fires on single-command
-invocations. Anything containing a pipe, redirect, separator, or newline is
-left untouched (a `|` may sit inside the query string itself, and rewriting
-around user-composed plumbing risks changing semantics for no benefit).
-
-Non-matching input produces no output at all, which Claude Code treats as
-"no opinion". If the runtime does not support `updatedInput`, the emitted JSON
-is ignored and the command runs unmodified — degradation is silent and safe.
+Compatibility mode (Copilot forwarder tests):
+- If `COPILOT_TOON_HOOK` is set, forward the raw hook payload to that script.
+  If the target is missing or fails, degrade to a no-op.
 """
 from __future__ import annotations
 
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -38,37 +27,73 @@ _UNSAFE_CHARS = set("|;&<>\n")
 
 
 def serializer_command() -> str | None:
-    """The serializer to pipe through, or None when the binary is not built."""
     if RUST_BIN.is_file() and os.access(RUST_BIN, os.X_OK):
         return f'"{RUST_BIN}"'
     return None
 
 
 def rewrite(command: str) -> str | None:
-    """Return the piped command, or None when the hook should stay silent."""
     if not _GRAPHIFY_RE.match(command):
         return None
     if "graph_to_toon" in command:
-        return None  # already routed
+        return None
     if any(ch in command for ch in _UNSAFE_CHARS):
-        return None  # composed command line: do not re-plumb it
+        return None
     serializer = serializer_command()
     if serializer is None:
-        return None  # binary not built: degrade to raw graphify output
-    return f'{command.rstrip()} | {serializer} --passthrough'
+        return None
+    return f"{command.rstrip()} | {serializer} --passthrough"
+
+
+def resolve_target() -> Path:
+    override = os.environ.get("COPILOT_TOON_HOOK", "").strip()
+    if override:
+        return Path(override).expanduser()
+    return REPO / ".copilot" / "hooks" / "toon_graphify_pipe.py"
+
+
+def run_delegate(payload_bytes: bytes, target: Path) -> int:
+    if not (target.is_file() and os.access(target, os.X_OK)):
+        return 0
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(target)],
+            input=payload_bytes,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except Exception:
+        return 0
+    if proc.returncode != 0:
+        return 0
+    if proc.stdout:
+        sys.stdout.buffer.write(proc.stdout)
+    if proc.stderr:
+        sys.stderr.buffer.write(proc.stderr)
+    return 0
 
 
 def main() -> int:
+    payload_bytes = sys.stdin.buffer.read()
+
+    # Compatibility mode: explicit delegate for Copilot override/forwarding.
+    if os.environ.get("COPILOT_TOON_HOOK") is not None:
+        return run_delegate(payload_bytes, resolve_target())
+
     try:
-        payload = json.load(sys.stdin)
+        payload = json.loads(payload_bytes.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
         return 0
+
     if payload.get("tool_name") != "Bash":
         return 0
+
     command = (payload.get("tool_input") or {}).get("command") or ""
     updated = rewrite(command)
     if updated is None:
         return 0
+
     print(
         json.dumps(
             {
