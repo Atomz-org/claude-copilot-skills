@@ -30,6 +30,7 @@ import pr_decision_diagram as pdd  # noqa: E402
 import pr_impact_graph as pig  # noqa: E402
 
 WORKFLOW = REPO / ".github" / "workflows" / "pr-decision-diagram.yml"
+CI_REQUIREMENTS = REPO / ".github" / "requirements" / "ci.txt"
 
 GATES = [
     "branch naming|pass|feat/no-ticket-sample",
@@ -387,7 +388,8 @@ def test_workflow_builds_the_graph_and_feeds_the_diff_to_the_renderer():
     """Without these inputs the diagram silently falls back to 'no graph'."""
     text = WORKFLOW.read_text(encoding="utf-8")
     assert "graphify update . --no-cluster" in text, "graph must be rebuilt from the PR tree"
-    assert re.search(r"graphifyy==\d+\.\d+\.\d+", text), "graphify version must be pinned"
+    requirements = CI_REQUIREMENTS.read_text(encoding="utf-8")
+    assert re.search(r"graphifyy==\d+\.\d+\.\d+", requirements), "graphify version must be pinned"
     assert "git diff -U0" in text and "--diff-filter=d" in text
     for flag in ("--graph graphify-out/graph.json", "--changed", "--diff"):
         assert flag in text, f"renderer invoked without {flag}"
@@ -454,8 +456,23 @@ def test_diagram_is_serialized_per_pr():
 def test_test_gate_has_pytest_installed():
     """pytest is not preinstalled on the runner; without it the gate always fails."""
     text = WORKFLOW.read_text(encoding="utf-8")
-    install = text.index("pip install -q pytest")
+    assert "pytest" in CI_REQUIREMENTS.read_text(encoding="utf-8")
+    install = text.index("pip install -q -r")
     assert install < text.index("Run decision gates")
+
+
+def test_ci_requirements_path_matches_the_workflow():
+    """A dangling path fails setup-python's cache step and the install step.
+
+    `cache-dependency-path` and `pip install -r` both resolve against the repo
+    root, so the requirements file has to exist exactly where they point.
+    """
+    text = WORKFLOW.read_text(encoding="utf-8")
+    referenced = set(re.findall(r"[\w./-]*\.github/requirements/[\w.-]+", text))
+    assert referenced, "workflow no longer references a requirements file"
+    for path in referenced:
+        assert (REPO / path).is_file(), f"{path} is referenced by the workflow but missing"
+    assert "cache: 'pip'" in text and "cache-dependency-path:" in text
 
 
 def test_scratch_files_stay_out_of_the_work_tree():
