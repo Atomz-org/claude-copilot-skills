@@ -1,4 +1,5 @@
 {
     "chat.useClaudeHooks": true,
-    "claudeCode.useTerminal": true
+    "claudeCode.useTerminal": true,
+    "chat.utilityModel": "local-model-provider/mlx-community/Qwen3.5-4B-MLX-8bit"
 }
