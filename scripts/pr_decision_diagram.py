@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""Render the PR decision gates as a Mermaid flowchart for a PR comment.
+"""Render a PR's impact subgraph and merge-gate results as a sticky comment.
 
-Used by .github/workflows/pr-decision-diagram.yml. The workflow runs each of
-the repository's merge-decision gates (branch naming, Conventional Commits,
-activation drift, marketplace portability, TOON serializer build, test suite),
-records one `gate|status|detail` line per gate, and this script turns those
-records into a markdown document containing:
+Used by .github/workflows/pr-decision-diagram.yml. The document contains:
 
-- a Mermaid flowchart — the decision chain in execution order, each node
-  colored pass/fail/skip, failed gates wired to the verdict with a "blocks
-  merge" edge;
-- a result table with the per-gate detail;
-- a sticky-comment marker so the workflow updates one comment per PR instead
-  of stacking new ones.
+- a Mermaid flowchart of the PR's **impact subgraph** — the nodes in
+  `graphify-out/graph.json` that this PR's diff actually touches, plus one hop
+  of dependents and dependencies. Its shape is derived from the diff, so it
+  differs per PR. `scripts/pr_impact_graph.py` does the graph work;
+- a per-file table of touched symbols;
+- the merge-gate results (branch naming, Conventional Commits, activation
+  drift, portability, TOON build, tests) as a table with a verdict;
+- a sticky-comment marker so the workflow updates one comment per PR.
+
+This replaced an earlier diagram that drew the same fixed gate chain on every
+PR — identical by construction, and therefore worthless as a diagram. The
+gates now render as a table, and the diagram carries PR-specific structure.
 
 GitHub renders ```mermaid fences natively in PR comments and in
 $GITHUB_STEP_SUMMARY, so the same document serves both.
@@ -20,7 +22,8 @@ $GITHUB_STEP_SUMMARY, so the same document serves both.
 Security note: PR titles and branch names are attacker-controlled on fork
 PRs. They reach this script via argv (passed from env in the workflow, never
 shell-interpolated) and every label goes through _escape() before it lands in
-Mermaid or markdown.
+Mermaid or markdown. Node labels come from graph.json, which is built from
+the PR's own tree, so they are escaped on the same path.
 """
 from __future__ import annotations
 
@@ -28,11 +31,24 @@ import argparse
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from pr_impact_graph import (  # noqa: E402
+    file_impact,
+    is_file_node,
+    load_graph,
+    parse_diff,
+    rank_files,
+    rank_pairs,
+    seed_nodes,
+)
+
 MARKER = "<!-- pr-decision-diagram -->"
 
 _STATUS_CLASS = {"pass": "pass", "fail": "fail", "skip": "skip"}
 _STATUS_ICON = {"pass": "✅", "fail": "❌", "skip": "⏭️"}
 _MAX_LABEL = 60
+_DEFAULT_MAX_NEIGHBOURS = 10
 
 
 def _escape(text: str) -> str:
@@ -70,51 +86,175 @@ def parse_records(path: Path) -> list[dict]:
     return records
 
 
-def render(records: list[dict], pr_number: str, pr_title: str, head_ref: str) -> str:
-    verdict_pass = all(r["status"] != "fail" for r in records)
-    lines: list[str] = [MARKER, "", "## Merge decision diagram", ""]
+def _relation_label(relations: dict[str, int]) -> str:
+    """`imports ×2, calls` — the relations collapsed into one file-level edge."""
+    parts = []
+    for relation, count in sorted(relations.items(), key=lambda kv: (-kv[1], kv[0])):
+        parts.append(f"{relation} ×{count}" if count > 1 else relation)
+    return _escape(", ".join(parts[:3]))
 
-    # --- Mermaid flowchart: the chain of decisions in execution order -----
-    lines += [
+
+def build_impact(
+    graph_path: Path | None,
+    changed_files: list[str],
+    diff_text: str,
+    max_neighbours: int = _DEFAULT_MAX_NEIGHBOURS,
+) -> dict:
+    """Resolve the PR's diff against the graph into a renderable structure."""
+    impact: dict = {
+        "available": False,
+        "reason": "",
+        "changed": [],
+        "dependents": [],
+        "dependencies": [],
+        "internal": [],
+        "dropped": 0,
+        "unextracted": [],
+        "missing": [],
+    }
+    if not changed_files:
+        impact["reason"] = "no changed files resolved for this PR"
+        return impact
+    index = load_graph(graph_path) if graph_path else None
+    if index is None:
+        impact["reason"] = "graphify-out/graph.json was not built for this run"
+        return impact
+
+    hunks = parse_diff(diff_text) if diff_text else {}
+    seeds, missing, unextracted = seed_nodes(index, changed_files, hunks)
+    impact["missing"] = missing
+    impact["unextracted"] = unextracted
+    if not seeds:
+        impact["reason"] = "none of the changed files are represented in the code graph"
+        return impact
+
+    # The file node stands for the module scope rather than a symbol, so it
+    # seeds the traversal but is not listed as one of the touched symbols.
+    per_file: dict[str, list[str]] = {}
+    for node in seeds:
+        per_file.setdefault(node["source_file"], [])
+        if not is_file_node(node):
+            per_file[node["source_file"]].append(node.get("label") or node["id"])
+    dependents, dependencies, internal = file_impact(index, seeds, set(changed_files))
+    kept_dependents, dropped_in = rank_files(dependents, max_neighbours)
+    kept_dependencies, dropped_out = rank_files(dependencies, max_neighbours)
+    kept_internal, dropped_internal = rank_pairs(internal, max_neighbours * 2)
+
+    impact.update(
+        available=True,
+        changed=sorted(per_file.items(), key=lambda kv: (-len(kv[1]), kv[0])),
+        dependents=kept_dependents,
+        dependencies=kept_dependencies,
+        internal=kept_internal,
+        dropped=dropped_in + dropped_out + dropped_internal,
+    )
+    return impact
+
+
+def render_mermaid(impact: dict, pr_number: str, head_ref: str) -> list[str]:
+    """The impact subgraph: changed nodes boxed, one hop of neighbours around."""
+    lines = [
         "```mermaid",
-        "flowchart TD",
-        "    classDef pass fill:#1a7f37,color:#ffffff,stroke:#116329",
-        "    classDef fail fill:#cf222e,color:#ffffff,stroke:#a40e26",
-        "    classDef skip fill:#6e7781,color:#ffffff,stroke:#57606a",
-        "    classDef verdict fill:#0969da,color:#ffffff,stroke:#0550ae",
-        "    classDef blocked fill:#cf222e,color:#ffffff,stroke:#a40e26",
-        "",
-        f'    PR["PR #{_escape(pr_number)}: {_escape(_clip(pr_title))}'
-        f'<br/>{_escape(_clip(head_ref))}"]',
+        "flowchart LR",
+        "    classDef changed fill:#0969da,color:#ffffff,stroke:#0550ae",
+        "    classDef dependent fill:#bf3989,color:#ffffff,stroke:#99286e",
+        "    classDef dependency fill:#6e7781,color:#ffffff,stroke:#57606a",
+        "    classDef empty fill:#6e7781,color:#ffffff,stroke:#57606a",
     ]
-    prev = "PR"
-    for i, r in enumerate(records):
-        node = f"G{i}"
-        icon = _STATUS_ICON[r["status"]]
-        label = f'{icon} {_escape(r["gate"])}'
-        if r["detail"]:
-            label += f'<br/>{_escape(_clip(r["detail"]))}'
-        lines.append(f'    {prev} --> {node}["{label}"]:::{_STATUS_CLASS[r["status"]]}')
-        prev = node
-    if verdict_pass:
-        lines.append(
-            f'    {prev} --> V["Verdict: mergeable by repository standards"]:::verdict'
-        )
-    else:
-        lines.append(f'    {prev} --> V["Verdict: BLOCKED"]:::blocked')
-        for i, r in enumerate(records):
-            if r["status"] == "fail":
-                lines.append(f"    G{i} -. blocks merge .-> V")
-    lines += ["```", ""]
+    if not impact.get("available"):
+        reason = impact.get("reason") or "impact analysis not run"
+        lines += [
+            f'    PR["PR #{_escape(pr_number)}<br/>{_escape(_clip(head_ref))}"]:::changed',
+            f'    PR --> X["No impact subgraph<br/>{_escape(_clip(reason, 70))}"]:::empty',
+            "```",
+            "",
+        ]
+        return lines
 
-    # --- Result table ------------------------------------------------------
-    lines += ["| Gate | Result | Detail |", "|---|---|---|"]
+    lines.append(f'    subgraph CHANGED["Changed by PR #{_escape(pr_number)}"]')
+    node_of = {}
+    for i, (path, symbols) in enumerate(impact["changed"]):
+        node_of[path] = f"C{i}"
+        touched = f"{len(symbols)} symbol(s) touched" if symbols else "module scope"
+        label = f"{_escape(_clip(path))}<br/>{touched}"
+        lines.append(f'        C{i}["{label}"]:::changed')
+    lines.append("    end")
+
+    # Edges the PR draws inside itself, e.g. a new test importing a new module.
+    internal = [
+        (node_of[src], node_of[tgt], relations)
+        for (src, tgt), relations in impact.get("internal", [])
+        if src in node_of and tgt in node_of
+    ]
+    for src, tgt, relations in internal:
+        lines.append(f"    {src} -->|{_relation_label(relations)}| {tgt}")
+
+    # Dependents point at the changed code — this is the blast radius.
+    for i, (path, relations) in enumerate(impact["dependents"]):
+        lines.append(f'    D{i}["{_escape(_clip(path))}"]:::dependent')
+        lines.append(f"    D{i} -->|{_relation_label(relations)}| CHANGED")
+    # Dependencies are what the changed code now relies on.
+    for i, (path, relations) in enumerate(impact["dependencies"]):
+        lines.append(f'    U{i}["{_escape(_clip(path))}"]:::dependency')
+        lines.append(f"    CHANGED -->|{_relation_label(relations)}| U{i}")
+    if not impact["dependents"] and not impact["dependencies"] and not internal:
+        lines.append('    CHANGED --> N0["No cross-file dependents or dependencies"]:::empty')
+    lines += ["```", ""]
+    return lines
+
+
+def render(
+    records: list[dict],
+    pr_number: str,
+    pr_title: str,
+    head_ref: str,
+    impact: dict | None = None,
+) -> str:
+    impact = impact or {"available": False, "reason": "impact analysis not run"}
+    verdict_pass = all(r["status"] != "fail" for r in records)
+    lines: list[str] = [
+        MARKER,
+        "",
+        f"## PR #{_escape(pr_number)} — {_escape(_clip(pr_title, 100))}",
+        "",
+        "### Impact graph",
+        "",
+    ]
+    lines += render_mermaid(impact, pr_number, head_ref)
+
+    if impact.get("available"):
+        lines += ["| Changed file | Symbols touched |", "|---|---|"]
+        for path, symbols in impact["changed"]:
+            shown = ", ".join(_escape(_clip(s, 40)) for s in sorted(symbols)[:6])
+            if len(symbols) > 6:
+                shown += f", … (+{len(symbols) - 6})"
+            lines.append(f"| {_escape(path)} | {shown or 'module scope'} |")
+        lines.append("")
+        if impact.get("dropped"):
+            lines.append(
+                f"_{impact['dropped']} further neighbour file(s) omitted from the "
+                "diagram; only the most strongly connected are drawn._"
+            )
+        for key, note in (
+            ("unextracted", "Not extracted by graphify (no nodes exist for this file type)"),
+            ("missing", "Changed but absent from the code graph"),
+        ):
+            paths = impact.get(key) or []
+            if paths:
+                shown = ", ".join(f"`{_escape(p)}`" for p in sorted(paths)[:8])
+                extra = f" (+{len(paths) - 8} more)" if len(paths) > 8 else ""
+                lines.append(f"_{note}: {shown}{extra}._")
+        lines.append("")
+
+    lines += ["### Merge gates", "", "| Gate | Result | Detail |", "|---|---|---|"]
     for r in records:
         lines.append(
             f'| {_escape(r["gate"])} | {_STATUS_ICON[r["status"]]} {r["status"]} '
             f'| {_escape(r["detail"]) or "—"} |'
         )
     lines += [
+        "",
+        f"**Verdict: {'mergeable by repository standards' if verdict_pass else 'BLOCKED'}**",
         "",
         "_Generated by `.github/workflows/pr-decision-diagram.yml` on every push "
         "to this PR; this comment is updated in place._",
@@ -128,6 +268,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--pr-number", default="", help="PR number (from env, untrusted-safe)")
     ap.add_argument("--pr-title", default="", help="PR title (from env, escaped here)")
     ap.add_argument("--head-ref", default="", help="head branch name (from env, escaped here)")
+    ap.add_argument("--graph", type=Path, help="graphify graph.json for the impact subgraph")
+    ap.add_argument("--changed", type=Path, help="file listing the PR's changed paths")
+    ap.add_argument("--diff", type=Path, help="`git diff -U0 <base> HEAD` output")
+    ap.add_argument(
+        "--max-neighbours",
+        type=int,
+        default=_DEFAULT_MAX_NEIGHBOURS,
+        help="max dependent/dependency files drawn per direction",
+    )
     ap.add_argument("--out", type=Path, required=True, help="markdown output path")
     args = ap.parse_args(argv)
 
@@ -135,8 +284,19 @@ def main(argv: list[str] | None = None) -> int:
     if not records:
         print("pr_decision_diagram: no gate records found", file=sys.stderr)
         return 1
+
+    changed_files = []
+    if args.changed and args.changed.is_file():
+        changed_files = [
+            line.strip()
+            for line in args.changed.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+    diff_text = args.diff.read_text(encoding="utf-8") if args.diff and args.diff.is_file() else ""
+    impact = build_impact(args.graph, changed_files, diff_text, args.max_neighbours)
+
     args.out.write_text(
-        render(records, args.pr_number, args.pr_title, args.head_ref), encoding="utf-8"
+        render(records, args.pr_number, args.pr_title, args.head_ref, impact), encoding="utf-8"
     )
     return 0
 
