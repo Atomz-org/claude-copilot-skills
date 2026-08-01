@@ -151,6 +151,62 @@ def test_pack_is_covered_by_the_portability_check():
 
 
 # ---------------------------------------------------------------------------
+# Scan footprint — what a scan leaves behind in the work tree
+# ---------------------------------------------------------------------------
+
+def test_skillmapignore_is_tracked_not_ignored():
+    """It decides which files become nodes, so it decides the gate's verdict.
+
+    Untracked, `sm init` writes its own defaults per machine and the gate stops
+    meaning the same thing in two checkouts. It also made CI's activation-drift
+    gate fail, since the scan runs before it and left an untracked file behind.
+    """
+    ignore = REPO / ".skillmapignore"
+    assert ignore.is_file()
+    proc = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", ".skillmapignore"],
+        cwd=str(REPO), capture_output=True, text=True, timeout=60,
+    )
+    assert proc.returncode == 0, ".skillmapignore must be committed, not gitignored"
+
+
+def test_skillmapignore_excludes_graphify_output():
+    """CI builds graphify-out/ right before scanning; a laptop usually has none.
+
+    Scanned, its wiki Markdown enters the graph and the node count differs
+    between the two environments for no reason a reviewer could act on.
+    """
+    text = (REPO / ".skillmapignore").read_text(encoding="utf-8")
+    entries = {
+        line.strip() for line in text.splitlines()
+        if line.strip() and not line.startswith("#")
+    }
+    assert "graphify-out/" in entries
+    # The transient DB must stay out too, or every scan dirties the tree.
+    assert ".skill-map/" in entries
+
+
+def test_scan_state_directory_is_gitignored():
+    """`.skill-map/` is a SQLite DB, regenerated per scan; committing it is noise."""
+    proc = subprocess.run(
+        ["git", "check-ignore", ".skill-map/skill-map.db"],
+        cwd=str(REPO), capture_output=True, text=True, timeout=60,
+    )
+    assert proc.returncode == 0, ".skill-map/ must be gitignored"
+
+
+def test_workflow_scans_before_the_drift_gate_runs():
+    """Ordering is load-bearing: anything the scan drops must already be handled.
+
+    The harness scan step sits above `Run decision gates`, so a file the scan
+    creates and nothing accounts for shows up as activation drift — which is
+    exactly how `.skillmapignore` was caught.
+    """
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert text.index("Map the harness") < text.index("Run decision gates")
+
+
+# ---------------------------------------------------------------------------
 # The nested Harness subgraph
 # ---------------------------------------------------------------------------
 

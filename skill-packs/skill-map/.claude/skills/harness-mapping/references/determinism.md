@@ -60,6 +60,37 @@ invocation, so a scan makes no analytics call and no version ping. `NO_COLOR=1`
 is set for the same reason a machine-readable flag exists — ANSI escapes would
 corrupt a `--json` consumer.
 
+## What a scan leaves in the work tree
+
+Two paths, and both are already handled — the CI activation-drift gate runs
+*after* the harness scan, so anything the scan creates and nothing accounts for
+is reported as drift:
+
+- `.skill-map/` — the SQLite DB and settings. Transient, regenerated per scan,
+  **gitignored**.
+- `.skillmapignore` — decides which files become nodes. **Committed**, for the
+  same reason the CLI version is pinned: untracked, `sm init` writes its own
+  defaults per machine and the gate stops meaning the same thing in two
+  checkouts. `sm init` never overwrites an existing copy.
+
+## Scan scope and reproducibility
+
+`.skillmapignore` excludes `graphify-out/`, which matters more than it looks.
+CI runs `graphify update .` immediately before the harness scan, so that tree
+exists on a runner and usually does not on a laptop; scanned, its wiki Markdown
+would enter the graph and the node count would differ between the two
+environments for no reason a reviewer could act on.
+
+With it excluded, node and link counts are identical in both. One difference
+survives and cannot be fixed from the ignore file: `CLAUDE.md:24` points at
+`graphify-out/GRAPH_REPORT.md`, and `reference-broken` resolves against the
+graph *or the disk*, so that one pointer resolves on a runner and is reported
+broken on a laptop.
+
+That is a ±1 swing in a number the gate does not read — `reference-broken` is
+deliberately not one of `GATE_ANALYZERS` — so the verdict stays stable and only
+the diagram's findings box moves.
+
 ## Version pinning
 
 `PINNED_VERSION` in the wrapper fixes the CLI version. The analyzer set decides

@@ -85,6 +85,12 @@ skill-map ships a probabilistic layer that queues LLM jobs, and the allowlist in
 `agent`, `findings`, `refresh`). `tests/test_skill_map_pack.py` fails if one is
 ever added. No API key; exit `3` and a recorded `skip` where Node is absent.
 
+A scan touches two paths, both already accounted for: `.skill-map/` (transient
+SQLite state) is gitignored, and `.skillmapignore` (which files become nodes) is
+**committed**, so the gate means the same thing in every checkout. It excludes
+`graphify-out/`, which CI builds immediately before scanning and a laptop
+usually lacks.
+
 Pack: `skill-packs/skill-map/` (skill `harness-mapping`, command `/skill-map`).
 Wraps `@skill-map/cli` at a pinned version rather than vendoring the upstream
 monorepo — analyzers decide which issues exist, so the pin is what keeps the
