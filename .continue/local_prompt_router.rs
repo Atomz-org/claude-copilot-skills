@@ -214,6 +214,24 @@ fn maybe_start_mlx(cfg: &Cfg) {
     thread::sleep(Duration::from_millis(700));
 }
 
+fn kill_upstream_listener(cfg: &Cfg) {
+    let target = format!("lsof -ti tcp:{} | xargs kill -9", cfg.upstream_port);
+    let _ = Command::new("sh")
+        .arg("-lc")
+        .arg(target)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+}
+
+fn restart_mlx(cfg: &Cfg) {
+    if !cfg.auto_start_mlx {
+        return;
+    }
+    kill_upstream_listener(cfg);
+    maybe_start_mlx(cfg);
+}
+
 fn forward_to_upstream(cfg: &Cfg, target_path: &str, body: &[u8]) -> std::io::Result<Vec<u8>> {
     let mut s = TcpStream::connect((cfg.upstream_host.as_str(), cfg.upstream_port))?;
     s.set_read_timeout(Some(Duration::from_secs(120)))?;
@@ -230,6 +248,19 @@ fn forward_to_upstream(cfg: &Cfg, target_path: &str, body: &[u8]) -> std::io::Re
     let mut resp = Vec::new();
     s.read_to_end(&mut resp)?;
     Ok(resp)
+}
+
+fn forward_with_recovery(cfg: &Cfg, target_path: &str, body: &[u8]) -> std::io::Result<Vec<u8>> {
+    match forward_to_upstream(cfg, target_path, body) {
+        Ok(resp) => Ok(resp),
+        Err(first_err) => {
+            if !cfg.auto_start_mlx {
+                return Err(first_err);
+            }
+            restart_mlx(cfg);
+            forward_to_upstream(cfg, target_path, body)
+        }
+    }
 }
 
 fn response_status_code(resp: &[u8]) -> u16 {
@@ -461,7 +492,7 @@ fn handle_client(mut stream: TcpStream, cfg: Cfg) {
     maybe_start_mlx(&cfg);
 
     if is_chat {
-        match forward_to_upstream(&cfg, &cfg.upstream_chat_path, body.as_bytes()) {
+        match forward_with_recovery(&cfg, &cfg.upstream_chat_path, body.as_bytes()) {
             Ok(resp) => {
                 let _ = stream.write_all(&resp);
             }
@@ -475,12 +506,12 @@ fn handle_client(mut stream: TcpStream, cfg: Cfg) {
         return;
     }
 
-    match forward_to_upstream(&cfg, &cfg.upstream_completions_path, body.as_bytes()) {
+    match forward_with_recovery(&cfg, &cfg.upstream_completions_path, body.as_bytes()) {
         Ok(resp) => {
             let code = response_status_code(&resp);
             if code == 404 || code == 405 || code == 501 {
                 let chat_body = completions_to_chat_json(&body, &cfg.local_model);
-                match forward_to_upstream(&cfg, &cfg.upstream_chat_path, chat_body.as_bytes()) {
+                match forward_with_recovery(&cfg, &cfg.upstream_chat_path, chat_body.as_bytes()) {
                     Ok(chat_resp) => {
                         let converted = chat_to_completions_response(&chat_resp, &cfg.local_model);
                         let _ = stream.write_all(&converted);

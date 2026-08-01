@@ -6,6 +6,12 @@ ROUTER_PORT ?= 4000
 HARD_REQUEST_BYTES ?= 3000000
 HARD_INPUT_TOKENS ?= 24000
 DISABLE_STREAM_OVER_TOKENS ?= 10000
+UPSTREAM_HOST ?= 127.0.0.1
+UPSTREAM_PORT ?= 8080
+LOCAL_MODEL ?= mlx-community/Qwen3.5-4B-MLX-8bit
+MLX_BIN ?= /Users/sswaminathan/Documents/claude-data-skills/code-skills/.venv/bin/mlx_lm.server
+MLX_HOST ?= $(UPSTREAM_HOST)
+MLX_CMD ?= $(MLX_BIN) --model $(LOCAL_MODEL) --host $(MLX_HOST) --port $(UPSTREAM_PORT)
 
 # Cline tends to send larger contexts/tool transcripts than lightweight chat clients.
 # These values are intentionally higher than defaults to reduce 413 local_budget_exceeded errors.
@@ -16,17 +22,24 @@ CLINE_DISABLE_STREAM_OVER_TOKENS ?= 14000
 .PHONY: setup run run-cline health test stop
 
 setup:
-	# Print the available local run entrypoint. No process changes happen here.
+	# Print the available local run entrypoint and override mechanism. No process changes happen here.
 	echo "Continue local run helpers are available. Use: make run"
+	echo "Optional overrides: export LOCAL_MODEL=... or write .continue/.env.local"
 
 run:
 	# Start the local router using normal limits.
 	# continue2.sh handles: kill existing listener, rebuild router, start background process,
 	# and perform health/chat smoke checks.
 	ROUTER_PORT=$(ROUTER_PORT) \
+	UPSTREAM_HOST=$(UPSTREAM_HOST) \
+	UPSTREAM_PORT=$(UPSTREAM_PORT) \
 	HARD_REQUEST_BYTES=$(HARD_REQUEST_BYTES) \
 	HARD_INPUT_TOKENS=$(HARD_INPUT_TOKENS) \
 	DISABLE_STREAM_OVER_TOKENS=$(DISABLE_STREAM_OVER_TOKENS) \
+	LOCAL_MODEL=$(LOCAL_MODEL) \
+	MLX_BIN=$(MLX_BIN) \
+	MLX_HOST=$(MLX_HOST) \
+	MLX_CMD='$(MLX_CMD)' \
 	zsh continue2.sh
 
 run-cline:
@@ -34,9 +47,15 @@ run-cline:
 	# Use this target when Cline reports empty/unparsable responses caused by upstream truncation
 	# or frequent 413 local_budget_exceeded from large request payloads.
 	ROUTER_PORT=$(ROUTER_PORT) \
+	UPSTREAM_HOST=$(UPSTREAM_HOST) \
+	UPSTREAM_PORT=$(UPSTREAM_PORT) \
 	HARD_REQUEST_BYTES=$(CLINE_HARD_REQUEST_BYTES) \
 	HARD_INPUT_TOKENS=$(CLINE_HARD_INPUT_TOKENS) \
 	DISABLE_STREAM_OVER_TOKENS=$(CLINE_DISABLE_STREAM_OVER_TOKENS) \
+	LOCAL_MODEL=$(LOCAL_MODEL) \
+	MLX_BIN=$(MLX_BIN) \
+	MLX_HOST=$(MLX_HOST) \
+	MLX_CMD='$(MLX_CMD)' \
 	zsh continue2.sh
 
 health:
