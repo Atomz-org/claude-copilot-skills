@@ -69,3 +69,4 @@ rust/toon/bin/
 # untracked is also what keeps the CI activation-drift gate seeing a clean tree
 # after a scan runs.
 .skill-map/
+.continue/
