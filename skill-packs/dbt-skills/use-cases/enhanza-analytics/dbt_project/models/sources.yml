@@ -69,27 +69,6 @@ sources:
       - name: accounting
       - name: ratings
 
-  - name: visma_economic_api
-    description: 'Visma e-conomic raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: visma_economic_api_{{ var('uid') }}
-    tables:
-      - name: accounting_years
-      - name: accounts
-      - name: customer_groups
-      - name: customers
-      - name: employees
-      - name: entries
-      - name: invoices_booked
-      - name: invoices_sent
-      - name: journals
-      - name: orders_archived
-      - name: orders_drafts
-      - name: orders_sent
-      - name: products
-      - name: self
-      - name: suppliers
-
   - name: xledger_api
     description: 'Xledger raw data'
     database: "{{ target.project | default(target.database) }}"

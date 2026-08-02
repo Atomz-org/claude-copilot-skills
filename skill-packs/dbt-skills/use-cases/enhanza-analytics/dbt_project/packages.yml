@@ -14,3 +14,4 @@ packages:
   - local: packages/tripletex
   - local: packages/upsales
   - local: packages/visma_eaccounting
+  - local: packages/visma_economic

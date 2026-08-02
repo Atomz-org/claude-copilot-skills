@@ -8,4 +8,5 @@ packages:
   - local: packages/tripletex
   - local: packages/upsales
   - local: packages/visma_eaccounting
-sha1_hash: 589216ff046bf61e73f3b1fa6f8e048306eab7d0
+  - local: packages/visma_economic
+sha1_hash: dc0b02c99a20271e027ae038bcfb04324773b14f

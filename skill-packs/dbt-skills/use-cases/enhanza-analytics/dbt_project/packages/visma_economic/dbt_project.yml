@@ -1,0 +1,23 @@
+# enhanza_visma_economic — the Visma e-conomic connector as a dbt package.
+#
+# Installed by one `- local: packages/visma_economic` line in the root packages.yml; enabled
+# per tenant by the root-level `is_visma_economic_enabled` var. Mechanism macros (model_alias,
+# auto_config, add_erp_fields, erp_union) resolve from the ROOT project — dbt Core never
+# searches sibling packages for unqualified macros — so this package declares no macro
+# dependency and carries only what it owns: its models, its sources, and any macro used
+# solely here.
+name: 'enhanza_visma_economic'
+version: '1.0.0'
+config-version: 2
+require-dbt-version: [">=1.9.0", "<2.0.0"]
+
+model-paths: ["models"]
+
+models:
+  enhanza_visma_economic:
+    +materialized: view
+    +tags: ['visma_economic']
+    +enabled: "{{ var('is_visma_economic_enabled', false) | as_bool }}"
+    staging:
+      +schema: visma_economic_staging
+      +tags: ['staging']
