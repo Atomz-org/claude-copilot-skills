@@ -17,7 +17,9 @@ models:
   enhanza_visma_eaccounting:
     +materialized: view
     +tags: ['visma_eaccounting']
-    +enabled: "{{ var('is_visma_eaccounting_enabled', false) | as_bool }}"
+    # +enabled lives in the ROOT dbt_project.yml under `enhanza_visma_eaccounting:` — dbt
+    # renders CLI vars fully only in the root project yml; declared here, the
+    # gate read its default and silently disabled the whole package.
     staging:
       +schema: visma_eaccounting_staging
       +tags: ['staging']

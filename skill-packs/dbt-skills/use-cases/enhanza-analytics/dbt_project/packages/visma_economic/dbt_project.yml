@@ -17,7 +17,9 @@ models:
   enhanza_visma_economic:
     +materialized: view
     +tags: ['visma_economic']
-    +enabled: "{{ var('is_visma_economic_enabled', false) | as_bool }}"
+    # +enabled lives in the ROOT dbt_project.yml under `enhanza_visma_economic:` — dbt
+    # renders CLI vars fully only in the root project yml; declared here, the
+    # gate read its default and silently disabled the whole package.
     staging:
       +schema: visma_economic_staging
       +tags: ['staging']

@@ -17,7 +17,9 @@ models:
   enhanza_xledger:
     +materialized: view
     +tags: ['xledger']
-    +enabled: "{{ var('is_xledger_enabled', false) | as_bool }}"
+    # +enabled lives in the ROOT dbt_project.yml under `enhanza_xledger:` — dbt
+    # renders CLI vars fully only in the root project yml; declared here, the
+    # gate read its default and silently disabled the whole package.
     staging:
       +schema: xledger_staging
       +tags: ['staging']

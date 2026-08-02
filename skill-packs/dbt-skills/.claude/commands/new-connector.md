@@ -19,7 +19,8 @@ already does this — its layout wins over any example in the skill.
 ```bash
 ls skill-packs/*/use-cases/
 cat skill-packs/*/use-cases/<slug>/CONNECTORS.md 2>/dev/null
-ls skill-packs/*/use-cases/<slug>/dbt_project/models/staging/
+ls skill-packs/*/use-cases/<slug>/dbt_project/models/staging/ \
+   skill-packs/*/use-cases/<slug>/dbt_project/packages/ 2>/dev/null
 ```
 
 **If the use-case does not exist, stop.** Run `/new-use-case` first — a connector belongs to

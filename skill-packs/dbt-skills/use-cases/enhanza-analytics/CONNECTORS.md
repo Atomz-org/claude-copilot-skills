@@ -30,19 +30,35 @@ entirely, and how `xledger` claimed a `fact_vouchers` it had no adapter for.
 [tests/test_enhanza_connector_registry.py](../../../../tests/test_enhanza_connector_registry.py)
 now fails on both of those shapes. Run it before you open the PR.
 
+## Layout: one connector, one dbt package
+
+Every connector is a standalone dbt package under `packages/<source>/`, installed by one
+line in the root `packages.yml` and gated per tenant by `is_<source>_enabled` in the root
+`dbt_project.yml`. Those are two different dials on purpose: `packages.yml` decides what
+is *installed* (composition, per deployment); the vars decide what is *enabled* (tenancy,
+per run). The root project — `enhanza_erp_bi` — owns the unified layer, the marts, the
+mechanism macros, and the registry; `packages/core/` owns the shared reference sources.
+
+Two placements are dbt Core's rules, not this project's taste. Mechanism macros and the
+registry live in the **root** project because dbt resolves an unqualified macro call
+through the calling package and the root only — never a sibling package. The tenancy
+gates live in the **root** `dbt_project.yml` because dbt fully renders CLI vars only
+there; the same gate declared inside a package's own yml read its default and silently
+disabled all 70 Fortnox BI models (the graph emitter's coverage gate caught it).
+
 ## Layers a connector passes through
 
 ```
-<source>_api                     sources.yml — raw, one schema per tenant
-  └─ <source>_bi_<model>_staging  models/staging/<source>/ — rename, cast, coerce
-       └─ <source>_bi_<model>     models/<source>_bi/ — user-facing, {{ auto_config() }}
-  └─ <source>_erp_bi_<concept>    models/staging/<source>/ — adapter to the common schema
-       └─ erp_bi_<concept>        models/staging/erp/ — union across sources, registry-driven
-            └─ logic_bi_*         models/logic_bi/ — business logic, contracted
+<source>_api                     packages/<source>/models/sources.yml — raw, one schema per tenant
+  └─ <source>_bi_<model>_staging  packages/<source>/models/staging/ — rename, cast, coerce
+       └─ <source>_bi_<model>     packages/<source>/models/<source>_bi/ — user-facing, {{ auto_config() }}
+  └─ <source>_erp_bi_<concept>    packages/<source>/models/staging/ — adapter to the common schema
+       └─ erp_bi_<concept>        models/erp/ — union across sources, registry-driven (root)
+            └─ logic_bi_*         models/logic_bi/ — business logic, contracted (root)
                  └─ Cube          semantic layer consumed by app.enhanza.com
 ```
 
-Two distinct jobs live in `models/staging/<source>/`:
+Two distinct jobs live in `packages/<source>/models/staging/`:
 
 - **`<source>_bi_<model>_staging`** quarantines the raw source — renaming, casting, and
   coercion happen here and nowhere else. It feeds the source-aligned `<source>_bi` layer
@@ -66,16 +82,18 @@ python3 scripts/new_connector.py shopify \
     --erp-concepts dim_customers,dim_articles,fact_orders,fact_order_rows
 ```
 
-This writes the directory, the staging and adapter stubs, the `<source>_bi` one-liners, the
-`sources.yml` block, and prints the registry entry to paste. It never overwrites an
-existing file. Everything it emits is a stub with `[NEEDS INPUT]` markers where a real
-column list belongs — it saves the typing, not the modeling.
+This writes the package skeleton under `packages/<source>/` — its `dbt_project.yml`, the
+staging and adapter stubs, the `<source>_bi` one-liners — and prints the `packages.yml`
+install line, the `sources.yml` block, and the registry entry to paste. It never
+overwrites an existing file. Everything it emits is a stub with `[NEEDS INPUT]` markers
+where a real column list belongs — it saves the typing, not the modeling.
 
 ### 2. Declare the raw source
 
-Add the block to [dbt_project/models/sources.yml](dbt_project/models/sources.yml). The
-source name is `<source>_api`, not `<source>` — every existing staging model calls
-`source('fortnox_api', ...)`, and a bare `source('fortnox', ...)` will not resolve.
+Add the block to the package's own `packages/<source>/models/sources.yml` — the connector
+owns its source declaration. The source name is `<source>_api`, not `<source>` — every
+existing staging model calls `source('fortnox_api', ...)`, and a bare
+`source('fortnox', ...)` will not resolve.
 
 ```yaml
   - name: shopify_api
@@ -111,9 +129,9 @@ Add an alphabetically-placed entry to `all_available_sources`:
 
 Three rules the tests enforce:
 
-- The key (`shopify`) must match the `is_<key>_enabled` var, the
-  `models/staging/<key>/` directory, and the `<key>_erp_bi_*` filename prefix. These are
-  string-matched at compile time, not resolved — a mismatch produces silence, not an error.
+- The key (`shopify`) must match the `is_<key>_enabled` var, the `packages/<key>/`
+  directory, and the `<key>_erp_bi_*` filename prefix. These are string-matched at
+  compile time, not resolved — a mismatch produces silence, not an error.
 - Every concept in `included_models` that has an `erp_bi_<concept>` union model must have a
   `<key>_erp_bi_<concept>.sql` adapter on disk.
 - Omit `default_currency` rather than guessing it. `add_erp_fields()` emits a NULL

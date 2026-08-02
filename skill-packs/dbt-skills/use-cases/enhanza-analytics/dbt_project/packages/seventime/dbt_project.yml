@@ -17,7 +17,9 @@ models:
   enhanza_seventime:
     +materialized: view
     +tags: ['seventime']
-    +enabled: "{{ var('is_seventime_enabled', false) | as_bool }}"
+    # +enabled lives in the ROOT dbt_project.yml under `enhanza_seventime:` — dbt
+    # renders CLI vars fully only in the root project yml; declared here, the
+    # gate read its default and silently disabled the whole package.
     staging:
       +schema: seventime_staging
       +tags: ['staging']

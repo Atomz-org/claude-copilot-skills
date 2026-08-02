@@ -273,16 +273,21 @@ def detect(use_case: Path) -> Conventions:
     conv.sources_yml = next(
         (f for f in found_files if f.name == "sources.yml"), next(iter(found_files), None)
     )
+    # All matches, shortest suffix wins. First-match broke on the package layout: the
+    # connector's own `<ref>_api` block moved into its package while `<ref>_api_demo`
+    # stayed in the root sources.yml, which globs first — and `_api_demo` became the
+    # learned suffix for every new connector. The demo block is a *derived* source; the
+    # base one is always the shortest.
+    matches: list[tuple[str, Path]] = []
     for candidate_file in found_files:
-        found = re.search(
+        for found in re.finditer(
             rf"^\s*-\s*name:\s*{re.escape(ref)}(\w*)\s*$",
             candidate_file.read_text(encoding="utf-8"),
             re.MULTILINE,
-        )
-        if found:
-            conv.source_suffix = found.group(1)
-            conv.sources_yml = candidate_file
-            break
+        ):
+            matches.append((found.group(1), candidate_file))
+    if matches:
+        conv.source_suffix, conv.sources_yml = min(matches, key=lambda m: len(m[0]))
 
     return conv
 

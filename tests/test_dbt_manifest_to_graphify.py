@@ -175,9 +175,32 @@ def test_only_project_macros_are_emitted() -> None:
     fragment = _fragment()
     macros = [n for n in fragment["nodes"] if n.get("dbt_resource_type") == "macro"]
     assert macros, "no project macros emitted"
+    # First-party = the root project plus its local packages (packages/<name>), which is
+    # where fortnox_start_year_filter lives after the split. Vendored macro packages
+    # (dbt_utils, dbt core) must still be absent.
+    first_party = ("macro.enhanza_erp_bi.", "macro.enhanza_")
     for node in macros:
         assert "dbt_packages" not in node["source_file"]
-        assert node["dbt_unique_id"].startswith("macro.enhanza_analytics.")
+        assert node["dbt_unique_id"].startswith(first_party), node["dbt_unique_id"]
+    assert any(n["dbt_unique_id"].startswith("macro.enhanza_erp_bi.") for n in macros)
+
+
+@needs_manifest
+def test_package_models_carry_their_package_path() -> None:
+    """`original_file_path` is package-relative; the node id must not pretend otherwise.
+
+    Without the package prefix a fortnox model would claim
+    `<project>/models/staging/...` — a path that no longer exists — and could collide
+    with a root model at the same relative path.
+    """
+    fragment = _fragment()
+    fortnox = [
+        n for n in fragment["nodes"]
+        if n.get("dbt_resource_type") == "model" and n["label"].startswith("fortnox_bi_")
+    ]
+    assert fortnox, "no fortnox models in the fragment"
+    for node in fortnox:
+        assert "/packages/fortnox/models/" in node["source_file"], node["source_file"]
 
 
 @needs_manifest

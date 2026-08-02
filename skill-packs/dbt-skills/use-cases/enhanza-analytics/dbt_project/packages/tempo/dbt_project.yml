@@ -17,7 +17,9 @@ models:
   enhanza_tempo:
     +materialized: view
     +tags: ['tempo']
-    +enabled: "{{ var('is_tempo_enabled', false) | as_bool }}"
+    # +enabled lives in the ROOT dbt_project.yml under `enhanza_tempo:` — dbt
+    # renders CLI vars fully only in the root project yml; declared here, the
+    # gate read its default and silently disabled the whole package.
     staging:
       +schema: tempo_staging
       +tags: ['staging']

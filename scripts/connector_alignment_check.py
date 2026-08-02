@@ -393,7 +393,10 @@ def unified_layer_dirs(conv: Conventions) -> Set[str]:
     out: Set[str] = set()
     current: Optional[str] = None
     for line in text.splitlines():
-        heading = re.match(r"^\s{6}([a-z_0-9]+):\s*$", line)
+        # 4 spaces when the layer sits directly under the project key (models/erp in the
+        # package layout), 6 when nested under a staging: block (the monolith). Both are
+        # the same declaration.
+        heading = re.match(r"^ {4,6}([a-z_0-9]+):\s*$", line)
         if heading:
             current = heading.group(1)
             continue

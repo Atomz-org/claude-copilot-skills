@@ -18,7 +18,9 @@ models:
   enhanza_fortnox:
     +materialized: view
     +tags: ['fortnox']
-    +enabled: "{{ var('is_fortnox_enabled', false) | as_bool }}"
+    # +enabled lives in the ROOT dbt_project.yml under `enhanza_fortnox:` — dbt
+    # renders CLI vars fully only in the root project yml; declared here, the
+    # gate read its default and silently disabled the whole package.
     staging:
       +schema: fortnox_staging
       +tags: ['staging']

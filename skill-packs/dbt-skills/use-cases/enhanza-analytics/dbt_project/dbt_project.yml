@@ -1,4 +1,9 @@
-name: 'enhanza_analytics'
+# The ERP/CRM BI project — a project by itself. Connectors live under packages/ as
+# standalone dbt packages, composed by packages.yml; this root owns the unified layer
+# (erp/), the marts (logic_bi/), the app and demo layers, the mechanism macros, and the
+# registry. The macros stay here by construction: dbt Core resolves unqualified macro
+# calls through the calling package and the root project only, never a sibling package.
+name: 'enhanza_erp_bi'
 version: '1.0.0'
 config-version: 2
 profile: 'enhanza_sample'
@@ -73,7 +78,7 @@ vars:
 # alias collision *within* a dataset — the only kind that is a real defect.
 # ---------------------------------------------------------------------------------------
 models:
-  enhanza_analytics:
+  enhanza_erp_bi:
     +materialized: view
 
     # Loose starter models left over from the initial scaffold. Not part of the Enhanza
@@ -81,6 +86,8 @@ models:
     dim_customers_scaffold:
       +tags: ['scaffold']
     orders_mart_scaffold:
+      +tags: ['scaffold']
+    stg_sales_orders_scaffold:
       +tags: ['scaffold']
 
     app:
@@ -91,16 +98,43 @@ models:
       +schema: demo
       +tags: ['demo']
 
-    staging:
-      +schema: staging
-      +tags: ['staging']
-      # The unified layer is user-facing: erp_bi_dim_accounts -> erp_bi.dim_accounts.
-      erp:
-        +schema: erp_bi
-        +tags: ['unified', 'erp']
-      # Per-connector staging datasets. These hold both the `<source>_bi_*_staging` models
-      # and the `<source>_erp_bi_*` adapters that feed the unified union above.
+    # The unified layer is user-facing: erp_bi_dim_accounts -> erp_bi.dim_accounts.
+    # Per-connector staging and BI layers live in packages/<connector>/ and declare
+    # their own +schema there.
+    erp:
+      +schema: erp_bi
+      +tags: ['unified', 'erp']
 
     logic_bi:
       +schema: logic_bi
       +tags: ['logic', 'mart']
+
+  # ------------------------------------------------------------------------------------
+  # Tenancy gates for the connector packages — in the ROOT project, twice over. First,
+  # doctrine: packages.yml decides what is installed (composition); these vars decide what
+  # is enabled for a tenant (tenancy), and tenancy is the deployment's call, not the
+  # package's. Second, mechanics: dbt renders jinja with CLI vars fully only in the root
+  # dbt_project.yml — the same gate declared inside a package's own yml read its default
+  # and silently disabled all 70 Fortnox BI models. The emitter's coverage gate (95% of
+  # on-disk models must reach the manifest) is what caught it.
+  # ------------------------------------------------------------------------------------
+  enhanza_favrit:
+    +enabled: "{{ var('is_favrit_enabled', false) | as_bool }}"
+  enhanza_fortnox:
+    +enabled: "{{ var('is_fortnox_enabled', false) | as_bool }}"
+  enhanza_seventime:
+    +enabled: "{{ var('is_seventime_enabled', false) | as_bool }}"
+  enhanza_shopify:
+    +enabled: "{{ var('is_shopify_enabled', false) | as_bool }}"
+  enhanza_tempo:
+    +enabled: "{{ var('is_tempo_enabled', false) | as_bool }}"
+  enhanza_tripletex:
+    +enabled: "{{ var('is_tripletex_enabled', false) | as_bool }}"
+  enhanza_upsales:
+    +enabled: "{{ var('is_upsales_enabled', false) | as_bool }}"
+  enhanza_visma_eaccounting:
+    +enabled: "{{ var('is_visma_eaccounting_enabled', false) | as_bool }}"
+  enhanza_visma_economic:
+    +enabled: "{{ var('is_visma_economic_enabled', false) | as_bool }}"
+  enhanza_xledger:
+    +enabled: "{{ var('is_xledger_enabled', false) | as_bool }}"

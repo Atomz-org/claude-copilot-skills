@@ -21,7 +21,12 @@ PROJECT = (
 )
 MODELS = PROJECT / "models"
 GLOBAL_CONFIGS = PROJECT / "macros/config/global_configs.sql"
-ERP_DIR = MODELS / "staging/erp"
+# The unified layer moved from models/staging/erp to models/erp when the connectors were
+# extracted into packages; accept whichever this checkout has.
+ERP_DIR = next(
+    (d for d in (MODELS / "erp", MODELS / "staging/erp") if d.is_dir()),
+    MODELS / "erp",
+)
 
 
 def _all_available_sources():
@@ -83,9 +88,17 @@ def _erp_union_concepts():
 
 
 def _adapters():
-    """`{(source, concept): path}` for every `<source>_erp_bi_<concept>.sql` on disk."""
+    """`{(source, concept): path}` for every `<source>_erp_bi_<concept>.sql` on disk.
+
+    Adapters live inside each connector's package after the split
+    (packages/<source>/models/staging/); the root models/ tree is still scanned so the
+    test keeps meaning the same thing on a pre-split checkout.
+    """
     found = {}
-    for f in MODELS.rglob("*_erp_bi_*.sql"):
+    candidates = list(MODELS.rglob("*_erp_bi_*.sql")) + list(
+        PROJECT.glob("packages/*/models/**/*_erp_bi_*.sql")
+    )
+    for f in candidates:
         if f.stem.startswith("erp_bi_"):
             continue
         source, concept = f.stem.split("_erp_bi_", 1)
@@ -158,8 +171,16 @@ def test_union_models_carry_no_hardcoded_connector_gates(model):
 
 @pytest.mark.parametrize("source", sorted(REGISTRY))
 def test_every_source_has_a_staging_directory(source):
-    assert (MODELS / "staging" / source).is_dir(), (
-        f"'{source}' is in the registry but models/staging/{source}/ does not exist"
+    """A registry entry with no models behind it unions nothing, silently.
+
+    Two layouts satisfy it: the monolith's models/staging/<source>/ and the package
+    layout's packages/<source>/models/staging/.
+    """
+    monolith = MODELS / "staging" / source
+    package = PROJECT / "packages" / source / "models" / "staging"
+    assert monolith.is_dir() or package.is_dir(), (
+        f"'{source}' is in the registry but neither models/staging/{source}/ nor "
+        f"packages/{source}/models/staging/ exists"
     )
 
 

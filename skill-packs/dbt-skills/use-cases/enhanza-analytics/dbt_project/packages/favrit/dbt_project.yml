@@ -17,7 +17,9 @@ models:
   enhanza_favrit:
     +materialized: view
     +tags: ['favrit']
-    +enabled: "{{ var('is_favrit_enabled', false) | as_bool }}"
+    # +enabled lives in the ROOT dbt_project.yml under `enhanza_favrit:` — dbt
+    # renders CLI vars fully only in the root project yml; declared here, the
+    # gate read its default and silently disabled the whole package.
     staging:
       +schema: favrit_staging
       +tags: ['staging']
