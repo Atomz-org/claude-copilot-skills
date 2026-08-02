@@ -1,0 +1,26 @@
+# enhanza_tripletex — the Tripletex connector as a dbt package.
+#
+# Installed by one `- local: packages/tripletex` line in the root packages.yml; enabled
+# per tenant by the root-level `is_tripletex_enabled` var. Mechanism macros (model_alias,
+# auto_config, add_erp_fields, erp_union) resolve from the ROOT project — dbt Core never
+# searches sibling packages for unqualified macros — so this package declares no macro
+# dependency and carries only what it owns: its models, its sources, and any macro used
+# solely here.
+name: 'enhanza_tripletex'
+version: '1.0.0'
+config-version: 2
+require-dbt-version: [">=1.9.0", "<2.0.0"]
+
+model-paths: ["models"]
+
+models:
+  enhanza_tripletex:
+    +materialized: view
+    +tags: ['tripletex']
+    +enabled: "{{ var('is_tripletex_enabled', false) | as_bool }}"
+    staging:
+      +schema: tripletex_staging
+      +tags: ['staging']
+    tripletex_bi:
+      +schema: tripletex_bi
+      +tags: ['bi']

@@ -100,9 +100,6 @@ models:
         +tags: ['unified', 'erp']
       # Per-connector staging datasets. These hold both the `<source>_bi_*_staging` models
       # and the `<source>_erp_bi_*` adapters that feed the unified union above.
-      tripletex:
-        +schema: tripletex_staging
-        +tags: ['tripletex']
       upsales:
         +schema: upsales_staging
         +tags: ['upsales']
@@ -115,11 +112,6 @@ models:
       xledger:
         +schema: xledger_staging
         +tags: ['xledger']
-
-    tripletex_bi:
-      +schema: tripletex_bi
-      +tags: ['tripletex', 'bi']
-      +enabled: "{{ var('is_tripletex_enabled', false) | as_bool }}"
 
     logic_bi:
       +schema: logic_bi

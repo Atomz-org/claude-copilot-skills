@@ -5,4 +5,5 @@ packages:
   - local: packages/seventime
   - local: packages/shopify
   - local: packages/tempo
-sha1_hash: 0ee988330964f92cf59fc89b1aa45e0b5702114b
+  - local: packages/tripletex
+sha1_hash: a48e5a87c8d7a1defc0cd3328a8fb5078907fb58

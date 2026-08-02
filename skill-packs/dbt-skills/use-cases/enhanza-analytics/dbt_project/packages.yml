@@ -11,3 +11,4 @@ packages:
   - local: packages/seventime
   - local: packages/shopify
   - local: packages/tempo
+  - local: packages/tripletex
