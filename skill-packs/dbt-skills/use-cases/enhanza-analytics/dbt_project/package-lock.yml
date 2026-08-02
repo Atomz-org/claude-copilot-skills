@@ -9,4 +9,5 @@ packages:
   - local: packages/upsales
   - local: packages/visma_eaccounting
   - local: packages/visma_economic
-sha1_hash: dc0b02c99a20271e027ae038bcfb04324773b14f
+  - local: packages/xledger
+sha1_hash: 4a94027e1c02c96f60a5bd004977aa462d6972de

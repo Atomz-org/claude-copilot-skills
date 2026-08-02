@@ -100,9 +100,6 @@ models:
         +tags: ['unified', 'erp']
       # Per-connector staging datasets. These hold both the `<source>_bi_*_staging` models
       # and the `<source>_erp_bi_*` adapters that feed the unified union above.
-      xledger:
-        +schema: xledger_staging
-        +tags: ['xledger']
 
     logic_bi:
       +schema: logic_bi
