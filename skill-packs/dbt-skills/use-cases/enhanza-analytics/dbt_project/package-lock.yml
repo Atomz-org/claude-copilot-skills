@@ -4,4 +4,5 @@ packages:
   - local: packages/fortnox
   - local: packages/seventime
   - local: packages/shopify
-sha1_hash: 4ed8d4f016567dd6d78250f8ee39bc7a12985990
+  - local: packages/tempo
+sha1_hash: 0ee988330964f92cf59fc89b1aa45e0b5702114b

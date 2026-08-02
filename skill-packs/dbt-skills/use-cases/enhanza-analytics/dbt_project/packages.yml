@@ -10,3 +10,4 @@ packages:
   - local: packages/fortnox
   - local: packages/seventime
   - local: packages/shopify
+  - local: packages/tempo

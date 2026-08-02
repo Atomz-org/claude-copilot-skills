@@ -59,13 +59,6 @@ sources:
       - name: voucher_series
       - name: vouchers
   
-  - name: tempo_api
-    description: 'Tempo raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: tempo_api_{{ var('uid') }}
-    tables:
-      - name: worklogs
-
   - name: tripletex_api
     description: 'Tripletex raw data'
     database: "{{ target.project | default(target.database) }}"
