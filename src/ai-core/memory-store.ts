@@ -81,9 +81,46 @@ export class AgentMemoryClient {
       if (!res.ok) {
         return [];
       }
-      return normalizeSearchResults(await res.json());
+      return this.hydrate(normalizeSearchResults(await res.json()).slice(0, limit));
     } catch {
       return [];
+    }
+  }
+
+  // /agentmemory/smart-search answers in `mode: "compact"` and has no fuller mode:
+  // every row is {obsId, score, sessionId, timestamp, title, type} with no `content`,
+  // and `title` is truncated to ~79 characters server-side. Ranking without the text
+  // is useless to a caller, so the hit list is hydrated from /agentmemory/memories,
+  // which does carry full content, and search order is preserved.
+  //
+  // A failed hydrate degrades to the truncated titles rather than to nothing.
+  private async hydrate(entries: MemoryEntry[]): Promise<MemoryEntry[]> {
+    if (entries.length === 0) {
+      return entries;
+    }
+    try {
+      const res = await fetch(`${this.baseUrl}/agentmemory/memories`, {
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+      if (!res.ok) {
+        return entries;
+      }
+      const payload = (await res.json()) as { memories?: unknown[] } | unknown[] | null;
+      const rows = Array.isArray(payload) ? payload : (payload?.memories ?? []);
+      const contentById = new Map<string, string>();
+      for (const raw of rows) {
+        const row = raw as Record<string, unknown>;
+        const id = String(row.id ?? '');
+        if (id && typeof row.content === 'string' && row.content.length > 0) {
+          contentById.set(id, row.content);
+        }
+      }
+      return entries.map((entry) => {
+        const full = contentById.get(entry.id);
+        return full ? { ...entry, content: full } : entry;
+      });
+    } catch {
+      return entries;
     }
   }
 }

@@ -191,4 +191,45 @@ High-priority rules:
 
 ## AgentMemory guidance
 
-Use AgentMemory for persistent cross-session context. Setup and operational commands are documented in `docs/INTEGRATIONS.md`.
+AgentMemory holds what the repository cannot: the reasoning behind a decision. Setup and
+the REST contract are in `docs/INTEGRATIONS.md`.
+
+**It does not capture anything on its own.** The server reports `Sessions: 0,
+Observations: 0` — it observes nothing unless something writes to it deliberately. A
+fact not written by `sync_context.sh --decision` does not exist in the next session.
+
+### What goes where
+
+Three stores, three jobs. Putting a fact in the wrong one is how it goes stale:
+
+- **graphify** — code structure. Regenerated from the AST, so it cannot be wrong for
+  long. Never record structure in memory; query the graph.
+- **git** — what changed and when. Never mirror a commit summary into memory; it
+  duplicates `git log` and breaks on the next amend or rebase.
+- **AgentMemory** — why. A choice between real alternatives and why the loser lost, a
+  constraint discovered the hard way, a correction to something previously believed.
+
+### Writing
+
+```bash
+./scripts/sync_context.sh "<summary>" --decision "<why>"
+```
+
+Without `--decision` nothing is mirrored, on purpose. Recall is **BM25, not embeddings**
+(`Embeddings: bm25-only`), so a decision is only findable by its own words — phrase it
+with the terms a future question would use. "merge over delete+insert for fct_orders,
+source late-arrives 3 days" is findable; "fixed the incremental" is not.
+
+### Reading
+
+The `agentmemory` MCP server is registered globally in `~/.claude.json`; `GET
+/agentmemory/memories` and `POST /agentmemory/smart-search` on `:3111` are the direct
+REST equivalents. Recall before assuming why a prior choice was made — and treat what
+comes back as what was true when written, not as current fact. Verify a named file,
+flag, or command still exists before acting on it.
+
+### Never smoke-test by hand
+
+`:3111` is a single global store with no per-request namespace, so an ad-hoc `curl`
+lands in the same corpus the agent reads back. Use `./scripts/agentmemory_smoke.sh`,
+which deletes what it writes and verifies the deletion.
