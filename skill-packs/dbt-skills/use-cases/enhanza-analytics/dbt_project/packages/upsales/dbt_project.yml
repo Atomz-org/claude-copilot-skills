@@ -1,0 +1,23 @@
+# enhanza_upsales — the Upsales connector as a dbt package.
+#
+# Installed by one `- local: packages/upsales` line in the root packages.yml; enabled
+# per tenant by the root-level `is_upsales_enabled` var. Mechanism macros (model_alias,
+# auto_config, add_erp_fields, erp_union) resolve from the ROOT project — dbt Core never
+# searches sibling packages for unqualified macros — so this package declares no macro
+# dependency and carries only what it owns: its models, its sources, and any macro used
+# solely here.
+name: 'enhanza_upsales'
+version: '1.0.0'
+config-version: 2
+require-dbt-version: [">=1.9.0", "<2.0.0"]
+
+model-paths: ["models"]
+
+models:
+  enhanza_upsales:
+    +materialized: view
+    +tags: ['upsales']
+    +enabled: "{{ var('is_upsales_enabled', false) | as_bool }}"
+    staging:
+      +schema: upsales_staging
+      +tags: ['staging']

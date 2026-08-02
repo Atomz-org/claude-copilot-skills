@@ -100,9 +100,6 @@ models:
         +tags: ['unified', 'erp']
       # Per-connector staging datasets. These hold both the `<source>_bi_*_staging` models
       # and the `<source>_erp_bi_*` adapters that feed the unified union above.
-      upsales:
-        +schema: upsales_staging
-        +tags: ['upsales']
       visma_eaccounting:
         +schema: visma_eaccounting_staging
         +tags: ['visma_eaccounting']

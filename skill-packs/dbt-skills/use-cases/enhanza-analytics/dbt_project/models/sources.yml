@@ -69,19 +69,6 @@ sources:
       - name: accounting
       - name: ratings
 
-  - name: upsales_api
-    description: 'Upsales raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: upsales_api_{{ var('uid') }}
-    tables:
-      - name: accounts
-      - name: activities
-      - name: appointments
-      - name: opportunities
-      - name: orders
-      - name: products
-      - name: self
-
   - name: visma_eaccounting_api
     description: 'Visma eAccounting raw data'
     database: "{{ target.project | default(target.database) }}"
