@@ -98,17 +98,44 @@ This writes `.claude/graph-state.json` so the project always has a local graph a
 
 ## 3. AgentMemory integration
 
-Install and connect (from AgentMemory project docs):
+[AgentMemory](https://github.com/rohitg00/agentmemory) is a **user-level service, not a
+repository dependency**: a global npm install that runs a SQLite-backed memory engine on
+`:3111` and keeps all state in `~/.agentmemory`. Every integration leg below is
+timeout-guarded, so a checkout — or a CI runner — without the server behaves exactly as
+before it existed.
+
+One-time setup per machine:
 
 ```bash
 npm install -g @agentmemory/agentmemory
-agentmemory
-agentmemory connect claude-code
-npx skills add rohitg00/agentmemory -y
+agentmemory                       # start the server on :3111
+agentmemory connect claude-code   # register the MCP server + lifecycle hooks
 ```
 
-No hard dependency is required for repository tests. If AgentMemory is present, it can be
-used with this scaffold's sync script.
+What the repository does with it:
+
+- `scripts/sync_context.sh` mirrors each context-sync entry to
+  `POST /agentmemory/remember` after writing the local checkpoint. The committed
+  artifacts (`.claude/memory.md`, `.claude/agentmemory.json`, `.claude/checkpoints/`)
+  remain the source of truth; the server is an enrichment index over them. Override the
+  target with `AGENTMEMORY_URL`; an absent server means a silent skip and exit 0.
+- `src/ai-core/memory-store.ts` exposes `AgentMemoryClient` (`health`, `remember`,
+  `recall` via `/agentmemory/smart-search`) and `createBridgedMemoryStore()`, which
+  probes the server and falls back to the in-memory `MemoryStore`. TypeScript call
+  sites route through this wrapper, never raw fetch calls.
+- `tests/test_agentmemory_bridge.py` pins the contract with a stub HTTP server, so the
+  suite needs neither Node nor the real service.
+
+Deliberately **not** done, and why:
+
+- The upstream plugin's 15 skills and 12 lifecycle hooks stay at user level, installed
+  by `agentmemory connect`. Vendoring them into `skill-packs/` would surface
+  `/remember`, `/recall`, and `/forget` as new collisions in the skill-map scan.
+- No repo-level lifecycle hooks for it: the plugin already observes sessions globally,
+  and duplicating that in `.claude/settings.json` would break the no-duplicate-
+  mechanisms rule while slowing every Bash call.
+- Optional: set `CLAUDE_MEMORY_BRIDGE=true` to sync AgentMemory with Claude Code's own
+  `MEMORY.md`, avoiding a third divergent memory store.
 
 ## 4. dbt Labs translated skills
 

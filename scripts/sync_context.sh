@@ -65,3 +65,32 @@ with open(out_path, "w", encoding="utf-8") as handle:
 
 print(f"Checkpoint written to {out_path}")
 PY
+
+# Mirror the entry to a local AgentMemory server (rohitg00/agentmemory) when one
+# is reachable. The committed files above stay the source of truth; this leg is
+# best-effort by design, so a checkout or CI runner without the server — or
+# without curl — must exit 0 on the exact path it always did.
+agentmemory_url="${AGENTMEMORY_URL:-http://127.0.0.1:3111}"
+if command -v curl >/dev/null 2>&1 \
+    && curl -sf --max-time 1 -o /dev/null "${agentmemory_url}/agentmemory/health" 2>/dev/null; then
+    payload="$(python3 - "${entry}" "${checkpoint_file}" <<'PY'
+import json
+import sys
+
+entry, checkpoint = sys.argv[1], sys.argv[2]
+print(json.dumps({
+    "content": f"[code-skills context sync] {entry} (checkpoint: {checkpoint})",
+    "concepts": ["context-sync", "code-skills"],
+}))
+PY
+)"
+    if curl -sf --max-time 3 -o /dev/null -X POST \
+        -H "Content-Type: application/json" -d "${payload}" \
+        "${agentmemory_url}/agentmemory/remember" 2>/dev/null; then
+        echo "Entry mirrored to AgentMemory at ${agentmemory_url}"
+    else
+        echo "AgentMemory mirror skipped (server refused the write)"
+    fi
+else
+    echo "AgentMemory mirror skipped (no server at ${agentmemory_url})"
+fi
