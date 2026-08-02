@@ -59,20 +59,6 @@ sources:
       - name: voucher_series
       - name: vouchers
   
-  - name: seventime_api
-    description: 'Seventime raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: seventime_api_{{ var('uid') }}
-    tables:
-      - name: companyinformation
-      - name: customers
-      - name: expenseitems
-      - name: expenses
-      - name: invoices
-      - name: quotes
-      - name: timelogs
-      - name: workorders
-
   - name: tempo_api
     description: 'Tempo raw data'
     database: "{{ target.project | default(target.database) }}"

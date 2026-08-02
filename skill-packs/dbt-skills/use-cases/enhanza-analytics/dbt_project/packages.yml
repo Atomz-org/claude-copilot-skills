@@ -8,3 +8,4 @@ packages:
   - local: packages/core
   - local: packages/favrit
   - local: packages/fortnox
+  - local: packages/seventime
