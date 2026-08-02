@@ -1,0 +1,7 @@
+ArticleNumber,ArticleName,Unit,ArticleType
+ART-100,Pallet Wrap 500mm,roll,goods
+ART-101,Corrugated Box 400x300x200,piece,goods
+ART-102,Shipping Label A6,sheet,goods
+ART-103,Warehouse Racking Bay,piece,goods
+ART-104,Forklift Service Hour,hour,service
+ART-105,Consulting Hour,hour,service

@@ -1,0 +1,13 @@
+OrgId,contact,description,endDate,id,isClosed,isOffer,isReadyForInvoicing,number,ProjectId,projectManager,startDate
+ORG-1001,contact_value_1,description_value_1,2026-01-05,KEY-001,false,false,false,KEY-001,PROJEC-001,projectmanager_value_1,2026-01-05
+ORG-1002,contact_value_2,description_value_2,2026-01-12,KEY-002,true,true,true,KEY-002,PROJEC-002,projectmanager_value_2,2026-01-12
+ORG-1003,contact_value_3,description_value_3,2026-01-19,KEY-003,true,true,true,KEY-003,PROJEC-003,projectmanager_value_3,2026-01-19
+ORG-1004,contact_value_4,description_value_4,2026-01-26,KEY-004,false,false,false,KEY-004,PROJEC-004,projectmanager_value_4,2026-01-26
+ORG-1001,contact_value_5,description_value_5,2026-02-02,KEY-005,true,true,true,KEY-005,PROJEC-005,projectmanager_value_5,2026-02-02
+ORG-1002,contact_value_6,description_value_6,2026-02-09,KEY-006,true,true,true,KEY-006,PROJEC-006,projectmanager_value_6,2026-02-09
+ORG-1003,contact_value_7,description_value_7,2026-02-16,KEY-007,false,false,false,KEY-007,PROJEC-007,projectmanager_value_7,2026-02-16
+ORG-1004,contact_value_8,description_value_8,2026-02-23,KEY-008,true,true,true,KEY-008,PROJEC-008,projectmanager_value_8,2026-02-23
+ORG-1001,contact_value_9,description_value_9,2026-03-02,KEY-009,true,true,true,KEY-009,PROJEC-009,projectmanager_value_9,2026-03-02
+ORG-1002,contact_value_10,description_value_10,2026-03-09,KEY-010,false,false,false,KEY-010,PROJEC-010,projectmanager_value_10,2026-03-09
+ORG-1003,contact_value_11,description_value_11,2026-03-16,KEY-011,true,true,true,KEY-011,PROJEC-011,projectmanager_value_11,2026-03-16
+ORG-1004,contact_value_12,description_value_12,2026-03-23,KEY-012,true,true,true,KEY-012,PROJEC-012,projectmanager_value_12,2026-03-23

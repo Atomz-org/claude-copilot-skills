@@ -1,0 +1,13 @@
+PartyKind,PartyNumber,PartyName,City,Country
+customer,C-1001,Bergen Bygg AS,Bergen,NO
+customer,C-1002,Uppsala Livsmedel AB,Uppsala,SE
+customer,C-1003,Aarhus Elektronik ApS,Aarhus,DK
+customer,C-1004,Tampere Kone Oy,Tampere,FI
+customer,C-1005,Stavanger Marine AS,Stavanger,NO
+supplier,S-2001,Malmo Emballage AB,Malmo,SE
+supplier,S-2002,Trondheim Verktoy AS,Trondheim,NO
+supplier,S-2003,Odense Papir ApS,Odense,DK
+employee,E-3001,Astrid Lindqvist,Stockholm,SE
+employee,E-3002,Henrik Dahl,Oslo,NO
+employee,E-3003,Mette Sorensen,Copenhagen,DK
+employee,E-3004,Jukka Virtanen,Helsinki,FI

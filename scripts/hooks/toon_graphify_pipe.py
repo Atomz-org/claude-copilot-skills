@@ -25,6 +25,16 @@ RUST_BIN = REPO / "rust" / "toon" / "bin" / "graph_to_toon"
 _GRAPHIFY_RE = re.compile(r"^\s*graphify\s+(query|path|explain)\b")
 _UNSAFE_CHARS = set("|;&<>\n")
 
+# Repo scripts whose findings are a uniform record list, and whose `--format json` output is
+# measurably cheaper as TOON than as prose. Measured on the 28-finding drift case:
+# 7447 chars of text -> 2624 as TOON, a 64.8% cut, because the message template and the
+# shared path prefix are each stated once instead of 28 times.
+#
+# `dbt_manifest_to_graphify.py` is deliberately NOT here. Its text output is already four
+# lines of counts; the JSON form carries more fields and comes out *larger* (271 -> 639).
+# Routing it through TOON would cost tokens, not save them.
+_TOON_SCRIPTS = ("scripts/connector_alignment_check.py",)
+
 
 def serializer_command() -> str | None:
     if RUST_BIN.is_file() and os.access(RUST_BIN, os.X_OK):
@@ -33,8 +43,6 @@ def serializer_command() -> str | None:
 
 
 def rewrite(command: str) -> str | None:
-    if not _GRAPHIFY_RE.match(command):
-        return None
     if "graph_to_toon" in command:
         return None
     if any(ch in command for ch in _UNSAFE_CHARS):
@@ -42,7 +50,22 @@ def rewrite(command: str) -> str | None:
     serializer = serializer_command()
     if serializer is None:
         return None
-    return f"{command.rstrip()} | {serializer} --passthrough"
+
+    if _GRAPHIFY_RE.match(command):
+        return f"{command.rstrip()} | {serializer} --passthrough"
+
+    if any(script in command for script in _TOON_SCRIPTS):
+        if "--format" in command:
+            return None
+        # `set -o pipefail` is not optional here. These scripts carry a `--check` gate that
+        # signals failure through the exit status, and without pipefail the pipeline reports
+        # the serializer's exit code instead — turning a red CI gate silently green.
+        return (
+            f"set -o pipefail; {command.rstrip()} --format json "
+            f"| {serializer} --passthrough"
+        )
+
+    return None
 
 
 def resolve_target() -> Path:

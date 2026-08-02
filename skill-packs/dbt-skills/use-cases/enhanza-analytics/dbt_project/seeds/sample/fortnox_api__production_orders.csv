@@ -1,0 +1,13 @@
+OrgId,documentState,EndDate,id,inboundStockPointId,note,packageItems,productionDate,productionState,startDate
+ORG-1001,documentstate_value_1,2026-01-05,KEY-001,137.50,note_value_1,packageitems_value_1,2026-01-05,productionstate_value_1,2026-01-05
+ORG-1002,documentstate_value_2,2026-01-12,KEY-002,275.00,note_value_2,packageitems_value_2,2026-01-12,productionstate_value_2,2026-01-12
+ORG-1003,documentstate_value_3,2026-01-19,KEY-003,412.50,note_value_3,packageitems_value_3,2026-01-19,productionstate_value_3,2026-01-19
+ORG-1004,documentstate_value_4,2026-01-26,KEY-004,550.00,note_value_4,packageitems_value_4,2026-01-26,productionstate_value_4,2026-01-26
+ORG-1001,documentstate_value_5,2026-02-02,KEY-005,687.50,note_value_5,packageitems_value_5,2026-02-02,productionstate_value_5,2026-02-02
+ORG-1002,documentstate_value_6,2026-02-09,KEY-006,825.00,note_value_6,packageitems_value_6,2026-02-09,productionstate_value_6,2026-02-09
+ORG-1003,documentstate_value_7,2026-02-16,KEY-007,962.50,note_value_7,packageitems_value_7,2026-02-16,productionstate_value_7,2026-02-16
+ORG-1004,documentstate_value_8,2026-02-23,KEY-008,1100.00,note_value_8,packageitems_value_8,2026-02-23,productionstate_value_8,2026-02-23
+ORG-1001,documentstate_value_9,2026-03-02,KEY-009,1237.50,note_value_9,packageitems_value_9,2026-03-02,productionstate_value_9,2026-03-02
+ORG-1002,documentstate_value_10,2026-03-09,KEY-010,1375.00,note_value_10,packageitems_value_10,2026-03-09,productionstate_value_10,2026-03-09
+ORG-1003,documentstate_value_11,2026-03-16,KEY-011,1512.50,note_value_11,packageitems_value_11,2026-03-16,productionstate_value_11,2026-03-16
+ORG-1004,documentstate_value_12,2026-03-23,KEY-012,1650.00,note_value_12,packageitems_value_12,2026-03-23,productionstate_value_12,2026-03-23

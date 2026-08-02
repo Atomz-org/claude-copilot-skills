@@ -1,0 +1,13 @@
+OrgId,currency,id,isInactive,ledgerAccount,name,postalAddress,supplierNumber
+ORG-1001,SEK,KEY-001,false,ledgeraccount_value_1,Bergen Bygg AS,postaladdress_value_1,S-2001
+ORG-1002,NOK,KEY-002,true,ledgeraccount_value_2,Uppsala Livsmedel AB,postaladdress_value_2,S-2002
+ORG-1003,DKK,KEY-003,true,ledgeraccount_value_3,Aarhus Elektronik ApS,postaladdress_value_3,S-2003
+ORG-1004,EUR,KEY-004,false,ledgeraccount_value_4,Tampere Kone Oy,postaladdress_value_4,S-2001
+ORG-1001,GBP,KEY-005,true,ledgeraccount_value_5,Stavanger Marine AS,postaladdress_value_5,S-2002
+ORG-1002,USD,KEY-006,true,ledgeraccount_value_6,Malmo Emballage AB,postaladdress_value_6,S-2003
+ORG-1003,SEK,KEY-007,false,ledgeraccount_value_7,Trondheim Verktoy AS,postaladdress_value_7,S-2001
+ORG-1004,NOK,KEY-008,true,ledgeraccount_value_8,Odense Papir ApS,postaladdress_value_8,S-2002
+ORG-1001,DKK,KEY-009,true,ledgeraccount_value_9,Astrid Lindqvist,postaladdress_value_9,S-2003
+ORG-1002,EUR,KEY-010,false,ledgeraccount_value_10,Henrik Dahl,postaladdress_value_10,S-2001
+ORG-1003,GBP,KEY-011,true,ledgeraccount_value_11,Mette Sorensen,postaladdress_value_11,S-2002
+ORG-1004,USD,KEY-012,true,ledgeraccount_value_12,Jukka Virtanen,postaladdress_value_12,S-2003

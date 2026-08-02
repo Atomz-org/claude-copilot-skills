@@ -33,6 +33,6 @@ select
   , QuantityInStock
   , cast(null as STRING) as SupplierName
   , cast(null as STRING) as SupplierNumber
-  , cast(null as BOOLEAN) as isActive
+  , cast(null as BOOLEAN) as Active
   , {{ add_erp_fields(columns=['ArticleId']) }}
 from main

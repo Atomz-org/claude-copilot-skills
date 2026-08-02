@@ -1,0 +1,13 @@
+OrgId,entries,journalNumber,name
+ORG-1001,entries_value_1,JOURNA-001,Bergen Bygg AS
+ORG-1002,entries_value_2,JOURNA-002,Uppsala Livsmedel AB
+ORG-1003,entries_value_3,JOURNA-003,Aarhus Elektronik ApS
+ORG-1004,entries_value_4,JOURNA-004,Tampere Kone Oy
+ORG-1001,entries_value_5,JOURNA-005,Stavanger Marine AS
+ORG-1002,entries_value_6,JOURNA-006,Malmo Emballage AB
+ORG-1003,entries_value_7,JOURNA-007,Trondheim Verktoy AS
+ORG-1004,entries_value_8,JOURNA-008,Odense Papir ApS
+ORG-1001,entries_value_9,JOURNA-009,Astrid Lindqvist
+ORG-1002,entries_value_10,JOURNA-010,Henrik Dahl
+ORG-1003,entries_value_11,JOURNA-011,Mette Sorensen
+ORG-1004,entries_value_12,JOURNA-012,Jukka Virtanen

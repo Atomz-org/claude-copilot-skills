@@ -157,3 +157,51 @@ def test_prompt_hook_emits_single_line_pipeline_assertion():
     assert "graph_to_toon" in lines[0]
     assert "TOON" in lines[0]
     assert "--decode" in lines[0]
+
+
+# ---------------------------------------------------------------------------------------
+# Repo scripts whose findings are a uniform record list
+# ---------------------------------------------------------------------------------------
+
+
+def test_alignment_check_is_rewritten_to_json_toon(monkeypatch, tmp_path):
+    fake = tmp_path / "graph_to_toon"
+    fake.write_text("#!/bin/sh\ncat\n", encoding="utf-8")
+    fake.chmod(0o755)
+    monkeypatch.setattr(toon_graphify_pipe, "RUST_BIN", fake)
+
+    cmd = "python3 scripts/connector_alignment_check.py --connector shopify --check"
+    rewritten = toon_graphify_pipe.rewrite(cmd)
+    assert rewritten is not None
+    assert "--format json" in rewritten
+    assert rewritten.endswith("--passthrough")
+    # Without pipefail the pipeline reports the serializer's status, so a failing
+    # `--check` would exit 0 and a red gate would go silently green.
+    assert rewritten.startswith("set -o pipefail;")
+
+
+def test_alignment_check_with_explicit_format_is_left_alone(monkeypatch, tmp_path):
+    fake = tmp_path / "graph_to_toon"
+    fake.write_text("#!/bin/sh\ncat\n", encoding="utf-8")
+    fake.chmod(0o755)
+    monkeypatch.setattr(toon_graphify_pipe, "RUST_BIN", fake)
+
+    cmd = "python3 scripts/connector_alignment_check.py --format json"
+    assert toon_graphify_pipe.rewrite(cmd) is None
+
+
+def test_manifest_emitter_is_not_rewritten(monkeypatch, tmp_path):
+    """Its text output is already smaller than its JSON; TOON would cost tokens."""
+    fake = tmp_path / "graph_to_toon"
+    fake.write_text("#!/bin/sh\ncat\n", encoding="utf-8")
+    fake.chmod(0o755)
+    monkeypatch.setattr(toon_graphify_pipe, "RUST_BIN", fake)
+
+    cmd = "python3 scripts/dbt_manifest_to_graphify.py --manifest x.json"
+    assert toon_graphify_pipe.rewrite(cmd) is None
+
+
+def test_script_rewrite_stays_silent_without_the_binary(monkeypatch, tmp_path):
+    monkeypatch.setattr(toon_graphify_pipe, "RUST_BIN", tmp_path / "absent")
+    cmd = "python3 scripts/connector_alignment_check.py --check"
+    assert toon_graphify_pipe.rewrite(cmd) is None

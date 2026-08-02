@@ -1,0 +1,13 @@
+OrgId,active,ArticleId,articleNo,category,id,listPrice,name,purchaseCost
+ORG-1001,false,ARTICL-001,ART-100,category_value_1,KEY-001,137.50,Bergen Bygg AS,137.50
+ORG-1002,true,ARTICL-002,ART-101,category_value_2,KEY-002,275.00,Uppsala Livsmedel AB,275.00
+ORG-1003,true,ARTICL-003,ART-102,category_value_3,KEY-003,412.50,Aarhus Elektronik ApS,412.50
+ORG-1004,false,ARTICL-004,ART-103,category_value_4,KEY-004,550.00,Tampere Kone Oy,550.00
+ORG-1001,true,ARTICL-005,ART-104,category_value_5,KEY-005,687.50,Stavanger Marine AS,687.50
+ORG-1002,true,ARTICL-006,ART-105,category_value_6,KEY-006,825.00,Malmo Emballage AB,825.00
+ORG-1003,false,ARTICL-007,ART-100,category_value_7,KEY-007,962.50,Trondheim Verktoy AS,962.50
+ORG-1004,true,ARTICL-008,ART-101,category_value_8,KEY-008,1100.00,Odense Papir ApS,1100.00
+ORG-1001,true,ARTICL-009,ART-102,category_value_9,KEY-009,1237.50,Astrid Lindqvist,1237.50
+ORG-1002,false,ARTICL-010,ART-103,category_value_10,KEY-010,1375.00,Henrik Dahl,1375.00
+ORG-1003,true,ARTICL-011,ART-104,category_value_11,KEY-011,1512.50,Mette Sorensen,1512.50
+ORG-1004,true,ARTICL-012,ART-105,category_value_12,KEY-012,1650.00,Jukka Virtanen,1650.00

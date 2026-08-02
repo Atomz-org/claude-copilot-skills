@@ -1,0 +1,164 @@
+# Connector catalogue
+# ===================
+#
+# Every source system Enhanza connects or intends to connect. This is the extension point:
+# adding a connector to the platform starts with a row here, and everything downstream —
+# the ontology extension, the topology, the dbt package scaffold — is generated from it.
+#
+# `status` is the honest part.
+#
+#   implemented  the connector has adapter models in the warehouse, and its ontology
+#                extension is generated from the registry, the manifest, and the parsed
+#                column lineage. Every class in it names a dbt model that exists.
+#
+#   planned      the connector is named and its kind is known, and nothing else is. Its
+#                source tables, its column names, and which concepts it can actually supply
+#                are unknown in this repository, so they are not written down. The generated
+#                extension is a stub carrying [NEEDS INPUT]. Inventing a plausible Salesforce
+#                schema here would produce an ontology that looks finished and maps to
+#                nothing — rule 5 in .claude/rules/analytics-engineering-rules.md.
+#
+# `expected_concepts` on a planned connector is a *hypothesis* about scope, used to size the
+# work and to generate the scaffold's TODO list. It is not an assertion that the connector
+# supplies them, and the generator marks it as such.
+#
+# An `implemented` connector's `key` MUST match a key in
+# `global_configs('all_available_sources')`; tests/test_ontology_generator.py fails on drift.
+
+connectors:
+
+  # ---- implemented: ERP / accounting -------------------------------------------------
+  - key: fortnox
+    name: Fortnox
+    kind: erp
+    status: implemented
+    region: SE
+
+  - key: tripletex
+    name: Tripletex
+    kind: erp
+    status: implemented
+    region: "NO"
+
+  - key: visma_economic
+    name: Visma e-conomic
+    kind: erp
+    status: implemented
+    region: DK
+
+  - key: visma_eaccounting
+    name: Visma eAccounting
+    kind: erp
+    status: implemented
+    region: SE
+
+  - key: xledger
+    name: Xledger
+    kind: erp
+    status: implemented
+    region: "NO"
+
+  - key: seventime
+    name: SevenTime
+    kind: erp
+    status: implemented
+    region: SE
+
+  # ---- implemented: CRM ---------------------------------------------------------------
+  - key: upsales
+    name: Upsales
+    kind: crm
+    status: implemented
+    region: SE
+
+  # ---- implemented: commerce / POS ----------------------------------------------------
+  - key: shopify
+    name: Shopify
+    kind: commerce
+    status: implemented
+
+  - key: favrit
+    name: Favrit
+    kind: commerce
+    status: implemented
+    region: "NO"
+
+  # ---- implemented: time tracking -----------------------------------------------------
+  - key: tempo
+    name: Tempo
+    kind: erp
+    status: implemented
+
+  # ---- planned: ERP / accounting ------------------------------------------------------
+  - key: quickbooks
+    name: QuickBooks
+    kind: erp
+    status: planned
+    expected_concepts: [dim_customers, dim_suppliers, dim_accounts, dim_articles,
+                        dim_financial_years, fact_invoices, fact_invoice_rows, fact_vouchers]
+
+  - key: xero
+    name: Xero
+    kind: erp
+    status: planned
+    expected_concepts: [dim_customers, dim_suppliers, dim_accounts, dim_articles,
+                        dim_financial_years, fact_invoices, fact_invoice_rows, fact_vouchers]
+
+  - key: visma_net
+    name: Visma.net
+    kind: erp
+    status: planned
+    region: "NO"
+    expected_concepts: [dim_customers, dim_suppliers, dim_accounts, dim_cost_centers,
+                        dim_projects, dim_financial_years, fact_invoices, fact_vouchers]
+
+  - key: poweroffice
+    name: PowerOffice
+    kind: erp
+    status: planned
+    region: "NO"
+    expected_concepts: [dim_customers, dim_suppliers, dim_accounts, dim_projects,
+                        dim_financial_years, fact_invoices, fact_vouchers]
+
+  - key: hogia_your_landlord
+    name: Hogia Your Landlord
+    kind: erp
+    status: planned
+    region: SE
+    # A property-management system. Its central subject is a lease against a unit, which the
+    # current core has no class for — see ontology/core/README.md, "Extending the core".
+    expected_concepts: [dim_customers, dim_accounts, fact_invoices, fact_invoice_rows]
+
+  - key: serviceprotokoll
+    name: Serviceprotokoll
+    kind: erp
+    status: planned
+    region: SE
+    # Field-service reporting. `fact_work_orders` already exists as a registry concept with
+    # no supplier, which is the shape this is expected to fill.
+    expected_concepts: [dim_customers, dim_employees, fact_work_orders,
+                        fact_time_reporting_registrations]
+
+  # ---- planned: CRM -------------------------------------------------------------------
+  - key: hubspot
+    name: HubSpot
+    kind: crm
+    status: planned
+    expected_concepts: [dim_customers, fact_opportunities, fact_opportunity_rows,
+                        fact_activities, fact_appointments]
+
+  - key: salesforce
+    name: Salesforce
+    kind: crm
+    status: planned
+    expected_concepts: [dim_customers, dim_employees, fact_opportunities,
+                        fact_opportunity_rows, fact_activities, fact_appointments]
+
+  - key: dynamics365
+    name: Microsoft Dynamics 365
+    kind: crm
+    status: planned
+    # Dynamics spans CRM and ERP depending on which modules a tenant licenses. Recorded as
+    # crm because that is the module Enhanza expects first; revisit when the scope is known.
+    expected_concepts: [dim_customers, dim_employees, dim_articles, fact_opportunities,
+                        fact_activities, fact_orders, fact_order_rows]

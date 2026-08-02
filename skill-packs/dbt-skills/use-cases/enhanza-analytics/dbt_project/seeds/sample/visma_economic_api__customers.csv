@@ -1,0 +1,13 @@
+OrgId,address,barred,corporateIdentificationNumber,country,customerNumber,ean,email,mobilePhone,name,telephoneAndFaxNumber,zip
+ORG-1001,address_value_1,false,137.50,NO,C-1001,ean_value_1,email_value_1,mobilephone_value_1,Bergen Bygg AS,TELEPH-001,zip_value_1
+ORG-1002,address_value_2,true,275.00,SE,C-1002,ean_value_2,email_value_2,mobilephone_value_2,Uppsala Livsmedel AB,TELEPH-002,zip_value_2
+ORG-1003,address_value_3,true,412.50,DK,C-1003,ean_value_3,email_value_3,mobilephone_value_3,Aarhus Elektronik ApS,TELEPH-003,zip_value_3
+ORG-1004,address_value_4,false,550.00,FI,C-1004,ean_value_4,email_value_4,mobilephone_value_4,Tampere Kone Oy,TELEPH-004,zip_value_4
+ORG-1001,address_value_5,true,687.50,NO,C-1005,ean_value_5,email_value_5,mobilephone_value_5,Stavanger Marine AS,TELEPH-005,zip_value_5
+ORG-1002,address_value_6,true,825.00,SE,C-1001,ean_value_6,email_value_6,mobilephone_value_6,Malmo Emballage AB,TELEPH-006,zip_value_6
+ORG-1003,address_value_7,false,962.50,NO,C-1002,ean_value_7,email_value_7,mobilephone_value_7,Trondheim Verktoy AS,TELEPH-007,zip_value_7
+ORG-1004,address_value_8,true,1100.00,DK,C-1003,ean_value_8,email_value_8,mobilephone_value_8,Odense Papir ApS,TELEPH-008,zip_value_8
+ORG-1001,address_value_9,true,1237.50,SE,C-1004,ean_value_9,email_value_9,mobilephone_value_9,Astrid Lindqvist,TELEPH-009,zip_value_9
+ORG-1002,address_value_10,false,1375.00,NO,C-1005,ean_value_10,email_value_10,mobilephone_value_10,Henrik Dahl,TELEPH-010,zip_value_10
+ORG-1003,address_value_11,true,1512.50,DK,C-1001,ean_value_11,email_value_11,mobilephone_value_11,Mette Sorensen,TELEPH-011,zip_value_11
+ORG-1004,address_value_12,true,1650.00,FI,C-1002,ean_value_12,email_value_12,mobilephone_value_12,Jukka Virtanen,TELEPH-012,zip_value_12

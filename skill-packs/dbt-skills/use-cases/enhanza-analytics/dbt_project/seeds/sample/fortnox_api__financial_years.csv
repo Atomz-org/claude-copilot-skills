@@ -1,0 +1,13 @@
+OrgId,Amount,Currency,CurrencyRate,Date,DocumentNumber,FromDate,Id,OfferDate,OrderReference,SalaryCode,ToDate,Total,VAT,VATIncluded
+ORG-1001,137.50,SEK,137.50,2026-01-05,DOCUME-001,2026-01-05,KEY-001,2026-01-05,orderreference_value_1,salarycode_value_1,2026-01-05,137.50,vat_value_1,vatincluded_value_1
+ORG-1002,275.00,NOK,275.00,2026-01-12,DOCUME-002,2026-01-12,KEY-002,2026-01-12,orderreference_value_2,salarycode_value_2,2026-01-12,275.00,vat_value_2,vatincluded_value_2
+ORG-1003,412.50,DKK,412.50,2026-01-19,DOCUME-003,2026-01-19,KEY-003,2026-01-19,orderreference_value_3,salarycode_value_3,2026-01-19,412.50,vat_value_3,vatincluded_value_3
+ORG-1004,550.00,EUR,550.00,2026-01-26,DOCUME-004,2026-01-26,KEY-004,2026-01-26,orderreference_value_4,salarycode_value_4,2026-01-26,550.00,vat_value_4,vatincluded_value_4
+ORG-1001,687.50,GBP,687.50,2026-02-02,DOCUME-005,2026-02-02,KEY-005,2026-02-02,orderreference_value_5,salarycode_value_5,2026-02-02,687.50,vat_value_5,vatincluded_value_5
+ORG-1002,825.00,USD,825.00,2026-02-09,DOCUME-006,2026-02-09,KEY-006,2026-02-09,orderreference_value_6,salarycode_value_6,2026-02-09,825.00,vat_value_6,vatincluded_value_6
+ORG-1003,962.50,SEK,962.50,2026-02-16,DOCUME-007,2026-02-16,KEY-007,2026-02-16,orderreference_value_7,salarycode_value_7,2026-02-16,962.50,vat_value_7,vatincluded_value_7
+ORG-1004,1100.00,NOK,1100.00,2026-02-23,DOCUME-008,2026-02-23,KEY-008,2026-02-23,orderreference_value_8,salarycode_value_8,2026-02-23,1100.00,vat_value_8,vatincluded_value_8
+ORG-1001,1237.50,DKK,1237.50,2026-03-02,DOCUME-009,2026-03-02,KEY-009,2026-03-02,orderreference_value_9,salarycode_value_9,2026-03-02,1237.50,vat_value_9,vatincluded_value_9
+ORG-1002,1375.00,EUR,1375.00,2026-03-09,DOCUME-010,2026-03-09,KEY-010,2026-03-09,orderreference_value_10,salarycode_value_10,2026-03-09,1375.00,vat_value_10,vatincluded_value_10
+ORG-1003,1512.50,GBP,1512.50,2026-03-16,DOCUME-011,2026-03-16,KEY-011,2026-03-16,orderreference_value_11,salarycode_value_11,2026-03-16,1512.50,vat_value_11,vatincluded_value_11
+ORG-1004,1650.00,USD,1650.00,2026-03-23,DOCUME-012,2026-03-23,KEY-012,2026-03-23,orderreference_value_12,salarycode_value_12,2026-03-23,1650.00,vat_value_12,vatincluded_value_12

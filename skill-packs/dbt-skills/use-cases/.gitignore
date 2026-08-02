@@ -1,5 +1,6 @@
 # dbt build output
 target/
+target-sample/
 dbt_packages/
 logs/
 .user.yml
@@ -21,6 +22,10 @@ profiles.yml
 # A new use case that genuinely needs its profile committed adds its own line here, which
 # is a reviewable diff.
 !example-order-revenue-mart/dbt_project/profiles.yml
+# enhanza-analytics: same safety class — DuckDB only, a local file path and a schema name,
+# no credentials. Its `demo` target is what wires the sample seeds to the sources
+# (seeds/sample/README.md), so a fresh clone must get it.
+!enhanza-analytics/dbt_project/profiles.yml
 
 # DuckDB databases created by the worked example
 *.duckdb

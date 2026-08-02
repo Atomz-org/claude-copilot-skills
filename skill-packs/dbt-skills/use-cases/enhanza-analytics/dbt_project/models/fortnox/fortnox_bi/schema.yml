@@ -51,9 +51,8 @@ models:
         description: 'Foreign key to dim_financial_years'
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_financial_years')
-                field: FinancialYearId
+              to: ref('fortnox_bi_dim_financial_years')
+              field: FinancialYearId
   - name: fortnox_bi_dim_articles
     description: "Datailed information on sold articles (items)"
     columns:
@@ -65,9 +64,8 @@ models:
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: QuantityInStock
         description: "Current amount in stock from fortnox_bi.fact_stockbalance"
       - name: ReservedQuantity
@@ -116,9 +114,8 @@ models:
         description: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
   - name: fortnox_bi_dim_bundle_articles
     description: "Information on bundle (parent) articles"
     columns:
@@ -126,9 +123,8 @@ models:
         description: "Unique identifier of bundle sub items, link to fortnox_bi.dim_articles"
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: BundleArticleId
         description: "Unique identifier of a bundle (parent) article"
         data_tests:
@@ -218,9 +214,8 @@ models:
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: FinancialYear
         description: "From and to dates of the financial year in a format ymd-ymd"
       - name: FyCounter
@@ -247,9 +242,8 @@ models:
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
   - name: fortnox_bi_dim_projects
     description: "Detailed information on registered projects"
     columns:
@@ -273,24 +267,21 @@ models:
         data_tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_fact_supplier_invoices')
-                field: SupplierInvoiceId
+              to: ref('fortnox_bi_fact_supplier_invoices')
+              field: SupplierInvoiceId
   - name: fortnox_bi_dim_supplier_items
     columns:
       - name: ArticleId
         description: "Article id based on article number assigned by your organisation"
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: SupplierId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_suppliers')
-                field: SupplierId
+              to: ref('fortnox_bi_dim_suppliers')
+              field: SupplierId
       - name: SupplierArticleNo
         description: "Article number assigned by supplier"
   - name: fortnox_bi_dim_suppliers
@@ -316,15 +307,13 @@ models:
       - name: EmployeeId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_employees')
-                field: EmployeeId
+              to: ref('fortnox_bi_dim_employees')
+              field: EmployeeId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
   - name: fortnox_bi_fact_asset_rows
     columns:
@@ -336,15 +325,13 @@ models:
       - name: FinancialYearId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_financial_years')
-                field: FinancialYearId
+              to: ref('fortnox_bi_dim_financial_years')
+              field: FinancialYearId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
   - name: fortnox_bi_fact_assets
     columns:
@@ -357,16 +344,14 @@ models:
         description: "Unique identifier of asset type"
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_assets_types')
-                field: AssetTypeId
+              to: ref('fortnox_bi_dim_assets_types')
+              field: AssetTypeId
       - name: CostCenterId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
   - name: fortnox_bi_fact_attendance_transactions
     columns:
@@ -374,15 +359,13 @@ models:
       - name: EmployeeId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_employees')
-                field: EmployeeId
+              to: ref('fortnox_bi_dim_employees')
+              field: EmployeeId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
   - name: fortnox_bi_fact_budgets
     description: "Budget is calculated and presented on monthly based"
@@ -390,22 +373,19 @@ models:
       - name: AccountId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_accounts')
-                field: AccountId
+              to: ref('fortnox_bi_dim_accounts')
+              field: AccountId
       - name: CostCenterId
       - name: FinancialYearId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_financial_years')
-                field: FinancialYearId
+              to: ref('fortnox_bi_dim_financial_years')
+              field: FinancialYearId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: BudgetDate
         description: "Month is represented by its last calendar day"
   - name: fortnox_bi_fact_contracts
@@ -418,15 +398,13 @@ models:
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: PriceListId
         description: "Unique price list identifier, no relationship since it's a deprecated dimension"
       - name: ProjectId
@@ -436,9 +414,8 @@ models:
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: ContractId
         data_tests:
           - not_null
@@ -446,15 +423,13 @@ models:
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: Currency
         description: "Original transaction currency used in Fortnox"
@@ -467,15 +442,13 @@ models:
       - name: EmployeeId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_employees')
-                field: EmployeeId
+              to: ref('fortnox_bi_dim_employees')
+              field: EmployeeId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: ScheduleId
         data_tests:
@@ -491,15 +464,13 @@ models:
       - name: EmployeeId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_employees')
-                field: EmployeeId
+              to: ref('fortnox_bi_dim_employees')
+              field: EmployeeId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: WageChangeDate
         description: "Date on which this payment amount came into force"
@@ -509,35 +480,30 @@ models:
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: CostCenterId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: purchaseOrderId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_fact_purchase_orders')
-                field: purchaseOrderId
+              to: ref('fortnox_bi_fact_purchase_orders')
+              field: purchaseOrderId
       - name: stockPointId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_stockpoints')
-                field: StockPointId
+              to: ref('fortnox_bi_dim_stockpoints')
+              field: StockPointId
       - name: SupplierId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_suppliers')
-                field: SupplierId
+              to: ref('fortnox_bi_dim_suppliers')
+              field: SupplierId
   - name: fortnox_bi_fact_invoice_accruals
     description: "Net in SEK"
     columns:
@@ -546,15 +512,13 @@ models:
         data_tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_fact_invoices')
-                field: InvoiceId
+              to: ref('fortnox_bi_fact_invoices')
+              field: InvoiceId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
   - name: fortnox_bi_fact_invoice_payments
     description: "Net in SEK"
@@ -562,15 +526,13 @@ models:
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: VoucherSeriesId
         description: "Unique identifier of Voucher series, , no reference since it's a deprecated dimension"
   - name: fortnox_bi_fact_invoice_rows
@@ -579,42 +541,36 @@ models:
       - name: AccountId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_accounts')
-                field: AccountId
+              to: ref('fortnox_bi_dim_accounts')
+              field: AccountId
               config:
                 where: "InvoiceDate >= '2017-05-01'"
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: CostCenterId
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: FinancialYearId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_financial_years')
-                field: FinancialYearId
+              to: ref('fortnox_bi_dim_financial_years')
+              field: FinancialYearId
       - name: InvoiceId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_fact_invoices')
-                field: InvoiceId
+              to: ref('fortnox_bi_fact_invoices')
+              field: InvoiceId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: Currency
         description: "Original currency used in Fortnox"
@@ -633,15 +589,13 @@ models:
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: FinancialYearId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_financial_years')
-                field: FinancialYearId
+              to: ref('fortnox_bi_dim_financial_years')
+              field: FinancialYearId
       - name: InvoiceId
         data_tests:
           - unique
@@ -649,9 +603,8 @@ models:
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: IsDue
         description: "TRUE if invoice balance is not 0 and due date has already passed"
@@ -673,40 +626,35 @@ models:
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
   - name: fortnox_bi_fact_offer_rows
     description: "Offer detailed to sold articles, all values in SEK, only not cancelled and with article details. See Document-level info in fortnox_bi.fact_offers"
     columns:
       - name: AccountId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_accounts')
-                field: AccountId
-                config:
-                  where: "OfferDate >= '2017-05-01'"
-                  # needs to be deleted after the bug ED-1441 (https://enhanza.atlassian.net/browse/ED-1441) is fixed
+              to: ref('fortnox_bi_dim_accounts')
+              field: AccountId
+              config:
+                where: "OfferDate >= '2017-05-01'"
+                # needs to be deleted after the bug ED-1441 (https://enhanza.atlassian.net/browse/ED-1441) is fixed
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: CostCenterId
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: Currency
         description: "Original currency used in Fortnox"
@@ -727,15 +675,13 @@ models:
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: Currency
         description: "Original currency used in Fortnox"
@@ -755,31 +701,27 @@ models:
       - name: AccountId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_accounts')
-                field: AccountId
+              to: ref('fortnox_bi_dim_accounts')
+              field: AccountId
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: CostCenterId
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: OrderNum
         data_tests:
           - not_null
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: Currency
         description: "Original currency used in Fortnox"
@@ -803,24 +745,21 @@ models:
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: OrderNo
         data_tests:
           - not_null
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: StockPointId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_stockpoints')
-                field: StockPointId
+              to: ref('fortnox_bi_dim_stockpoints')
+              field: StockPointId
       - name: Currency
         description: "Original currency used in Fortnox"
       - name: CurrencyRate
@@ -839,16 +778,14 @@ models:
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: CostCenterId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProductionOrderId
         data_tests:
           - not_null
@@ -856,31 +793,27 @@ models:
       - name: StockPointId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_stockpoints')
-                field: stockPointId
+              to: ref('fortnox_bi_dim_stockpoints')
+              field: stockPointId
   - name: fortnox_bi_fact_purchase_orders
     description: "Details on orders sent to suppliers"
     columns:
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: CostCenterId
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: purchaseOrderId
         data_tests:
@@ -888,43 +821,37 @@ models:
       - name: stockPointId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_stockpoints')
-                field: stockPointId
+              to: ref('fortnox_bi_dim_stockpoints')
+              field: stockPointId
       - name: SupplierId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_suppliers')
-                field: SupplierId
+              to: ref('fortnox_bi_dim_suppliers')
+              field: SupplierId
   - name: fortnox_bi_fact_salary_transactions
     description: "Details on salry transactions per employee"
     columns:
       - name: AccountId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_accounts')
-                field: AccountId
+              to: ref('fortnox_bi_dim_accounts')
+              field: AccountId
       - name: CostCenterId
       - name: EmployeeId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_employees')
-                field: EmployeeId
+              to: ref('fortnox_bi_dim_employees')
+              field: EmployeeId
       - name: ExpenseId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_expenses')
-                field: ExpenseId
+              to: ref('fortnox_bi_dim_expenses')
+              field: ExpenseId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
   - name: fortnox_bi_fact_stockbalance
     description: "Balance of article stock, valid at the date of latest sync. Articles with 0 in stock will not appear in Fortnox API"
@@ -932,44 +859,38 @@ models:
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: stockPointId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_stockpoints')
-                field: stockPointId
+              to: ref('fortnox_bi_dim_stockpoints')
+              field: stockPointId
   - name: fortnox_bi_fact_stocktakings
     description: "Adjustments to stock balance per request"
     columns:
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: CostCenterId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: StockPointId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_stockpoints')
-                field: StockPointId
+              to: ref('fortnox_bi_dim_stockpoints')
+              field: StockPointId
       - name: StockTakingId
         data_tests:
           - not_null
@@ -980,9 +901,8 @@ models:
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: SupplierInvoiceId
         data_tests:
@@ -993,29 +913,25 @@ models:
       - name: AccountId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_accounts')
-                field: AccountId
+              to: ref('fortnox_bi_dim_accounts')
+              field: AccountId
       - name: ArticleId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: CostCenterId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: SupplierId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_suppliers')
-                field: SupplierId
+              to: ref('fortnox_bi_dim_suppliers')
+              field: SupplierId
       - name: Currency
         description: "Original currency used in Fortnox"
       - name: CurrencyRate
@@ -1031,16 +947,14 @@ models:
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: SupplierId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_suppliers')
-                field: SupplierId
+              to: ref('fortnox_bi_dim_suppliers')
+              field: SupplierId
       - name: SupplierInvoiceId
         data_tests:
           - not_null
@@ -1058,22 +972,19 @@ models:
         description: "Service to which time registration is linked"
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_articles')
-                field: ArticleId
+              to: ref('fortnox_bi_dim_articles')
+              field: ArticleId
       - name: CostCenterId
       - name: CustomerId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_customers')
-                field: CustomerId
+              to: ref('fortnox_bi_dim_customers')
+              field: CustomerId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: UserNo
         description: "UserId available in Fortnox UI only"
@@ -1083,22 +994,19 @@ models:
       - name: AccountId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_accounts')
-                field: AccountId
+              to: ref('fortnox_bi_dim_accounts')
+              field: AccountId
       - name: CostCenterId
       - name: FinancialYearId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_financial_years')
-                field: FinancialYearId
+              to: ref('fortnox_bi_dim_financial_years')
+              field: FinancialYearId
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: ProjectId
       - name: VoucherSeriesId
         description: "Unique identifier of Voucher series, no reference since it's a deprecated dimension"
@@ -1109,20 +1017,17 @@ models:
       - name: OrgId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_company')
-                field: OrgId
+              to: ref('fortnox_bi_dim_company')
+              field: OrgId
       - name: FinancialYearId
         data_tests:
           - relationships:
-              arguments:
-                to: ref('fortnox_bi_dim_financial_years')
-                field: FinancialYearId
+              to: ref('fortnox_bi_dim_financial_years')
+              field: FinancialYearId
       - name: AccountId
 #        data_tests:
 #          - relationships:
-#              arguments:
-#                to: ref('fortnox_bi_dim_accounts')
-#                field: AccountId
+#              to: ref('fortnox_bi_dim_accounts')
+#              field: AccountId
 #      rolling_sum takes into account 11 months that may cover several financial years that created discrepancy with dim_accounts
       - name: CostCenterId

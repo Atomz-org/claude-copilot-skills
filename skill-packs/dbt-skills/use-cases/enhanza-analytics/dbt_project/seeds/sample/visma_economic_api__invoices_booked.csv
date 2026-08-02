@@ -1,0 +1,13 @@
+OrgId,bookedInvoiceNumber,customer,date,lines
+ORG-1001,BOOKED-001,customer_value_1,2026-01-05,lines_value_1
+ORG-1002,BOOKED-002,customer_value_2,2026-01-12,lines_value_2
+ORG-1003,BOOKED-003,customer_value_3,2026-01-19,lines_value_3
+ORG-1004,BOOKED-004,customer_value_4,2026-01-26,lines_value_4
+ORG-1001,BOOKED-005,customer_value_5,2026-02-02,lines_value_5
+ORG-1002,BOOKED-006,customer_value_6,2026-02-09,lines_value_6
+ORG-1003,BOOKED-007,customer_value_7,2026-02-16,lines_value_7
+ORG-1004,BOOKED-008,customer_value_8,2026-02-23,lines_value_8
+ORG-1001,BOOKED-009,customer_value_9,2026-03-02,lines_value_9
+ORG-1002,BOOKED-010,customer_value_10,2026-03-09,lines_value_10
+ORG-1003,BOOKED-011,customer_value_11,2026-03-16,lines_value_11
+ORG-1004,BOOKED-012,customer_value_12,2026-03-23,lines_value_12

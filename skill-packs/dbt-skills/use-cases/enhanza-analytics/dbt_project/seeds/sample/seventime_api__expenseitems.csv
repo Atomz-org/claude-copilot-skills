@@ -1,0 +1,13 @@
+OrgId,_id,ArticleId,articleNumber,description,distributor,distributorName,isActive,name,unit,unitCost,unitPrice
+ORG-1001,_-001,ARTICL-001,ART-100,description_value_1,distributor_value_1,distributorname_value_1,false,Bergen Bygg AS,roll,137.50,137.50
+ORG-1002,_-002,ARTICL-002,ART-101,description_value_2,distributor_value_2,distributorname_value_2,true,Uppsala Livsmedel AB,piece,275.00,275.00
+ORG-1003,_-003,ARTICL-003,ART-102,description_value_3,distributor_value_3,distributorname_value_3,true,Aarhus Elektronik ApS,sheet,412.50,412.50
+ORG-1004,_-004,ARTICL-004,ART-103,description_value_4,distributor_value_4,distributorname_value_4,false,Tampere Kone Oy,piece,550.00,550.00
+ORG-1001,_-005,ARTICL-005,ART-104,description_value_5,distributor_value_5,distributorname_value_5,true,Stavanger Marine AS,hour,687.50,687.50
+ORG-1002,_-006,ARTICL-006,ART-105,description_value_6,distributor_value_6,distributorname_value_6,true,Malmo Emballage AB,hour,825.00,825.00
+ORG-1003,_-007,ARTICL-007,ART-100,description_value_7,distributor_value_7,distributorname_value_7,false,Trondheim Verktoy AS,roll,962.50,962.50
+ORG-1004,_-008,ARTICL-008,ART-101,description_value_8,distributor_value_8,distributorname_value_8,true,Odense Papir ApS,piece,1100.00,1100.00
+ORG-1001,_-009,ARTICL-009,ART-102,description_value_9,distributor_value_9,distributorname_value_9,true,Astrid Lindqvist,sheet,1237.50,1237.50
+ORG-1002,_-010,ARTICL-010,ART-103,description_value_10,distributor_value_10,distributorname_value_10,false,Henrik Dahl,piece,1375.00,1375.00
+ORG-1003,_-011,ARTICL-011,ART-104,description_value_11,distributor_value_11,distributorname_value_11,true,Mette Sorensen,hour,1512.50,1512.50
+ORG-1004,_-012,ARTICL-012,ART-105,description_value_12,distributor_value_12,distributorname_value_12,true,Jukka Virtanen,hour,1650.00,1650.00

@@ -59,66 +59,113 @@ vars:
 #   dbt build --select tag:fortnox        # everything Fortnox contributes, all layers
 #   dbt build --select tag:unified+       # the unified layer and everything downstream
 #   dbt build --exclude tag:scaffold      # skip the starter placeholder models
+#
+# `+schema` is what makes those layers addressable. `model_alias()` strips the connector
+# prefix, so `fortnox_bi_dim_accounts`, `tripletex_bi_dim_accounts`, `logic_bi_dim_accounts`
+# and `erp_bi_dim_accounts` all alias to the bare relation `dim_accounts` — 38 aliases in
+# this project are claimed by more than one model. That is intended: the dataset, not the
+# table name, is what separates them. Without a `+schema` per directory dbt refuses to parse
+# with more than a narrow subset of connectors enabled ("two resources with the database
+# representation"), which is why `generate_schema_name` exists and had nothing to consume.
+#
+# The invariant: one model directory, one dataset. Verified by
+# `scripts/connector_alignment_check.py`, which fails when a new connector introduces an
+# alias collision *within* a dataset — the only kind that is a real defect.
 # ---------------------------------------------------------------------------------------
 models:
   enhanza_analytics:
     +materialized: view
 
     # Loose starter models left over from the initial scaffold. Not part of the Enhanza
-    # DAG; tagged so a real build can exclude them.
+    # DAG; tagged so a real build can exclude them. No +schema: they stay in target.schema.
     dim_customers_scaffold:
       +tags: ['scaffold']
     orders_mart_scaffold:
       +tags: ['scaffold']
 
     app:
+      +schema: app
       +tags: ['app']
 
     demo:
+      +schema: demo
       +tags: ['demo']
 
     staging:
+      +schema: staging
       +tags: ['staging']
+      # The unified layer is user-facing: erp_bi_dim_accounts -> erp_bi.dim_accounts.
       erp:
+        +schema: erp_bi
         +tags: ['unified', 'erp']
+      # Per-connector staging datasets. These hold both the `<source>_bi_*_staging` models
+      # and the `<source>_erp_bi_*` adapters that feed the unified union above.
       favrit:
+        +schema: favrit_staging
         +tags: ['favrit']
       fortnox:
+        +schema: fortnox_staging
         +tags: ['fortnox']
       seventime:
+        +schema: seventime_staging
         +tags: ['seventime']
       shopify:
+        +schema: shopify_staging
         +tags: ['shopify']
       tempo:
+        +schema: tempo_staging
         +tags: ['tempo']
       tripletex:
+        +schema: tripletex_staging
         +tags: ['tripletex']
       upsales:
+        +schema: upsales_staging
         +tags: ['upsales']
       visma_eaccounting:
+        +schema: visma_eaccounting_staging
         +tags: ['visma_eaccounting']
       visma_economic:
+        +schema: visma_economic_staging
         +tags: ['visma_economic']
       xledger:
+        +schema: xledger_staging
         +tags: ['xledger']
 
+    # Connector-facing BI folders are gated on their connector's var, at the folder,
+    # because the models inside use auto_config(), which only emits an `enabled` for the
+    # erp_bi/logic_bi prefixes. Without this gate the models are unconditionally enabled
+    # while the `_staging` models they `select * from` are gated per source — so any parse
+    # that did not enable fortnox failed with "depends on a node which is disabled". It
+    # went unseen because artifacts/refresh.sh enables every connector at once; the sample
+    # build parses with one tenant's flags, which is how it surfaced.
     favrit_bi:
+      +schema: favrit_bi
       +tags: ['favrit', 'bi']
+      +enabled: "{{ var('is_favrit_enabled', false) | as_bool }}"
 
     shopify_bi:
+      +schema: shopify_bi
       +tags: ['shopify', 'bi']
+      +enabled: "{{ var('is_shopify_enabled', false) | as_bool }}"
 
     fortnox:
       +tags: ['fortnox']
+      +enabled: "{{ var('is_fortnox_enabled', false) | as_bool }}"
       fortnox_bi:
+        +schema: fortnox_bi
         +tags: ['bi']
       fortnox_flat:
+        +schema: fortnox_flat
         +tags: ['flat']
       fortnox_reports:
+        +schema: fortnox_reports
         +tags: ['reports']
 
     tripletex_bi:
+      +schema: tripletex_bi
       +tags: ['tripletex', 'bi']
+      +enabled: "{{ var('is_tripletex_enabled', false) | as_bool }}"
 
     logic_bi:
+      +schema: logic_bi
       +tags: ['logic', 'mart']
