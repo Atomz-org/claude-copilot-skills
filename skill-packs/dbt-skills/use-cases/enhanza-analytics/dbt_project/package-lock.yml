@@ -1,0 +1,3 @@
+packages:
+  - local: packages/core
+sha1_hash: 37c1fa1e71443886d851eae2f7bad19dba1e6213

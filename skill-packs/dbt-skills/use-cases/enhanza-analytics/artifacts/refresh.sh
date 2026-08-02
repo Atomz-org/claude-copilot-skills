@@ -54,6 +54,11 @@ PY
 #
 # `set -o pipefail` is already in effect above, so a failed parse still fails this script
 # rather than being masked by the filter's exit code.
+# Local packages (packages/core, packages/<connector>) are symlinked into dbt_packages/
+# by deps. Cheap when nothing changed, and parse fails cryptically without it.
+echo "==> dbt deps"
+( cd "${PROJECT}" && "${DBT}" deps --profiles-dir . ) >/dev/null
+
 echo "==> dbt parse with all connectors enabled"
 if command -v rtk >/dev/null 2>&1; then
     ( cd "${PROJECT}" && "${DBT}" parse --profiles-dir . --vars "${VARS}" 2>&1 | rtk pipe )

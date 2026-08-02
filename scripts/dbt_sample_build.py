@@ -172,7 +172,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not args.keep_db and db_path.exists():
         db_path.unlink()  # fresh build every run, so a pass never means "leftover state"
 
-    # 1. Compile the selection: jinja rendered, refs resolved, ephemeral models inlined.
+    # 1. Install local packages, then compile the selection: jinja rendered, refs
+    #    resolved, ephemeral models inlined. deps is cheap when nothing changed.
+    if (project / "packages.yml").exists():
+        run_dbt(dbt, project, ["deps"], dbt_vars)
     run_dbt(dbt, project, ["compile", "--select", f"+{args.select}"], dbt_vars)
     man = Manifest.load(str(project / TARGET_PATH / "manifest.json"))
     terminal = next((uid for uid, n in man.nodes.items()

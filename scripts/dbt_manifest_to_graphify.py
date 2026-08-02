@@ -298,8 +298,24 @@ def build_fragment(
     seen: Dict[str, str] = {}  # unique_id -> graphify node id
     by_connector: Dict[str, List[str]] = {}
 
+    # package_name -> path prefix inside the project. `original_file_path` is relative to
+    # the node's *package* root, so a model in packages/fortnox would otherwise claim
+    # `<project>/models/...` — a path that does not exist — and its graph node id would
+    # collide with a root model of the same relative path. First-party packages are the
+    # ones with a dbt_project.yml under packages/; dbt_packages/ (installed symlinks) is
+    # deliberately not scanned, or every package file would appear twice.
+    pkg_prefix: Dict[str, str] = {man.project_name: ""}
+    for pkg_yml in sorted(project_root.glob("packages/*/dbt_project.yml")):
+        match = re.search(
+            r"^name:\s*['\"]?([A-Za-z0-9_]+)", pkg_yml.read_text(encoding="utf-8"), re.MULTILINE
+        )
+        if match:
+            pkg_prefix[match.group(1)] = f"packages/{pkg_yml.parent.name}"
+
     def file_path_of(node: Dict[str, Any]) -> str:
-        return f"{project_rel}/{node.get('original_file_path', '')}".rstrip("/")
+        prefix = pkg_prefix.get(node.get("package_name") or man.project_name, "")
+        base = f"{project_rel}/{prefix}".rstrip("/")
+        return f"{base}/{node.get('original_file_path', '')}".rstrip("/")
 
     # ---- models, snapshots, seeds, exposures, metrics ---------------------------------
     for uid, node in man.all_nodes().items():
@@ -360,7 +376,9 @@ def build_fragment(
     # without them is missing the thing that generates a third of the SQL. Package macros
     # (dbt_utils, dbt core) are excluded: they are vendored and not part of this repo.
     for uid, node in man.macros.items():
-        if node.get("package_name") != man.project_name:
+        # First-party macros only — the root project and its local packages. dbt_utils and
+        # dbt-internal macros are vendored, not part of this repo.
+        if node.get("package_name") not in pkg_prefix:
             continue
         rel_in_project = node.get("original_file_path", "")
         if not rel_in_project:
@@ -518,6 +536,10 @@ def coverage(man: Manifest, project_root: Path) -> Dict[str, Any]:
         root = project_root / mp
         if root.is_dir():
             on_disk |= {p.stem for p in root.rglob("*.sql")}
+    # Local packages carry models too; a coverage gate that cannot see them would call a
+    # manifest complete while every extracted connector is missing from it.
+    for pkg_models in sorted(project_root.glob("packages/*/models")):
+        on_disk |= {p.stem for p in pkg_models.rglob("*.sql")}
 
     in_manifest = {
         n.get("name")

@@ -1,0 +1,8 @@
+# Composition point for the ERP/CRM BI project. Installing a connector is one line here —
+# reviewable in isolation — plus its registry entry in enhanza_core. Two distinct dials:
+# this file decides what is *installed* (per deployment); `is_<connector>_enabled` vars
+# decide what is *enabled* (per tenant, per run).
+#
+# Paths are local: `dbt deps` symlinks them into dbt_packages/. Run it after editing.
+packages:
+  - local: packages/core

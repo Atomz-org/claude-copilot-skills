@@ -318,13 +318,42 @@ def _connector_of_node(node: Dict[str, Any]) -> Optional[str]:
 # ---------------------------------------------------------------------------------------
 
 
+def _package_dir(conv: Conventions, connector: str) -> Optional[Path]:
+    """The connector's dbt package directory, when the project uses the split layout.
+
+    Two layouts are first-class: the monolith keeps a connector under
+    `models/staging/<connector>` (+ sibling `<connector>_bi/` dirs); the package layout
+    gives it `packages/<connector>/` with its own dbt_project.yml and models tree. The
+    checker reads whichever the connector actually has, so the same gate holds before,
+    during, and after a migration — a gate that only works on one layout goes silent
+    exactly when the moves happen, which is when drift is most likely.
+    """
+    pkg = conv.project / "packages" / connector
+    return pkg if (pkg / "dbt_project.yml").exists() else None
+
+
+def _staging_dir(conv: Conventions, connector: str) -> Path:
+    pkg = _package_dir(conv, connector)
+    if pkg is not None:
+        return pkg / "models" / "staging"
+    return conv.models / "staging" / connector
+
+
 def staging_dirs(conv: Conventions) -> List[str]:
+    names: Set[str] = set()
     staging = conv.models / "staging"
-    if not staging.is_dir():
-        return []
-    return sorted(
-        d.name for d in staging.iterdir() if d.is_dir() and any(d.glob("*.sql"))
-    )
+    if staging.is_dir():
+        names |= {
+            d.name for d in staging.iterdir() if d.is_dir() and any(d.glob("*.sql"))
+        }
+    packages = conv.project / "packages"
+    if packages.is_dir():
+        names |= {
+            d.name
+            for d in packages.iterdir()
+            if (d / "dbt_project.yml").exists() and any((d / "models").rglob("*.sql"))
+        }
+    return sorted(names)
 
 
 def registry_connectors(conv: Conventions) -> Optional[List[str]]:
@@ -376,6 +405,9 @@ def unified_layer_dirs(conv: Conventions) -> Set[str]:
 
 def _model_files(conv: Conventions, connector: str) -> List[Path]:
     """Every .sql file that belongs to a connector, across all its layers."""
+    pkg = _package_dir(conv, connector)
+    if pkg is not None:
+        return sorted((pkg / "models").rglob("*.sql"))
     files: List[Path] = []
     staging = conv.models / "staging" / connector
     if staging.is_dir():
@@ -397,7 +429,10 @@ def check_dependency_discipline(files: Iterable[Path], connector: str, conv: Con
     """
     out: List[Finding] = []
     macro_call = re.compile(r"\{\{-?\s*([a-z_][a-z0-9_]*)\s*\(")
+    # Root macros plus package-local ones; dbt_packages/ (the installed symlinks) is
+    # deliberately not globbed — it would double-count everything under packages/.
     known_macros = {m.stem for m in conv.project.glob("macros/**/*.sql")}
+    known_macros |= {m.stem for m in conv.project.glob("packages/*/macros/**/*.sql")}
     for f in files:
         text = f.read_text(encoding="utf-8", errors="replace")
         if "{{ ref(" in text or "{{ref(" in text or "{{ source(" in text or "{{source(" in text:
@@ -422,7 +457,7 @@ def check_dependency_discipline(files: Iterable[Path], connector: str, conv: Con
 def check_naming(files: Iterable[Path], connector: str, conv: Conventions) -> List[Finding]:
     """Staging model names follow the shape the project's other connectors use."""
     out: List[Finding] = []
-    staging_dir = conv.models / "staging" / connector
+    staging_dir = _staging_dir(conv, connector)
     for f in files:
         if f.parent != staging_dir:
             continue
@@ -545,7 +580,7 @@ def check_schema_yml(conv: Conventions, connector: str, files: List[Path]) -> Li
                 "no-schema-yml",
                 "no schema.yml anywhere in this connector's directories — no descriptions, "
                 "no tests, nothing for the graph to read",
-                _rel(conv.models / "staging" / connector),
+                _rel(_staging_dir(conv, connector)),
                 subject=connector,
             )
         )
@@ -606,7 +641,9 @@ def check_enable_var(conv: Conventions, connector: str) -> List[Finding]:
 def check_sources_declared(conv: Conventions, connector: str) -> List[Finding]:
     """The connector's raw tables enter through `sources:` with a freshness SLA."""
     out: List[Finding] = []
-    candidates = sorted(conv.models.glob("**/*sources.yml"))
+    candidates = sorted(conv.models.glob("**/*sources.yml")) + sorted(
+        conv.project.glob("packages/*/models/**/*sources.yml")
+    )
     text = "\n".join(f.read_text(encoding="utf-8") for f in candidates)
     if not re.search(rf"^\s*-\s*name:\s*{re.escape(connector)}\w*\s*$", text, re.MULTILINE):
         out.append(
@@ -646,7 +683,11 @@ def _source_block(text: str, connector: str) -> str:
 
 
 def _connector_ymls(conv: Conventions, connector: str) -> List[Path]:
-    out: List[Path] = []
+    pkg = _package_dir(conv, connector)
+    if pkg is not None:
+        out = sorted((pkg / "models").rglob("*.yml"))
+        return [y for y in out if y.name != "sources.yml"]
+    out = []
     staging = conv.models / "staging" / connector
     if staging.is_dir():
         out.extend(sorted(staging.glob("*.yml")))
