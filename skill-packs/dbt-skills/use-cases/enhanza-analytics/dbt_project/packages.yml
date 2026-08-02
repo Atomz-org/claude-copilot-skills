@@ -7,3 +7,4 @@
 packages:
   - local: packages/core
   - local: packages/favrit
+  - local: packages/fortnox

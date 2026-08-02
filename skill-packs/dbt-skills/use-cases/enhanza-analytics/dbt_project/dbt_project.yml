@@ -100,9 +100,6 @@ models:
         +tags: ['unified', 'erp']
       # Per-connector staging datasets. These hold both the `<source>_bi_*_staging` models
       # and the `<source>_erp_bi_*` adapters that feed the unified union above.
-      fortnox:
-        +schema: fortnox_staging
-        +tags: ['fortnox']
       seventime:
         +schema: seventime_staging
         +tags: ['seventime']
@@ -132,19 +129,6 @@ models:
       +schema: shopify_bi
       +tags: ['shopify', 'bi']
       +enabled: "{{ var('is_shopify_enabled', false) | as_bool }}"
-
-    fortnox:
-      +tags: ['fortnox']
-      +enabled: "{{ var('is_fortnox_enabled', false) | as_bool }}"
-      fortnox_bi:
-        +schema: fortnox_bi
-        +tags: ['bi']
-      fortnox_flat:
-        +schema: fortnox_flat
-        +tags: ['flat']
-      fortnox_reports:
-        +schema: fortnox_reports
-        +tags: ['reports']
 
     tripletex_bi:
       +schema: tripletex_bi

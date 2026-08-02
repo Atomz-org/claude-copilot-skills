@@ -1,4 +1,5 @@
 packages:
   - local: packages/core
   - local: packages/favrit
-sha1_hash: bb6eefef078ca6da81781325c545343132280138
+  - local: packages/fortnox
+sha1_hash: 52c3be1412e74880d2c315c3517ce25a5a5dca8f

@@ -1,0 +1,33 @@
+# enhanza_fortnox — the Fortnox connector as a dbt package.
+#
+# Installed by one `- local: packages/fortnox` line in the root packages.yml; enabled
+# per tenant by the root-level `is_fortnox_enabled` var. Mechanism macros (model_alias,
+# auto_config, add_erp_fields, erp_union) resolve from the ROOT project — dbt Core never
+# searches sibling packages for unqualified macros — so this package declares no macro
+# dependency and carries only what it owns: its models, its sources, and any macro used
+# solely here.
+name: 'enhanza_fortnox'
+version: '1.0.0'
+config-version: 2
+require-dbt-version: [">=1.9.0", "<2.0.0"]
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+
+models:
+  enhanza_fortnox:
+    +materialized: view
+    +tags: ['fortnox']
+    +enabled: "{{ var('is_fortnox_enabled', false) | as_bool }}"
+    staging:
+      +schema: fortnox_staging
+      +tags: ['staging']
+    fortnox_bi:
+      +schema: fortnox_bi
+      +tags: ['bi']
+    fortnox_flat:
+      +schema: fortnox_flat
+      +tags: ['flat']
+    fortnox_reports:
+      +schema: fortnox_reports
+      +tags: ['reports']
