@@ -6,3 +6,4 @@
 # Paths are local: `dbt deps` symlinks them into dbt_packages/. Run it after editing.
 packages:
   - local: packages/core
+  - local: packages/favrit

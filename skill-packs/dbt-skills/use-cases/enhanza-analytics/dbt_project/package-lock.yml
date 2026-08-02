@@ -1,3 +1,4 @@
 packages:
   - local: packages/core
-sha1_hash: 37c1fa1e71443886d851eae2f7bad19dba1e6213
+  - local: packages/favrit
+sha1_hash: bb6eefef078ca6da81781325c545343132280138

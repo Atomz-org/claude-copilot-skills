@@ -170,16 +170,6 @@ sources:
       - name: timesheet_allocated
       - name: voucher_type
 
-  - name: favrit_api
-    description: 'FAVRIT raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: favrit_api_{{ var('uid') }}
-    tables:
-      - name: user_location
-      - name: orderline
-      - name: accounting
-      - name: ratings
-
   - name: favrit_api_demo
     description: 'FAVRIT DEMO raw data'
     database: "{{ target.project | default(target.database) }}"

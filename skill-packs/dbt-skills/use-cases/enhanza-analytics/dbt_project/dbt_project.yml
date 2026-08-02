@@ -100,9 +100,6 @@ models:
         +tags: ['unified', 'erp']
       # Per-connector staging datasets. These hold both the `<source>_bi_*_staging` models
       # and the `<source>_erp_bi_*` adapters that feed the unified union above.
-      favrit:
-        +schema: favrit_staging
-        +tags: ['favrit']
       fortnox:
         +schema: fortnox_staging
         +tags: ['fortnox']
@@ -130,18 +127,6 @@ models:
       xledger:
         +schema: xledger_staging
         +tags: ['xledger']
-
-    # Connector-facing BI folders are gated on their connector's var, at the folder,
-    # because the models inside use auto_config(), which only emits an `enabled` for the
-    # erp_bi/logic_bi prefixes. Without this gate the models are unconditionally enabled
-    # while the `_staging` models they `select * from` are gated per source — so any parse
-    # that did not enable fortnox failed with "depends on a node which is disabled". It
-    # went unseen because artifacts/refresh.sh enables every connector at once; the sample
-    # build parses with one tenant's flags, which is how it surfaced.
-    favrit_bi:
-      +schema: favrit_bi
-      +tags: ['favrit', 'bi']
-      +enabled: "{{ var('is_favrit_enabled', false) | as_bool }}"
 
     shopify_bi:
       +schema: shopify_bi
