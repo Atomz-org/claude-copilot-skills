@@ -1,5 +1,6 @@
 # dbt build output
 target/
+target-sample/
 dbt_packages/
 logs/
 .user.yml
@@ -70,3 +71,7 @@ rust/toon/bin/
 # after a scan runs.
 .skill-map/
 .continue/
+
+# Local runtime state stores (machine-specific generated binaries)
+data/state_store.db/
+data/stream_store/
