@@ -177,14 +177,26 @@ def detect(use_case: Path) -> Conventions:
         for m in project.glob("macros/**/*.sql")
     )
 
-    # The reference connector: the staging subdirectory with the most models. A project's
+    # The reference connector: the staging directory with the most models. A project's
     # busiest connector is the one whose conventions are most likely to be the real ones.
+    # Two layouts contribute candidates: `models/staging/<connector>/` (monolith) and
+    # `packages/<connector>/models/staging/` (split) — in the second, the connector's name
+    # is the *package* directory, not the staging dir's own name.
+    candidates: dict[Path, int] = {}
+    names: dict[Path, str] = {}
     staging_root = models / "staging"
-    candidates = (
-        {d: len(list(d.glob("*.sql"))) for d in staging_root.iterdir() if d.is_dir()}
-        if staging_root.is_dir()
-        else {}
-    )
+    if staging_root.is_dir():
+        for d in staging_root.iterdir():
+            if d.is_dir():
+                candidates[d] = len(list(d.glob("*.sql")))
+                names[d] = d.name
+    packages_root = project / "packages"
+    if packages_root.is_dir():
+        for pkg in packages_root.iterdir():
+            d = pkg / "models" / "staging"
+            if (pkg / "dbt_project.yml").exists() and d.is_dir():
+                candidates[d] = len(list(d.glob("*.sql")))
+                names[d] = pkg.name
     candidates = {d: n for d, n in candidates.items() if n}
     if not candidates:
         conv.notes.append(
@@ -199,7 +211,7 @@ def detect(use_case: Path) -> Conventions:
         return conv
 
     ref_dir = max(candidates, key=lambda d: candidates[d])
-    ref = ref_dir.name
+    ref = names[ref_dir]
     conv.reference = ref
 
     # The connector name is not always at the start: `fortnox_bi_dim_customers_staging`
@@ -235,11 +247,18 @@ def detect(use_case: Path) -> Conventions:
     # than only the reference: the busiest connector is usually the oldest, and in the
     # reference project it predates the `<source>_bi/` convention its successors follow.
     suffixes: dict[str, int] = {}
-    for connector in candidates:
-        for sibling in models.iterdir():
-            if sibling.is_dir() and sibling.name.startswith(connector.name):
-                suffix = sibling.name[len(connector.name) :]
-                suffixes[suffix] = suffixes.get(suffix, 0) + 1
+    for connector_dir in candidates:
+        connector_name = names[connector_dir]
+        # Monolith: sibling dirs beside models/staging; split: dirs beside the package's
+        # own models/staging. Both express the same `<connector>_bi/` convention.
+        sibling_roots = [models]
+        if connector_dir.parent.name == "models":
+            sibling_roots = [connector_dir.parent]
+        for root in sibling_roots:
+            for sibling in root.iterdir():
+                if sibling.is_dir() and sibling.name.startswith(connector_name):
+                    suffix = sibling.name[len(connector_name) :]
+                    suffixes[suffix] = suffixes.get(suffix, 0) + 1
     non_empty = {s: n for s, n in suffixes.items() if s}
     if non_empty:
         conv.bi_dir_suffix = max(non_empty, key=lambda k: non_empty[k])
@@ -248,20 +267,27 @@ def detect(use_case: Path) -> Conventions:
 
     # The source suffix used in sources.yml — <ref>_api vs bare <ref>. Prefer a central
     # sources.yml; some projects keep one per connector as `_<ref>__sources.yml`.
-    found_files = sorted(models.glob("**/*sources.yml"))
+    found_files = sorted(models.glob("**/*sources.yml")) + sorted(
+        project.glob("packages/*/models/**/*sources.yml")
+    )
     conv.sources_yml = next(
         (f for f in found_files if f.name == "sources.yml"), next(iter(found_files), None)
     )
+    # All matches, shortest suffix wins. First-match broke on the package layout: the
+    # connector's own `<ref>_api` block moved into its package while `<ref>_api_demo`
+    # stayed in the root sources.yml, which globs first — and `_api_demo` became the
+    # learned suffix for every new connector. The demo block is a *derived* source; the
+    # base one is always the shortest.
+    matches: list[tuple[str, Path]] = []
     for candidate_file in found_files:
-        found = re.search(
+        for found in re.finditer(
             rf"^\s*-\s*name:\s*{re.escape(ref)}(\w*)\s*$",
             candidate_file.read_text(encoding="utf-8"),
             re.MULTILINE,
-        )
-        if found:
-            conv.source_suffix = found.group(1)
-            conv.sources_yml = candidate_file
-            break
+        ):
+            matches.append((found.group(1), candidate_file))
+    if matches:
+        conv.source_suffix, conv.sources_yml = min(matches, key=lambda m: len(m[0]))
 
     return conv
 
@@ -301,6 +327,31 @@ from {{{{ ref('{staging_model}') }}}}
 """
 
 BI_AUTO_STUB = "{{ auto_config() }}\n"
+
+# The dbt package a new connector becomes in a split-layout project. Mechanism macros are
+# called unqualified from these models and resolve through the ROOT project — dbt Core
+# never searches sibling packages — so the package declares no macro dependencies and
+# carries only what it owns: its models, its sources.yml, and any macro used solely here.
+PACKAGE_PROJECT_STUB = """\
+# enhanza_{source} — the {display} connector as a dbt package.
+# Installed by one `- local: packages/{source}` line in the root packages.yml.
+name: 'enhanza_{source}'
+version: '1.0.0'
+config-version: 2
+require-dbt-version: [">=1.9.0", "<2.0.0"]
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+
+models:
+  enhanza_{source}:
+    +materialized: view
+    +tags: ['{source}']
+    +enabled: "{{{{ var('is_{source}_enabled', false) | as_bool }}}}"
+    staging:
+      +schema: {source}_staging
+      +tags: ['staging']
+"""
 
 BI_PLAIN_STUB = """\
 {{{{ config(materialized='view') }}}}
@@ -439,10 +490,38 @@ def main(argv: list[str] | None = None) -> int:
     created: list[Path] = []
     skipped: list[Path] = []
 
-    staging_dir = conv.models / "staging" / source
-    bi_dir = (
-        conv.models / f"{source}{conv.bi_dir_suffix}" if conv.bi_dir_suffix is not None else None
+    # In a package-layout project, a new connector is born as a package: its models land
+    # under packages/<source>/models/ and the scaffold also writes the package's
+    # dbt_project.yml. Detection keys on packages/ containing at least one dbt package —
+    # the same signal the alignment checker uses — so the scaffolder and the checker
+    # cannot disagree about where a connector lives.
+    packages_root = conv.project / "packages"
+    split_layout = packages_root.is_dir() and any(
+        (d / "dbt_project.yml").exists() for d in packages_root.iterdir() if d.is_dir()
     )
+    if split_layout:
+        pkg_root = packages_root / source
+        model_root = pkg_root / "models"
+        staging_dir = model_root / "staging"
+        bi_dir = (
+            model_root / f"{source}{conv.bi_dir_suffix}"
+            if conv.bi_dir_suffix is not None
+            else None
+        )
+        write(
+            pkg_root / "dbt_project.yml",
+            PACKAGE_PROJECT_STUB.format(source=source, display=display),
+            created,
+            skipped,
+            args.dry_run,
+        )
+    else:
+        staging_dir = conv.models / "staging" / source
+        bi_dir = (
+            conv.models / f"{source}{conv.bi_dir_suffix}"
+            if conv.bi_dir_suffix is not None
+            else None
+        )
 
     enable = f"var('{conv.var_for(source)}', false)"
     staging_cfg = (
@@ -551,6 +630,13 @@ def paste_blocks(
     rel = lambda path: path.relative_to(REPO)  # noqa: E731
     table_lines = "\n".join(f"      - name: {t}" for t, _ in tables)
 
+    packages_yml = conv.project / "packages.yml"
+    split_layout = packages_yml.exists() and (conv.project / "packages").is_dir()
+    sources_dest = (
+        rel(conv.project / "packages" / source / "models" / "sources.yml")
+        if split_layout
+        else (rel(conv.sources_yml) if conv.sources_yml else str(rel(conv.models)) + "/sources.yml")
+    )
     out = [
         "",
         "-" * 86,
@@ -558,7 +644,18 @@ def paste_blocks(
         "see them as a hand-written diff, not as generated text.",
         "-" * 86,
         "",
-        f"1. {rel(conv.sources_yml) if conv.sources_yml else str(rel(conv.models)) + '/sources.yml'}",
+    ]
+    if split_layout:
+        out += [
+            f"0. {rel(packages_yml)} — install the package:",
+            "",
+            f"  - local: packages/{source}",
+            "",
+            "   Then run `dbt deps`.",
+            "",
+        ]
+    out += [
+        f"1. {sources_dest}",
         "",
         f"  - name: {source}{conv.source_suffix}",
         f"    description: '{display} raw data'",

@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: visma_eaccounting_api
+    description: 'Visma eAccounting raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: visma_eaccounting_api_{{ var('uid') }}
+    tables:
+      - name: accounts
+      - name: articles
+      - name: companysettings
+      - name: costcenters
+      - name: customerinvoices
+      - name: customers
+      - name: fiscalyears
+      - name: openingbalances
+      - name: orders
+      - name: projects
+      - name: vouchers
+

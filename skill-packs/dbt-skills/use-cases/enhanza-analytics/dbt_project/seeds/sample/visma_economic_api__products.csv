@@ -1,0 +1,13 @@
+OrgId,ArticleId,costPrice,description,inventory,name,productGroup,productNumber,salesPrice,unit
+ORG-1001,ARTICL-001,137.50,description_value_1,inventory_value_1,Bergen Bygg AS,productgroup_value_1,PRODUC-001,137.50,roll
+ORG-1002,ARTICL-002,275.00,description_value_2,inventory_value_2,Uppsala Livsmedel AB,productgroup_value_2,PRODUC-002,275.00,piece
+ORG-1003,ARTICL-003,412.50,description_value_3,inventory_value_3,Aarhus Elektronik ApS,productgroup_value_3,PRODUC-003,412.50,sheet
+ORG-1004,ARTICL-004,550.00,description_value_4,inventory_value_4,Tampere Kone Oy,productgroup_value_4,PRODUC-004,550.00,piece
+ORG-1001,ARTICL-005,687.50,description_value_5,inventory_value_5,Stavanger Marine AS,productgroup_value_5,PRODUC-005,687.50,hour
+ORG-1002,ARTICL-006,825.00,description_value_6,inventory_value_6,Malmo Emballage AB,productgroup_value_6,PRODUC-006,825.00,hour
+ORG-1003,ARTICL-007,962.50,description_value_7,inventory_value_7,Trondheim Verktoy AS,productgroup_value_7,PRODUC-007,962.50,roll
+ORG-1004,ARTICL-008,1100.00,description_value_8,inventory_value_8,Odense Papir ApS,productgroup_value_8,PRODUC-008,1100.00,piece
+ORG-1001,ARTICL-009,1237.50,description_value_9,inventory_value_9,Astrid Lindqvist,productgroup_value_9,PRODUC-009,1237.50,sheet
+ORG-1002,ARTICL-010,1375.00,description_value_10,inventory_value_10,Henrik Dahl,productgroup_value_10,PRODUC-010,1375.00,piece
+ORG-1003,ARTICL-011,1512.50,description_value_11,inventory_value_11,Mette Sorensen,productgroup_value_11,PRODUC-011,1512.50,hour
+ORG-1004,ARTICL-012,1650.00,description_value_12,inventory_value_12,Jukka Virtanen,productgroup_value_12,PRODUC-012,1650.00,hour

@@ -1,0 +1,5 @@
+OrgId,OrgName,Country,DefaultCurrency
+ORG-1001,Nordlys Handel AS,NO,NOK
+ORG-1002,Vasaloppet Logistik AB,SE,SEK
+ORG-1003,Kobenhavn Design ApS,DK,DKK
+ORG-1004,Suomi Teollisuus Oy,FI,EUR

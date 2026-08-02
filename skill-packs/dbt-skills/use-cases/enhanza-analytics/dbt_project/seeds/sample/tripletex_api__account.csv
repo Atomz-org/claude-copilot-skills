@@ -1,0 +1,13 @@
+OrgId,department,id,name,Number,numberPretty
+ORG-1001,department_value_1,KEY-001,Bergen Bygg AS,KEY-001,numberpretty_value_1
+ORG-1002,department_value_2,KEY-002,Uppsala Livsmedel AB,KEY-002,numberpretty_value_2
+ORG-1003,department_value_3,KEY-003,Aarhus Elektronik ApS,KEY-003,numberpretty_value_3
+ORG-1004,department_value_4,KEY-004,Tampere Kone Oy,KEY-004,numberpretty_value_4
+ORG-1001,department_value_5,KEY-005,Stavanger Marine AS,KEY-005,numberpretty_value_5
+ORG-1002,department_value_6,KEY-006,Malmo Emballage AB,KEY-006,numberpretty_value_6
+ORG-1003,department_value_7,KEY-007,Trondheim Verktoy AS,KEY-007,numberpretty_value_7
+ORG-1004,department_value_8,KEY-008,Odense Papir ApS,KEY-008,numberpretty_value_8
+ORG-1001,department_value_9,KEY-009,Astrid Lindqvist,KEY-009,numberpretty_value_9
+ORG-1002,department_value_10,KEY-010,Henrik Dahl,KEY-010,numberpretty_value_10
+ORG-1003,department_value_11,KEY-011,Mette Sorensen,KEY-011,numberpretty_value_11
+ORG-1004,department_value_12,KEY-012,Jukka Virtanen,KEY-012,numberpretty_value_12

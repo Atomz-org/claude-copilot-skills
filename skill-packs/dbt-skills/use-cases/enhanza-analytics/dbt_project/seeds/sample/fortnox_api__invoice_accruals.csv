@@ -1,0 +1,13 @@
+OrgId,AccrualAccount,EndDate,InvoiceAccrualRows,InvoiceNumber,Period,StartDate,Times,Total
+ORG-1001,accrualaccount_value_1,2026-01-05,invoiceaccrualrows_value_1,INVOIC-001,period_value_1,2026-01-05,times_value_1,137.50
+ORG-1002,accrualaccount_value_2,2026-01-12,invoiceaccrualrows_value_2,INVOIC-002,period_value_2,2026-01-12,times_value_2,275.00
+ORG-1003,accrualaccount_value_3,2026-01-19,invoiceaccrualrows_value_3,INVOIC-003,period_value_3,2026-01-19,times_value_3,412.50
+ORG-1004,accrualaccount_value_4,2026-01-26,invoiceaccrualrows_value_4,INVOIC-004,period_value_4,2026-01-26,times_value_4,550.00
+ORG-1001,accrualaccount_value_5,2026-02-02,invoiceaccrualrows_value_5,INVOIC-005,period_value_5,2026-02-02,times_value_5,687.50
+ORG-1002,accrualaccount_value_6,2026-02-09,invoiceaccrualrows_value_6,INVOIC-006,period_value_6,2026-02-09,times_value_6,825.00
+ORG-1003,accrualaccount_value_7,2026-02-16,invoiceaccrualrows_value_7,INVOIC-007,period_value_7,2026-02-16,times_value_7,962.50
+ORG-1004,accrualaccount_value_8,2026-02-23,invoiceaccrualrows_value_8,INVOIC-008,period_value_8,2026-02-23,times_value_8,1100.00
+ORG-1001,accrualaccount_value_9,2026-03-02,invoiceaccrualrows_value_9,INVOIC-009,period_value_9,2026-03-02,times_value_9,1237.50
+ORG-1002,accrualaccount_value_10,2026-03-09,invoiceaccrualrows_value_10,INVOIC-010,period_value_10,2026-03-09,times_value_10,1375.00
+ORG-1003,accrualaccount_value_11,2026-03-16,invoiceaccrualrows_value_11,INVOIC-011,period_value_11,2026-03-16,times_value_11,1512.50
+ORG-1004,accrualaccount_value_12,2026-03-23,invoiceaccrualrows_value_12,INVOIC-012,period_value_12,2026-03-23,times_value_12,1650.00

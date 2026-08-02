@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: tempo_api
+    description: 'Tempo raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: tempo_api_{{ var('uid') }}
+    tables:
+      - name: worklogs
+

@@ -1,0 +1,13 @@
+OrgId,accountManager,customerNumber,deliveryAddress,department,discountPercentage,id,invoicesDueIn,isCustomer,isInactive,isPrivateIndividual,organizationNumber,postalAddress
+ORG-1001,accountmanager_value_1,C-1001,deliveryaddress_value_1,department_value_1,137.50,KEY-001,invoicesduein_value_1,false,false,false,ORGANI-001,postaladdress_value_1
+ORG-1002,accountmanager_value_2,C-1002,deliveryaddress_value_2,department_value_2,275.00,KEY-002,invoicesduein_value_2,true,true,true,ORGANI-002,postaladdress_value_2
+ORG-1003,accountmanager_value_3,C-1003,deliveryaddress_value_3,department_value_3,412.50,KEY-003,invoicesduein_value_3,true,true,true,ORGANI-003,postaladdress_value_3
+ORG-1004,accountmanager_value_4,C-1004,deliveryaddress_value_4,department_value_4,550.00,KEY-004,invoicesduein_value_4,false,false,false,ORGANI-004,postaladdress_value_4
+ORG-1001,accountmanager_value_5,C-1005,deliveryaddress_value_5,department_value_5,687.50,KEY-005,invoicesduein_value_5,true,true,true,ORGANI-005,postaladdress_value_5
+ORG-1002,accountmanager_value_6,C-1001,deliveryaddress_value_6,department_value_6,825.00,KEY-006,invoicesduein_value_6,true,true,true,ORGANI-006,postaladdress_value_6
+ORG-1003,accountmanager_value_7,C-1002,deliveryaddress_value_7,department_value_7,962.50,KEY-007,invoicesduein_value_7,false,false,false,ORGANI-007,postaladdress_value_7
+ORG-1004,accountmanager_value_8,C-1003,deliveryaddress_value_8,department_value_8,1100.00,KEY-008,invoicesduein_value_8,true,true,true,ORGANI-008,postaladdress_value_8
+ORG-1001,accountmanager_value_9,C-1004,deliveryaddress_value_9,department_value_9,1237.50,KEY-009,invoicesduein_value_9,true,true,true,ORGANI-009,postaladdress_value_9
+ORG-1002,accountmanager_value_10,C-1005,deliveryaddress_value_10,department_value_10,1375.00,KEY-010,invoicesduein_value_10,false,false,false,ORGANI-010,postaladdress_value_10
+ORG-1003,accountmanager_value_11,C-1001,deliveryaddress_value_11,department_value_11,1512.50,KEY-011,invoicesduein_value_11,true,true,true,ORGANI-011,postaladdress_value_11
+ORG-1004,accountmanager_value_12,C-1002,deliveryaddress_value_12,department_value_12,1650.00,KEY-012,invoicesduein_value_12,true,true,true,ORGANI-012,postaladdress_value_12

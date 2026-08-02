@@ -1,0 +1,43 @@
+version: 2
+
+sources:
+  - name: tripletex_api
+    description: 'Tripletex raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: tripletex_api_{{ var('uid') }}
+    tables:
+      - name: account
+      - name: address
+      - name: annual_account
+      - name: balance_sheet
+      - name: currency
+      - name: customer
+      - name: department
+      - name: division
+      - name: employee
+      - name: employee_category
+      - name: employment
+      - name: employment_details
+      - name: inventory
+      - name: inventory_location
+      - name: invoice
+      - name: leave_of_absence
+      - name: leave_of_absence_type
+      - name: ledger
+      - name: ledger_posting
+      - name: ledger_voucher
+      - name: municipality
+      - name: order
+      - name: payment_type
+      - name: product
+      - name: project
+      - name: purchase_order
+      - name: resultbudget
+      - name: salary_payslip
+      - name: stocktaking
+      - name: supplier
+      - name: supplier_invoice
+      - name: supplier_product
+      - name: timesheet_allocated
+      - name: voucher_type
+

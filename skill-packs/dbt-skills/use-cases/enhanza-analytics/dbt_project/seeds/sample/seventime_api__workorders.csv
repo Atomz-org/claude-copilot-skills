@@ -1,0 +1,13 @@
+OrgId,_id,categoryName,cost,endTimestamp,invoiceableTime,isAbsence,isInvoiceable,isWorkTime,pricePerHour,time,timestamp,user,userName
+ORG-1001,_-001,categoryname_value_1,137.50,endtimestamp_value_1,invoiceabletime_value_1,false,false,false,137.50,time_value_1,timestamp_value_1,user_value_1,username_value_1
+ORG-1002,_-002,categoryname_value_2,275.00,endtimestamp_value_2,invoiceabletime_value_2,true,true,true,275.00,time_value_2,timestamp_value_2,user_value_2,username_value_2
+ORG-1003,_-003,categoryname_value_3,412.50,endtimestamp_value_3,invoiceabletime_value_3,true,true,true,412.50,time_value_3,timestamp_value_3,user_value_3,username_value_3
+ORG-1004,_-004,categoryname_value_4,550.00,endtimestamp_value_4,invoiceabletime_value_4,false,false,false,550.00,time_value_4,timestamp_value_4,user_value_4,username_value_4
+ORG-1001,_-005,categoryname_value_5,687.50,endtimestamp_value_5,invoiceabletime_value_5,true,true,true,687.50,time_value_5,timestamp_value_5,user_value_5,username_value_5
+ORG-1002,_-006,categoryname_value_6,825.00,endtimestamp_value_6,invoiceabletime_value_6,true,true,true,825.00,time_value_6,timestamp_value_6,user_value_6,username_value_6
+ORG-1003,_-007,categoryname_value_7,962.50,endtimestamp_value_7,invoiceabletime_value_7,false,false,false,962.50,time_value_7,timestamp_value_7,user_value_7,username_value_7
+ORG-1004,_-008,categoryname_value_8,1100.00,endtimestamp_value_8,invoiceabletime_value_8,true,true,true,1100.00,time_value_8,timestamp_value_8,user_value_8,username_value_8
+ORG-1001,_-009,categoryname_value_9,1237.50,endtimestamp_value_9,invoiceabletime_value_9,true,true,true,1237.50,time_value_9,timestamp_value_9,user_value_9,username_value_9
+ORG-1002,_-010,categoryname_value_10,1375.00,endtimestamp_value_10,invoiceabletime_value_10,false,false,false,1375.00,time_value_10,timestamp_value_10,user_value_10,username_value_10
+ORG-1003,_-011,categoryname_value_11,1512.50,endtimestamp_value_11,invoiceabletime_value_11,true,true,true,1512.50,time_value_11,timestamp_value_11,user_value_11,username_value_11
+ORG-1004,_-012,categoryname_value_12,1650.00,endtimestamp_value_12,invoiceabletime_value_12,true,true,true,1650.00,time_value_12,timestamp_value_12,user_value_12,username_value_12

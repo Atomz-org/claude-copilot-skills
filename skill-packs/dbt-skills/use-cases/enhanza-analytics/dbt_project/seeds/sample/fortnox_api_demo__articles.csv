@@ -1,0 +1,13 @@
+OrgId,Active,ArticleNumber,Bulky,demo_multi,DirectCost,FreightCost,Housework,OtherCost,PurchasePrice,QuantityInStock,ReservedQuantity,SalesPrice,StockGoods,StockValue,Type,Unit,VAT
+ORG-1001,false,ART-100,bulky_value_1,demo_multi_value_1,137.50,137.50,housework_value_1,137.50,137.50,137.50,137.50,137.50,137.50,137.50,type_value_1,roll,vat_value_1
+ORG-1002,true,ART-101,bulky_value_2,demo_multi_value_2,275.00,275.00,housework_value_2,275.00,275.00,275.00,275.00,275.00,275.00,275.00,type_value_2,piece,vat_value_2
+ORG-1003,true,ART-102,bulky_value_3,demo_multi_value_3,412.50,412.50,housework_value_3,412.50,412.50,412.50,412.50,412.50,412.50,412.50,type_value_3,sheet,vat_value_3
+ORG-1004,false,ART-103,bulky_value_4,demo_multi_value_4,550.00,550.00,housework_value_4,550.00,550.00,550.00,550.00,550.00,550.00,550.00,type_value_4,piece,vat_value_4
+ORG-1001,true,ART-104,bulky_value_5,demo_multi_value_5,687.50,687.50,housework_value_5,687.50,687.50,687.50,687.50,687.50,687.50,687.50,type_value_5,hour,vat_value_5
+ORG-1002,true,ART-105,bulky_value_6,demo_multi_value_6,825.00,825.00,housework_value_6,825.00,825.00,825.00,825.00,825.00,825.00,825.00,type_value_6,hour,vat_value_6
+ORG-1003,false,ART-100,bulky_value_7,demo_multi_value_7,962.50,962.50,housework_value_7,962.50,962.50,962.50,962.50,962.50,962.50,962.50,type_value_7,roll,vat_value_7
+ORG-1004,true,ART-101,bulky_value_8,demo_multi_value_8,1100.00,1100.00,housework_value_8,1100.00,1100.00,1100.00,1100.00,1100.00,1100.00,1100.00,type_value_8,piece,vat_value_8
+ORG-1001,true,ART-102,bulky_value_9,demo_multi_value_9,1237.50,1237.50,housework_value_9,1237.50,1237.50,1237.50,1237.50,1237.50,1237.50,1237.50,type_value_9,sheet,vat_value_9
+ORG-1002,false,ART-103,bulky_value_10,demo_multi_value_10,1375.00,1375.00,housework_value_10,1375.00,1375.00,1375.00,1375.00,1375.00,1375.00,1375.00,type_value_10,piece,vat_value_10
+ORG-1003,true,ART-104,bulky_value_11,demo_multi_value_11,1512.50,1512.50,housework_value_11,1512.50,1512.50,1512.50,1512.50,1512.50,1512.50,1512.50,type_value_11,hour,vat_value_11
+ORG-1004,true,ART-105,bulky_value_12,demo_multi_value_12,1650.00,1650.00,housework_value_12,1650.00,1650.00,1650.00,1650.00,1650.00,1650.00,1650.00,type_value_12,hour,vat_value_12

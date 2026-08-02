@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: xledger_api
+    description: 'Xledger raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: xledger_api_{{ var('uid') }}
+    tables:
+      - name: accounts
+      - name: object_values
+      - name: recent_transactions
+      - name: transactions
+
+  # Shopify is the first source in this file to declare freshness. Every other block
+  # predates the rule and is an undocumented SLA; this one is not. See CONNECTORS.md.
+  # [NEEDS INPUT] `loaded_at_field` assumes the loader stamps `_loaded_at`. Confirm the
+  # actual column against the landed schema — a wrong name makes `dbt source freshness`
+  # error rather than silently pass, which is the safe direction, but it still blocks.
+  # [NEEDS INPUT] warn/error thresholds below are placeholders pending the sync cadence.
+

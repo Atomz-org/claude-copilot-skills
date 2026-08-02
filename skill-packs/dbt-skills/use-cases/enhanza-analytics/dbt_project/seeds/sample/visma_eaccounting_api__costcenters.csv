@@ -1,0 +1,13 @@
+OrgId,CostCenterId,IsActive,Items
+ORG-1001,137.50,false,items_value_1
+ORG-1002,275.00,true,items_value_2
+ORG-1003,412.50,true,items_value_3
+ORG-1004,550.00,false,items_value_4
+ORG-1001,687.50,true,items_value_5
+ORG-1002,825.00,true,items_value_6
+ORG-1003,962.50,false,items_value_7
+ORG-1004,1100.00,true,items_value_8
+ORG-1001,1237.50,true,items_value_9
+ORG-1002,1375.00,false,items_value_10
+ORG-1003,1512.50,true,items_value_11
+ORG-1004,1650.00,true,items_value_12
