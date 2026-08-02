@@ -3,4 +3,5 @@ packages:
   - local: packages/favrit
   - local: packages/fortnox
   - local: packages/seventime
-sha1_hash: 3db50eb145d00ef90030238d6243be4640625369
+  - local: packages/shopify
+sha1_hash: 4ed8d4f016567dd6d78250f8ee39bc7a12985990
