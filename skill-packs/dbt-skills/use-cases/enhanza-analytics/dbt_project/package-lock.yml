@@ -7,4 +7,5 @@ packages:
   - local: packages/tempo
   - local: packages/tripletex
   - local: packages/upsales
-sha1_hash: 6c045b8aa0642d02470293d3e547f44b1c7e8c45
+  - local: packages/visma_eaccounting
+sha1_hash: 589216ff046bf61e73f3b1fa6f8e048306eab7d0

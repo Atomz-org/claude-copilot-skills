@@ -69,23 +69,6 @@ sources:
       - name: accounting
       - name: ratings
 
-  - name: visma_eaccounting_api
-    description: 'Visma eAccounting raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: visma_eaccounting_api_{{ var('uid') }}
-    tables:
-      - name: accounts
-      - name: articles
-      - name: companysettings
-      - name: costcenters
-      - name: customerinvoices
-      - name: customers
-      - name: fiscalyears
-      - name: openingbalances
-      - name: orders
-      - name: projects
-      - name: vouchers
-  
   - name: visma_economic_api
     description: 'Visma e-conomic raw data'
     database: "{{ target.project | default(target.database) }}"
