@@ -30,6 +30,32 @@ jobs:
           chmod +x scripts/activate_skill_stack.sh
           ./scripts/activate_skill_stack.sh dbt-skills
 
+      # Node is only needed so skill_map_scan.py can resolve its pinned CLI
+      # (npx -y @skill-map/cli@<PINNED_VERSION>); the scan itself is
+      # deterministic and offline -- see the runner's docstring.
+      - name: Set up Node for skill-map
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Blocking harness-hygiene gate over the activated tree. The budget of 1
+      # tolerates exactly the known senior-analytics-engineer agent/skill
+      # name-collision (the documented compat alias); any NEW name-collision
+      # or frontmatter-parse-error fails the PR. Drop the budget to 0 if the
+      # alias is ever retired. Exit 3 means the CLI could not be resolved:
+      # per the runner's contract that is a recorded skip, not a red build.
+      - name: Skill-map hygiene gate (deterministic)
+        run: |
+          set +e
+          python scripts/skill_map_scan.py --check --max-errors 1 --summary
+          status=$?
+          set -e
+          if [ "$status" -eq 3 ]; then
+            echo "::warning::skill-map CLI unavailable on this runner; hygiene gate skipped."
+            exit 0
+          fi
+          exit "$status"
+
       - name: Apply readiness label for review
         env:
           GH_TOKEN: ${{ github.token }}
