@@ -47,8 +47,43 @@ sources:
     schema: public
     tables:
       - name: bas_account_chart
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Account
+          - name: AccountClass
+          - name: AccountName
+          - name: Active
+          - name: CostCenterSettings
+          - name: MainAccount
+          - name: Number
+          - name: ProjectSettings
+          - name: SubAccount
+          - name: Year
       - name: calendar
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Date
       - name: cause_codes
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: CauseCode
+          - name: Date
+          - name: Description
+          - name: Extent
+          - name: HolidayEntitling
+          - name: Hours
+          - name: is
       - name: country_codes
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: CountryName
       - name: currency_exchange_rates
 

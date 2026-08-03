@@ -7,7 +7,31 @@ sources:
     schema: favrit_api_{{ var('uid') }}
     tables:
       - name: user_location
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: id
+          - name: is_active
       - name: orderline
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: account_id
+          - name: cost_center_id
+          - name: created_at
+          - name: customer_id
+          - name: delivered_quantity
+          - name: discount_amount
+          - name: id
+          - name: order_id
+          - name: product_id
+          - name: project_id
+          - name: quantity
+          - name: unit_price
+          - name: updated_at
+          - name: vat_rate
       - name: accounting
       - name: ratings
 
