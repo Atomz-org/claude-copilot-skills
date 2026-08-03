@@ -64,3 +64,32 @@ rust/toon/bin/
 target/
 dbt_packages/
 logs/
+
+# --- Activation mirrors and pack-side component copies ------------------------
+# `scripts/activate_skill_stack.sh` materialises the active pack twice:
+#
+#   1. `references/` and `templates/` at the repository ROOT are byte-for-byte
+#      copies of the pack's own `skill-packs/<pack>/{references,templates}/`.
+#      Scanning both double-counts every doc node and makes token totals lie.
+#      The pack copy is the editing source ("edit the pack copy, never the
+#      root mirror -- activation overwrites it", README), so the pack side
+#      stays scanned and the root mirror is excluded. Links from live skills
+#      (`../../references/<file>.md`) keep resolving: `reference-broken`
+#      checks the graph *or the disk*, same as the graphify-out/ entry above.
+#
+#   2. `.claude/` is LAYERED from `skill-packs/*/.claude/` (shared pack first,
+#      then domain pack). The live tree is where skill-map's provider detection
+#      assigns real kinds (skill/command/agent) and where collisions and
+#      reserved names are checked; the pack-side copies scan kind-blind as
+#      plain markdown, double-counting all 38 skills and contributing phantom
+#      `reference-broken` findings (their `../../references/` links only
+#      resolve after activation flattens them to the root). Scan the live
+#      tree, exclude the pack-side component copies. Pack-side references/
+#      and templates/ are NOT matched by this pattern and remain scanned.
+#
+# Leading slashes anchor at the repository root on purpose: a bare
+# `references/` would also swallow `skill-packs/<pack>/references/` -- the
+# exact opposite of the intent.
+/references/
+/templates/
+/skill-packs/*/.claude/
