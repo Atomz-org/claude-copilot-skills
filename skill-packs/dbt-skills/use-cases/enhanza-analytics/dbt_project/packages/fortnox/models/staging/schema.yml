@@ -101,3 +101,15 @@ models:
   - name: fortnox_reports_liquidity_staging
   - name: fortnox_reports_rolling_sum_report_staging
   - name: fortnox_reports_vouchers_budgets_staging
+  - name: fortnox_base_v2_invoices
+    description: >
+      One row per Fortnox invoice as delivered by the v2 API, filtered to the tenant's
+      configured start year. Ephemeral, and deliberately named `base_` rather than
+      `_staging`: it applies that year filter once for the five staging models that read
+      it, instead of each repeating it. It does not rename or cast — that stays in the
+      staging models downstream.
+  - name: fortnox_erp_bi_dim_stockpoints
+    description: >
+      One row per Fortnox stock point. Adapts the Fortnox stock point to the common
+      unified schema so `erp_bi_dim_stockpoints` can union it alongside other connectors;
+      its column list and order are the conformed contract, not Fortnox's own shape.

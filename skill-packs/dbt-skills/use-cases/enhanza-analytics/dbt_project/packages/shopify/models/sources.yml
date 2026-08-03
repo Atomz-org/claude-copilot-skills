@@ -11,7 +11,61 @@ sources:
       error_after: {count: 24, period: hour}
     tables:
       - name: customers
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: created_at
+          - name: id
+          - name: orders_count
+          - name: state
+          - name: tax_exempt
+          - name: total_spent
+          - name: updated_at
+          - name: verified_email
       - name: orders
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: closed_at
+          - name: created_at
+          - name: customer_id
+          - name: id
+          - name: order_number
+          - name: processed_at
+          - name: subtotal_price
+          - name: taxes_included
+          - name: total_discounts
+          - name: total_line_items_price
+          - name: total_price
+          - name: total_tax
+          - name: updated_at
       - name: order_lines
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: fulfillable_quantity
+          - name: id
+          - name: order_id
+          - name: price
+          - name: quantity
+          - name: tax_lines
+          - name: total_discount
+          - name: variant_id
       - name: products
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: created_at
+          - name: product_id
+          - name: status
+          - name: updated_at
+          - name: variant_grams
+          - name: variant_id
+          - name: variant_inventory_quantity
+          - name: variant_price
+          - name: variant_requires_shipping
 
