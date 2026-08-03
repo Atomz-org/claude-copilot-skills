@@ -305,3 +305,128 @@ def test_a_qualified_row_variable_is_not_attributed_to_the_base_table() -> None:
     assert ("Price", f"api{lineage.SOURCE_SEP}invoices", "Price") not in resolved
     # The genuine column alongside it still resolves.
     assert ("InvoiceNumber", f"api{lineage.SOURCE_SEP}invoices", "InvoiceNumber") in resolved
+
+
+# ---------------------------------------------------------------------------------------
+# Jinja block resolution
+#
+# Deleting `{% ... %}` tags and keeping everything between them produces text no parser
+# accepts. Both shapes below were found by running this module over a real project, where
+# they accounted for all five of its parse failures.
+# ---------------------------------------------------------------------------------------
+
+
+def test_only_the_first_branch_of_a_conditional_survives():
+    """`{% if %} X {% else %} NULL {% endif %} as C` collapsed to `X NULL as C`."""
+    sql = "select {% if a %} Price {% else %} NULL {% endif %} as Amount from t"
+
+    out = lineage.resolve_jinja_blocks(sql)
+
+    assert "Price" in out
+    assert "NULL" not in out
+    assert "as Amount from t" in out
+
+
+def test_nested_conditionals_keep_the_right_branches():
+    sql = (
+        "select {% if a %}{% if b %} X {% else %} Y {% endif %}"
+        "{% else %} Z {% endif %} as C from t"
+    )
+
+    out = lineage.resolve_jinja_blocks(sql)
+
+    assert "X" in out
+    assert "Y" not in out and "Z" not in out
+
+
+def test_a_dropped_branch_does_not_unbalance_the_stack():
+    """A nested `if` inside a dropped `else` must not pop the outer level early."""
+    sql = "select A {% if a %} , B {% else %} {% if c %} , C {% endif %} {% endif %} , D from t"
+
+    out = lineage.resolve_jinja_blocks(sql)
+
+    assert ", B" in out
+    assert ", C" not in out
+    assert ", D from t" in out, "the tail after endif was lost — the stack unbalanced"
+
+
+def test_a_set_block_body_is_dropped_entirely():
+    """`{% set q %}...{% endset %}` assigns to a variable; it is not emitted in place."""
+    sql = "{% set q %} select 1 as X from other {% endset %} select A from t"
+
+    out = lineage.resolve_jinja_blocks(sql)
+
+    assert "other" not in out
+    assert "select A from t" in out.strip()
+
+
+def test_a_one_line_set_is_not_treated_as_a_block():
+    """`{% set x = 1 %}` opens no scope; treating it as one swallows the rest of the file."""
+    sql = "{% set cols = ['A'] %}\nselect A from t"
+
+    out = lineage.resolve_jinja_blocks(sql)
+
+    assert "select A from t" in out
+
+
+def test_a_conditional_where_clause_no_longer_breaks_the_case_statement():
+    """The `categories_x_mapping` shape: an `{% if %}` wrapping `when`, leaving a bare `then`."""
+    sql = (
+        "select case {% if a %} when X = 1 then 'a' {% endif %} "
+        "{% if b %} when X = 2 then 'b' {% endif %} end as C from t"
+    )
+
+    tree, error = lineage.parse_model_sql(sql, "bigquery")
+
+    assert error is None, error
+    assert tree is not None
+
+
+# ---------------------------------------------------------------------------------------
+# Macros in different syntactic positions at once
+# ---------------------------------------------------------------------------------------
+
+
+def test_macros_in_two_different_positions_still_parse():
+    """One uniform substitution cannot be valid in a select list *and* after a FROM.
+
+    `logic_bi_dim_articles` has a macro in each: all four uniform forms failed and the model
+    was reported unparseable while its column list was perfectly readable.
+    """
+    sql = (
+        "select\n  A\n  , B as Renamed\n  {{ extra_columns() }}\n"
+        "from {{ ref('upstream') }}\n{{ some_filter() }}\norder by 1"
+    )
+
+    tree, error = lineage.parse_model_sql(sql, "bigquery")
+
+    assert error is None, f"mixed-position macros still fail: {error}"
+    assert tree is not None
+
+
+def test_the_mixed_pass_is_bounded():
+    """It is exponential in the macro count, so it must refuse rather than hang."""
+    macros = " ".join("{{ m%d() }}" % i for i in range(lineage.MAX_MIXED_MACROS + 3))
+    sql = f"select A {macros} from t"
+
+    tree, error = lineage.parse_model_sql(sql, "bigquery")
+
+    assert tree is not None or error is not None  # returns either way, never hangs
+
+
+def test_the_real_project_has_no_parse_failures():
+    """Was 5. Each was one of the two Jinja shapes above."""
+    manifest = (
+        REPO / "skill-packs/dbt-skills/use-cases/enhanza-analytics"
+        "/dbt_project/target/manifest.json"
+    )
+    if not manifest.is_file() or lineage.sqlglot is None:
+        pytest.skip("needs the manifest and sqlglot")
+
+    import sys as _sys
+    _sys.path.insert(0, str(REPO / "scripts"))
+    from _manifest import Manifest
+
+    result = lineage.build_lineage(Manifest.load(str(manifest)))
+
+    assert result["parse_failed"] == 0, [f["model"] for f in result["failures"]]

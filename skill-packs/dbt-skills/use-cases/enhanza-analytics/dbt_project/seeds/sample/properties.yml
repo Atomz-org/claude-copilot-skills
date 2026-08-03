@@ -3,6 +3,15 @@
 version: 2
 
 seeds:
+  - name: app__dimension_mapping
+    config:
+      enabled: "{{ target.name == 'demo' }}"
+      alias: dimension_mapping
+      schema: app
+      column_types:
+        OrgId: varchar
+        CategoryId: varchar
+        DimensionId: varchar
   - name: favrit_api__orderline
     config:
       enabled: "{{ target.name == 'demo' }}"
