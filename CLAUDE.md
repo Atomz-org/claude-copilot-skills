@@ -60,6 +60,7 @@ get its own serializer.
 |---|---|---|---|
 | `connector_alignment_check.py --connector erp` (28 findings) | 7447 | **2624** | −64.8% |
 | `dbt_manifest_to_graphify.py --dry-run` | **271** | 639 | +136% |
+| `dbt_column_memory.py` (default report) | **297** | 806 | +171% |
 
 The checker wins because its findings are a uniform record list: the message template and
 the shared path prefix are each stated once instead of 28 times, so
@@ -67,6 +68,11 @@ the shared path prefix are each stated once instead of 28 times, so
 `--format json | graph_to_toon`. The emitter loses because its text output is already four
 lines of counts — it is deliberately **not** in that hook's `_TOON_SCRIPTS`, and adding it
 would cost tokens. `--format json` still exists there for machine consumption.
+
+`dbt_column_memory.py` loses for the same reason and is out for the same reason: its default
+report is six lines of counts, and its detailed view (`--concept`) is a contract header plus
+two differently-shaped lists, not one uniform record set. The **artifact** is where its
+uniform lists live, and that is already JSON.
 
 Two rules that fall out of this:
 
@@ -134,6 +140,18 @@ Two rules decide whether the result is trustworthy:
 checker cannot disagree about what the convention is. Run it with `--check` in CI; it needs
 no warehouse, no profile, and no parse.
 
+Accepted warnings on enhanza-analytics, do not re-report:
+
+- **`naming: fortnox_base_v2_invoices`.** `base_` is a real dbt convention for a
+  pre-staging model, and this one exists to apply the start-year filter once for the five
+  staging models that read it. The checker only knows this project's two shapes. Renaming
+  it is six files of churn to satisfy a heuristic.
+- **`no-freshness` × 8.** Every source needs `loaded_at_field` and a `freshness:` block
+  ([rule 14](.claude/rules/analytics-engineering-rules.md)) and **nobody may invent one**
+  ([rule 5](.claude/rules/analytics-engineering-rules.md)) — the SLA is a fact about the
+  upstream pipeline, not a number to pick. This stays a warning until someone who knows
+  each connector's load cadence supplies it.
+
 ### Column lineage
 
 dbt Core stops at model-level lineage. `scripts/dbt_column_lineage.py` parses each model's
@@ -148,12 +166,23 @@ python3 scripts/dbt_column_lineage.py --manifest <path> --column OrgName
 python3 scripts/dbt_manifest_to_graphify.py --manifest <path> --with-columns --merge
 ```
 
-Coverage is stated, never implied: 223 of 359 models parse, 131 are macro-only and resolved
-structurally, 5 fail and are named. `--with-columns` roughly doubles the graph
+Coverage is stated, never implied: 225 of 359 models parse, 134 are macro-only and resolved
+structurally, **0 fail**. `--with-columns` roughly doubles the graph
 (3058 → 6382 nodes), so it is a flag rather than a default.
 
 **Anything inferred by parsing can be confidently wrong**, which is why
 `tests/test_dbt_column_lineage.py` pins each resolver bug found while building it:
+
+- Deleting `{% ... %}` tags and keeping what is between them is wrong for the two block
+  forms that carry SQL. `{% if a %} X {% else %} NULL {% endif %} as C` collapses to
+  `X NULL as C` — every branch survives and they concatenate — and a `{% set q %}...
+  {% endset %}` body is assigned to a *variable*, so keeping it splices a second query into
+  the middle of the first. `resolve_jinja_blocks()` keeps the first branch and drops set
+  bodies. This was all five of the project's parse failures.
+- One substitution cannot be valid everywhere at once. A model with a macro in its select
+  list *and* one after its FROM fails all four uniform forms, so a bounded per-occurrence
+  pass tries combinations — capped at `MAX_MIXED_MACROS`, and only for a model the uniform
+  pass could not read. Measured: **parse failures 5 → 0** on 359 models.
 
 - `find_all(exp.Table)` walks the whole subtree, so an outer SELECT claimed its CTE's base
   table as its own source and invented `src.OrgName` beside the true `src.companyName`.
@@ -171,10 +200,134 @@ connectors are enabled at once** — the connector's own build passes and the fa
 for a tenant with both. It found `visma_economic_erp_bi_dim_articles` calling a column
 `isActive` where five peers call it `Active`.
 
+### Column memory — the store an agent actually reads
+
+`scripts/dbt_column_lineage.py` is the primitive; `scripts/dbt_column_memory.py` is what
+makes it usable. It fixes three things about the primitive and adds nothing else:
+
+| | |
+|---|---|
+| **Currency** | `raw_code` is a snapshot from the last `dbt parse`. A model whose file has moved since is re-parsed **from disk** instead. |
+| **Cost** | per-model results cached on the model's content hash, so editing one model re-parses one model — **1.6s cold, 0.35s warm** on 359 models. |
+| **Depth** | `resolve()` walks the whole chain to the raw source column, through `select *` passthroughs and union branches, and names every transform it crossed. |
+
+```bash
+python3 scripts/dbt_column_memory.py --use-case enhanza-analytics --concept dim_articles
+python3 scripts/dbt_column_memory.py --use-case enhanza-analytics --write   # the artifact
+python3 scripts/dbt_column_memory.py --use-case enhanza-analytics --check   # the CI gate
+python3 scripts/dbt_column_memory.py --use-case enhanza-analytics --merge-graphify
+```
+
+Freshness is free and exact: every manifest node carries `checksum.checksum`, which is
+`sha256(file_bytes.strip())` — dbt's `FileHash.from_contents` strips before hashing.
+Measured here: **359 of 359 models match**. Drop the `.strip()` and 36 of 97 mismatch, the
+incremental rebuild silently degrades to a full one, and `--check` never goes green.
+
+Package roots resolve from **each package's own `dbt_project.yml name:`**, never by
+transforming the directory name. `packages/favrit/` declares `enhanza_favrit`, so a prefix
+rule works here and would break silently on the first package where the two diverge — by
+reporting all of its models as deleted.
+
+Three rules decide whether the output can be trusted:
+
+- **`select *` is expanded, not skipped.** Most adapters here are
+  `select *, {{ add_erp_fields(...) }} from ref(...)` and declare no named column at all.
+  Reading named projections only gave 20 of 30 concepts a contract, and the ten it dropped
+  included `dim_accounts`, which five connectors supply. A conformance check silent on the
+  concepts most likely to drift is worse than none.
+- **Incomplete is carried through, but never as silence.** A macro-generated column list
+  cannot be named, so the contract says `partial_for` and those connectors stay out of
+  `missing_from` — a connector that *might* have the column is not accused of dropping it.
+  It is still reported, as `drift.confidence: suspected`. Emitting nothing was a real bug,
+  found by onboarding a throwaway connector end to end: an adapter that drops a column
+  *and* calls `add_erp_fields(...)` is `partial`, so the drop landed in `unknown_for` and
+  this file read "0 drift findings" while `connector_alignment_check.py` reported an error
+  on the same adapter. Two detectors disagreeing is worse than one being wrong, because the
+  quiet one is the one people read.
+- **Nothing run-dependent goes in the artifact.** Cache counters and manifest timestamps in
+  `provenance` made the file change when the project had not, so `--check` was permanently
+  red. Run statistics are printed, never written.
+
+The artifact is `ontology/column-memory.json` (448 KB, committed); the cache is
+`.dbt-column-cache/` (gitignored, rebuildable in 1.6s). Same split, same reasons, as the
+graphify fragment versus the manifest.
+
+**It is regenerated automatically.** `scripts/hooks/dbt_column_memory_watch.py` runs on
+`PostToolUse` for `Edit|Write|MultiEdit` and rebuilds the store when the edited file is a
+`.sql`/`.yml` under a `dbt_project/`. It probes with `--stale-only` first (no parser, no
+ontology, ~0.3s) and only then rebuilds. It **never blocks** — PostToolUse fires after the
+edit has landed, so a non-zero exit cannot undo anything and can only break the agent's next
+step for an unrelated reason. `use_case_sync.py`'s `columns` stage is the same work at
+review time.
+
+### Source column contracts — the one input nobody can derive
+
+Adding a connector has exactly **one** genuinely unknown input: the raw table's column list.
+Every other column in the project is a rename of it. That one unknown was also the only thing
+nobody wrote down — measured before this: **200 source tables declared in `sources.yml`, zero
+of them declaring `columns:`.** The raw schema existed only inside whatever somebody hand-typed
+into a staging model, which is why adapter drift was detectable downstream but not preventable
+upstream.
+
+```bash
+python3 scripts/dbt_column_memory.py --use-case <slug> --emit-source-columns --write
+./skill-packs/dbt-skills/use-cases/<slug>/artifacts/refresh.sh   # dbt re-reads them
+```
+
+Bootstrapped here: **804 columns across 99 tables in 12 files, 1200 insertions and 0
+deletions**, dbt parse clean. Then `check_source_columns` in
+`scripts/connector_alignment_check.py` makes them load-bearing — staging reading a column its
+source does not declare is an `error`.
+
+A source contract is a statement of **what this project depends on, not an inventory of what
+the API returns**. Declare the ten fields staging reads, not the forty available. Upstream can
+then add fields freely, and removing one you declared becomes a detectable breaking change
+instead of a warehouse error at 3am.
+
+Four rules, each of which was a bug first:
+
+- **Insert text, never round-trip the YAML.** These files carry Jinja in load-bearing
+  positions — `schema: fortnox_api_{{ var('demo_uid', var('uid')) }}` — and a YAML library
+  either rejects it or re-emits it quoted so dbt stops rendering it. A round-trip also drops
+  every comment. The gate is that the diff is **insertions only**.
+- **Key by `(source, table)`, never by table alone.** Two `sources.yml` here declare three
+  and five sources; nothing stops two of them exposing a `customers`. It does not collide
+  today and is one added table away from writing one source's columns under another's table,
+  silently.
+- **A table that already declares `columns:` is left alone.** The generated list bootstraps a
+  contract a human then owns; overwriting a hand-authored one makes the generator the
+  authority on a fact it only inferred.
+- **A source with no contract is skipped, not failed.** Most of a project has no contract the
+  day this lands, and a gate that goes red on a correct state gets switched off within a week.
+
+Order of work follows from this. Read the contract **before** writing the adapter, not after:
+`--concept <name>` gives the column list in order plus the raw field each existing connector
+mapped. Staging then has one job — land those names — and the adapter becomes mechanical.
+
+### Where the column contract goes, and why it is three places
+
+Not three copies of one fact — three consumers that cannot read each other's format:
+
+| Destination | Holds | Why not the others |
+|---|---|---|
+| `ontology/column-memory.json` | contracts, bindings, drift | the store of record; reviewable diff |
+| `graphify-out/graph.json` | contract + drift nodes, edged to the adapter models | the Graphify-first rule makes `graphify query` the first move, so a contract outside the graph is a contract nobody finds during orientation |
+| AgentMemory | the contract, the drift, and a locator | survives the session; BM25-findable by concept and column name |
+
+The graphify fragment reuses `dbt_manifest_to_graphify.node_id()`, so its 57 edges attach to
+adapter model nodes that already exist — measured: **+29 nodes, +57 edges, 0 duplicates, all
+359 dbt models still present**. Merge it with `--merge-graphify`, and the same ordering rule
+applies: **never run `graphify update` afterwards.**
+
+`--remember` writes **contracts, drift, and one locator — never the edge set.** `:3111` is a
+single global store with no namespace and BM25 recall, so 1024 mechanical binding records
+would bury the decisions it exists to hold. Every record is phrased with the words the
+question would use. `--remember-bindings` adds the resolved bindings, capped at 120.
+
 ## Use-case derived artifacts — one command
 
-A use-case is one hand-written thing and five derived ones. `scripts/use_case_sync.py` runs
-all five in dependency order and reports each as `ok`, `changed`, or `skip` with a reason:
+A use-case is one hand-written thing and six derived ones. `scripts/use_case_sync.py` runs
+all six in dependency order and reports each as `ok`, `changed`, or `skip` with a reason:
 
 ```bash
 python3 scripts/use_case_sync.py --init <slug>                       # scaffold a use-case
@@ -186,6 +339,7 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 |---|---|---|
 | `ontology` | `ontology/connectors/*.ttl`, `topology/*.ttl` | `connectors.yml` |
 | `index` | `ontology/index.json` — the machine-facing projection | same generator pass |
+| `columns` | `ontology/column-memory.json` — the column contract | manifest, sqlglot |
 | `seeds` | `dbt_project/seeds/sample/*.csv` | manifest, sqlglot, reference data |
 | `graphify` | the code graph, rebuilt | `--graphify-update` |
 | `graph` | dbt lineage merged into `graphify-out/graph.json` | manifest |
