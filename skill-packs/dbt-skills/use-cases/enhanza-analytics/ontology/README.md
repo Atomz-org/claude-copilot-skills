@@ -12,6 +12,7 @@ ontology/
   connectors/*.ttl   GENERATED — one per connector
   topology/*.ttl     GENERATED — concept coverage across connectors
   index.json         GENERATED — the machine-facing projection (see "Serving it")
+  column-memory.json GENERATED — the column contract underneath it (see "Down one level")
   reference/*.csv    hand-authored — the only values sample data may use
   connectors.yml     hand-authored — the catalogue, and the extension point
   ontology.yml       hand-authored — this use-case's namespace and its own concepts
@@ -24,7 +25,8 @@ python3 scripts/use_case_sync.py --use-case enhanza-analytics
 python3 scripts/use_case_sync.py --all --check      # the CI gate form
 ```
 
-`connectors/`, `topology/`, and `index.json` are rewritten; edits there are lost.
+`connectors/`, `topology/`, `index.json`, and `column-memory.json` are rewritten; edits
+there are lost.
 `scripts/ontology_generator.py` still runs standalone when only the ontology is in question.
 
 ## Why it is generated
@@ -140,6 +142,50 @@ test — an MCP server is a long-running process against a file it does not cont
 
 Nothing here builds a server. What it does is make one a thin read of one file, with no dbt,
 no warehouse, and no RDF stack in the request path.
+
+## Down one level — `column-memory.json`
+
+`index.json` answers "which dbt model realises `erp:Article` for Fortnox".
+`column-memory.json` answers the question underneath it: **which columns, and where did each
+one come from.** Produced by `scripts/dbt_column_memory.py`, from the `.sql` on disk.
+
+The split is borrowed from the Fabric IQ ontology format
+([PackMaaan/Ontology-Playground](https://github.com/PackMaaan/Ontology-Playground),
+`docs/TODO-full-ontology-format.md`), which separates an `EntityType` — a class and its
+properties — from a `DataBinding` that maps each property to a physical table plus
+`columnMappings`. The Turtle here already asserts the classes; nothing asserted the binding
+underneath them. `conn:Mapping` is a one-hop binding for the 92 columns matching a known
+property rule, and this is the same idea carried across the whole adapter surface and all
+the way back to the raw source column.
+
+| Key | Records | What it is |
+|---|---|---|
+| `contracts` | 29 | per conformed concept: the column list **in declaration order**, the property each realises, who carries it, who is missing it |
+| `bindings` | 1024 | per (connector, column): the raw source column at the far end of the chain, and the transform crossed |
+| `drift` | 0 | a column two or more peers carry and at least one does not |
+
+`contracts` is the **topology at column granularity**. `topology/concept-coverage.ttl` says
+six connectors supply `dim_articles`; it cannot say whether they agree on what a row of it
+looks like. `erp_union()` stacks one adapter per enabled source, so a disagreement compiles
+cleanly for every tenant with one connector and breaks for the first tenant with two.
+
+Three things about reading it:
+
+- **Order is data.** The union is positional, so a column in the wrong slot with a
+  compatible type unions cleanly and transposes values. The list is never sorted.
+- **`partial_for` means "cannot say", not "does not have".** A macro-generated column list
+  is unreadable to a SQL parser, so those connectors are excluded from `missing_from`
+  rather than accused of dropping a column.
+- **`drift: []` is a verdict, not a gap.** All ten multi-supplier concepts currently agree.
+  `tests/test_dbt_column_memory.py` reproduces a drifting adapter synthetically, so the
+  detector cannot quietly stop working while the real project stays clean.
+
+No `class`, `core_class`, or `property` on a binding: all three are stated once on the
+contract or compose from `prefixes`, and repeating them per row cost 240 KB.
+
+Regeneration is automatic — a `PostToolUse` hook rebuilds the store when a `.sql` under
+`dbt_project/` changes, re-parsing only that model. It is also the `columns` stage of
+`use_case_sync.py`, so `--check` catches it at review time either way.
 
 ## Adding a connector
 
