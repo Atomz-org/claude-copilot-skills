@@ -209,7 +209,7 @@ def stage_columns(use_case: Path, slug: str, manifest: Optional[Path], check: bo
         return Stage(
             "columns", FAIL,
             "refused to rewrite column-memory.json without its bindings "
-            "(sqlglot not installed — pip install -r requirements.txt)",
+            "(sqlglot not installed — pip install -r .github/requirements/ci.txt)",
         )
 
     changed = [str(path.relative_to(REPO))] if _write(path, ccm.serialise(store), check) else []

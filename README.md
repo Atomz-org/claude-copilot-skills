@@ -28,9 +28,12 @@ scripts, templates, references, CI workflows, and tests.
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
-pytest -q
+.venv/bin/pip install -r .github/requirements/ci.txt
+./scripts/check.sh
 ```
+
+`dbt` is not needed for any of it. The derived artifacts are committed, which is what lets a
+fresh clone work with no dbt and no warehouse.
 
 For dbt worked example:
 
@@ -43,16 +46,19 @@ cd skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project
 ## Verifying a change
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills   # re-materialise .claude/, references/, templates/
-./scripts/marketplace_portability_check.sh     # pack manifests and SKILL.md structure
-pytest -q                                      # unit tests + documentation integrity
-git status --short                             # must be clean: drift means a root copy was hand-edited
+./scripts/check.sh
 ```
 
-That last check is the important one. `.claude/`, `references/`, and `templates/` are
-generated; if activation changes a tracked file, the edit was made in the wrong place.
-`tests/test_docs_links.py` asserts that every relative markdown link in the repository
-resolves and that each pack asset has a root mirror.
+One command, seven gates, the same ones a pull request runs and in the same order — so green
+here means green there. Each failure prints what the gate was protecting and the exact
+command that fixes it; [docs/DEBUGGING.md](docs/DEBUGGING.md) has the longer version. It
+changes nothing you have not committed, and a gate that cannot run on your machine (no Rust,
+no Node) reports `skipped` rather than failing.
+
+The gate worth understanding before you make your first edit is **activation drift**.
+`.claude/`, `references/`, and `templates/` are generated from `skill-packs/<pack>/`; an edit
+made directly in one of them works until the next activation silently reverts it. Edit the
+pack, then re-run `./scripts/activate_skill_stack.sh dbt-skills`.
 
 ## Slash commands
 

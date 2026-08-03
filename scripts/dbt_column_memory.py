@@ -1444,7 +1444,7 @@ def _report(store: ColumnStore, args: argparse.Namespace) -> None:
         )
     if not store.provenance["sqlglot"]:
         print("sqlglot:  NOT INSTALLED — only passthrough and union chains resolved.")
-        print("          pip install -r requirements.txt")
+        print("          pip install -r .github/requirements/ci.txt")
     print(
         f"parsed:   {store.provenance['models_parsed']} parsed · "
         f"{store.provenance['models_macro_only']} macro-only · "
