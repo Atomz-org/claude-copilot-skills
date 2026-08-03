@@ -8,8 +8,30 @@ sources:
     tables:
       - name: accounts
       - name: object_values
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: code
+          - name: dateFrom
+          - name: dateTo
+          - name: description
+          - name: id
+          - name: text1
+          - name: text2
       - name: recent_transactions
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
       - name: transactions
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
 
   # Shopify is the first source in this file to declare freshness. Every other block
   # predates the rule and is an undocumented SLA; this one is not. See CONNECTORS.md.

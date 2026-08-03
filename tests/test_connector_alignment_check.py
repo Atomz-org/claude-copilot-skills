@@ -619,3 +619,107 @@ def test_drift_is_scoped_to_the_named_connector() -> None:
 @needs_sqlglot
 def test_a_single_adapter_has_nothing_to_disagree_with() -> None:
     assert checker.check_adapter_column_drift(_adapter_manifest({"alpha": "Id, Name"})) == []
+
+
+# ---------------------------------------------------------------------------------------
+# check_source_columns
+# ---------------------------------------------------------------------------------------
+
+
+def _real_manifest():
+    import json as _json
+
+    path = (
+        REPO
+        / "skill-packs/dbt-skills/use-cases/enhanza-analytics/dbt_project/target/manifest.json"
+    )
+    if not path.is_file():
+        pytest.skip("no manifest — run artifacts/refresh.sh")
+    return _json.loads(path.read_text(encoding="utf-8"))
+
+
+def _sqlglot_or_skip():
+    import sys as _sys
+
+    _sys.path.insert(0, str(REPO / "scripts"))
+    import dbt_column_lineage as lineage_mod
+
+    if lineage_mod.sqlglot is None:
+        pytest.skip("sqlglot not installed")
+
+
+def test_source_columns_check_is_clean_on_the_committed_project():
+    """Every column staging reads is declared. This is the gate, not a smoke test."""
+    _sqlglot_or_skip()
+
+    findings = checker.check_source_columns(_real_manifest())
+
+    assert findings == [], "\n".join(f.message for f in findings[:5])
+
+
+def test_source_columns_check_fires_when_a_declared_column_disappears():
+    """The project is currently clean, so without this the check could silently break."""
+    import copy
+
+    _sqlglot_or_skip()
+    manifest = copy.deepcopy(_real_manifest())
+
+    removed = None
+    for node in manifest["sources"].values():
+        columns = node.get("columns") or {}
+        if node.get("name") == "articles" and "Active" in columns:
+            del columns["Active"]
+            removed = f"{node['source_name']}.{node['name']}"
+            break
+    assert removed, "fixture assumption broke: no source declares articles.Active"
+
+    findings = checker.check_source_columns(manifest)
+
+    assert findings, f"removing a column from {removed} produced no finding"
+    assert all(f.check == "undeclared-source-column" for f in findings)
+    assert all(f.severity == checker.ERROR for f in findings)
+    assert any("Active" in f.message for f in findings)
+
+
+def test_source_columns_check_scopes_to_the_named_connector():
+    import copy
+
+    _sqlglot_or_skip()
+    manifest = copy.deepcopy(_real_manifest())
+    for node in manifest["sources"].values():
+        columns = node.get("columns") or {}
+        if node.get("name") == "articles" and "Active" in columns:
+            del columns["Active"]
+            break
+
+    assert checker.check_source_columns(manifest, connector="shopify") == []
+    assert checker.check_source_columns(manifest) != []
+
+
+def test_a_source_with_no_declared_columns_is_skipped_not_failed():
+    """Most of a project has no contract the day this lands. A gate that goes red on a
+    correct state gets switched off inside a week, taking the real failures with it."""
+    import copy
+
+    _sqlglot_or_skip()
+    manifest = copy.deepcopy(_real_manifest())
+    for node in manifest["sources"].values():
+        node["columns"] = {}
+
+    assert checker.check_source_columns(manifest) == []
+
+
+def test_the_check_is_registered_in_check_detail():
+    """A finding whose check has no entry renders without its explanation in JSON mode."""
+    assert "undeclared-source-column" in checker.CHECK_DETAIL
+
+
+def test_source_columns_check_degrades_without_sqlglot(monkeypatch):
+    import sys as _sys
+
+    _sys.path.insert(0, str(REPO / "scripts"))
+    import dbt_column_lineage as lineage_mod
+
+    monkeypatch.setattr(lineage_mod, "sqlglot", None)
+
+    assert checker.check_source_columns(_real_manifest()) == []

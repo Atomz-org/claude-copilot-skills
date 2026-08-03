@@ -7,4 +7,12 @@ sources:
     schema: tempo_api_{{ var('uid') }}
     tables:
       - name: worklogs
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: createdAt
+          - name: org_id
+          - name: startDateTimeUTC
+          - name: timeSpentSeconds
 
