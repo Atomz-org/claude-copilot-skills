@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-dangerous-git.sh\""
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}\"; bash \"$d/.claude/hooks/block-dangerous-git.sh\""
           }
         ]
       },
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/toon_graphify_pipe.py\""
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}\"; [ -f \"$d/scripts/hooks/toon_graphify_pipe.py\" ] && python3 \"$d/scripts/hooks/toon_graphify_pipe.py\" || true"
           }
         ]
       },
@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/sswaminathan/.local/bin/graphify hook-guard search"
+            "command": "command -v graphify >/dev/null 2>&1 && graphify hook-guard search || true"
           }
         ]
       },
@@ -33,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/sswaminathan/.local/bin/graphify hook-guard read"
+            "command": "command -v graphify >/dev/null 2>&1 && graphify hook-guard read || true"
           }
         ]
       }
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hooks/toon_prompt_context.sh\""
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}\"; [ -f \"$d/scripts/hooks/toon_prompt_context.sh\" ] && bash \"$d/scripts/hooks/toon_prompt_context.sh\" || true"
           }
         ]
       }
