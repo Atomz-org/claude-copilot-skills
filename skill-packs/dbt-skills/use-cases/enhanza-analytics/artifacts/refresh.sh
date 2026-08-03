@@ -35,6 +35,14 @@ fi
 
 # Every connector on. Derived from dbt_project.yml rather than hardcoded, so a connector
 # added to the vars block is picked up here without editing this script.
+# Seeds are gated on `target.name == 'demo'` in seeds/sample/properties.yml, so a parse
+# against the default target (dev) registers ZERO of the 120 sample seeds and the emitted
+# fragment silently loses every seed node. Same class of trap as the connector vars above —
+# internally consistent, quietly partial, and nothing in the output says so. The only other
+# `target.name` branch in the project tests for production/staging, which neither dev nor
+# demo matches, so this changes seeds and nothing else.
+DBT_TARGET="${DBT_TARGET:-demo}"
+
 VARS=$(python3 - "$PROJECT/dbt_project.yml" <<'PY'
 import json, re, sys
 text = open(sys.argv[1], encoding="utf-8").read()
@@ -59,21 +67,27 @@ PY
 echo "==> dbt deps"
 ( cd "${PROJECT}" && "${DBT}" deps --profiles-dir . ) >/dev/null
 
-echo "==> dbt parse with all connectors enabled"
+echo "==> dbt parse with all connectors enabled, target ${DBT_TARGET}"
 if command -v rtk >/dev/null 2>&1; then
-    ( cd "${PROJECT}" && "${DBT}" parse --profiles-dir . --vars "${VARS}" 2>&1 | rtk pipe )
+    ( cd "${PROJECT}" && "${DBT}" parse --profiles-dir . --target "${DBT_TARGET}" --vars "${VARS}" 2>&1 | rtk pipe )
 else
-    ( cd "${PROJECT}" && "${DBT}" parse --profiles-dir . --vars "${VARS}" )
+    ( cd "${PROJECT}" && "${DBT}" parse --profiles-dir . --target "${DBT_TARGET}" --vars "${VARS}" )
 fi
 
 echo
 echo "==> emit graphify fragment"
-# `--with-columns` needs sqlglot; the emitter says so and carries on without it, so this is
-# one command either way rather than two paths that drift.
+# Deliberately NOT `--with-columns`. This fragment is committed, and the reason it is
+# committed is that it is small: ~1.1 MB against a 3.0 MB manifest that churns on every
+# model edit. Column lineage adds 3,322 column nodes and 2,539 `derives_from` edges and
+# takes the fragment to 4.2 MB — larger than the manifest it exists to replace, which
+# voids its own justification. It used to be passed here and did nothing, because no
+# environment had sqlglot; installing sqlglot quadrupled a committed artifact overnight.
+#
+# Column lineage stays opt-in, at merge time, for whoever has sqlglot and wants it:
+#   python3 scripts/dbt_manifest_to_graphify.py --manifest <path> --with-columns --merge
 python3 "${REPO}/scripts/dbt_manifest_to_graphify.py" \
     --manifest "${PROJECT}/target/manifest.json" \
-    --out "${ARTIFACTS}/graphify-fragment.json" \
-    --with-columns
+    --out "${ARTIFACTS}/graphify-fragment.json"
 
 echo
 echo "==> connector alignment"

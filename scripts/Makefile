@@ -13,6 +13,8 @@
 USE_CASE ?= enhanza-analytics
 # Use `make -f scripts/Makefile query q="your question"`
 q ?= "how does activation work"
+# Extra flags for `init`, e.g. REBUILD_FLAGS="--code-only" or "--cold"
+REBUILD_FLAGS ?=
 # Use `make -f scripts/Makefile path from="start" to="end"`
 from ?= "GraphManager"
 to ?= "toon-serializer"
@@ -60,15 +62,15 @@ $(TOON_SERIALIZER): $(ROOT_DIR)/rust/toon/graph_to_toon.rs
 
 # Graph lifecycle
 # ---------------
-init: clean build
+# `init` no longer depends on `clean`. It used to, and `clean` is `rm -rf
+# graphify-out` — so the graph was destroyed before anything verified a rebuild
+# could succeed. It could not (no LLM API key), and the repository was left with
+# no graph at all. scripts/graphify_rebuild.sh checks every precondition first,
+# moves the old graph aside instead of deleting it, verifies the new one, and
+# restores the old one on any failure or interrupt.
+init: build
 	@echo "--> Initializing graph from scratch for use-case: $(USE_CASE)"
-	@echo "--> Step 1/3: Creating base code graph..."
-	@if [ -z "$(GRAPHIFY)" ]; then echo "ERROR: graphify command not found. Please install it."; exit 1; fi
-	@$(GRAPHIFY) .
-	@echo "--> Step 2/3: Refreshing dbt manifest..."
-	@if [ -f "$(DBT_REFRESH_SCRIPT)" ]; then $(DBT_REFRESH_SCRIPT); else echo "Warning: dbt refresh script not found for $(USE_CASE). Assuming manifest is current."; fi
-	@echo "--> Step 3/3: Syncing dbt lineage..."
-	@$(PYTHON) $(SYNC_SCRIPT) --use-case $(USE_CASE)
+	@$(ROOT_DIR)/scripts/graphify_rebuild.sh --use-case $(USE_CASE) $(REBUILD_FLAGS)
 	@echo "--> Graph initialized successfully."
 
 update: build
