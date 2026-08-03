@@ -1,12 +1,12 @@
 # Use Cases
 
 One directory per data request. The method lives in [.claude/](../.claude/); the work lives
-here.
+under the owning skill pack, in `skill-packs/<pack>/use-cases/`.
 
 ## Structure
 
 ```
-use-cases/<slug>/
+skill-packs/<pack>/use-cases/<slug>/
 ├── use-case-spec.md          # written FIRST, before any model file
 ├── data-model-canvas.md      # entities, ERD, keys, grain — one per subject area
 ├── bus-matrix.md             # processes x dimensions, when there is more than one process
@@ -23,7 +23,8 @@ their keep as soon as a second model or a second business process appears.
 
 ## Working sequence
 
-1. **Frame** — `/new-use-case <request>` writes `use-cases/<slug>/use-case-spec.md`.
+1. **Frame** — `/new-use-case <request>` writes
+   `skill-packs/<pack>/use-cases/<slug>/use-case-spec.md`.
    Nothing is modeled until the decision sentence, the consumer, and the grain are written
    down. If the verdict is "not a dbt problem", that is a successful outcome — say where it
    belongs and stop.

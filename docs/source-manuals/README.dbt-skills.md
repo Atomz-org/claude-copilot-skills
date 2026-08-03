@@ -468,7 +468,7 @@ old 29–34 is now 36–41, old 35–38 is now 42–45.
 | [scripts/](../../scripts/) | 11 analyzers + 2 shared helpers |
 | [templates/](../../templates/) | 10 deliverable shapes — specs, canvas, blueprints, runbooks, checklists |
 | [../../skill-packs/dbt-skills/references/](../../skill-packs/dbt-skills/references/) | 15 deep references, loaded on demand |
-| [use-cases/](../../use-cases/) | One directory per data request |
+| [skill-packs/dbt-skills/use-cases/](../../skill-packs/dbt-skills/use-cases/) | One directory per data request |
 | [SKILL.md](../../SKILL.md) | Stage → skill routing table |
 | [CLAUDE.md](../../CLAUDE.md) | Project instructions Claude reads automatically |
 
