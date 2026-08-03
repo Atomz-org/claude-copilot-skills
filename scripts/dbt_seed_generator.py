@@ -284,13 +284,54 @@ def source_columns(man: Manifest) -> Dict[str, Tuple[str, Set[str]]]:
     return out
 
 
+def _relations_claimed_by_models(man: Manifest) -> Set[Tuple[str, str]]:
+    """`{(source_name, table)}` for every source relation a model already writes.
+
+    A seed lands at `schema=<source_name>`, `alias=<table>` — see `build_properties` — so a
+    model whose own schema and alias resolve to that pair is competing for one relation.
+    Compared on those two rather than on the fully-qualified name because the database and
+    the target suffix are applied identically to both by `generate_schema_name()`, so they
+    cannot distinguish a collision from a non-collision.
+    """
+    claimed: Set[Tuple[str, str]] = set()
+    by_relation: Dict[Tuple[str, str], str] = {}
+    for node in man.nodes.values():
+        if node.get("resource_type") != "model":
+            continue
+        config = node.get("config") or {}
+        schema = config.get("schema") or node.get("schema") or ""
+        alias = node.get("alias") or node.get("name") or ""
+        by_relation[(schema, alias)] = node.get("name", "")
+
+    for node in man.sources.values():
+        key = (node.get("source_name", ""), node.get("name", ""))
+        if key in by_relation:
+            claimed.add(key)
+    return claimed
+
+
 def build_seeds(man: Manifest, ref: Reference, connector: Optional[str]) -> Dict[str, str]:
     """`{filename: csv text}` — one file per source table with data behind it,
     plus `properties.yml` binding each seed to the source relation it stands in for."""
     seeds: Dict[str, str] = {}
+    claimed = _relations_claimed_by_models(man)
     for uid, (relation, columns) in sorted(source_columns(man).items()):
-        source_name = man.sources[uid].get("source_name", "")
+        node = man.sources[uid]
+        source_name = node.get("source_name", "")
         if connector and not source_name.startswith(connector):
+            continue
+        # A source table that a *model* also writes is not an upstream table, whatever the
+        # `sources:` block says — it is a relation this project maintains and then reads
+        # back. `app.dimension_categories` is exactly that: an incremental model merges into
+        # it and a source block reads it. A seed standing in for it declares the same
+        # `(schema, alias)` the model does, and dbt refuses to compile at all:
+        #
+        #   dbt found two resources with the database representation
+        #   "enhanza_sample"."app_demo"."dimension_categories"
+        #
+        # which fails the whole project, not just the sample build. Skipping is right on the
+        # merits too — the model already produces the rows a seed would be faking.
+        if (source_name, node.get("name", "")) in claimed:
             continue
         # Case-colliding names are one column, not two. Different models spell the same
         # physical column differently (`DueDate` in one, `duedate` in another); BigQuery
