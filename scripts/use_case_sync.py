@@ -12,6 +12,7 @@ So the five are one command, in dependency order, and each stage reports what it
 
     ontology   connectors/*.ttl + topology/*.ttl   <- registry, manifest, column lineage
     index      index.json                          <- same pass as the Turtle
+    columns    ontology/column-memory.json         <- the .sql on disk, parsed and cached
     seeds      seeds/sample/*.csv                  <- manifest + parsed source columns
     graphify   the code graph, rebuilt             <- opt-in; must precede the merge
     graph      graphify fragment, merged           <- manifest
@@ -162,6 +163,70 @@ def stage_ontology(use_case: Path, slug: str, manifest: Optional[Path], check: b
         return Stage(which, CHANGED if changed[which] else OK, detail, changed[which])
 
     return [build("ontology"), build("index")]
+
+
+def stage_columns(use_case: Path, slug: str, manifest: Optional[Path], check: bool) -> Stage:
+    """`ontology/column-memory.json` — the column contract, its bindings, and its drift.
+
+    Sequenced after `ontology` because it reads the same `ontology.yml` namespace and the
+    same `property_for` rules, and before `graph` because the graphify merge carries column
+    nodes derived from the same lineage. It is a separate stage rather than part of
+    `ontology` for one reason: it is the only stage that reads the `.sql` files on disk
+    rather than the manifest, so it is the only one that can be *right* when the manifest is
+    stale — and reporting that separately is the point.
+    """
+    if not manifest:
+        return Stage("columns", SKIP, "no manifest — run artifacts/refresh.sh")
+
+    import dbt_column_memory as ccm
+
+    project_root = ccm.project_root_of(use_case, manifest)
+    man = ccm.Manifest.load(str(manifest))
+    cache = ccm.LineageCache(ccm.CACHE_DIR / f"{slug}.json")
+    store = ccm.build_store(man, project_root, slug, use_case, cache=cache)
+
+    path = ccm.artifact_path(use_case)
+
+    # A project with no unified layer has no adapter to disagree with anything, so it has no
+    # column contract. Writing an empty one would create an `ontology/` directory the
+    # use-case never asked for and put a file there that asserts nothing — and every later
+    # `--check` would then be comparing two empty files and reporting `ok`. Skipping says
+    # what is true. An artifact that already exists is still regenerated, because an existing
+    # store going empty is a regression rather than a non-event.
+    if not store.contracts and not store.bindings and not path.exists():
+        return Stage("columns", SKIP, "no unified adapters — nothing to contract")
+
+    # The refusal is decided *before* anything is written, and against the file as it was.
+    # Deciding it afterwards inspects this run's own output: with a warm .dbt-column-cache the
+    # bindings survive the rewrite and the guard fires correctly, but on a cold cache — CI, a
+    # fresh clone, exactly where this matters — the bindings-free file is already on disk, the
+    # marker it looks for is gone with them, and the guard waves through the damage it exists
+    # to prevent. Same refusal shape as `ontology`; only the ordering was wrong.
+    had_bindings = (
+        path.exists() and '"source_column"' in path.read_text(encoding="utf-8")
+    )
+    if not store.provenance["sqlglot"] and had_bindings:
+        return Stage(
+            "columns", FAIL,
+            "refused to rewrite column-memory.json without its bindings "
+            "(sqlglot not installed — pip install -r requirements.txt)",
+        )
+
+    changed = [str(path.relative_to(REPO))] if _write(path, ccm.serialise(store), check) else []
+
+    fresh = store.provenance["freshness"]
+    detail = (
+        f"{len(store.contracts)} concept contracts, {len(store.bindings)} source bindings, "
+        f"{len(store.drift)} drift finding(s)"
+    )
+    if not store.provenance["sqlglot"]:
+        detail += "; no source bindings (sqlglot not installed)"
+    if fresh["changed"] or fresh["untracked_sql"]:
+        detail += (
+            f"; {fresh['changed']} model(s) re-read from disk, "
+            f"{fresh['untracked_sql']} untracked .sql — the manifest is behind the project"
+        )
+    return Stage("columns", CHANGED if changed else OK, detail, changed)
 
 
 def stage_seeds(use_case: Path, slug: str, manifest: Optional[Path], check: bool) -> Stage:
@@ -429,6 +494,7 @@ def sync(slug: str, check: bool, manifest_arg: Optional[str],
         stages.extend(produced if isinstance(produced, list) else [produced])
 
     run("ontology", lambda: stage_ontology(use_case, slug, manifest, check))
+    run("columns", lambda: stage_columns(use_case, slug, manifest, check))
     run("seeds", lambda: stage_seeds(use_case, slug, manifest, check))
     # Order-critical: the rebuild drops every .sql node, so the merge has to follow it.
     if graphify_update:
@@ -459,7 +525,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--pack", default="dbt-skills", help="pack that owns a new use-case")
     p.add_argument("--manifest", help="manifest.json (default: <project>/target/manifest.json)")
     p.add_argument("--stage", action="append",
-                   choices=("ontology", "seeds", "graphify", "graph", "alignment"),
+                   choices=("ontology", "columns", "seeds", "graphify", "graph", "alignment"),
                    help="run only this stage (repeatable)")
     p.add_argument("--graphify-update", action="store_true",
                    help="rebuild the code graph before merging dbt lineage into it; never "

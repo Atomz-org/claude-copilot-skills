@@ -153,6 +153,50 @@ def test_a_refused_downgrade_fails_the_stage_that_was_refused(monkeypatch, tmp_p
     assert "CustomerNumber" in index.read_text(encoding="utf-8"), "refused file was written"
 
 
+def test_columns_refuses_before_it_writes_rather_than_after(monkeypatch, tmp_path: Path) -> None:
+    """The same guard on `columns`, pinned to the ordering that makes it mean anything.
+
+    It has to read the artifact as it was, not the artifact it just wrote. With a warm
+    `.dbt-column-cache` the bindings survive a parser-less rebuild, so the marker the guard
+    looks for is still on disk and it fires — which is why this passed by hand. On a cold
+    cache, which is CI and every fresh clone, the rewrite lands first and takes the bindings
+    with it; the guard then inspects its own output, finds no marker, and reports `changed`
+    over the exact downgrade it exists to stop. So the fixture below is a cold one.
+    """
+    import dbt_column_memory as ccm
+
+    artifact = tmp_path / "ontology" / "column-memory.json"
+    artifact.parent.mkdir(parents=True)
+    original = '{"bindings": [{"source_column": "CustomerNumber"}]}\n'
+    artifact.write_text(original, encoding="utf-8")
+
+    class _Store:
+        contracts: dict = {}
+        bindings: dict = {}
+        drift: list = []
+        provenance = {"sqlglot": None, "freshness": {"changed": 0, "untracked_sql": 0}}
+
+    class _Manifest:
+        @staticmethod
+        def load(_path):
+            return object()
+
+    monkeypatch.setattr(sync, "REPO", tmp_path)
+    monkeypatch.setattr(ccm, "Manifest", _Manifest)
+    monkeypatch.setattr(ccm, "project_root_of", lambda *a, **k: tmp_path)
+    monkeypatch.setattr(ccm, "LineageCache", lambda *a, **k: None)
+    monkeypatch.setattr(ccm, "build_store", lambda *a, **k: _Store())
+    monkeypatch.setattr(ccm, "artifact_path", lambda *a, **k: artifact)
+    monkeypatch.setattr(ccm, "serialise", lambda _store: '{"bindings": []}\n')
+
+    stage = sync.stage_columns(
+        tmp_path, "toy", manifest=tmp_path / "manifest.json", check=False
+    )
+
+    assert stage.status == sync.FAIL, stage.detail
+    assert artifact.read_text(encoding="utf-8") == original, "refused file was written"
+
+
 # ---------------------------------------------------------------------------------------
 # Stage order — the one pair that is destructive out of order
 # ---------------------------------------------------------------------------------------
