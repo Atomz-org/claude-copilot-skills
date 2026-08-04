@@ -1,0 +1,36 @@
+name: raw_fortnox_api_cost_centers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: cost_centers
+columns:
+- name: Active
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Code
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Description
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Note
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.cost_centers
+  dbt_resource_type: source

@@ -1,0 +1,101 @@
+name: logic_bi_dim_projects
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_projects
+columns:
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: Project
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Project name (and number)
+- name: ProjectGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: unique
+    dbt_test_status: verified
+- name: ProjectManager
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Project leader, employee name
+- name: ProjectManagerGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectManagerGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectManagerSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectManagerSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectManagerSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectManagerSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_projects
+  dbt_resource_type: model

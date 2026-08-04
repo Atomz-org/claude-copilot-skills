@@ -1,0 +1,12 @@
+name: order_count
+statement: |
+  SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,
+         COUNT(fct_orders.order_id) AS order_count
+  FROM fct_orders
+  WHERE (fct_orders.order_status != 'cancelled')
+  GROUP BY 1
+properties:
+  description: "Count of non-cancelled orders, excluding internal test accounts."
+  source: dbt_metric
+  metric_type: simple
+  grain: day

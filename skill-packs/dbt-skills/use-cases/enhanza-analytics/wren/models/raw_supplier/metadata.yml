@@ -1,0 +1,36 @@
+name: raw_supplier
+table_reference:
+  catalog: enhanza_sample
+  schema: tripletex_api_canonical
+  table: supplier
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isInactive
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: supplierNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tripletex.tripletex_api.supplier
+  dbt_resource_type: source

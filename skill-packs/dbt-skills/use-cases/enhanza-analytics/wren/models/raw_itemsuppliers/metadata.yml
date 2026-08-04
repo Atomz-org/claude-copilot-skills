@@ -1,0 +1,56 @@
+name: raw_itemsuppliers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: itemsuppliers
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: currencyCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: deliveryTime
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: itemId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: minimumQuantityToPurchase
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: price
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: supplierItemId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: supplierItemName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: supplierNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.itemsuppliers
+  dbt_resource_type: source

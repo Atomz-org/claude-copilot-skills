@@ -1,0 +1,16 @@
+name: raw_ledger_voucher
+table_reference:
+  catalog: enhanza_sample
+  schema: tripletex_api_canonical
+  table: ledger_voucher
+columns:
+- name: number
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tripletex.tripletex_api.ledger_voucher
+  dbt_resource_type: source

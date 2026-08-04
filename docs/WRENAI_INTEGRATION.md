@@ -3,7 +3,8 @@
 This repository includes [WrenAI](https://github.com/PackMaaan/WrenAI) — the open-source
 semantic layer / GenBI engine — as its serving tier: a dbt use-case's models, ontology,
 column contracts, and MetricFlow metrics are projected into a Wren MDL project that an
-agent (or a human) queries through governed SQL and structured cubes.
+agent (or a human) queries through governed SQL — one semantic layer, two consumers:
+BI through `wren query`, agents through the per-use-case MCP server the sync emits.
 
 ## How it is included, and why this shape
 
@@ -30,7 +31,8 @@ destroying the other's output, and unknown files (hand-authored knowledge) are r
 | Conformed column contracts | `ontology/column-memory.json` | `knowledge/rules/column-contracts.md` |
 | Adapter drift caveats | column-memory `drift` | `knowledge/caveats/adapter-drift.md` |
 | Metric definitions (canonical: MetricFlow) | manifest `metrics` | `knowledge/rules/semantic-metrics.md` |
-| Cubes (measures/dimensions/time, typed) | manifest `semantic_models` + `catalog.json` | `cubes/<name>/metadata.yml` |
+| **Metric views** — the whole definition (filter, ratio, offset, window) compiled to SQL | manifest `metrics` + `saved_queries` + `catalog.json` | `views/<metric>/metadata.yml` |
+| MCP server config (live for duckdb, profile remedy otherwise) | resolved CLI + project paths | `wren/mcp.json` + `.wren-home/` (gitignored, per-clone) |
 
 Refusals, each a rule before it was code:
 
@@ -44,10 +46,25 @@ Refusals, each a rule before it was code:
   `dbt docs generate`; no CLI → `pip install -r requirements.txt`). The `--all --check`
   gate stays green on a bare runner.
 
-Known upstream defect worked around: wrenai 0.13.2's importer crashes on model-level dbt
-tests (`column_name: None` breaks a sort). The bridge hides exactly those rows from
-`run_results.json` for the duration of the import and restores the file on any exit;
-the one-line fix is staged at `external/patches/wrenai-dbt-import-columnless-tests.patch`.
+Why views and not cubes: a cube carries `AGG(column)` and silently drops the metric's
+filter, ratio, offset, and window — measured here, the cube's `order_total` and the
+metric `revenue` disagreed by 4.4%, both internally consistent. The compiled view *is*
+the metric: `SELECT * FROM revenue` returns the filtered series for BI and agents
+alike, `wren context validate` dry-plans it with no warehouse, and
+`tests/test_wren_semantic_equivalence.py` holds every view row-for-row equal to a
+hand-written oracle of its MetricFlow definition. Full analysis:
+`docs/SEMANTIC_LAYER_ALIGNMENT.md`.
+
+Upstream defects worked around (each: bridge workaround + patch in `external/patches/`):
+
+- importer crash on model-level dbt tests (`column_name: None` breaks a sort) —
+  rows hidden from `run_results.json` for the import's duration.
+- importer dies on multi-connector alias collisions (21 on enhanza) — manifest
+  rewritten for the import's duration; `identifier` pins the physical relation.
+- wren-core registers parameterized `DECIMAL(p, s)` as Utf8 inside view planning —
+  generated SQL casts measures to their own catalog type.
+- the `[mcp]` extra resolves mcp 2.x, which removed `mcp.server.fastmcp` —
+  `mcp<2` pinned in requirements.txt.
 
 ## Running it
 
@@ -61,15 +78,21 @@ python3 scripts/use_case_sync.py --use-case example-order-revenue-mart --stage w
 ```
 
 Measured on `example-order-revenue-mart`: 13 models (8 dbt + 5 raw sources), 3
-relationships from dbt tests, 2 cubes projected from the MetricFlow semantic models,
-validate clean, and the governed revenue-by-region query equal to direct DuckDB row for
-row. Regeneration is idempotent (second run: 0 changed files) and `--check` writes
-nothing. `tests/test_wren_context_sync.py` pins all of it.
+relationships from dbt tests, 8 metric views (7 metrics + 1 saved query) compiled from
+MetricFlow, validate clean, the governed revenue-by-region query equal to direct DuckDB
+row for row, and `sum(revenue)` through the view equal to the metric definition
+(277,183.41 — not the raw measure's 289,470.66). Regeneration is idempotent (second
+run: 0 changed files) and `--check` writes nothing. `tests/test_wren_context_sync.py`
+and `tests/test_wren_semantic_equivalence.py` pin all of it.
 
-On `enhanza-analytics` the stage reports `skip — no catalog.json` until the demo target is
-built (`dbt build --target demo && dbt docs generate` with the seeded DuckDB); the
-enrichment there carries 29 column contracts and 58 ontology concepts into the Wren
-knowledge layer.
+Measured on `enhanza-analytics` (the multi-connector proof): 176 models imported
+(272 dropped for missing column info — stated in the payload, never silent), 101
+relationships, 58 ontology concepts and the conformed column contracts in the Wren
+knowledge layer, 0 metric views (no MetricFlow semantic models there yet — correctly
+counted, not invented), and the whole project served over MCP (`list_models`: 176).
+Regenerate its catalog with the full connector var set:
+`dbt docs generate --target demo --vars <all is_*_enabled> --exclude "*meta_data*"`
+(the meta models run BigQuery SQL through `run_query()` at compile time).
 
 ## Day-to-day agent workflow
 
@@ -77,8 +100,9 @@ knowledge layer.
 wren skills get usage            # the CLI serves its own workflow guides
 wren dry-plan --sql '...'        # plan through MDL, no database — the cheap gate
 wren query --sql '...'           # governed execution
-wren cube query --cube orders --measures order_count --dimensions order_status
-wren serve mcp --transport stdio # optional: expose the project as MCP tools
+wren query --sql 'select * from revenue'   # the compiled metric view IS the metric
+# agents: register the per-use-case server the sync emitted (wren/mcp.json) —
+# the sync prints the exact `claude mcp add` line; duckdb targets come up live
 ```
 
 Binding rules: `skill-packs/wren-skills/.claude/rules/wren-rules.md` (ownership,

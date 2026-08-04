@@ -1,0 +1,55 @@
+name: fact_employee_schedules
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_employee_schedules
+columns:
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmployeeId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ScheduleChangeDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date on which the schedule comes into force
+- name: ScheduleId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: isCurrentSchedule
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: TRUE is this schedule is valid at the date of the last sync
+cached: false
+properties:
+  description: Historical records of employee work schedules
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_employee_schedules
+  dbt_resource_type: model

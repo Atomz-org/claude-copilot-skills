@@ -1,0 +1,56 @@
+name: raw_ledger_posting
+table_reference:
+  catalog: enhanza_sample
+  schema: tripletex_api_canonical
+  table: ledger_posting
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: amount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: customer
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: department
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: description
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: project
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: supplier
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: voucher
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tripletex.tripletex_api.ledger_posting
+  dbt_resource_type: source

@@ -1,0 +1,16 @@
+name: raw_customers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: customers
+columns:
+- name: CustomerNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_erp_bi.fortnox_api_demo.customers
+  dbt_resource_type: source

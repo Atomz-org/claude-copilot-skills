@@ -1,0 +1,36 @@
+name: fact_invoice_accruals
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_invoice_accruals
+columns:
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: InvoiceId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null,relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: Net in SEK
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_invoice_accruals
+  dbt_resource_type: model

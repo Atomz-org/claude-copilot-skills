@@ -1,0 +1,16 @@
+name: raw_address
+table_reference:
+  catalog: enhanza_sample
+  schema: tripletex_api_canonical
+  table: address
+columns:
+- name: discountPercentage
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tripletex.tripletex_api.address
+  dbt_resource_type: source

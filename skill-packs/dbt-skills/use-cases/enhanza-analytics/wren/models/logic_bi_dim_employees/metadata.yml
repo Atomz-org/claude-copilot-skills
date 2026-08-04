@@ -1,0 +1,151 @@
+name: logic_bi_dim_employees
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_employees
+columns:
+- name: ClearingNo
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Identifies the bank and branch for an employee's bank account
+- name: CurrentHourlyPay
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Latest available hourly rate
+- name: CurrentMonthlySalary
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Latest available monthly salary
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: EmployeeCity
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Employee's address, city
+- name: EmployeeCountry
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Employee's address, country
+- name: EmployeeGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmployeeGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmployeeId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: unique
+    dbt_test_status: verified
+- name: EmployeeName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: First and last employee name
+- name: EmployeeSalaryForm
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Abbreviation of salary form, MAN or TIM
+- name: EmployeeSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmployeeSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmployeeSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmployeeSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmploymentForm
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Abbreviation of applicable employment form, i.e. TV, PRO, TID
+- name: FiringDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: If not null, the date the person has left the job
+- name: ForaType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The insurance agreement that a company signs with Fora
+- name: HiringDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The date the person has been employed
+- name: JobTitle
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Employee's current posistion title
+- name: PersonalIdentityNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique code assigned by employers to individual employees
+- name: PersonelType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: TJM for salaried employees and ARB for hourly-based workers
+- name: TaxAllowance
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Deduction reducing taxable income based on specific criteria
+- name: isActive
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Marks if employee is currently active
+cached: false
+properties:
+  description: List of all registered employees and their personal and corporate details
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_employees
+  dbt_resource_type: model

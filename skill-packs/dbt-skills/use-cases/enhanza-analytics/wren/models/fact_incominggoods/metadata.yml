@@ -1,0 +1,57 @@
+name: fact_incominggoods
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_incominggoods
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: purchaseOrderId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: stockPointId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+cached: false
+properties:
+  description: Items received to the warehouse
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_incoming_goods
+  dbt_resource_type: model

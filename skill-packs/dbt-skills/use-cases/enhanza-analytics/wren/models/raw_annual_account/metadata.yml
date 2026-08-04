@@ -1,0 +1,31 @@
+name: raw_annual_account
+table_reference:
+  catalog: enhanza_sample
+  schema: tripletex_api_canonical
+  table: annual_account
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: end
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: start
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tripletex.tripletex_api.annual_account
+  dbt_resource_type: source

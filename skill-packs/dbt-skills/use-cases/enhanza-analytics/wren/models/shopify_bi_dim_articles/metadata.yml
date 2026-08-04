@@ -1,0 +1,23 @@
+name: shopify_bi_dim_articles
+table_reference:
+  catalog: enhanza_sample
+  schema: shopify_bi_demo
+  table: dim_articles
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Shopify variant id. Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+cached: false
+properties:
+  description: One row per Shopify product variant. Variant grain so it joins to order
+    rows without fanning out; product-level attributes repeat across a product's variants.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_shopify.shopify_bi_dim_articles
+  dbt_resource_type: model
+primary_key: ArticleId

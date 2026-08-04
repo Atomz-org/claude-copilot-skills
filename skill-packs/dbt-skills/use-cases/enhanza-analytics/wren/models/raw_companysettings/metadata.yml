@@ -1,0 +1,26 @@
+name: raw_companysettings
+table_reference:
+  catalog: enhanza_sample
+  schema: visma_eaccounting_api_canonical
+  table: companysettings
+columns:
+- name: City
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_visma_eaccounting.visma_eaccounting_api.companysettings
+  dbt_resource_type: source

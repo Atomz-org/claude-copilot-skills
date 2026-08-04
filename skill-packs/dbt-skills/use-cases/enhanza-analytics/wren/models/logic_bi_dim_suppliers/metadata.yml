@@ -1,0 +1,108 @@
+name: logic_bi_dim_suppliers
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_suppliers
+columns:
+- name: CityGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CityGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CitySubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CitySubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CitySubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CitySubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: SupplierCity
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierCountry
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique Supplier identifier used as a primary key
+    dbt_tests: unique
+    dbt_test_status: verified
+- name: SupplierName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Supplier name (and number)
+- name: SupplierSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isActive
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Marks if supplier is currently active
+cached: false
+properties:
+  description: List of suppliers
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_suppliers
+  dbt_resource_type: model

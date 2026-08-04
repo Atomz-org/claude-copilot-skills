@@ -1,0 +1,31 @@
+name: raw_company_settings
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: company_settings
+columns:
+- name: City
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DatabaseNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.company_settings
+  dbt_resource_type: source

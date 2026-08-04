@@ -1,0 +1,51 @@
+name: raw_expenses
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: expenses
+columns:
+- name: Amount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Code
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalaryCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Text
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Total
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VAT
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.expenses
+  dbt_resource_type: source

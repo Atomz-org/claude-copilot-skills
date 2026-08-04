@@ -395,8 +395,11 @@ def stage_wren(use_case: Path, slug: str, manifest: Optional[Path], check: bool)
         str((use_case / "wren" / rel).relative_to(REPO))
         for rel in payload.get("changed", []) + payload.get("deleted", [])
     ]
+    without = payload.get("models_without_columns", 0)
+    coverage = f" ({without} dropped: no column info)" if without else ""
     detail = (
-        f"{payload.get('models', 0)} models, {payload.get('relationships', 0)} "
+        f"{payload.get('models', 0)} models{coverage}, "
+        f"{payload.get('relationships', 0)} "
         f"relationships, {payload.get('views', 0)} metric views, "
         f"{payload.get('knowledge_files', 0)} knowledge files, "
         f"{payload.get('validate_warnings', 0)} validate warning(s)"

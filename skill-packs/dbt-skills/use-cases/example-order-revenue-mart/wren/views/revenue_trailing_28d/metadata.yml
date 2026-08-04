@@ -1,0 +1,24 @@
+name: revenue_trailing_28d
+statement: |
+  WITH daily AS (
+    SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,
+           SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS v
+    FROM fct_orders
+    GROUP BY 1
+  ),
+  spine AS (
+    SELECT DISTINCT CAST(date_day AS TIMESTAMP) AS metric_time
+    FROM metricflow_time_spine
+  )
+  SELECT spine.metric_time, SUM(daily.v) AS revenue_trailing_28d
+  FROM spine LEFT JOIN daily
+    ON daily.metric_time > spine.metric_time - INTERVAL '28 day'
+    AND daily.metric_time <= spine.metric_time
+  WHERE spine.metric_time BETWEEN (SELECT MIN(metric_time) FROM daily)
+                              AND (SELECT MAX(metric_time) FROM daily)
+  GROUP BY 1
+properties:
+  description: "Rolling 28-day revenue. Requires the metricflow_time_spine model."
+  source: dbt_metric
+  metric_type: cumulative
+  grain: day

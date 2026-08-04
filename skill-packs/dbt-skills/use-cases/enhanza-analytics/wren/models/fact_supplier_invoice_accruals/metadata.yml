@@ -1,0 +1,35 @@
+name: fact_supplier_invoice_accruals
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_supplier_invoice_accruals
+columns:
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierInvoiceId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_supplier_invoice_accruals
+  dbt_resource_type: model

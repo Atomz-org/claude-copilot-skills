@@ -1,0 +1,25 @@
+name: shopify_bi_dim_customers
+table_reference:
+  catalog: enhanza_sample
+  schema: shopify_bi_demo
+  table: dim_customers
+columns:
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Shopify customer id. Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+cached: false
+properties:
+  description: One row per Shopify customer — the source-aligned customer dimension
+    Shopify users query directly. Pass-through of shopify_bi_dim_customers_staging
+    with the column list enumerated so a new upstream Shopify field cannot surface
+    here silently.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_shopify.shopify_bi_dim_customers
+  dbt_resource_type: model
+primary_key: CustomerId

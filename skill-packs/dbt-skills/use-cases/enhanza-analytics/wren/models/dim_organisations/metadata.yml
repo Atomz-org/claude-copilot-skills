@@ -1,0 +1,38 @@
+name: dim_organisations
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_organisations
+columns:
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: unique
+    dbt_test_status: verified
+- name: OrganisationName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Registered name of your company(s)
+- name: OrganisationNumber
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Organisation ID of your company(s) used as a primary key
+    dbt_tests: not_null
+    dbt_test_status: verified
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_organisations
+  dbt_resource_type: model

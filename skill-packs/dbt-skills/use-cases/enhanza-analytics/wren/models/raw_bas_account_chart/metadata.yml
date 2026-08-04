@@ -1,0 +1,61 @@
+name: raw_bas_account_chart
+table_reference:
+  catalog: enhanza_sample
+  schema: public
+  table: bas_account_chart
+columns:
+- name: Account
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountClass
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Active
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CostCenterSettings
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: MainAccount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Number
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectSettings
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SubAccount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Year
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_core.public.bas_account_chart
+  dbt_resource_type: source

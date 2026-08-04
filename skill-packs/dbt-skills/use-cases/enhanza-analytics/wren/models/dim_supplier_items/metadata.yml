@@ -1,0 +1,32 @@
+name: dim_supplier_items
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_supplier_items
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Article id based on article number assigned by your organisation
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: SupplierArticleNo
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Article number assigned by supplier
+- name: SupplierId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_supplier_items
+  dbt_resource_type: model

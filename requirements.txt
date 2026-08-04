@@ -30,8 +30,13 @@ orjson>=3.9
 # this wheel is the runtime. Without it the `wren` stage reports `skip` with a
 # reason. Pinned exactly: the stage shells out to the CLI, and CLI surface moved
 # between 0.x minors. Bump together with the external/WrenAI submodule SHA.
-# wrenai requires sqlglot>=29, satisfied by the 30.x pin above.
-wrenai==0.13.2
+# wrenai requires sqlglot>=29, satisfied by the 30.x pin above. The [mcp] extra
+# powers `wren serve mcp` — the per-use-case MCP server wren/mcp.json points at.
+wrenai[mcp]==0.13.2
+# wrenai 0.13.2 imports mcp.server.fastmcp, which mcp 2.0 removed, and its extra
+# declares no upper bound — without this pin a fresh install boots a server that
+# dies on import (fix staged at external/patches/wrenai-mcp-extra-upper-bound.patch).
+mcp<2
 
 # --- tests --------------------------------------------------------------------
 

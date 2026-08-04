@@ -6,6 +6,10 @@ Metric definitions from the dbt semantic layer (MetricFlow). These are the
 canonical definitions — a query answering a metric question should reproduce
 the definition below, not invent a variant (one metric, one definition).
 
+Each metric that compiles is also an MDL **view** of the same name:
+`SELECT * FROM <metric>` through the engine returns the governed series
+(metric_time, value). Prefer the view over re-deriving the SQL.
+
 ## average_order_value
 
 Label: Average Order Value

@@ -1,0 +1,28 @@
+name: dim_bundle_articles
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_bundle_articles
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique identifier of bundle sub items, link to fortnox_bi.dim_articles
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: BundleArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of a bundle (parent) article
+    dbt_tests: not_null
+    dbt_test_status: verified
+cached: false
+properties:
+  description: Information on bundle (parent) articles
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_bundle_articles
+  dbt_resource_type: model

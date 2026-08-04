@@ -1,0 +1,51 @@
+name: raw_entries
+table_reference:
+  catalog: enhanza_sample
+  schema: visma_economic_api_canonical
+  table: entries
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: account
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: amountInBaseCurrency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: entryType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: invoiceNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: text
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: voucherNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_visma_economic.visma_economic_api.entries
+  dbt_resource_type: source

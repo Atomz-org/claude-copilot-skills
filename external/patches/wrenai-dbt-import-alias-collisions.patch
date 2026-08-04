@@ -1,0 +1,65 @@
+Fall back to the dbt node name when aliases collide, instead of failing the import
+
+The importer names Wren models `alias or name` and raises on the first duplicate.
+Multi-connector dbt projects alias one conformed relation name per connector as a
+matter of course — `fortnox_bi_dim_accounts` and `tripletex_bi_dim_accounts` are both
+`alias: dim_accounts`, in different schemas — so dbt is fine (relations are
+schema-qualified) while the import dies before writing anything:
+
+    Error: Duplicate Wren model name 'dim_accounts' generated from dbt artifacts.
+
+Measured against wrenai 0.13.2 on a 359-model multi-tenant project: 21 colliding
+aliases; and after naive renaming, one second-order case where one node's *name* is
+another node's *alias* (`shopify_bi_dim_articles`).
+
+dbt node names are unique per project, and the Wren model name and the physical
+`table_reference` are already computed independently (`wren_name` vs `table_name` in
+`_build_model_metadata`), so a naming-only fallback cannot change what any model binds
+to. Escalation: alias -> node name -> package_name_name -> unique_id. A contested name
+is only kept by the node whose dbt *name* it is.
+
+This repository works around it in scripts/wren_context_sync.py
+(`_colliding_aliases_disambiguated`): the manifest is rewritten for the import's
+duration with `alias := node name` and `identifier := original alias` (identifier
+outranks alias in the table chain, so table_reference stays byte-identical). The
+workaround can be dropped when a release ships this.
+
+--- a/core/wren/wren/dbt.py
++++ b/core/wren/wren/dbt.py
+@@ -713,7 +713,7 @@
+         model = _build_model_metadata(
+             unique_id=unique_id,
+             node=node,
+             catalog_entry=catalog_nodes.get(unique_id, {}),
+-            wren_name=str(node.get("alias") or node.get("name") or ""),
++            wren_name=_unique_wren_name(node, unique_id, used_names),
+             dbt_resource_type="model",
+             type_dialect=type_dialect,
+         )
+@@ -944,6 +944,24 @@
+ def _ensure_unique_model_name(name: str, used_names: set[str]) -> None:
+     if name in used_names:
+         raise DbtLoadError(
+             f"Duplicate Wren model name '{name}' generated from dbt artifacts. "
+             "Use dbt aliases or adjust the import naming strategy."
+         )
+     used_names.add(name)
++
++
++def _unique_wren_name(node: dict, unique_id: str, used_names: set[str]) -> str:
++    """alias -> name -> package_name_name -> unique_id, first not yet taken.
++
++    dbt guarantees node names are unique per project, so the second candidate
++    almost always resolves a collision; the later ones cover a node whose *name*
++    is another node's alias. Naming only — `table_name` in _build_model_metadata
++    is derived separately, so the physical binding never moves.
++    """
++    for cand in (
++        str(node.get("alias") or ""),
++        str(node.get("name") or ""),
++        f"{node.get('package_name')}_{node.get('name')}",
++        unique_id.replace(".", "_"),
++    ):
++        if cand and cand not in used_names:
++            return cand
++    return unique_id.replace(".", "_")

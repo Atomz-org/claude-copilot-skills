@@ -1,0 +1,36 @@
+name: logic_bi_dim_financial_years
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_financial_years
+columns:
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: FinancialYearId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: unique
+    dbt_test_status: verified
+- name: FyCounter
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Current financial year is '0', previous is '-1' and so on
+- name: FyDates
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Start and End dates of financial year, in format 'yyyy-mm-dd -> yyyy-mm-dd'
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_financial_years
+  dbt_resource_type: model

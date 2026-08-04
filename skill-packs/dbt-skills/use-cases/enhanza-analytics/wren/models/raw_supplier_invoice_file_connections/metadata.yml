@@ -1,0 +1,31 @@
+name: raw_supplier_invoice_file_connections
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: supplier_invoice_file_connections
+columns:
+- name: FileURL
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierInvoiceNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.supplier_invoice_file_connections
+  dbt_resource_type: source

@@ -1,0 +1,42 @@
+name: fact_employee_wages
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_employee_wages
+columns:
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmployeeId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: WageChangeDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date on which this payment amount came into force
+cached: false
+properties:
+  description: Historical records of employee payment amounts
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_employee_wages
+  dbt_resource_type: model

@@ -1,0 +1,71 @@
+name: logic_bi_dim_cost_centers
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_cost_centers
+columns:
+- name: CostCenter
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Cost Center / Department name (and code)
+- name: CostCenterGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CostCenterGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: unique
+    dbt_test_status: verified
+- name: CostCenterNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CostCenterSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CostCenterSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CostCenterSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CostCenterSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: isActive
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Indicates whether the article is currently active
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_cost_centers
+  dbt_resource_type: model

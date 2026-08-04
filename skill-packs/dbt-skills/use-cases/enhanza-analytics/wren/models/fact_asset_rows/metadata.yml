@@ -1,0 +1,43 @@
+name: fact_asset_rows
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_asset_rows
+columns:
+- name: AssetId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique asset's identifiyer for your workspace
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: FinancialYearId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_asset_rows
+  dbt_resource_type: model

@@ -1,0 +1,66 @@
+name: raw_employees
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: employees
+columns:
+- name: Amount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CauseCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmployeeId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Extent
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: HolidayEntitling
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Hours
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalaryCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Total
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VAT
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.employees
+  dbt_resource_type: source

@@ -1,0 +1,40 @@
+name: shopify_bi_fact_order_rows
+table_reference:
+  catalog: enhanza_sample
+  schema: shopify_bi_demo
+  table: fact_order_rows
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Shopify variant id. Nullable for custom line items.
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrderId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Parent order.
+    dbt_tests: not_null,relationships
+    dbt_test_status: verified
+- name: OrderRowId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Shopify line item id. Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+cached: false
+properties:
+  description: One row per line item on a non-cancelled Shopify order. Retains OrderRowId,
+    which the unified erp_bi_fact_order_rows contract has no column for — this is
+    the only layer a consumer can get a line-level key from.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_shopify.shopify_bi_fact_order_rows
+  dbt_resource_type: model
+primary_key: OrderRowId

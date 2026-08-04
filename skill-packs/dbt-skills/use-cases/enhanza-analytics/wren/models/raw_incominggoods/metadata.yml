@@ -1,0 +1,46 @@
+name: raw_incominggoods
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: incominggoods
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: completed
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: note
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: released
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: voided
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.incominggoods
+  dbt_resource_type: source

@@ -1,0 +1,108 @@
+name: fortnox_bi_fact_order_rows
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_order_rows
+columns:
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Original currency used in Fortnox
+- name: CurrencyRate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Exchange rate from Fortnox, used to convert all values to SEK
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: DiscountType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: PERCENT or AMOUNT
+- name: InvoiceReference
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 0 if no invoice is created for this order yet
+- name: OrderNum
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: OrderedValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Potential NET value in SEK, discounts applied of the total ordered
+      quantity
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: PriceAfterDiscount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: NET price in SEK after all discounts applied
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: NET value in SEK, discounts applied
+- name: isVATIncluded
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: TRUE is VAT is originally included in article price. Already used
+      in calculations
+cached: false
+properties:
+  description: Order detailed to sold articles, all values in SEK, only not cancelled.
+    See Document-level info in fortnox_bi.fact_orders
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_order_rows
+  dbt_resource_type: model
