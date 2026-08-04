@@ -23,6 +23,7 @@ fortnox:connector a conn:ERPConnector ;
 
 fortnox:Account a owl:Class ;
     rdfs:subClassOf erp:Account ;
+    rdfs:label "Fortnox Account"@en ;
     conn:conformsTo erp:Account ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_accounts" ;
@@ -30,6 +31,7 @@ fortnox:Account a owl:Class ;
 
 fortnox:Article a owl:Class ;
     rdfs:subClassOf erp:Article ;
+    rdfs:label "Fortnox Article"@en ;
     conn:conformsTo erp:Article ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_articles" ;
@@ -52,6 +54,7 @@ fortnox:Article-resourceNumber-ArticleNumber a conn:Mapping ;
 
 fortnox:AssetsType a owl:Class ;
     rdfs:subClassOf erp:Asset ;
+    rdfs:label "Fortnox Assets Type"@en ;
     conn:conformsTo erp:Asset ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_dim_assets_types" ;
@@ -59,6 +62,7 @@ fortnox:AssetsType a owl:Class ;
 
 fortnox:BundleArticle a owl:Class ;
     rdfs:subClassOf erp:BundleArticle ;
+    rdfs:label "Fortnox Bundle Article"@en ;
     conn:conformsTo erp:BundleArticle ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_dim_bundle_articles" ;
@@ -66,6 +70,7 @@ fortnox:BundleArticle a owl:Class ;
 
 fortnox:Company a owl:Class ;
     rdfs:subClassOf erp:Organisation ;
+    rdfs:label "Fortnox Company"@en ;
     conn:conformsTo erp:Organisation ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_company" ;
@@ -83,6 +88,7 @@ fortnox:Company-partyName-OrgName a conn:Mapping ;
 
 fortnox:CostCenter a owl:Class ;
     rdfs:subClassOf erp:CostCenter ;
+    rdfs:label "Fortnox Cost Center"@en ;
     conn:conformsTo erp:CostCenter ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_cost_centers" ;
@@ -90,6 +96,7 @@ fortnox:CostCenter a owl:Class ;
 
 fortnox:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Fortnox Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_customers" ;
@@ -107,6 +114,7 @@ fortnox:Customer-partyNumber-CustomerNumber a conn:Mapping ;
 
 fortnox:Employee a owl:Class ;
     rdfs:subClassOf erp:Employee ;
+    rdfs:label "Fortnox Employee"@en ;
     conn:conformsTo erp:Employee ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_employees" ;
@@ -114,6 +122,7 @@ fortnox:Employee a owl:Class ;
 
 fortnox:Expense a owl:Class ;
     rdfs:subClassOf erp:Classifier ;
+    rdfs:label "Fortnox Expense"@en ;
     conn:conformsTo erp:Classifier ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_dim_expenses" ;
@@ -121,6 +130,7 @@ fortnox:Expense a owl:Class ;
 
 fortnox:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "Fortnox Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_financial_years" ;
@@ -133,6 +143,7 @@ fortnox:FinancialYear-orgId-OrgId a conn:Mapping ;
 
 fortnox:Label a owl:Class ;
     rdfs:subClassOf erp:Label ;
+    rdfs:label "Fortnox Label"@en ;
     conn:conformsTo erp:Label ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_dim_labels" ;
@@ -140,6 +151,7 @@ fortnox:Label a owl:Class ;
 
 fortnox:MetaData a owl:Class ;
     rdfs:subClassOf erp:Classifier ;
+    rdfs:label "Fortnox Meta Data"@en ;
     conn:conformsTo erp:Classifier ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_dim_meta_data" ;
@@ -147,6 +159,7 @@ fortnox:MetaData a owl:Class ;
 
 fortnox:Pricelist a owl:Class ;
     rdfs:subClassOf erp:PriceList ;
+    rdfs:label "Fortnox Pricelist"@en ;
     conn:conformsTo erp:PriceList ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_dim_pricelists" ;
@@ -154,6 +167,7 @@ fortnox:Pricelist a owl:Class ;
 
 fortnox:Price a owl:Class ;
     rdfs:subClassOf erp:PriceList ;
+    rdfs:label "Fortnox Price"@en ;
     conn:conformsTo erp:PriceList ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_dim_prices" ;
@@ -161,6 +175,7 @@ fortnox:Price a owl:Class ;
 
 fortnox:Project a owl:Class ;
     rdfs:subClassOf erp:Project ;
+    rdfs:label "Fortnox Project"@en ;
     conn:conformsTo erp:Project ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_projects" ;
@@ -168,6 +183,7 @@ fortnox:Project a owl:Class ;
 
 fortnox:Stockpoint a owl:Class ;
     rdfs:subClassOf erp:StockPoint ;
+    rdfs:label "Fortnox Stockpoint"@en ;
     conn:conformsTo erp:StockPoint ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_stockpoints" ;
@@ -180,6 +196,7 @@ fortnox:Stockpoint-isActive-isActive a conn:Mapping ;
 
 fortnox:SupplierInvoiceFile a owl:Class ;
     rdfs:subClassOf erp:Classifier ;
+    rdfs:label "Fortnox Supplier Invoice File"@en ;
     conn:conformsTo erp:Classifier ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_supplier_invoice_files" ;
@@ -187,6 +204,7 @@ fortnox:SupplierInvoiceFile a owl:Class ;
 
 fortnox:SupplierItem a owl:Class ;
     rdfs:subClassOf erp:Article ;
+    rdfs:label "Fortnox Supplier Item"@en ;
     conn:conformsTo erp:Article ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_dim_supplier_items" ;
@@ -194,6 +212,7 @@ fortnox:SupplierItem a owl:Class ;
 
 fortnox:Supplier a owl:Class ;
     rdfs:subClassOf erp:Supplier ;
+    rdfs:label "Fortnox Supplier"@en ;
     conn:conformsTo erp:Supplier ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_suppliers" ;
@@ -216,6 +235,7 @@ fortnox:Supplier-partyNumber-SupplierNumber a conn:Mapping ;
 
 fortnox:VoucherSerie a owl:Class ;
     rdfs:subClassOf erp:VoucherSeries ;
+    rdfs:label "Fortnox Voucher Serie"@en ;
     conn:conformsTo erp:VoucherSeries ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_dim_voucher_series" ;
@@ -223,6 +243,7 @@ fortnox:VoucherSerie a owl:Class ;
 
 fortnox:AbsenceTransaction a owl:Class ;
     rdfs:subClassOf erp:AbsenceTransaction ;
+    rdfs:label "Fortnox Absence Transaction"@en ;
     conn:conformsTo erp:AbsenceTransaction ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_absence_transactions" ;
@@ -230,6 +251,7 @@ fortnox:AbsenceTransaction a owl:Class ;
 
 fortnox:AssetRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Fortnox Asset Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_asset_rows" ;
@@ -237,6 +259,7 @@ fortnox:AssetRow a owl:Class ;
 
 fortnox:Asset a owl:Class ;
     rdfs:subClassOf erp:Asset ;
+    rdfs:label "Fortnox Asset"@en ;
     conn:conformsTo erp:Asset ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_assets" ;
@@ -244,6 +267,7 @@ fortnox:Asset a owl:Class ;
 
 fortnox:AttendanceTransaction a owl:Class ;
     rdfs:subClassOf erp:AttendanceTransaction ;
+    rdfs:label "Fortnox Attendance Transaction"@en ;
     conn:conformsTo erp:AttendanceTransaction ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_attendance_transactions" ;
@@ -251,6 +275,7 @@ fortnox:AttendanceTransaction a owl:Class ;
 
 fortnox:Budget a owl:Class ;
     rdfs:subClassOf erp:Budget ;
+    rdfs:label "Fortnox Budget"@en ;
     conn:conformsTo erp:Budget ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_budgets" ;
@@ -258,6 +283,7 @@ fortnox:Budget a owl:Class ;
 
 fortnox:ContractRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Fortnox Contract Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_contract_rows" ;
@@ -265,6 +291,7 @@ fortnox:ContractRow a owl:Class ;
 
 fortnox:Contract a owl:Class ;
     rdfs:subClassOf erp:Contract ;
+    rdfs:label "Fortnox Contract"@en ;
     conn:conformsTo erp:Contract ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_contracts" ;
@@ -272,6 +299,7 @@ fortnox:Contract a owl:Class ;
 
 fortnox:EmployeeSchedule a owl:Class ;
     rdfs:subClassOf erp:Event ;
+    rdfs:label "Fortnox Employee Schedule"@en ;
     conn:conformsTo erp:Event ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_employee_schedules" ;
@@ -279,6 +307,7 @@ fortnox:EmployeeSchedule a owl:Class ;
 
 fortnox:EmployeeWage a owl:Class ;
     rdfs:subClassOf erp:SalaryTransaction ;
+    rdfs:label "Fortnox Employee Wage"@en ;
     conn:conformsTo erp:SalaryTransaction ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_employee_wages" ;
@@ -291,6 +320,7 @@ fortnox:EmployeeWage-orgId-OrgId a conn:Mapping ;
 
 fortnox:IncomingGood a owl:Class ;
     rdfs:subClassOf erp:IncomingGoods ;
+    rdfs:label "Fortnox Incoming Good"@en ;
     conn:conformsTo erp:IncomingGoods ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_incoming_goods" ;
@@ -298,6 +328,7 @@ fortnox:IncomingGood a owl:Class ;
 
 fortnox:InvoiceAccrual a owl:Class ;
     rdfs:subClassOf erp:Event ;
+    rdfs:label "Fortnox Invoice Accrual"@en ;
     conn:conformsTo erp:Event ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_invoice_accruals" ;
@@ -305,6 +336,7 @@ fortnox:InvoiceAccrual a owl:Class ;
 
 fortnox:InvoicePayment a owl:Class ;
     rdfs:subClassOf erp:Payment ;
+    rdfs:label "Fortnox Invoice Payment"@en ;
     conn:conformsTo erp:Payment ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_invoice_payments" ;
@@ -322,6 +354,7 @@ fortnox:InvoicePayment-orgId-OrgId a conn:Mapping ;
 
 fortnox:InvoiceRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Fortnox Invoice Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_invoice_rows" ;
@@ -339,6 +372,7 @@ fortnox:InvoiceRow-orgId-OrgId a conn:Mapping ;
 
 fortnox:Invoice a owl:Class ;
     rdfs:subClassOf erp:Invoice ;
+    rdfs:label "Fortnox Invoice"@en ;
     conn:conformsTo erp:Invoice ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_invoices" ;
@@ -366,6 +400,7 @@ fortnox:Invoice-orgId-OrgId a conn:Mapping ;
 
 fortnox:LockedPeriod a owl:Class ;
     rdfs:subClassOf erp:LockedPeriod ;
+    rdfs:label "Fortnox Locked Period"@en ;
     conn:conformsTo erp:LockedPeriod ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_locked_period" ;
@@ -373,6 +408,7 @@ fortnox:LockedPeriod a owl:Class ;
 
 fortnox:OfferRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Fortnox Offer Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_offer_rows" ;
@@ -380,6 +416,7 @@ fortnox:OfferRow a owl:Class ;
 
 fortnox:Offer a owl:Class ;
     rdfs:subClassOf erp:Offer ;
+    rdfs:label "Fortnox Offer"@en ;
     conn:conformsTo erp:Offer ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_offers" ;
@@ -397,6 +434,7 @@ fortnox:Offer-orgId-OrgId a conn:Mapping ;
 
 fortnox:OrderRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Fortnox Order Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_order_rows" ;
@@ -419,6 +457,7 @@ fortnox:OrderRow-orgId-OrgId a conn:Mapping ;
 
 fortnox:Order a owl:Class ;
     rdfs:subClassOf erp:Order ;
+    rdfs:label "Fortnox Order"@en ;
     conn:conformsTo erp:Order ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_orders" ;
@@ -441,6 +480,7 @@ fortnox:Order-orgId-OrgId a conn:Mapping ;
 
 fortnox:ProductionOrder a owl:Class ;
     rdfs:subClassOf erp:ProductionOrder ;
+    rdfs:label "Fortnox Production Order"@en ;
     conn:conformsTo erp:ProductionOrder ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_production_orders" ;
@@ -448,6 +488,7 @@ fortnox:ProductionOrder a owl:Class ;
 
 fortnox:PurchaseOrder a owl:Class ;
     rdfs:subClassOf erp:PurchaseOrder ;
+    rdfs:label "Fortnox Purchase Order"@en ;
     conn:conformsTo erp:PurchaseOrder ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_purchase_orders" ;
@@ -455,6 +496,7 @@ fortnox:PurchaseOrder a owl:Class ;
 
 fortnox:RollingSum a owl:Class ;
     rdfs:subClassOf erp:Event ;
+    rdfs:label "Fortnox Rolling Sum"@en ;
     conn:conformsTo erp:Event ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_rolling_sum" ;
@@ -462,6 +504,7 @@ fortnox:RollingSum a owl:Class ;
 
 fortnox:SalaryTransaction a owl:Class ;
     rdfs:subClassOf erp:SalaryTransaction ;
+    rdfs:label "Fortnox Salary Transaction"@en ;
     conn:conformsTo erp:SalaryTransaction ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_salary_transactions" ;
@@ -469,6 +512,7 @@ fortnox:SalaryTransaction a owl:Class ;
 
 fortnox:Stockbalance a owl:Class ;
     rdfs:subClassOf erp:StockBalance ;
+    rdfs:label "Fortnox Stockbalance"@en ;
     conn:conformsTo erp:StockBalance ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_stockbalance" ;
@@ -476,6 +520,7 @@ fortnox:Stockbalance a owl:Class ;
 
 fortnox:Stocktaking a owl:Class ;
     rdfs:subClassOf erp:Stocktaking ;
+    rdfs:label "Fortnox Stocktaking"@en ;
     conn:conformsTo erp:Stocktaking ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_stocktakings" ;
@@ -483,6 +528,7 @@ fortnox:Stocktaking a owl:Class ;
 
 fortnox:SupplierInvoiceAccrual a owl:Class ;
     rdfs:subClassOf erp:Event ;
+    rdfs:label "Fortnox Supplier Invoice Accrual"@en ;
     conn:conformsTo erp:Event ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_bi_fact_supplier_invoice_accruals" ;
@@ -490,6 +536,7 @@ fortnox:SupplierInvoiceAccrual a owl:Class ;
 
 fortnox:SupplierInvoiceRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Fortnox Supplier Invoice Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_supplier_invoice_rows" ;
@@ -527,6 +574,7 @@ fortnox:SupplierInvoiceRow-quantity-Quantity a conn:Mapping ;
 
 fortnox:SupplierInvoice a owl:Class ;
     rdfs:subClassOf erp:SupplierInvoice ;
+    rdfs:label "Fortnox Supplier Invoice"@en ;
     conn:conformsTo erp:SupplierInvoice ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_supplier_invoices" ;
@@ -559,6 +607,7 @@ fortnox:SupplierInvoice-orgId-OrgId a conn:Mapping ;
 
 fortnox:TimeReportingRegistration a owl:Class ;
     rdfs:subClassOf erp:TimeReportingRegistration ;
+    rdfs:label "Fortnox Time Reporting Registration"@en ;
     conn:conformsTo erp:TimeReportingRegistration ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_time_reporting_registrations" ;
@@ -566,6 +615,7 @@ fortnox:TimeReportingRegistration a owl:Class ;
 
 fortnox:Voucher a owl:Class ;
     rdfs:subClassOf erp:Voucher ;
+    rdfs:label "Fortnox Voucher"@en ;
     conn:conformsTo erp:Voucher ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_vouchers" ;

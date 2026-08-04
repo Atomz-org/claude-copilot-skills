@@ -23,6 +23,7 @@ xledger:connector a conn:ERPConnector ;
 
 xledger:Account a owl:Class ;
     rdfs:subClassOf erp:Account ;
+    rdfs:label "Xledger Account"@en ;
     conn:conformsTo erp:Account ;
     conn:providedBy xledger:connector ;
     conn:dbtModel "xledger_erp_bi_dim_accounts" ;
@@ -31,6 +32,7 @@ xledger:Account a owl:Class ;
 
 xledger:CostCenter a owl:Class ;
     rdfs:subClassOf erp:CostCenter ;
+    rdfs:label "Xledger Cost Center"@en ;
     conn:conformsTo erp:CostCenter ;
     conn:providedBy xledger:connector ;
     conn:dbtModel "xledger_erp_bi_dim_cost_centers" ;
@@ -39,6 +41,7 @@ xledger:CostCenter a owl:Class ;
 
 xledger:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "Xledger Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy xledger:connector ;
     conn:dbtModel "xledger_erp_bi_dim_financial_years" ;
@@ -52,6 +55,7 @@ xledger:FinancialYear-orgId-OrgId a conn:Mapping ;
 
 xledger:Project a owl:Class ;
     rdfs:subClassOf erp:Project ;
+    rdfs:label "Xledger Project"@en ;
     conn:conformsTo erp:Project ;
     conn:providedBy xledger:connector ;
     conn:dbtModel "xledger_erp_bi_dim_projects" ;

@@ -23,24 +23,28 @@ serviceprotokoll:connector a conn:ERPConnector ;
 
 serviceprotokoll:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Serviceprotokoll Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy serviceprotokoll:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 serviceprotokoll:Employee a owl:Class ;
     rdfs:subClassOf erp:Employee ;
+    rdfs:label "Serviceprotokoll Employee"@en ;
     conn:conformsTo erp:Employee ;
     conn:providedBy serviceprotokoll:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 serviceprotokoll:WorkOrder a owl:Class ;
     rdfs:subClassOf erp:Document ;
+    rdfs:label "Serviceprotokoll Work Order"@en ;
     conn:conformsTo erp:Document ;
     conn:providedBy serviceprotokoll:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 serviceprotokoll:TimeReportingRegistration a owl:Class ;
     rdfs:subClassOf erp:TimeReportingRegistration ;
+    rdfs:label "Serviceprotokoll Time Reporting Registration"@en ;
     conn:conformsTo erp:TimeReportingRegistration ;
     conn:providedBy serviceprotokoll:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
