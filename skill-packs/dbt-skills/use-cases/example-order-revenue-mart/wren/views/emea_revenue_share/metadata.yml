@@ -4,7 +4,7 @@ statement: |
     SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,
            SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS num
     FROM fct_orders
-      JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+      LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
     WHERE (fct_orders.order_status != 'cancelled')
       AND (dim_customers.region = 'EMEA')
     GROUP BY 1

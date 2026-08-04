@@ -5,7 +5,7 @@ statement: |
            dim_customers.region AS region,
            SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS revenue
     FROM fct_orders
-      JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+      LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
     WHERE (fct_orders.order_status != 'cancelled')
       AND (dim_customers.region is not null)
     GROUP BY 1, 2
@@ -15,7 +15,7 @@ statement: |
            dim_customers.region AS region,
            COUNT(fct_orders.order_id) AS order_count
     FROM fct_orders
-      JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+      LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
     WHERE (fct_orders.order_status != 'cancelled')
       AND (dim_customers.region is not null)
     GROUP BY 1, 2
@@ -26,7 +26,7 @@ statement: |
              dim_customers.region AS region,
              SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS num
       FROM fct_orders
-        JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+        LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
       WHERE (fct_orders.order_status != 'cancelled')
         AND (dim_customers.region is not null)
       GROUP BY 1, 2
@@ -36,7 +36,7 @@ statement: |
              dim_customers.region AS region,
              COUNT(fct_orders.order_id) AS den
       FROM fct_orders
-        JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+        LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
       WHERE (fct_orders.order_status != 'cancelled')
         AND (dim_customers.region is not null)
       GROUP BY 1, 2
