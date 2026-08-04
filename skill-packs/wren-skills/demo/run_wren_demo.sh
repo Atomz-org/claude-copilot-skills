@@ -3,11 +3,13 @@
 #
 #   dbt build (DuckDB)  ->  wren stage (native import + ontology/metric enrichment)
 #   ->  wren context build (MDL)  ->  governed `wren query`  ->  cross-check vs DuckDB
+#   ->  metric view == MetricFlow definition
 #
-# No Docker, no warehouse, no LLM key. The pass criterion is exact row equality between
-# the governed query (through the generated semantic layer) and the same aggregation run
-# directly against the DuckDB file — if the semantic layer misroutes a single join or
-# column, the two disagree and this exits 1.
+# No Docker, no warehouse, no LLM key. Two pass criteria, both exact:
+#   - the governed join query equals the same aggregation run directly on DuckDB
+#   - `SELECT sum(revenue) FROM revenue` — the compiled metric VIEW — equals the
+#     MetricFlow definition (filtered), not the raw measure. This is the number the
+#     cubes used to get wrong by 4.4%.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/../../.." && pwd)"
@@ -16,7 +18,7 @@ dbt_project="${root}/${uc}/dbt_project"
 
 step() { printf '\n== %s\n' "$1"; }
 
-step "0/5 toolchain"
+step "0/6 toolchain"
 dbt="${root}/.venv-dbt/bin/dbt"
 if [[ ! -x "${dbt}" ]]; then
   dbt="$(command -v dbt || true)"
@@ -32,18 +34,18 @@ fi
 echo "dbt:  ${dbt}"
 echo "wren: ${wren} ($("${wren}" --version))"
 
-step "1/5 dbt build + catalog (DuckDB, local)"
+step "1/6 dbt build + catalog (DuckDB, local)"
 (cd "${dbt_project}" && "${dbt}" build --quiet && "${dbt}" docs generate --quiet)
 echo "built $(ls "${dbt_project}"/dev.duckdb)"
 
-step "2/5 regenerate the wren/ project (import + enrichment, validate, build)"
+step "2/6 regenerate the wren/ project (import + enrichment, validate, build)"
 WREN_CLI="${wren}" python3 "${root}/scripts/use_case_sync.py" \
   --use-case example-order-revenue-mart --stage wren
 
-step "3/5 compile MDL"
+step "3/6 compile MDL"
 "${wren}" context build --path "${root}/${uc}/wren"
 
-step "4/5 governed query through the semantic layer"
+step "4/6 governed query through the semantic layer"
 conn="{\"datasource\":\"duckdb\",\"url\":\"${dbt_project}\",\"format\":\"duckdb\"}"
 sql="select c.region, count(*) as orders, round(sum(o.order_amount_usd),2) as revenue
      from fct_orders o join dim_customers c on o.customer_id = c.customer_id
@@ -52,7 +54,7 @@ governed="$("${wren}" query --sql "${sql}" \
   --mdl "${root}/${uc}/wren/target/mdl.json" --connection-info "${conn}" -o json -q)"
 echo "${governed}"
 
-step "5/5 cross-check against DuckDB directly"
+step "5/6 cross-check against DuckDB directly"
 # Use the interpreter co-located with the resolved CLI: its venv carries duckdb via the
 # wrenai dependency, and this keeps a WREN_CLI override working end to end.
 py="$(dirname "${wren}")/python"
@@ -81,4 +83,32 @@ else:
     sys.exit(1)
 EOF
 
+step "6/6 the metric view IS the metric"
+# The cubes this replaced projected the raw measure — sum(order_amount_usd) with the
+# metric's filter dropped, 4.4% high and internally consistent. The compiled view
+# carries the whole MetricFlow definition, so the governed number below must equal the
+# *filtered* oracle, and must NOT equal the unfiltered measure.
+metric="$("${wren}" query --sql "select round(sum(revenue),2) as v from revenue" \
+  --mdl "${root}/${uc}/wren/target/mdl.json" --connection-info "${conn}" -o json -q)"
+METRIC="${metric}" DEMO_DB="${dbt_project}/dev.duckdb" "${py}" - <<'EOF'
+import json, os, sys
+import duckdb
+
+governed = float(json.loads(os.environ["METRIC"].splitlines()[0])["v"])
+con = duckdb.connect(os.environ["DEMO_DB"], read_only=True)
+oracle = float(con.execute(
+    "select round(sum(order_amount_usd),2) from marts.fct_orders "
+    "where order_status <> 'cancelled'").fetchone()[0])
+measure = float(con.execute(
+    "select round(sum(order_amount_usd),2) from marts.fct_orders").fetchone()[0])
+
+if governed == oracle and governed != measure:
+    print(f"PASS: view revenue == metric definition == {governed} "
+          f"(raw measure is {measure}; the view did not regress to it)")
+else:
+    print(f"FAIL: view={governed} metric_oracle={oracle} raw_measure={measure}")
+    sys.exit(1)
+EOF
+
 printf '\nWrenAI end-to-end demo: PASS\n'
+printf 'MCP: register the per-use-case server printed by step 2 (wren/mcp.json).\n'
