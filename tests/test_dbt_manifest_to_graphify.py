@@ -129,6 +129,48 @@ needs_manifest = pytest.mark.skipif(
 )
 
 
+COMMITTED_FRAGMENT = (
+    REPO / "skill-packs/dbt-skills/use-cases/enhanza-analytics"
+    / "artifacts/graphify-fragment.json"
+)
+
+
+@needs_manifest
+def test_the_committed_fragment_is_what_refresh_sh_produces() -> None:
+    """The committed artifact must equal its documented regeneration, exactly.
+
+    `artifacts/refresh.sh` writes this file *without* `--with-columns`, and says why:
+    column lineage roughly quadruples it, and "installing sqlglot quadrupled a
+    committed artifact overnight". Nothing gated that, so the two drifted — the
+    committed file carried 3884 nodes and 3817 edges of column-level lineage while
+    the documented command produced 708 and 1288.
+
+    `8950a92 chore: merge ... resolve conflicts` is where it became permanent: its two
+    parents held 4110175 and 1108903 bytes of this file, and the resolution kept the
+    bloated side — a generated artifact settled by hand-merge, which is precisely what
+    this repository's rules forbid. A conflict in a generated path is resolved by
+    regenerating, and nothing was checking.
+
+    The cost of no gate was 4110176 bytes committed for 1110265 bytes of content, and
+    a 3 MB spurious diff on the machine of anyone who ran the documented command.
+
+    Column lineage remains available exactly as refresh.sh describes — opt-in, at
+    merge time: `dbt_manifest_to_graphify.py --manifest <path> --with-columns --merge`.
+    """
+    if not COMMITTED_FRAGMENT.is_file():
+        pytest.skip("no committed fragment")
+
+    expected = _fragment()
+    actual = json.loads(COMMITTED_FRAGMENT.read_text(encoding="utf-8"))
+
+    assert actual["nodes"] == expected["nodes"], (
+        "committed fragment's nodes differ from `refresh.sh` output — regenerate it, "
+        "never hand-merge it"
+    )
+    assert actual["edges"] == expected["edges"]
+    assert actual["hyperedges"] == expected["hyperedges"]
+
+
 @needs_manifest
 def test_nodes_carry_the_required_schema_keys() -> None:
     for node in _fragment()["nodes"]:
