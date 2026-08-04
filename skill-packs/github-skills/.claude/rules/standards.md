@@ -6,7 +6,7 @@ This repository is designed to behave as an independent, reusable module that ca
 - Keep the module self-contained, documented, and easy to adopt.
 - Preserve a consistent Git workflow with Conventional Commits and branch naming.
 - Favor focused changes, explicit documentation, and auditable review steps.
-- Keep shared github-skills discoverable and intent-based through `skills-index.md`.
+- Keep shared github-skills discoverable and intent-based through `.claude/commands/skills-index.md`.
 - Use RTK wrappers, Graphify snapshots, and AgentMemory updates for material workflow changes.
 
 ## Git rules

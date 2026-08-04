@@ -1,6 +1,6 @@
 ---
 description: Sync project memory and graph context after dbt or repo automation changes
-argument-hint: [summary of the work performed]
+argument-hint: "[summary of the work performed]"
 ---
 
 Synchronize context for: **$ARGUMENTS**

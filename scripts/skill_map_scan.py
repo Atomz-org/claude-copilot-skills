@@ -43,7 +43,7 @@ import tempfile
 from pathlib import Path
 
 # Pinned so the issue set cannot change shape under CI without a visible diff.
-PINNED_VERSION = "0.99.1"
+PINNED_VERSION = "1.2.3"
 
 # The deterministic surface. `scan` is the only verb this module actually needs
 # today; the rest are listed because they are the read-only verbs a human may
@@ -179,7 +179,12 @@ def scan(root: Path, timeout: int = 600) -> dict:
     root = root.resolve()
     # `sm scan` needs a provisioned .skill-map/ project. Bootstrapping it is
     # idempotent, and its own exit code is ignored for the same reason as above.
-    if not (root / ".skill-map").is_dir():
+    # Probe the DB file, not the directory: `.skill-map/settings.json` is
+    # committed (it carries the team-shared ignored-references policy), so on a
+    # fresh checkout the directory EXISTS while the DB does not -- a dir probe
+    # would skip provisioning and hand `sm scan` an unprovisioned project.
+    # `sm init` never overwrites an existing settings.json or .skillmapignore.
+    if not (root / ".skill-map" / "skill-map.db").is_file():
         try:
             _run_sm("init", "--json", cwd=root, timeout=timeout)
         except subprocess.TimeoutExpired as exc:

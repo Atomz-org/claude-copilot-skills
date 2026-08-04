@@ -49,7 +49,7 @@ destination, not a generic answer.
 Route : analytics-request-framing first — no model before a use-case spec.
 Why   : "churn" has no grain and no named consumer yet. One row per customer, or per
         customer per month? Churned on cancellation date or end of paid period?
-Output: skill-packs/dbt-skills/use-cases/customer-churn/use-case-spec.md
+Output: skill-packs/dbt-skills/use-cases/example-order-revenue-mart/use-case-spec.md
         with a Build / Narrowed build / Not a dbt problem / Blocked verdict.
 Then  : /data-model if the subject area needs more than one model, otherwise /dbt-model.
 ```

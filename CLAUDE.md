@@ -269,7 +269,7 @@ Two rules decide whether a reading of the output is correct:
 
 Accepted, do not re-report: the `senior-analytics-engineer` alias collision,
 `/review` shadowed by the Claude Code built-in, and agent `tools`-as-string
-warnings. Details in the pack's `references/findings.md`.
+warnings. Details in the pack's `.claude/skills/harness-mapping/references/findings.md`.
 
 ## Agent and command topology
 

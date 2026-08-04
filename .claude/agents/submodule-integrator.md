@@ -16,5 +16,5 @@ When integrating:
 - Preserve the module’s own standards and commands.
 - Capture any parent-repo-specific adaptation steps.
 - Verify the resulting workflow with the parent repository’s tooling.
-- Confirm shared github-skills intents (commit, review, merge, branching, docs, conflicts) are discoverable through `skills-index.md`.
+- Confirm shared github-skills intents (commit, review, merge, branching, docs, conflicts) are discoverable through `.claude/commands/skills-index.md`.
 - Confirm parent workflows preserve RTK/Graphify/AgentMemory sync via `scripts/sync_context.sh`.

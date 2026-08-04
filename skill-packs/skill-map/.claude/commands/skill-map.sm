@@ -1,0 +1,9 @@
+annotations:
+  issueSuppressions:
+    - analyzer: core/link-self-loop
+      note: The skill-map command legitimately names its own CLI
+      value: /skill-map
+identity:
+  bodyHash: 00266df536d532b37e78683a3d858e35bddb7e51beadcb446ec6cbd70af8a0a4
+  frontmatterHash: fc093fd91ecb953c9ee32ce9bfefe91f5238abe1d0c7b56d40ce2153e19eb99f
+  path: .claude/commands/skill-map.md

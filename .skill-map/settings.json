@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "activeProvider": "claude",
+  "activeProviderMarkers": [
+    "claude"
+  ],
+  "plugins": {
+    "core": {
+      "extensions": {
+        "reference-broken": {
+          "settings": {
+            "ignored-references": [
+              {
+                "type": "regex",
+                "value": "(^|/)graphify-out/"
+              },
+              {
+                "type": "regex",
+                "value": "(^|/)ontology/"
+              },
+              {
+                "type": "regex",
+                "value": "__docs\\.md$"
+              },
+              {
+                "type": "literal",
+                "value": "../../references/x.md"
+              },
+              {
+                "type": "glob",
+                "value": "erd.md"
+              },
+              {
+                "type": "glob",
+                "value": "dag.md"
+              },
+              {
+                "type": "glob",
+                "value": "MEMORY.md"
+              },
+              {
+                "type": "glob",
+                "value": "CONNECTORS.md"
+              },
+              {
+                "type": "glob",
+                "value": "CHANGELOG.md"
+              },
+              {
+                "type": "glob",
+                "value": "fct_orders.md"
+              },
+              {
+                "type": "glob",
+                "value": "use-case-spec.md"
+              },
+              {
+                "type": "glob",
+                "value": "data-model-canvas.md"
+              },
+              {
+                "type": "glob",
+                "value": "bus-matrix.md"
+              },
+              {
+                "type": "glob",
+                "value": "star-schema-spec.md"
+              },
+              {
+                "type": "glob",
+                "value": "model-blueprint.md"
+              },
+              {
+                "type": "glob",
+                "value": "source-contract.md"
+              },
+              {
+                "type": "glob",
+                "value": "deployment-runbook.md"
+              },
+              {
+                "type": "glob",
+                "value": "incident-investigation.md"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
