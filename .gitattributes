@@ -37,3 +37,9 @@ skill-packs/*/use-cases/*/ontology/column-memory.json merge=generated
 skill-packs/*/use-cases/*/ontology/index.json merge=generated
 skill-packs/*/use-cases/*/ontology/**/*.ttl merge=generated
 skill-packs/*/use-cases/*/dbt_project/seeds/sample/*.csv merge=generated
+# The Wren semantic-layer projection is the same kind of file for the same reason:
+# `use_case_sync.py --stage wren` regenerates the whole tree from the manifest,
+# catalog, and ontology artifacts, so two branches that both regenerate it always
+# collide and a hand-merge is meaningless. Regenerating is the resolution.
+skill-packs/*/use-cases/*/wren/**/*.yml merge=generated
+skill-packs/*/use-cases/*/wren/**/*.md merge=generated
