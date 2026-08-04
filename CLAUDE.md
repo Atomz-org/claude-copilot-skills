@@ -489,6 +489,54 @@ version-matched to the installed wheel, which is why the skill is a discovery st
 `wren genbi deploy` is data egress and needs explicit per-deploy user confirmation
 (`wren-rules.md` rule 9).
 
+### Containerised — podman, and the arch trap
+
+`./skill-packs/wren-skills/demo/run_wren_podman_demo.sh` runs the same two exact
+assertions as the local demo, inside a container, with `--network=none`. podman rather
+than Docker: rootless, daemonless, no Desktop licence. The commands are CLI-compatible,
+so `docker` works too — the file is named for the tool it was verified with, and
+`Containerfile` is podman's native filename.
+
+There is **no compose stack to run**: the pinned submodule ships no docker assets,
+because upstream is CLI-first on the 0.13.x line. The container carries the serving
+tier — dbt + the wren CLI — not the WrenAI application (UI, vector store, LLM gateway).
+
+Three findings, each of which cost a build to learn, all on Apple Silicon:
+
+- **`wren-core-py` publishes x86_64-only Linux wheels** — no aarch64 manylinux build at
+  any version through 0.7.3. A native arm64 `pip install wrenai` therefore compiles the
+  Rust core from source and fails in a slim image with `error: linker 'cc' not found`,
+  an error about a C compiler that says nothing about the missing wheel.
+- **The x86_64 wheel does not survive emulation.** `--platform=linux/amd64` builds in
+  ~3.5 minutes and then `wren --version` dies with
+  `qemu: uncaught target signal 11 (Segmentation fault)`. That path looks like a working
+  image right up to the moment it runs, which makes it the worse of the two failures.
+  The Containerfile is therefore a multi-stage build that compiles the core natively and
+  discards the Rust toolchain — slow once, cached after.
+- **podman cannot bind-mount `~/Documents`** (TCC-protected; `statfs: operation not
+  permitted`), and its `statfs` does not resolve the macOS `/tmp` → `/private/tmp`
+  symlink. So the runner stages the use-case with `mktemp -d` plus `pwd -P` and mounts
+  that read-only — one code path on every OS, and the read-only guarantee becomes real
+  because the container never receives the working tree at all.
+- **Peak memory, not total, is what fails the build.** cargo runs one rustc per core, and
+  a stock `podman machine` has 2 GiB, so compiling sqlparser at `opt-level=3` is
+  OOM-killed and reports `signal: 9, SIGKILL` against a random crate. The Containerfile
+  bounds `CARGO_BUILD_JOBS`; the runner checks `MemTotal` and names
+  `podman machine set --memory` as the remedy. Bounding jobs alone cannot rescue 2 GiB.
+- **`--workdir /work` fails for a directory that exists.** podman 5.8.5 answers
+  `workdir "/work" does not exist on container` while `ls -ld /work` lists it and
+  `WorkingDir` inspects as `/work`. The image's `WORKDIR` already sets it, so the flag is
+  redundant and removing it is the fix — pinned, because re-adding it looks like an
+  improvement.
+
+Measured: image build ~25 min cold (the Rust core) and cached after; the run itself 16s,
+producing the same numbers as the host demo — governed == direct on all three rows, and
+view revenue 277,183.41 against the 289,470.66 raw measure.
+
+`tests/test_wren_podman_demo.py` pins the contract without running a container: the
+image's pins may not drift from `requirements.txt`, `--no-index` keeps an unsatisfiable
+pin loud, and an absent podman exits **3** (rule 7, matching `skill_map_scan.py`).
+
 ## Harness cartography — skill-map
 
 `graphify` maps the **code**; `skill-map` maps the **harness** — skills, commands,
