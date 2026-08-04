@@ -1,0 +1,22 @@
+name: revenue
+statement: |
+  WITH base AS (
+    SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,
+           SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS revenue
+    FROM fct_orders
+    WHERE (fct_orders.order_status != 'cancelled')
+    GROUP BY 1
+  ),
+  spine AS (
+    SELECT DISTINCT date_trunc('day', CAST(date_day AS TIMESTAMP)) AS metric_time
+    FROM metricflow_time_spine
+  )
+  SELECT spine.metric_time, COALESCE(base.revenue, 0) AS revenue
+  FROM spine LEFT JOIN base ON base.metric_time = spine.metric_time
+  WHERE spine.metric_time BETWEEN (SELECT MIN(metric_time) FROM base)
+                              AND (SELECT MAX(metric_time) FROM base)
+properties:
+  description: "Gross order revenue in USD, excluding cancelled orders and internal test accounts. Verified against the NetSuite ledger for 2026-06 (0.02% variance). NOT net of refunds \u2014 use net_revenue for that."
+  source: dbt_metric
+  metric_type: simple
+  grain: day

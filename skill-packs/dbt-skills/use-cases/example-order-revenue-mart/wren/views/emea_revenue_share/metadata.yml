@@ -1,0 +1,26 @@
+name: emea_revenue_share
+statement: |
+  WITH num AS (
+    SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,
+           SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS num
+    FROM fct_orders
+      JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+    WHERE (fct_orders.order_status != 'cancelled')
+      AND (dim_customers.region = 'EMEA')
+    GROUP BY 1
+  ),
+  den AS (
+    SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,
+           SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS den
+    FROM fct_orders
+    WHERE (fct_orders.order_status != 'cancelled')
+    GROUP BY 1
+  )
+  SELECT den.metric_time AS metric_time,
+         CAST(COALESCE(num.num, 0) AS DOUBLE) / NULLIF(CAST(den.den AS DOUBLE), 0) AS emea_revenue_share
+  FROM den LEFT JOIN num ON num.metric_time IS NOT DISTINCT FROM den.metric_time
+properties:
+  description: "Share of revenue from EMEA customers. Guest checkouts have no region and are excluded from the numerator but included in the denominator."
+  source: dbt_metric
+  metric_type: ratio
+  grain: day
