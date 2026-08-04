@@ -34,13 +34,18 @@ See .claude/skills/connector-onboarding/SKILL.md for the full procedure.
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
+# This module is both a CLI and an import target (connector_alignment_check imports
+# `detect()` so the scaffolder and the checker cannot disagree about the convention).
+# Standalone runs need `scripts/` on the path before the sibling import below; an
+# importer has already done it, and the insert is idempotent.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from _paths import REPO  # noqa: E402
 
 # Entity prefixes mark where a model's *name* starts and its *layer* ends, so
 # `fortnox_bi_dim_customers` yields the infix `_bi_` rather than `_bi_dim_`. Only genuine

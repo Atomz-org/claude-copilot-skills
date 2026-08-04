@@ -39,14 +39,19 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _manifest import Manifest, die  # noqa: E402
 import _miniyaml  # noqa: E402
+import _paths  # noqa: E402
+from _paths import REPO  # noqa: E402
 
-REPO = Path(__file__).resolve().parent.parent
+
+def use_case_dir(slug: str) -> Path:
+    """`_paths.require_use_case_dir` bound to this module's REPO; absence exits 2."""
+    return _paths.require_use_case_dir(slug, REPO)
 
 # The namespace a use-case gets when it has no `ontology/ontology.yml`. Only the first
 # use-case ever relied on an implicit value; every use-case scaffolded since pins its own,
@@ -259,13 +264,6 @@ class ConnectorSpec:
 # ---------------------------------------------------------------------------------------
 # Inputs
 # ---------------------------------------------------------------------------------------
-
-
-def use_case_dir(slug: str) -> Path:
-    matches = [p for p in REPO.glob(f"skill-packs/*/use-cases/{slug}") if p.is_dir()]
-    if not matches:
-        die(f"no use-case '{slug}' under skill-packs/*/use-cases/")
-    return matches[0]
 
 
 def read_catalogue(path: Path) -> List[ConnectorSpec]:

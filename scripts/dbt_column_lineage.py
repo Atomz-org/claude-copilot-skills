@@ -54,7 +54,7 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _manifest import Manifest, die  # noqa: E402
+from _manifest import Manifest  # noqa: E402
 
 try:  # optional — absence degrades the run, it does not fail it
     import sqlglot
@@ -63,7 +63,6 @@ except ImportError:  # pragma: no cover - depends on the environment
     sqlglot = None  # type: ignore[assignment]
     exp = None  # type: ignore[assignment]
 
-REPO = Path(__file__).resolve().parent.parent
 
 # The dialect the project actually targets. Parsing BigQuery SQL as anything else rejects
 # backtick quoting and `safe_cast`, which this project uses.

@@ -47,7 +47,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _manifest import Manifest, die  # noqa: E402
 
-REPO = Path(__file__).resolve().parent.parent
+from _paths import REPO  # noqa: E402
 
 try:
     import sqlglot

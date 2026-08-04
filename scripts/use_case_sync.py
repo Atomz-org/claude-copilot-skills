@@ -51,9 +51,20 @@ from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-REPO = Path(__file__).resolve().parent.parent
+import _paths  # noqa: E402
+from _paths import REPO  # noqa: E402
 
 OK, SKIP, CHANGED, FAIL = "ok", "skip", "changed", "fail"
+
+
+def use_case_dir(slug: str) -> Optional[Path]:
+    """`_paths.use_case_dir` bound to this module's REPO, which tests override."""
+    return _paths.use_case_dir(slug, REPO)
+
+
+def all_use_cases() -> List[str]:
+    """`_paths.all_use_cases` bound to this module's REPO, which tests override."""
+    return _paths.all_use_cases(REPO)
 
 
 @dataclass
@@ -70,19 +81,6 @@ class Stage:
             "detail": self.detail,
             "changed": len(self.changed),
         }
-
-
-def use_case_dir(slug: str) -> Optional[Path]:
-    matches = [p for p in REPO.glob(f"skill-packs/*/use-cases/{slug}") if p.is_dir()]
-    return matches[0] if matches else None
-
-
-def all_use_cases() -> List[str]:
-    return sorted(
-        p.name
-        for p in REPO.glob("skill-packs/*/use-cases/*")
-        if p.is_dir() and not p.name.startswith(".")
-    )
 
 
 def _write(path: Path, content: str, check: bool) -> bool:

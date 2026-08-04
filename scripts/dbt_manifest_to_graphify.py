@@ -54,13 +54,13 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _manifest import Manifest, die  # noqa: E402
-
-REPO = Path(__file__).resolve().parent.parent
+import _paths  # noqa: E402
+from _paths import REPO  # noqa: E402,F401
 
 # How many names a capped list carries. Enough to recognise the pattern, few enough that a
 # pathological run costs a line rather than a page.
@@ -110,26 +110,19 @@ def _rel(path: Path) -> str:
 
 
 def project_root_of(manifest_path: Path) -> Path:
-    """The dbt project directory a manifest belongs to.
+    """The dbt project directory a manifest belongs to; absence is fatal here.
 
-    `original_file_path` in the manifest is relative to the dbt project root, not the repo
-    root, so the two have to be joined to get a path graphify would recognise. Walk up from
-    the manifest until a dbt_project.yml appears — this handles both `<project>/target/` and
-    the committed `<use-case>/artifacts/prod/` layout.
+    Resolution lives in `_paths.project_root_of`; this wrapper keeps the
+    single-argument signature and the remedy in the error message.
     """
-    for candidate in [manifest_path.parent, *manifest_path.parents]:
-        if (candidate / "dbt_project.yml").exists():
-            return candidate
-    # artifacts/prod/manifest.json -> the sibling dbt_project/ of the use-case
-    for candidate in manifest_path.parents:
-        sibling = candidate / "dbt_project"
-        if (sibling / "dbt_project.yml").exists():
-            return sibling
-    die(
-        f"could not locate a dbt_project.yml above {manifest_path}.\n"
-        f"  Pass --project-root explicitly."
-    )
-    raise SystemExit(2)  # unreachable; keeps type checkers quiet
+    found = _paths.project_root_of(manifest_path)
+    if found is None:
+        die(
+            f"could not locate a dbt_project.yml above {manifest_path}.\n"
+            f"  Pass --project-root explicitly."
+        )
+        raise SystemExit(2)  # unreachable; keeps type checkers quiet
+    return found
 
 
 def layer_of(rel_in_project: str) -> str:
