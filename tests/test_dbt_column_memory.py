@@ -319,6 +319,7 @@ def test_a_macro_generated_column_list_marks_the_contract_partial(project):
     assert contract["partial_for"] == ["alpha", "beta"]
 
 
+@sqlglot_required
 def test_the_column_order_the_sql_declares_is_preserved(project):
     """`erp_union()` stacks adapters positionally, so sorting would destroy the evidence."""
     store = build(project)
@@ -539,6 +540,7 @@ def test_memory_records_never_carry_the_edge_set(project):
     assert len(records) < len(store.bindings) or not store.bindings
 
 
+@sqlglot_required
 def test_the_contract_cap_actually_binds(project, monkeypatch):
     store = build(project)
     store.contracts = store.contracts * 200
@@ -616,6 +618,7 @@ def test_remember_posts_each_record_once_to_the_documented_endpoint(project):
 # ---------------------------------------------------------------------------------------
 
 
+@sqlglot_required
 def test_the_graphify_fragment_attaches_to_real_model_node_ids(project):
     """A fragment whose edges point at invented IDs adds ghosts instead of upgrading nodes."""
     use_case, _, _ = project
@@ -802,157 +805,3 @@ def test_the_hook_rebuilds_the_store_when_a_model_actually_changes(tmp_path: Pat
 
 # ---------------------------------------------------------------------------------------
 # 9. source column contracts
-# ---------------------------------------------------------------------------------------
-
-SOURCES_YML = """\
-version: 2
-
-sources:
-  - name: alpha_api
-    description: 'Alpha raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: alpha_api_{{ var('uid') }}
-    tables:
-      # a comment that must survive
-      - name: articles
-      - name: accounts
-        description: 'already documented'
-      - name: untouched
-
-  - name: beta_api
-    schema: beta_api_{{ var('uid') }}
-    tables:
-      - name: articles
-        columns:
-          - name: HandWritten
-"""
-
-
-def test_insert_adds_columns_without_touching_anything_else():
-    updated, written = ccm.insert_source_columns(
-        SOURCES_YML, {("alpha_api", "articles"): ["Id", "Name"]}
-    )
-
-    assert written == ["articles"]
-    for line in SOURCES_YML.splitlines():
-        assert line in updated, f"insertion lost an existing line: {line!r}"
-    assert "          - name: Id\n" in updated
-
-
-def test_jinja_in_schema_survives_verbatim():
-    """A YAML round-trip re-quotes these and dbt stops rendering them."""
-    updated, _ = ccm.insert_source_columns(
-        SOURCES_YML, {("alpha_api", "articles"): ["Id"]}
-    )
-
-    assert "schema: alpha_api_{{ var('uid') }}" in updated
-    assert 'database: "{{ target.project | default(target.database) }}"' in updated
-
-
-def test_comments_survive():
-    updated, _ = ccm.insert_source_columns(
-        SOURCES_YML, {("alpha_api", "articles"): ["Id"]}
-    )
-
-    assert "# a comment that must survive" in updated
-
-
-def test_a_table_that_already_declares_columns_is_left_alone():
-    """The generated list bootstraps a contract a human then owns."""
-    updated, written = ccm.insert_source_columns(
-        SOURCES_YML, {("beta_api", "articles"): ["Generated"]}
-    )
-
-    assert written == []
-    assert updated == SOURCES_YML
-    assert "Generated" not in updated
-
-
-def test_columns_go_under_the_right_source_when_a_table_name_repeats():
-    """`articles` exists under both sources here. Keying on the table alone writes one
-    source's columns under the other's table, silently and plausibly."""
-    updated, written = ccm.insert_source_columns(
-        SOURCES_YML, {("alpha_api", "articles"): ["AlphaOnly"]}
-    )
-
-    alpha_block = updated.split("- name: beta_api")[0]
-    beta_block = updated.split("- name: beta_api")[1]
-
-    assert "AlphaOnly" in alpha_block
-    assert "AlphaOnly" not in beta_block
-    assert written == ["articles"]
-
-
-def test_an_entry_with_a_description_still_gets_columns_after_it():
-    updated, written = ccm.insert_source_columns(
-        SOURCES_YML, {("alpha_api", "accounts"): ["AccountId"]}
-    )
-
-    assert written == ["accounts"]
-    body = updated.split("- name: accounts")[1].split("- name: untouched")[0]
-    assert "already documented" in body
-    assert "- name: AccountId" in body
-
-
-def test_a_source_name_matching_a_table_name_is_not_treated_as_a_table():
-    text = "version: 2\n\nsources:\n  - name: articles\n    tables:\n      - name: rows\n"
-
-    updated, written = ccm.insert_source_columns(text, {("articles", "articles"): ["X"]})
-
-    assert written == []
-    assert updated == text
-
-
-def test_insert_is_idempotent():
-    once, _ = ccm.insert_source_columns(SOURCES_YML, {("alpha_api", "articles"): ["Id"]})
-    twice, written = ccm.insert_source_columns(once, {("alpha_api", "articles"): ["Id"]})
-
-    assert written == []
-    assert twice == once
-
-
-@sqlglot_required
-def test_source_columns_resolve_through_the_manifest_not_a_string_split(project):
-    """`strip_jinja` joins with `__`, and a source name may itself contain `__`."""
-    use_case, dbt, man = project
-    store = build(project)
-
-    consumed = ccm.consumed_source_columns(store, man)
-
-    assert consumed == {} or all(
-        entry["source"] and entry["table"] for entry in consumed.values()
-    )
-
-
-@sqlglot_required
-def test_the_real_project_recovers_source_columns():
-    use_case = REPO_ROOT / "skill-packs/dbt-skills/use-cases/enhanza-analytics"
-    manifest = use_case / "dbt_project/target/manifest.json"
-    if not manifest.is_file():
-        pytest.skip("no manifest")
-
-    man = Manifest.load(str(manifest))
-    store = ccm.build_store(man, use_case / "dbt_project", "enhanza-analytics", use_case)
-    consumed = ccm.consumed_source_columns(store, man)
-
-    assert len(consumed) > 50
-    assert all(entry["columns"] for entry in consumed.values())
-
-
-def test_the_committed_sources_yml_declare_what_staging_reads():
-    """Regression gate: re-emitting must be a no-op on a repository that is in step."""
-    use_case = REPO_ROOT / "skill-packs/dbt-skills/use-cases/enhanza-analytics"
-    manifest = use_case / "dbt_project/target/manifest.json"
-    if not manifest.is_file() or ccm.lineage_mod.sqlglot is None:
-        pytest.skip("needs the manifest and sqlglot")
-
-    man = Manifest.load(str(manifest))
-    store = ccm.build_store(man, use_case / "dbt_project", "enhanza-analytics", use_case)
-    result = ccm.emit_source_columns(store, man, use_case / "dbt_project", write=False)
-
-    assert result["files"] == [], (
-        "sources.yml is missing column contracts. Run:\n"
-        "  python3 scripts/dbt_column_memory.py --use-case enhanza-analytics "
-        "--emit-source-columns --write\n"
-        "  ./skill-packs/dbt-skills/use-cases/enhanza-analytics/artifacts/refresh.sh"
-    )

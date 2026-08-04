@@ -1,0 +1,58 @@
+{
+  "use_case": "example-order-revenue-mart",
+  "title": "example-order-revenue-mart",
+  "generated_by": "scripts/dbt_column_memory.py",
+  "normative_source": "the .sql files on disk; manifest.json supplies the model registry only",
+  "prefixes": {
+    "erp": "https://w3id.org/enhanza/erp#",
+    "crm": "https://w3id.org/enhanza/crm#",
+    "conn": "https://w3id.org/enhanza/connector#",
+    "topo": "https://w3id.org/enhanza/topology#"
+  },
+  "mcp_tools": [
+    {
+      "tool": "column_contract",
+      "backed_by": "contracts",
+      "answers": "The columns every adapter for a conformed concept must carry."
+    },
+    {
+      "tool": "resolve_source_column",
+      "backed_by": "bindings",
+      "answers": "The raw source column behind a conformed column, per connector."
+    },
+    {
+      "tool": "column_drift",
+      "backed_by": "drift",
+      "answers": "Adapter columns that disagree across connectors for one concept."
+    }
+  ],
+  "provenance": {
+    "dbt_version": "1.9.10",
+    "project": "analytics",
+    "sqlglot": "30.14.0",
+    "dialect": "bigquery",
+    "freshness": {
+      "digest": "c710defe997e65db700e8316152aa2292dec9d1e6a2ef6ede9a67491820e50f4",
+      "models": 9,
+      "fresh": 9,
+      "changed": 0,
+      "missing": 0,
+      "untracked_sql": 0
+    },
+    "models_parsed": 3,
+    "models_macro_only": 1,
+    "models_parse_failed": 5,
+    "models_no_parser": 0,
+    "stale_models": [],
+    "parse_failures": [
+      "fct_orders",
+      "int_orders_with_line_totals",
+      "stg_demopos__receipts",
+      "stg_shopify__order_lines",
+      "stg_shopify__orders"
+    ]
+  },
+  "contracts": [],
+  "bindings": [],
+  "drift": []
+}

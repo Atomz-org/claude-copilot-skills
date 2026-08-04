@@ -8,3 +8,4 @@
 - [2026-07-31T06:28:46Z] docs drift repair verification
 - [2026-08-02T11:50:30Z] feat: integrate AgentMemory (rohitg00/agentmemory) — REST bridge in sync_context.sh, AgentMemoryClient adapter in memory-store.ts, degradation pinned by tests/test_agentmemory_bridge.py
 - [2026-08-02T20:33:09Z] feat(memory): gate AgentMemory mirror on decision text
+- [2026-08-04T02:00:17Z] feat(demopos): dummy connector onboarded into example-order-revenue-mart worked example

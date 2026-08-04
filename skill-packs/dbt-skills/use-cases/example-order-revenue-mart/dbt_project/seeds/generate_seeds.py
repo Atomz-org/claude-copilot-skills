@@ -17,6 +17,11 @@ The data deliberately contains the awkward cases the models claim to handle:
   - soft-deleted rows          -> filtered in staging via _fivetran_deleted
   - one unmapped country       -> exercises the 'OTHER' region branch
   - an unknown payment status  -> exercises the CASE fall-through to 'unknown'
+
+And for the second connector, Demo POS (the worked connector-onboarding example):
+  - ~25% walk-in receipts      -> no customer_ref, the nullable-FK case again
+  - shouting statuses ('PAID') -> lowercased and trimmed in staging
+  - one padded status/country  -> proves the trim() actually runs
 """
 
 from __future__ import annotations
@@ -32,6 +37,8 @@ RNG = random.Random(20260728)
 NOW = dt.datetime.now(dt.timezone.utc).replace(microsecond=0, tzinfo=None)
 N_CUSTOMERS = 120
 N_ORDERS = 500
+N_POS_CUSTOMERS = 40
+N_RECEIPTS = 200
 
 COUNTRIES = ["us", "ca", "gb", "fr", "de", "es", "mx", "nl", "se", "it"]
 PAYMENT_STATUSES = ["paid"] * 60 + ["pending"] * 15 + ["fulfilled"] * 10 + \
@@ -136,9 +143,60 @@ def main() -> None:
            "_fivetran_synced", "_fivetran_deleted"],
           line_rows)
 
+    # ----------------------------------------------------------------- demopos
+    # The second connector: a synthetic in-store till, the worked example of onboarding
+    # a connector. One nightly full export, every row stamped with the same exported_at
+    # — which is exactly what the freshness block in _demopos__sources.yml describes.
+    pos_exported_at = NOW - dt.timedelta(hours=3)
+
+    pos_customers = []
+    for i in range(1, N_POS_CUSTOMERS + 1):
+        country = COUNTRIES[(i * 3) % len(COUNTRIES)]
+        if i % 5 == 0:
+            country = country.upper()       # staging lowercases it
+        if i == 3:
+            country = f" {country} "        # staging trims it
+        pos_customers.append([
+            f"pc_{i:04d}",
+            f"till{i:04d}@example.com",
+            country,
+            iso(NOW - dt.timedelta(days=RNG.randint(10, 700))),
+            iso(pos_exported_at),
+        ])
+    write("raw_demopos_customers.csv",
+          ["customer_ref", "email_address", "country", "signed_up_at", "exported_at"],
+          pos_customers)
+
+    receipts, walk_ins = [], 0
+    for i in range(1, N_RECEIPTS + 1):
+        # ~25% walk-in cash sales: nobody scanned a loyalty card, so no customer_ref
+        if i % 4 == 0:
+            customer_ref = ""
+            walk_ins += 1
+        else:
+            customer_ref = f"pc_{RNG.randint(1, N_POS_CUSTOMERS):04d}"
+        status = RNG.choice(["PAID"] * 85 + ["REFUNDED"] * 10 + ["VOID"] * 5)
+        if i == 5:
+            status = " Paid "               # staging lowercases and trims
+        receipts.append([
+            f"r_{i:05d}",
+            customer_ref,
+            status,
+            "USD",
+            f"{RNG.uniform(3.50, 250.00):.2f}",
+            iso(NOW - dt.timedelta(hours=RNG.randint(1, 24 * 45))),
+            f"reg_{RNG.randint(1, 3):02d}",
+            iso(pos_exported_at),
+        ])
+    write("raw_demopos_receipts.csv",
+          ["receipt_ref", "customer_ref", "status", "currency", "total_amount",
+           "sold_at", "register_id", "exported_at"],
+          receipts)
+
     print(f"\n  {len(order_ids_without_lines)} order(s) with no line items — "
           f"the coalesce-to-zero case")
     print(f"  {sum(1 for o in orders if not o[1])} guest checkout(s) — the nullable-FK case")
+    print(f"  {walk_ins} walk-in receipt(s) with no customer — the same case, at the till")
     print(f"  seeds anchored to {iso(NOW)} UTC")
 
 

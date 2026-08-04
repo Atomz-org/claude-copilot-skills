@@ -196,6 +196,22 @@ def stage_columns(use_case: Path, slug: str, manifest: Optional[Path], check: bo
     if not store.contracts and not store.bindings and not path.exists():
         return Stage("columns", SKIP, "no unified adapters — nothing to contract")
 
+    # The refusal is decided *before* anything is written, and against the file as it was.
+    # Deciding it afterwards inspects this run's own output: with a warm .dbt-column-cache the
+    # bindings survive the rewrite and the guard fires correctly, but on a cold cache — CI, a
+    # fresh clone, exactly where this matters — the bindings-free file is already on disk, the
+    # marker it looks for is gone with them, and the guard waves through the damage it exists
+    # to prevent. Same refusal shape as `ontology`; only the ordering was wrong.
+    had_bindings = (
+        path.exists() and '"source_column"' in path.read_text(encoding="utf-8")
+    )
+    if not store.provenance["sqlglot"] and had_bindings:
+        return Stage(
+            "columns", FAIL,
+            "refused to rewrite column-memory.json without its bindings "
+            "(sqlglot not installed — pip install -r .github/requirements/ci.txt)",
+        )
+
     changed = [str(path.relative_to(REPO))] if _write(path, ccm.serialise(store), check) else []
 
     fresh = store.provenance["freshness"]
@@ -204,14 +220,6 @@ def stage_columns(use_case: Path, slug: str, manifest: Optional[Path], check: bo
         f"{len(store.drift)} drift finding(s)"
     )
     if not store.provenance["sqlglot"]:
-        # Same refusal shape as `ontology`: regenerating without a parser produces the same
-        # file with none of the resolved bindings, and that diff reads as tidying.
-        if path.exists() and '"source_column"' in path.read_text(encoding="utf-8"):
-            return Stage(
-                "columns", FAIL,
-                "refused to rewrite column-memory.json without its bindings "
-                "(sqlglot not installed — pip install -r requirements.txt)",
-            )
         detail += "; no source bindings (sqlglot not installed)"
     if fresh["changed"] or fresh["untracked_sql"]:
         detail += (

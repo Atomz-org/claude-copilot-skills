@@ -47,3 +47,26 @@ seeds:
         created_at: timestamp
         _fivetran_synced: timestamp
         _fivetran_deleted: boolean
+
+  - name: raw_demopos_customers
+    description: Stands in for the Demo POS nightly customer export.
+    config:
+      column_types:
+        customer_ref: varchar
+        email_address: varchar
+        country: varchar
+        signed_up_at: timestamp
+        exported_at: timestamp
+
+  - name: raw_demopos_receipts
+    description: Stands in for the Demo POS nightly receipt export.
+    config:
+      column_types:
+        receipt_ref: varchar
+        customer_ref: varchar
+        status: varchar
+        currency: varchar
+        total_amount: numeric(28,6)
+        sold_at: timestamp
+        register_id: varchar
+        exported_at: timestamp

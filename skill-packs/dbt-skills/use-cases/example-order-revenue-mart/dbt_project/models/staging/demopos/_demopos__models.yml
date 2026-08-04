@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: stg_demopos__customers
+    description: >
+      One row per customer registered at the in-store till, renamed and cast. The source
+      is a nightly full snapshot with no delete flag, so unlike stg_shopify__customers
+      there is nothing to filter here — a customer removed upstream stops appearing.
+    columns:
+      - name: customer_id
+        description: >
+          Primary key. Till customer reference (`pc_…` — a different id namespace from
+          Shopify's `c_…`; the two are deliberately not conformed until a consumer asks
+          for a cross-channel customer dimension).
+        data_tests: [unique, not_null]
+      - name: customer_email
+        description: Contact email. PII — masked outside prod.
+      - name: country_code
+        description: ISO-3166 alpha-2, lowercased and trimmed.
+      - name: first_seen_at
+        description: Timestamp the customer was first registered at the till.
+
+  - name: stg_demopos__receipts
+    description: >
+      One row per printed receipt. Walk-in cash sales have no customer (~25% of rows) —
+      the nullable-FK case. Voided receipts are kept, with receipt_status = 'void':
+      whether a void counts as a sale is a business decision that belongs downstream,
+      not in staging.
+    columns:
+      - name: receipt_id
+        description: Primary key. Receipt number from the till.
+        data_tests: [unique, not_null]
+      - name: customer_id
+        description: FK to stg_demopos__customers. Null for walk-in sales.
+        data_tests:
+          - relationships:
+              to: ref('stg_demopos__customers')
+              field: customer_id
+      - name: receipt_status
+        description: Till status, lowercased and trimmed.
+        data_tests:
+          - accepted_values:
+              values: ['paid', 'refunded', 'void']
+      - name: receipt_amount
+        description: Receipt total in the receipt's own currency.
+        data_tests: [not_null]
+      - name: sold_at
+        description: Time of sale at the register, UTC.
+        data_tests: [not_null]
+      - name: register_id
+        description: Which till printed the receipt (reg_01–reg_03).

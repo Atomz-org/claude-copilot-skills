@@ -369,6 +369,7 @@ def test_a_one_line_set_is_not_treated_as_a_block():
     assert "select A from t" in out
 
 
+@needs_sqlglot
 def test_a_conditional_where_clause_no_longer_breaks_the_case_statement():
     """The `categories_x_mapping` shape: an `{% if %}` wrapping `when`, leaving a bare `then`."""
     sql = (
@@ -387,6 +388,7 @@ def test_a_conditional_where_clause_no_longer_breaks_the_case_statement():
 # ---------------------------------------------------------------------------------------
 
 
+@needs_sqlglot
 def test_macros_in_two_different_positions_still_parse():
     """One uniform substitution cannot be valid in a select list *and* after a FROM.
 
@@ -404,8 +406,14 @@ def test_macros_in_two_different_positions_still_parse():
     assert tree is not None
 
 
+@needs_sqlglot
 def test_the_mixed_pass_is_bounded():
-    """It is exponential in the macro count, so it must refuse rather than hang."""
+    """It is exponential in the macro count, so it must refuse rather than hang.
+
+    Guarded even though it passes without sqlglot: `parse_model_sql` returns `(None, error)`
+    when the parser is absent, which satisfies the assertion while proving nothing. A test
+    that goes green having exercised nothing is worse than one that says it was skipped.
+    """
     macros = " ".join("{{ m%d() }}" % i for i in range(lineage.MAX_MIXED_MACROS + 3))
     sql = f"select A {macros} from t"
 
