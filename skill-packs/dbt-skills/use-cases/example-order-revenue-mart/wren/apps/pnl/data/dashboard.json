@@ -1,0 +1,466 @@
+{
+ "generated_from": "wren query against MDL views (governed)",
+ "span": {
+  "from": "2026-06-20",
+  "to": "2026-08-04",
+  "days": 46
+ },
+ "kpis": [
+  {
+   "label": "Revenue",
+   "value": 277183.41,
+   "unit": "USD",
+   "view": "revenue",
+   "change": -90.73,
+   "change_label": "MoM, latest month",
+   "fmt": "money"
+  },
+  {
+   "label": "Orders",
+   "value": 470,
+   "unit": "",
+   "view": "order_count",
+   "change": null,
+   "change_label": "",
+   "fmt": "int"
+  },
+  {
+   "label": "Average order value",
+   "value": 589.75,
+   "unit": "USD",
+   "view": "average_order_value",
+   "change": null,
+   "change_label": "",
+   "fmt": "money"
+  }
+ ],
+ "weeks": [
+  "2026-06-15",
+  "2026-06-22",
+  "2026-06-29",
+  "2026-07-06",
+  "2026-07-13",
+  "2026-07-20",
+  "2026-07-27",
+  "2026-08-03"
+ ],
+ "regions": [
+  "AMER",
+  "EMEA",
+  "OTHER"
+ ],
+ "by_region": [
+  {
+   "week": "2026-06-15",
+   "region": "AMER",
+   "revenue": 1698.88,
+   "orders": 3
+  },
+  {
+   "week": "2026-06-15",
+   "region": "EMEA",
+   "revenue": 9923.63,
+   "orders": 17
+  },
+  {
+   "week": "2026-06-15",
+   "region": "OTHER",
+   "revenue": 118.2,
+   "orders": 1
+  },
+  {
+   "week": "2026-06-22",
+   "region": "AMER",
+   "revenue": 16324.04,
+   "orders": 25
+  },
+  {
+   "week": "2026-06-22",
+   "region": "EMEA",
+   "revenue": 29352.23,
+   "orders": 49
+  },
+  {
+   "week": "2026-06-29",
+   "region": "AMER",
+   "revenue": 9146.55,
+   "orders": 16
+  },
+  {
+   "week": "2026-06-29",
+   "region": "EMEA",
+   "revenue": 27681.51,
+   "orders": 48
+  },
+  {
+   "week": "2026-06-29",
+   "region": "OTHER",
+   "revenue": 30.28,
+   "orders": 1
+  },
+  {
+   "week": "2026-07-06",
+   "region": "AMER",
+   "revenue": 15723.86,
+   "orders": 27
+  },
+  {
+   "week": "2026-07-06",
+   "region": "EMEA",
+   "revenue": 28890.78,
+   "orders": 57
+  },
+  {
+   "week": "2026-07-06",
+   "region": "OTHER",
+   "revenue": 428.59,
+   "orders": 1
+  },
+  {
+   "week": "2026-07-13",
+   "region": "AMER",
+   "revenue": 6036.29,
+   "orders": 14
+  },
+  {
+   "week": "2026-07-13",
+   "region": "EMEA",
+   "revenue": 30836.29,
+   "orders": 46
+  },
+  {
+   "week": "2026-07-20",
+   "region": "AMER",
+   "revenue": 8897.72,
+   "orders": 18
+  },
+  {
+   "week": "2026-07-20",
+   "region": "EMEA",
+   "revenue": 36422.18,
+   "orders": 56
+  },
+  {
+   "week": "2026-07-27",
+   "region": "AMER",
+   "revenue": 18718.52,
+   "orders": 25
+  },
+  {
+   "week": "2026-07-27",
+   "region": "EMEA",
+   "revenue": 23144.6,
+   "orders": 44
+  },
+  {
+   "week": "2026-08-03",
+   "region": "AMER",
+   "revenue": 1925.11,
+   "orders": 4
+  },
+  {
+   "week": "2026-08-03",
+   "region": "EMEA",
+   "revenue": 2686.49,
+   "orders": 4
+  }
+ ],
+ "daily": [
+  {
+   "date": "2026-06-20",
+   "revenue": 6281.15,
+   "orders": 11
+  },
+  {
+   "date": "2026-06-21",
+   "revenue": 5459.56,
+   "orders": 10
+  },
+  {
+   "date": "2026-06-22",
+   "revenue": 5530.29,
+   "orders": 9
+  },
+  {
+   "date": "2026-06-23",
+   "revenue": 7863.72,
+   "orders": 16
+  },
+  {
+   "date": "2026-06-24",
+   "revenue": 2379.5,
+   "orders": 6
+  },
+  {
+   "date": "2026-06-25",
+   "revenue": 9395.07,
+   "orders": 13
+  },
+  {
+   "date": "2026-06-26",
+   "revenue": 6172.87,
+   "orders": 9
+  },
+  {
+   "date": "2026-06-27",
+   "revenue": 10879.07,
+   "orders": 15
+  },
+  {
+   "date": "2026-06-28",
+   "revenue": 4148.31,
+   "orders": 8
+  },
+  {
+   "date": "2026-06-29",
+   "revenue": 1924.12,
+   "orders": 4
+  },
+  {
+   "date": "2026-06-30",
+   "revenue": 4094.72,
+   "orders": 8
+  },
+  {
+   "date": "2026-07-01",
+   "revenue": 8047.77,
+   "orders": 17
+  },
+  {
+   "date": "2026-07-02",
+   "revenue": 6365.03,
+   "orders": 11
+  },
+  {
+   "date": "2026-07-03",
+   "revenue": 7063.39,
+   "orders": 9
+  },
+  {
+   "date": "2026-07-04",
+   "revenue": 4843.57,
+   "orders": 8
+  },
+  {
+   "date": "2026-07-05",
+   "revenue": 6275.66,
+   "orders": 10
+  },
+  {
+   "date": "2026-07-06",
+   "revenue": 9053.66,
+   "orders": 17
+  },
+  {
+   "date": "2026-07-07",
+   "revenue": 6323.56,
+   "orders": 9
+  },
+  {
+   "date": "2026-07-08",
+   "revenue": 4040.23,
+   "orders": 9
+  },
+  {
+   "date": "2026-07-09",
+   "revenue": 5632.16,
+   "orders": 13
+  },
+  {
+   "date": "2026-07-10",
+   "revenue": 8280.41,
+   "orders": 15
+  },
+  {
+   "date": "2026-07-11",
+   "revenue": 5973.03,
+   "orders": 14
+  },
+  {
+   "date": "2026-07-12",
+   "revenue": 5740.18,
+   "orders": 8
+  },
+  {
+   "date": "2026-07-13",
+   "revenue": 5467.02,
+   "orders": 9
+  },
+  {
+   "date": "2026-07-14",
+   "revenue": 6477.46,
+   "orders": 10
+  },
+  {
+   "date": "2026-07-15",
+   "revenue": 5296.9,
+   "orders": 10
+  },
+  {
+   "date": "2026-07-16",
+   "revenue": 7357.94,
+   "orders": 11
+  },
+  {
+   "date": "2026-07-17",
+   "revenue": 4685.11,
+   "orders": 8
+  },
+  {
+   "date": "2026-07-18",
+   "revenue": 6770.78,
+   "orders": 10
+  },
+  {
+   "date": "2026-07-19",
+   "revenue": 2936.87,
+   "orders": 7
+  },
+  {
+   "date": "2026-07-20",
+   "revenue": 9367.05,
+   "orders": 15
+  },
+  {
+   "date": "2026-07-21",
+   "revenue": 4849.91,
+   "orders": 10
+  },
+  {
+   "date": "2026-07-22",
+   "revenue": 6222.34,
+   "orders": 9
+  },
+  {
+   "date": "2026-07-23",
+   "revenue": 6120.64,
+   "orders": 10
+  },
+  {
+   "date": "2026-07-24",
+   "revenue": 8503.98,
+   "orders": 11
+  },
+  {
+   "date": "2026-07-25",
+   "revenue": 4813.54,
+   "orders": 9
+  },
+  {
+   "date": "2026-07-26",
+   "revenue": 7611.57,
+   "orders": 12
+  },
+  {
+   "date": "2026-07-27",
+   "revenue": 6891.31,
+   "orders": 12
+  },
+  {
+   "date": "2026-07-28",
+   "revenue": 6376.88,
+   "orders": 11
+  },
+  {
+   "date": "2026-07-29",
+   "revenue": 4362.72,
+   "orders": 6
+  },
+  {
+   "date": "2026-07-30",
+   "revenue": 4245.42,
+   "orders": 6
+  },
+  {
+   "date": "2026-07-31",
+   "revenue": 8987.97,
+   "orders": 15
+  },
+  {
+   "date": "2026-08-01",
+   "revenue": 2753.68,
+   "orders": 5
+  },
+  {
+   "date": "2026-08-02",
+   "revenue": 10705.69,
+   "orders": 17
+  },
+  {
+   "date": "2026-08-03",
+   "revenue": 3712.97,
+   "orders": 7
+  },
+  {
+   "date": "2026-08-04",
+   "revenue": 898.63,
+   "orders": 1
+  }
+ ],
+ "monthly": [
+  {
+   "month": "2026-06-01",
+   "revenue": 64128.38,
+   "mom": null
+  },
+  {
+   "month": "2026-07-01",
+   "revenue": 194984.06,
+   "mom": 204.05
+  },
+  {
+   "month": "2026-08-01",
+   "revenue": 18070.97,
+   "mom": -90.73
+  }
+ ],
+ "region_totals": [
+  {
+   "region": "EMEA",
+   "revenue": 188937.71,
+   "orders": 321,
+   "aov": 588.59,
+   "share": 68.2
+  },
+  {
+   "region": "AMER",
+   "revenue": 78470.97,
+   "orders": 132,
+   "aov": 594.48,
+   "share": 28.3
+  },
+  {
+   "region": "OTHER",
+   "revenue": 577.07,
+   "orders": 3,
+   "aov": 192.36,
+   "share": 0.2
+  }
+ ],
+ "views_used": [
+  "revenue",
+  "order_count",
+  "average_order_value",
+  "revenue_growth_mom",
+  "weekly_revenue_by_region",
+  "emea_revenue_share"
+ ],
+ "absent": [
+  [
+   "Gross profit / net profit",
+   "no cost or COGS data in this project — only order revenue"
+  ],
+  [
+   "Account classes (Kontoklass)",
+   "no general ledger; that lives in enhanza-analytics (fact_vouchers + dim_accounts)"
+  ],
+  [
+   "Budget variance",
+   "no budget data here; enhanza-analytics has fact_budgets from Fortnox"
+  ],
+  [
+   "Year-over-year",
+   "the dataset spans 46 days (2026-06-20 to 2026-08-04) — there is no prior year to compare"
+  ]
+ ]
+}
