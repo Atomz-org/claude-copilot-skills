@@ -18,8 +18,17 @@ this repository already derives.
                                                <- column-memory drift findings
                                              knowledge/rules/semantic-metrics.md
                                                <- manifest metrics (MetricFlow)
-                                             cubes/<name>/metadata.yml
-                                               <- manifest semantic models + catalog types
+                                             views/<name>/metadata.yml
+                                               <- manifest metrics + saved queries,
+                                                  typed from catalog.json
+
+Metrics compile to MDL *views*, not cubes. A cube measure is `AGG(column)` with the
+metric's filter, ratio, offset, and window silently dropped — measured on
+example-order-revenue-mart, the cube's `order_total` and the metric `revenue` disagreed
+by 4.4% while both looked authoritative. A view carries the whole definition as SQL, so
+`SELECT * FROM revenue` through the engine *is* the metric, for BI and agents alike.
+MetricFlow stays the source of truth (analytics rule 42); the view is a projection with
+a generated marker, regenerated whole (wren rule 4).
 
 Ownership is disjoint on purpose: re-running the importer with `--force` regenerates its
 files and only its files, and this script's files carry a generated-by header naming the
@@ -30,9 +39,12 @@ Generation happens in a scratch directory beside the target and is diffed file-b
 the same reason the other emitters do it: `--check` must write nothing, a re-run must change
 nothing, and the changed-file list is the report. Nothing run-dependent goes into the tree.
 
-Cube types are read from catalog.json — the warehouse's own answer — never guessed (rule 5).
-A measure whose aggregation has no direct SQL projection, or a dimension whose expression is
-not a bare catalog column, is skipped and counted in the payload rather than approximated.
+Types are read from catalog.json — the warehouse's own answer — never guessed (rule 5).
+A metric whose type or parameters have no faithful SQL compilation is skipped and counted
+in the payload rather than approximated. Casts in the generated SQL come from the catalog
+too: wren-core registers a parameterized DECIMAL model column as Utf8 when planning a
+view's statement (fix staged at external/patches/), so every bare decimal measure column
+is CAST to its own catalog type — a no-op at execution, correct at planning.
 
 Inputs that are missing produce a `skip` with the way out, not a failure: no dbt_project, no
 manifest (`dbt parse`), no catalog.json (`dbt docs generate`), no `wren` CLI
@@ -50,6 +62,7 @@ import argparse
 import contextlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -72,18 +85,31 @@ GENERATED_HEADER = (
 # touch. `apps/` is agent-authored GenBI output; `.wren/` and `target/` are derived state.
 UNTOUCHED_DIRS = {"apps", ".wren", "target"}
 
-# MetricFlow aggregation -> SQL projection for a cube measure, with the result type the
-# aggregation itself determines. Anything not listed has no faithful single-expression
-# projection (percentile, median, sum_boolean) and is skipped, counted, and reported.
+# MetricFlow aggregation -> SQL projection. Anything not listed has no faithful
+# single-expression projection (percentile, median, sum_boolean) and is skipped,
+# counted, and reported.
 AGG_SQL = {
-    "sum": ("SUM({x})", "DOUBLE"),
-    "avg": ("AVG({x})", "DOUBLE"),
-    "average": ("AVG({x})", "DOUBLE"),
-    "count": ("COUNT({x})", "BIGINT"),
-    "count_distinct": ("COUNT(DISTINCT {x})", "BIGINT"),
-    "min": ("MIN({x})", None),  # result type = column type, read from the catalog
-    "max": ("MAX({x})", None),
+    "sum": "SUM({x})",
+    "avg": "AVG({x})",
+    "average": "AVG({x})",
+    "count": "COUNT({x})",
+    "count_distinct": "COUNT(DISTINCT {x})",
+    "min": "MIN({x})",
+    "max": "MAX({x})",
 }
+
+# Grain ordering for derived metrics: the view's grain is the coarsest offset any
+# input carries, because a 1-month offset only aligns on a monthly series.
+_GRAIN_ORDER = ("day", "week", "month", "quarter", "year")
+
+_BARE_COLUMN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
+
+# MetricFlow filter templates reference dimensions as {{ Dimension('entity__name') }}.
+_DIM_REF = re.compile(r"\{\{\s*Dimension\(\s*'([A-Za-z0-9_]+)__([A-Za-z0-9_]+)'\s*\)\s*\}\}")
+
+# Saved-query group_by entries are the same call forms, as bare strings.
+_SQ_TIME = re.compile(r"TimeDimension\(\s*'metric_time'\s*,\s*'([a-z]+)'\s*\)\Z")
+_SQ_DIM = re.compile(r"Dimension\(\s*'([A-Za-z0-9_]+)__([A-Za-z0-9_]+)'\s*\)\Z")
 
 
 def use_case_dir(slug: str) -> Optional[Path]:
@@ -143,27 +169,27 @@ def _yml_scalar(value: str) -> str:
     return value if plain else json.dumps(value)
 
 
-def cube_yaml(name: str, base_object: str, description: str,
-              measures: List[Dict[str, str]], dimensions: List[Dict[str, str]],
-              time_dimensions: List[Dict[str, str]]) -> str:
-    lines = [f"name: {_yml_scalar(name)}", f"base_object: {_yml_scalar(base_object)}"]
+def view_yaml(name: str, statement: str, description: str,
+              props: List[Tuple[str, str]]) -> str:
+    """An MDL view file: name + statement (block scalar) + generated marker.
 
-    def block(key: str, items: List[Dict[str, str]]) -> None:
-        if not items:
-            return
-        lines.append(f"{key}:")
-        for item in items:
-            lines.append(f"- name: {_yml_scalar(item['name'])}")
-            lines.append(f"  expression: {_yml_scalar(item['expression'])}")
-            lines.append(f"  type: {_yml_scalar(item['type'])}")
-
-    block("measures", measures)
-    block("dimensions", dimensions)
-    block("time_dimensions", time_dimensions)
+    `source: dbt_metric` is the ownership marker `_generation_owned` matches on, so an
+    orphaned view (its metric was renamed or removed) is deleted on the next sync while
+    a hand-authored view in the same directory is reported `stale` and never touched.
+    """
+    lines = [f"name: {_yml_scalar(name)}", "statement: |"]
+    for ln in statement.splitlines():
+        lines.append(f"  {ln}" if ln.strip() else "")
     lines.append("properties:")
     lines.append(f"  description: {_yml_scalar(description)}")
-    lines.append("  source: dbt_semantic_model")
+    lines.append("  source: dbt_metric")
+    for key, value in props:
+        lines.append(f"  {key}: {_yml_scalar(str(value))}")
     return "\n".join(lines) + "\n"
+
+
+def _indent(sql: str, pad: str = "  ") -> str:
+    return "\n".join(pad + ln if ln.strip() else "" for ln in sql.splitlines())
 
 
 # ---------------------------------------------------------------------------------------
@@ -256,6 +282,9 @@ def metrics_markdown(man: Manifest, slug: str) -> Optional[str]:
         "Metric definitions from the dbt semantic layer (MetricFlow). These are the",
         "canonical definitions — a query answering a metric question should reproduce",
         "the definition below, not invent a variant (one metric, one definition).", "",
+        "Each metric that compiles is also an MDL **view** of the same name:",
+        "`SELECT * FROM <metric>` through the engine returns the governed series",
+        "(metric_time, value). Prefer the view over re-deriving the SQL.", "",
     ]
     for key in sorted(metrics):
         m = metrics[key]
@@ -322,78 +351,525 @@ def _model_name(man: Manifest, unique_id: str) -> str:
     return node.get("name") or unique_id.rsplit(".", 1)[-1]
 
 
-def build_cubes(man: Manifest, catalog: Dict[str, Any],
-                slug: str) -> Tuple[Dict[str, str], List[str]]:
-    """One cube per dbt semantic model, typed from the warehouse catalog."""
-    cubes: Dict[str, str] = {}
-    skipped: List[str] = []
-    rejected: set = set()
-    catalog_nodes = catalog.get("nodes") or {}
+class _SemanticIndex:
+    """Resolved lookups over the manifest's semantic layer and the warehouse catalog.
 
-    for key in sorted(man.semantic_models):
-        sm = man.semantic_models[key]
-        name = sm.get("name") or key.rsplit(".", 1)[-1]
-        if name in cubes or name in rejected:
-            skipped.append(f"{name}: cube name collides across semantic models "
-                           f"({key}); rename one — no winner is emitted silently")
-            cubes.pop(name, None)
-            rejected.add(name)
-            continue
-        model_ids = [u for u in (sm.get("depends_on") or {}).get("nodes", [])
-                     if u.startswith("model.")]
-        if len(model_ids) != 1:
-            skipped.append(f"{name}: semantic model does not sit on exactly one model")
-            continue
-        base_object = _model_name(man, model_ids[0])
-        catalog_cols = {
-            c.lower(): (meta or {}).get("type", "")
-            for c, meta in ((catalog_nodes.get(model_ids[0]) or {}).get("columns") or {}).items()
+    Built once per generation. Everything a compiler needs to turn a metric into SQL —
+    which semantic model a measure lives on, which single dbt model that sits on, the
+    catalog type of a column, which model is the time spine — resolved here so each
+    metric compiler stays a straight-line SQL builder.
+    """
+
+    def __init__(self, man: Manifest, catalog: Dict[str, Any]) -> None:
+        self.man = man
+        self._cat: Dict[str, Dict[str, str]] = {
+            uid: {
+                c.lower(): (meta or {}).get("type", "")
+                for c, meta in ((node or {}).get("columns") or {}).items()
+            }
+            for uid, node in (catalog.get("nodes") or {}).items()
         }
-        if not catalog_cols:
-            skipped.append(f"{name}: {base_object} not in catalog.json")
-            continue
+        self.sms: Dict[str, Dict[str, Any]] = {}
+        self.sm_model: Dict[str, Optional[Tuple[str, str]]] = {}
+        self.measure_sm: Dict[str, str] = {}
+        self.primary_entity: Dict[str, str] = {}
+        for key in sorted(man.semantic_models):
+            sm = man.semantic_models[key]
+            name = sm.get("name") or key.rsplit(".", 1)[-1]
+            self.sms[name] = sm
+            model_ids = [u for u in (sm.get("depends_on") or {}).get("nodes", [])
+                         if u.startswith("model.")]
+            self.sm_model[name] = (
+                (model_ids[0], _model_name(man, model_ids[0]))
+                if len(model_ids) == 1 else None
+            )
+            for m in sm.get("measures") or []:
+                self.measure_sm.setdefault(m.get("name", ""), name)
+            for e in sm.get("entities") or []:
+                if (e.get("type") or "").lower() == "primary":
+                    self.primary_entity.setdefault(e.get("name", ""), name)
+        self.metrics: Dict[str, Dict[str, Any]] = {}
+        for key in sorted(man.metrics):
+            m = man.metrics[key]
+            self.metrics[m.get("name") or key.rsplit(".", 1)[-1]] = m
+        # The time spine comes from the manifest's own declaration
+        # (`time_spine.standard_granularity_column` on a model) — never from a
+        # name convention (rule 5). No declaration means cumulative metrics and
+        # timespine fills are skipped and counted, not guessed.
+        self.spine: Optional[Tuple[str, str]] = None
+        for uid in sorted(man.models()):
+            ts = man.models()[uid].get("time_spine")
+            if isinstance(ts, dict) and ts.get("standard_granularity_column"):
+                self.spine = (_model_name(man, uid), ts["standard_granularity_column"])
+                break
 
-        def column_type(expression: str) -> Optional[str]:
-            return catalog_cols.get(expression.strip().lower())
+    def catalog_type(self, model_uid: str, column: str) -> Optional[str]:
+        return self._cat.get(model_uid, {}).get(column.strip().lower())
 
-        measures, dimensions, time_dimensions = [], [], []
-        for ms in sm.get("measures") or []:
-            agg = (ms.get("agg") or "").lower()
-            template = AGG_SQL.get(agg)
-            expr = (ms.get("expr") or ms.get("name") or "").strip()
-            if not template or not expr:
-                skipped.append(f"{name}.{ms.get('name')}: no faithful projection for agg '{agg}'")
-                continue
-            sql, result_type = template
-            if result_type is None:  # min/max: result type is the column's own
-                result_type = column_type(expr)
-                if not result_type:
-                    skipped.append(f"{name}.{ms.get('name')}: '{expr}' not a catalog column")
-                    continue
-            measures.append({
-                "name": ms["name"], "expression": sql.format(x=expr), "type": result_type,
-            })
-        for dim in sm.get("dimensions") or []:
-            expr = (dim.get("expr") or dim.get("name") or "").strip()
-            ctype = column_type(expr)
-            if not ctype:
-                skipped.append(f"{name}.{dim.get('name')}: '{expr}' not a catalog column")
-                continue
-            entry = {"name": dim["name"], "expression": expr, "type": ctype}
-            if (dim.get("type") or "").lower() == "time":
-                time_dimensions.append(entry)
-            else:
-                dimensions.append(entry)
+    def model_in_catalog(self, model_uid: str) -> bool:
+        return bool(self._cat.get(model_uid))
 
-        if not measures:
-            skipped.append(f"{name}: no projectable measures")
-            continue
-        description = " ".join((sm.get("description") or "").split()) or (
-            f"Projected from dbt semantic model '{name}'."
+
+def _typed_column(idx: _SemanticIndex, model_uid: str, model: str, expr: str) -> str:
+    """Qualify a bare column and make its type visible to the planner.
+
+    wren-core's `map_data_type` matches `decimal`/`numeric` as exact strings, so a
+    parameterized `DECIMAL(28, 6)` from the catalog registers as Utf8 and any aggregate
+    over it fails to plan *inside a view statement* (model queries never plan the user's
+    aggregate, which is why the importer's output works unchanged). CAST to the column's
+    own catalog type is a no-op at execution and correct at planning. Fix staged at
+    external/patches/; measured on example-order-revenue-mart.
+
+    Non-bare expressions pass through untouched: their component columns are the model's
+    own and the planner infers from them.
+    """
+    if not _BARE_COLUMN.match(expr):
+        return expr
+    ctype = idx.catalog_type(model_uid, expr) or ""
+    base = ctype.split("(")[0].strip().lower()
+    if "(" in ctype and base in ("decimal", "numeric"):
+        return f"CAST({model}.{expr} AS {ctype.replace(' ', '')})"
+    return f"{model}.{expr}"
+
+
+def _resolve_dim(idx: _SemanticIndex, base_sm_name: str, entity: str,
+                 dim_name: str) -> Tuple[Optional[str], Optional[Tuple[str, str]], Optional[str]]:
+    """Resolve `entity__dim` to (sql_expr, join_or_None, err).
+
+    Same-model dimensions qualify against the base model. A foreign dimension joins
+    through the base semantic model's foreign entity of the same name — MetricFlow's
+    own join rule — and anything that cannot be resolved that way is an error the
+    caller turns into a skip, never a guess.
+    """
+    target_sm_name = idx.primary_entity.get(entity)
+    if not target_sm_name:
+        return None, None, f"no semantic model has primary entity '{entity}'"
+    sm = idx.sms[target_sm_name]
+    dim = next((d for d in sm.get("dimensions") or [] if d.get("name") == dim_name), None)
+    if dim is None:
+        return None, None, f"dimension '{dim_name}' not on semantic model '{target_sm_name}'"
+    expr = (dim.get("expr") or dim.get("name") or "").strip()
+    tinfo = idx.sm_model.get(target_sm_name)
+    if not tinfo:
+        return None, None, f"semantic model '{target_sm_name}' does not sit on exactly one model"
+    _, tmodel = tinfo
+    col = f"{tmodel}.{expr}" if _BARE_COLUMN.match(expr) else expr
+    if target_sm_name == base_sm_name:
+        return col, None, None
+    base = idx.sms[base_sm_name]
+    fk = next((e for e in base.get("entities") or []
+               if e.get("name") == entity and (e.get("type") or "").lower() == "foreign"), None)
+    if fk is None:
+        return None, None, f"'{base_sm_name}' has no foreign entity '{entity}' to join through"
+    pk = next((e for e in sm.get("entities") or []
+               if e.get("name") == entity and (e.get("type") or "").lower() == "primary"), None)
+    binfo = idx.sm_model.get(base_sm_name)
+    if not binfo or pk is None:
+        return None, None, f"cannot derive the join for entity '{entity}'"
+    fk_expr = (fk.get("expr") or fk.get("name") or "").strip()
+    pk_expr = (pk.get("expr") or pk.get("name") or "").strip()
+    join = (tmodel, f"{binfo[1]}.{fk_expr} = {tmodel}.{pk_expr}")
+    return col, join, None
+
+
+def _render_filter(idx: _SemanticIndex, base_sm_name: str,
+                   flt: Any) -> Tuple[Optional[str], List[Tuple[str, str]], Optional[str]]:
+    """MetricFlow where-template -> (sql, joins, err). Empty filter -> ("", [], None)."""
+    raw = _filter_sql(flt)
+    if not raw:
+        return "", [], None
+    joins: List[Tuple[str, str]] = []
+    errs: List[str] = []
+
+    def sub(m: "re.Match[str]") -> str:
+        col, join, err = _resolve_dim(idx, base_sm_name, m.group(1), m.group(2))
+        if err:
+            errs.append(err)
+            return m.group(0)
+        if join and join not in joins:
+            joins.append(join)
+        return col or m.group(0)
+
+    sql = _DIM_REF.sub(sub, raw)
+    if errs:
+        return None, [], "; ".join(errs)
+    if "{{" in sql:
+        return None, [], f"unsupported template in filter: {raw}"
+    return sql, joins, None
+
+
+def _grouped_metric_sql(idx: _SemanticIndex, metric: Dict[str, Any], value_alias: str,
+                        grain: Optional[str] = None,
+                        dims: Tuple[Tuple[str, str, str], ...] = (),
+                        extra_filters: Tuple[Any, ...] = (),
+                        timespine: bool = True,
+                        ) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]]:
+    """The core builder: a simple metric as (metric_time[, dims], AGG) SQL.
+
+    Everything else composes it — ratio legs, derived inputs, the cumulative daily
+    series, and saved-query cuts all reduce to this with a grain override, extra
+    dimensions, or extra filters.
+
+    `dims` entries are (alias, entity, dim_name). With no dims, a measure that declares
+    `join_to_timespine` gets the spine join and its `fill_nulls_with`, bounded to the
+    observed data range; with dims the fill is not applied (a per-combination fill needs
+    the dimension domain, which SQL from one model cannot know) and `meta["filled"]`
+    says so — visible, not silent.
+    """
+    tp = metric.get("type_params") or {}
+    mref = tp.get("measure") or {}
+    mname = mref.get("name") or ""
+    sm_name = idx.measure_sm.get(mname)
+    if not sm_name:
+        return None, None, f"measure '{mname}' not on any semantic model"
+    sm = idx.sms[sm_name]
+    minfo = idx.sm_model.get(sm_name)
+    if not minfo:
+        return None, None, f"semantic model '{sm_name}' does not sit on exactly one model"
+    model_uid, model = minfo
+    if not idx.model_in_catalog(model_uid):
+        return None, None, f"{model} not in catalog.json — dbt docs generate"
+    measure = next((m for m in sm.get("measures") or [] if m.get("name") == mname), None)
+    agg = ((measure or {}).get("agg") or "").lower()
+    template = AGG_SQL.get(agg)
+    if not template:
+        return None, None, f"no faithful SQL for agg '{agg}'"
+    agg_sql = template.format(
+        x=_typed_column(idx, model_uid, model, (measure.get("expr") or mname).strip())
+    )
+
+    td_name = measure.get("agg_time_dimension") or (sm.get("defaults") or {}).get("agg_time_dimension")
+    td = next((d for d in sm.get("dimensions") or [] if d.get("name") == td_name), None)
+    if td is None:
+        return None, None, f"agg_time_dimension '{td_name}' not found on '{sm_name}'"
+    t_expr = (td.get("expr") or td.get("name") or "").strip()
+    if _BARE_COLUMN.match(t_expr):
+        t_expr = f"{model}.{t_expr}"
+    g = grain or ((td.get("type_params") or {}).get("time_granularity") or "day")
+
+    joins: List[Tuple[str, str]] = []
+    where: List[str] = []
+    for f in (metric.get("filter"), mref.get("filter"), *extra_filters):
+        sql_f, f_joins, err = _render_filter(idx, sm_name, f)
+        if err:
+            return None, None, err
+        if sql_f:
+            where.append(f"({sql_f})")
+            for j in f_joins:
+                if j not in joins:
+                    joins.append(j)
+    dim_cols: List[Tuple[str, str]] = []
+    for alias, entity, dname in dims:
+        col, join, err = _resolve_dim(idx, sm_name, entity, dname)
+        if err:
+            return None, None, err
+        if join and join not in joins:
+            joins.append(join)
+        dim_cols.append((alias, col or ""))
+
+    select = [f"date_trunc('{g}', {t_expr}) AS metric_time"]
+    select += [f"{col} AS {alias}" for alias, col in dim_cols]
+    select.append(f"{agg_sql} AS {value_alias}")
+    frm = model
+    for jmodel, cond in joins:
+        frm += f"\n  JOIN {jmodel} ON {cond}"
+    sql = "SELECT " + ",\n       ".join(select) + f"\nFROM {frm}"
+    if where:
+        sql += "\nWHERE " + "\n  AND ".join(where)
+    sql += "\nGROUP BY " + ", ".join(str(i + 1) for i in range(1 + len(dim_cols)))
+
+    filled = False
+    if timespine and not dims and mref.get("join_to_timespine") and idx.spine:
+        spine_model, spine_col = idx.spine
+        fill = mref.get("fill_nulls_with")
+        value = (f"COALESCE(base.{value_alias}, {fill})" if fill is not None
+                 else f"base.{value_alias}")
+        sql = (
+            f"WITH base AS (\n{_indent(sql)}\n),\n"
+            f"spine AS (\n"
+            f"  SELECT DISTINCT date_trunc('{g}', CAST({spine_col} AS TIMESTAMP)) AS metric_time\n"
+            f"  FROM {spine_model}\n"
+            f")\n"
+            f"SELECT spine.metric_time, {value} AS {value_alias}\n"
+            f"FROM spine LEFT JOIN base ON base.metric_time = spine.metric_time\n"
+            f"WHERE spine.metric_time BETWEEN (SELECT MIN(metric_time) FROM base)\n"
+            f"                            AND (SELECT MAX(metric_time) FROM base)"
         )
-        cubes[name] = cube_yaml(name, base_object, description,
-                                measures, dimensions, time_dimensions)
-    return cubes, skipped
+        filled = True
+    return sql, {"grain": g, "filled": filled}, None
+
+
+def _ratio_metric_sql(idx: _SemanticIndex, metric: Dict[str, Any], name: str,
+                      grain: Optional[str] = None,
+                      dims: Tuple[Tuple[str, str, str], ...] = (),
+                      extra_filters: Tuple[Any, ...] = (),
+                      ) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]]:
+    """Ratio = numerator CTE / denominator CTE joined on the group keys.
+
+    The denominator drives the series (LEFT JOIN) and a missing numerator group is 0,
+    not NULL — a day with no EMEA revenue has share 0, it does not vanish.
+    """
+    tp = metric.get("type_params") or {}
+    legs: Dict[str, Tuple[str, Dict[str, Any]]] = {}
+    for role, alias in (("numerator", "num"), ("denominator", "den")):
+        ref = tp.get(role)
+        if not isinstance(ref, dict) or not ref.get("name"):
+            return None, None, f"{role} is not a metric reference"
+        base = idx.metrics.get(ref["name"])
+        if not base:
+            return None, None, f"{role} metric '{ref['name']}' not found"
+        if (base.get("type") or "").lower() != "simple":
+            return None, None, f"{role} '{ref['name']}' is not a simple metric"
+        sql, meta, err = _grouped_metric_sql(
+            idx, base, alias, grain=grain, dims=dims,
+            extra_filters=(ref.get("filter"), *extra_filters), timespine=False,
+        )
+        if err:
+            return None, None, f"{role}: {err}"
+        legs[role] = (sql or "", meta or {})
+    g = legs["denominator"][1].get("grain")
+    if legs["numerator"][1].get("grain") != g:
+        return None, None, "numerator and denominator compile at different grains"
+    keys = ["metric_time"] + [alias for alias, _, _ in dims]
+    on = " AND ".join(f"num.{k} IS NOT DISTINCT FROM den.{k}" for k in keys)
+    select = [f"den.{k} AS {k}" for k in keys]
+    select.append(
+        f"CAST(COALESCE(num.num, 0) AS DOUBLE) / NULLIF(CAST(den.den AS DOUBLE), 0) AS {name}"
+    )
+    sql = (
+        f"WITH num AS (\n{_indent(legs['numerator'][0])}\n),\n"
+        f"den AS (\n{_indent(legs['denominator'][0])}\n)\n"
+        "SELECT " + ",\n       ".join(select) + "\n"
+        f"FROM den LEFT JOIN num ON {on}"
+    )
+    return sql, {"grain": g}, None
+
+
+def _derived_metric_sql(idx: _SemanticIndex, metric: Dict[str, Any],
+                        name: str) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]]:
+    """Derived metric: one CTE per input (offset inputs shift their metric_time
+    forward by the offset, so an equality join lines the periods up), then the
+    formula verbatim over the joined value columns."""
+    tp = metric.get("type_params") or {}
+    expr = tp.get("expr")
+    inputs = tp.get("metrics") or []
+    if not expr or not inputs:
+        return None, None, "derived metric without expr or input metrics"
+    grain: Optional[str] = None
+    for i in inputs:
+        og = (i.get("offset_window") or {}).get("granularity")
+        if og and og in _GRAIN_ORDER and (
+            grain is None or _GRAIN_ORDER.index(og) > _GRAIN_ORDER.index(grain)
+        ):
+            grain = og
+    ctes: List[Tuple[str, str]] = []
+    base_alias: Optional[str] = None
+    for i in inputs:
+        base = idx.metrics.get(i.get("name") or "")
+        if not base:
+            return None, None, f"input metric '{i.get('name')}' not found"
+        if (base.get("type") or "").lower() != "simple":
+            return None, None, f"input '{i.get('name')}' is not a simple metric"
+        alias = i.get("alias") or i.get("name") or ""
+        sql, meta, err = _grouped_metric_sql(
+            idx, base, alias, grain=grain,
+            extra_filters=(i.get("filter"),), timespine=False,
+        )
+        if err:
+            return None, None, f"input {alias}: {err}"
+        if grain is None:
+            grain = (meta or {}).get("grain")
+        ow = i.get("offset_window") or {}
+        if ow.get("count") and ow.get("granularity"):
+            sql = (
+                f"SELECT metric_time + INTERVAL '{int(ow['count'])} {ow['granularity']}'"
+                f" AS metric_time, {alias}\n"
+                f"FROM (\n{_indent(sql or '')}\n) t"
+            )
+        elif base_alias is None:
+            base_alias = alias
+        ctes.append((alias, sql or ""))
+    base_alias = base_alias or ctes[0][0]
+    with_sql = ",\n".join(f"{a} AS (\n{_indent(s)}\n)" for a, s in ctes)
+    frm = base_alias
+    for a, _ in ctes:
+        if a != base_alias:
+            frm += f"\n  LEFT JOIN {a} ON {a}.metric_time = {base_alias}.metric_time"
+    sql = (
+        f"WITH {with_sql}\n"
+        f"SELECT {base_alias}.metric_time,\n"
+        f"       ({expr}) AS {name}\n"
+        f"FROM {frm}"
+    )
+    return sql, {"grain": grain or "day"}, None
+
+
+def _cumulative_metric_sql(idx: _SemanticIndex, metric: Dict[str, Any],
+                           name: str) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]]:
+    """Cumulative metric: daily series x time spine, windowed by a join condition.
+
+    A join range, not a window frame: `RANGE INTERVAL` frames are the one piece of this
+    SQL whose planner support varies, and the join form means the statement only needs
+    joins, aggregates, and interval arithmetic — which both the planner and every
+    target dialect here handle.
+    """
+    tp = metric.get("type_params") or {}
+    ctp = tp.get("cumulative_type_params") or {}
+    window, g2d = ctp.get("window"), ctp.get("grain_to_date")
+    if not idx.spine:
+        return None, None, ("no time spine — declare time_spine.standard_granularity_column "
+                            "on a model")
+    if bool(window) == bool(g2d):
+        return None, None, "cumulative needs exactly one of window / grain_to_date"
+    inner = {"type_params": {"measure": tp.get("measure")}, "filter": metric.get("filter")}
+    sql, _, err = _grouped_metric_sql(idx, inner, "v", grain="day", timespine=False)
+    if err:
+        return None, None, err
+    spine_model, spine_col = idx.spine
+    if window:
+        cond = (
+            f"daily.metric_time > spine.metric_time"
+            f" - INTERVAL '{int(window['count'])} {window['granularity']}'\n"
+            f"  AND daily.metric_time <= spine.metric_time"
+        )
+    else:
+        cond = (
+            f"daily.metric_time >= date_trunc('{g2d}', spine.metric_time)\n"
+            f"  AND daily.metric_time <= spine.metric_time"
+        )
+    out = (
+        f"WITH daily AS (\n{_indent(sql or '')}\n),\n"
+        f"spine AS (\n"
+        f"  SELECT DISTINCT CAST({spine_col} AS TIMESTAMP) AS metric_time\n"
+        f"  FROM {spine_model}\n"
+        f")\n"
+        f"SELECT spine.metric_time, SUM(daily.v) AS {name}\n"
+        f"FROM spine LEFT JOIN daily\n"
+        f"  ON {cond}\n"
+        f"WHERE spine.metric_time BETWEEN (SELECT MIN(metric_time) FROM daily)\n"
+        f"                            AND (SELECT MAX(metric_time) FROM daily)\n"
+        f"GROUP BY 1"
+    )
+    return out, {"grain": "day"}, None
+
+
+def _saved_query_view(idx: _SemanticIndex, sq: Dict[str, Any],
+                      name: str) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]]:
+    """A saved query is the dimensional cut the analyst already declared in dbt —
+    compile it instead of inventing per-dashboard SQL. One CTE per metric at the
+    query's grain and dimensions, joined on the full group key (null-safe, since a
+    dimension value can legitimately be NULL)."""
+    qp = sq.get("query_params") or {}
+    grain: Optional[str] = None
+    dims: List[Tuple[str, str, str]] = []
+    for gb in qp.get("group_by") or []:
+        m = _SQ_TIME.match(gb.strip())
+        if m:
+            grain = m.group(1)
+            continue
+        m = _SQ_DIM.match(gb.strip())
+        if m:
+            dims.append((m.group(2), m.group(1), m.group(2)))
+            continue
+        return None, None, f"unsupported group_by '{gb}'"
+    where = qp.get("where")
+    dtuple = tuple(dims)
+    ctes: List[Tuple[str, str]] = []
+    for mname in qp.get("metrics") or []:
+        metric = idx.metrics.get(mname)
+        if not metric:
+            return None, None, f"metric '{mname}' not found"
+        mtype = (metric.get("type") or "").lower()
+        if mtype == "simple":
+            sql, _, err = _grouped_metric_sql(
+                idx, metric, mname, grain=grain, dims=dtuple,
+                extra_filters=(where,), timespine=False,
+            )
+        elif mtype == "ratio":
+            sql, _, err = _ratio_metric_sql(
+                idx, metric, mname, grain=grain, dims=dtuple, extra_filters=(where,),
+            )
+        else:
+            return None, None, (f"metric '{mname}' is {mtype} — only simple and ratio "
+                                "compile into a saved-query view")
+        if err:
+            return None, None, f"{mname}: {err}"
+        ctes.append((mname, sql or ""))
+    if not ctes:
+        return None, None, "saved query names no metrics"
+    keys = ["metric_time"] + [alias for alias, _, _ in dims]
+    base = ctes[0][0]
+    frm = base
+    for a, _ in ctes[1:]:
+        on = " AND ".join(f"{a}.{k} IS NOT DISTINCT FROM {base}.{k}" for k in keys)
+        frm += f"\n  LEFT JOIN {a} ON {on}"
+    select = [f"{base}.{k} AS {k}" for k in keys]
+    select += [f"{a}.{a} AS {a}" for a, _ in ctes]
+    with_sql = ",\n".join(f"{a} AS (\n{_indent(s)}\n)" for a, s in ctes)
+    sql = (
+        f"WITH {with_sql}\n"
+        "SELECT " + ",\n       ".join(select) + "\n"
+        f"FROM {frm}"
+    )
+    return sql, {"grain": grain or "day"}, None
+
+
+def build_metric_views(man: Manifest, catalog: Dict[str, Any],
+                       slug: str) -> Tuple[Dict[str, str], List[str]]:
+    """One MDL view per MetricFlow metric and saved query.
+
+    The view *is* the metric: same name, full definition (filter, ratio, offset,
+    window) compiled to SQL the engine plans and `wren context validate` dry-plans
+    with no warehouse. A metric whose type or parameters have no faithful
+    compilation is skipped and counted — never approximated (rule 5).
+    """
+    idx = _SemanticIndex(man, catalog)
+    model_names = {_model_name(man, uid) for uid in man.models()}
+    views: Dict[str, str] = {}
+    skipped: List[str] = []
+
+    def emit(name: str, kind: str,
+             result: Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]],
+             description: str) -> None:
+        sql, meta, err = result
+        if err:
+            skipped.append(f"{name}: {err}")
+            return
+        if name in model_names:
+            skipped.append(f"{name}: collides with a model name — rename the metric")
+            return
+        if name in views:
+            skipped.append(f"{name}: duplicate view name")
+            return
+        props: List[Tuple[str, str]] = [
+            ("metric_type", kind), ("grain", str((meta or {}).get("grain") or "day")),
+        ]
+        views[name] = view_yaml(name, sql or "", description, props)
+
+    for name in sorted(idx.metrics):
+        metric = idx.metrics[name]
+        mtype = (metric.get("type") or "").lower()
+        desc = " ".join((metric.get("description") or "").split()) or (
+            f"dbt metric '{name}' ({mtype})."
+        )
+        if mtype == "simple":
+            emit(name, "simple", _grouped_metric_sql(idx, metric, name), desc)
+        elif mtype == "ratio":
+            emit(name, "ratio", _ratio_metric_sql(idx, metric, name), desc)
+        elif mtype == "derived":
+            emit(name, "derived", _derived_metric_sql(idx, metric, name), desc)
+        elif mtype == "cumulative":
+            emit(name, "cumulative", _cumulative_metric_sql(idx, metric, name), desc)
+        else:
+            skipped.append(f"{name}: metric type '{mtype}' has no faithful view compilation")
+    for key in sorted(man.saved_queries):
+        sq = man.saved_queries[key]
+        name = sq.get("name") or key.rsplit(".", 1)[-1]
+        desc = " ".join((sq.get("description") or "").split()) or (
+            f"dbt saved query '{name}'."
+        )
+        emit(name, "saved_query", _saved_query_view(idx, sq, name), desc)
+    return views, skipped
 
 
 # ---------------------------------------------------------------------------------------
@@ -483,9 +959,9 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
         target.write_text(content, encoding="utf-8")
         knowledge_written += 1
 
-    cubes, cubes_skipped = build_cubes(man, catalog, slug)
-    for name, content in sorted(cubes.items()):
-        target = scratch / "cubes" / name / "metadata.yml"
+    views, views_skipped = build_metric_views(man, catalog, slug)
+    for name, content in sorted(views.items()):
+        target = scratch / "views" / name / "metadata.yml"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
 
@@ -515,8 +991,8 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
     return {
         "models": models,
         "relationships": relationships,
-        "cubes": len(cubes),
-        "cubes_skipped": sorted(cubes_skipped),
+        "views": len(views),
+        "views_skipped": sorted(views_skipped),
         "knowledge_files": knowledge_written,
         "validate_warnings": warnings,
     }
@@ -543,7 +1019,12 @@ def _tree(root: Path) -> Dict[str, bytes]:
 
 
 # Paths the generation pipeline owns wholesale — a stale file here is an orphan of a
-# renamed or deleted dbt node, not somebody's hand work.
+# renamed or deleted dbt node, not somebody's hand work. `cubes/` stays listed although
+# nothing generates cubes any more: committed trees still carry them from before metrics
+# compiled to views, and the prefix is what lets the first regeneration delete them as
+# the orphans they now are. `views/` is deliberately NOT here — generated views are
+# owned by their `source: dbt_metric` marker, so a hand-authored view in the same
+# directory is reported `stale` and never touched.
 _OWNED_PREFIXES = ("models/", "cubes/")
 _OWNED_FILES = {"wren_project.yml", "relationships.yml", "AGENTS.md", ".gitignore"}
 
@@ -664,7 +1145,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(
                 f"{status:<5} {payload['use_case']}: {payload.get('models', 0)} models, "
                 f"{payload.get('relationships', 0)} relationships, "
-                f"{payload.get('cubes', 0)} cubes, "
+                f"{payload.get('views', 0)} metric views, "
                 f"{payload.get('knowledge_files', 0)} knowledge files, "
                 f"{payload.get('validate_warnings', 0)} validate warning(s)"
             )
@@ -674,9 +1155,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(f"  deleted  wren/{rel} (generation-owned orphan)")
             for rel in payload.get("stale", []):
                 print(f"  stale    wren/{rel} (hand-authored; left alone)")
-            skipped = payload.get("cubes_skipped", [])
+            skipped = payload.get("views_skipped", [])
             if skipped:
-                print(f"  {len(skipped)} cube part(s) skipped rather than approximated:")
+                print(f"  {len(skipped)} metric(s) skipped rather than approximated:")
                 for reason in skipped[:10]:
                     print(f"    - {reason}")
 
