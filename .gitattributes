@@ -1,0 +1,39 @@
+# Merge behavior only — no text/eol rules live here.
+#
+# Why this file exists: every recent PR conflicted, and the conflicts fall into
+# two repeatable classes. Class one is append-only list files that every branch
+# adds a line to (.gitignore). Class two is generated artifacts that every
+# branch regenerates (graphify fragment, column memory, ontology outputs) — two
+# regenerations of the same file always collide, and hand-merging them is wrong
+# anyway because the generator is the authority on their content.
+#
+# GitHub's merge UI honors neither `union` nor custom drivers, so a PR can
+# still *show* as conflicting there. These attributes make the local
+# resolution automatic: `git merge origin/main` completes clean, push the
+# result. The recipe stays one command instead of a hand-edit.
+
+# Append-only list files: both branches adding lines is the normal case and
+# line order carries no meaning. `union` keeps both sides instead of
+# conflicting. Caveat: when the two sides rewrite the SAME lines differently,
+# union keeps both variants silently — review the merged file when a hunk was
+# more than an append.
+.gitignore merge=union
+.skillmapignore merge=union
+
+# Generated artifacts: a generator (scripts/use_case_sync.py) produces them and
+# a CI freshness gate (tests/test_use_case_sync.py, `--check`) fails the build
+# when they are stale. The `generated` driver keeps the current branch's
+# version so the merge never stops; correctness then comes from regenerating —
+#
+#   python3 scripts/use_case_sync.py --all
+#
+# — not from the merge. The driver is local git config (git cannot version
+# it): scripts/setup_git_merge_drivers.sh registers it, and
+# scripts/activate_skill_stack.sh runs that on every activation. In a clone
+# that never registered it, these files fall back to a normal merge and can
+# conflict; the resolution is still "take either side, then regenerate".
+skill-packs/*/use-cases/*/artifacts/graphify-fragment.json merge=generated
+skill-packs/*/use-cases/*/ontology/column-memory.json merge=generated
+skill-packs/*/use-cases/*/ontology/index.json merge=generated
+skill-packs/*/use-cases/*/ontology/**/*.ttl merge=generated
+skill-packs/*/use-cases/*/dbt_project/seeds/sample/*.csv merge=generated
