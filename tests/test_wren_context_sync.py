@@ -342,10 +342,84 @@ def test_ratio_filters_the_numerator_leg_only() -> None:
     text = views["emea_share"]
     num = text[text.index("num AS"):text.index("den AS")]
     den = text[text.index("den AS"):]
-    assert "= 'EMEA'" in num and "JOIN dim_customers" in num
+    assert "= 'EMEA'" in num and "LEFT JOIN dim_customers" in num
     assert "= 'EMEA'" not in den and "JOIN dim_customers" not in den
     # A group with no numerator rows is 0, not a vanished row.
     assert "COALESCE(num.num, 0)" in text and "LEFT JOIN num" in text
+
+
+def test_dimension_joins_are_left_outer_like_metricflow() -> None:
+    """An INNER join silently dropped base rows with NULL/unmatched foreign keys —
+    measured: 15 guest-checkout orders and $9,197.66 of revenue vanishing from any
+    foreign-dimension cut. MetricFlow joins dimension sources LEFT OUTER."""
+    views, _ = _views()
+    assert "LEFT JOIN dim_customers" in views["weekly"]
+    assert "\n  JOIN dim_customers" not in views["weekly"]
+
+
+def test_ratio_leg_offsets_skip_instead_of_compiling_the_wrong_metric() -> None:
+    man = _semantic_manifest()
+    man.metrics["metric.p.rev_over_prior"] = {
+        "name": "rev_over_prior", "type": "ratio",
+        "type_params": {
+            "numerator": {"name": "revenue"},
+            "denominator": {"name": "revenue",
+                            "offset_window": {"count": 1, "granularity": "month"}},
+        },
+    }
+    views, skipped = wcs.build_metric_views(man, _catalog(), "toy")
+    assert "rev_over_prior" not in views, (
+        "dropping the offset compiles revenue/revenue == 1.0 — a different metric")
+    assert any("rev_over_prior" in s and "offset" in s for s in skipped)
+
+
+def test_derived_offset_to_grain_and_mixed_granularities_skip() -> None:
+    man = _semantic_manifest()
+    man.metrics["metric.p.mtd_delta"] = {
+        "name": "mtd_delta", "type": "derived",
+        "type_params": {
+            "expr": "revenue - month_start",
+            "metrics": [{"name": "revenue"},
+                        {"name": "revenue", "alias": "month_start",
+                         "offset_to_grain": "month"}],
+        },
+    }
+    man.metrics["metric.p.wow_mom"] = {
+        "name": "wow_mom", "type": "derived",
+        "type_params": {
+            "expr": "wow - mom",
+            "metrics": [
+                {"name": "revenue", "alias": "wow",
+                 "offset_window": {"count": 7, "granularity": "day"}},
+                {"name": "revenue", "alias": "mom",
+                 "offset_window": {"count": 1, "granularity": "month"}},
+            ],
+        },
+    }
+    views, skipped = wcs.build_metric_views(man, _catalog(), "toy")
+    assert "mtd_delta" not in views and "wow_mom" not in views
+    assert any("mtd_delta" in s and "offset_to_grain" in s for s in skipped)
+    # Month-truncated times shifted by 7 days match nothing on an equality join:
+    # the leg would be NULL everywhere while the view validates clean.
+    assert any("wow_mom" in s and "granularities" in s for s in skipped)
+
+
+def test_cumulative_over_non_additive_aggs_skips() -> None:
+    man = _semantic_manifest()
+    man.metrics["metric.p.active_28d"] = {
+        "name": "active_28d", "type": "cumulative",
+        "type_params": {
+            "measure": {"name": "actives"},
+            "cumulative_type_params": {"window": {"count": 28, "granularity": "day"}},
+        },
+    }
+    sm = man.semantic_models["semantic_model.p.orders"]
+    sm["measures"].append({"name": "actives", "agg": "count_distinct",
+                           "expr": "customer_id"})
+    views, skipped = wcs.build_metric_views(man, _catalog(), "toy")
+    assert "active_28d" not in views, (
+        "SUM over daily COUNT(DISTINCT) counts a customer once per active day")
+    assert any("active_28d" in s and "count_distinct" in s for s in skipped)
 
 
 def test_derived_offset_shifts_the_offset_leg_forward() -> None:
@@ -557,6 +631,87 @@ def test_alias_sanitizer_is_a_no_op_without_collisions(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------------------
+# Crash healing — restore the same generation, never clobber newer work
+# ---------------------------------------------------------------------------------------
+
+
+def _artifact(generated_at: str, marker: str) -> str:
+    return json.dumps({"metadata": {"generated_at": generated_at}, "which": marker})
+
+
+def test_heal_restores_the_original_over_its_own_sanitized_copy(tmp_path: Path) -> None:
+    target = tmp_path / "manifest.json"
+    backup = tmp_path / "manifest.json.wren-sync-alias-orig"
+    backup.write_text(_artifact("2026-08-04T10:00:00Z", "original"), encoding="utf-8")
+    target.write_text(_artifact("2026-08-04T10:00:00Z", "sanitized"), encoding="utf-8")
+    wcs._restore_or_discard(backup, target)
+    assert json.loads(target.read_text(encoding="utf-8"))["which"] == "original"
+    assert not backup.exists()
+
+
+def test_heal_never_clobbers_an_artifact_regenerated_after_the_crash(tmp_path: Path) -> None:
+    """Measured failure: SIGKILL strands the backup, the user re-parses, and the old
+    heal silently replaced the FRESH manifest with the pre-crash one — the sync then
+    regenerated from models that no longer exist while reporting success."""
+    target = tmp_path / "manifest.json"
+    backup = tmp_path / "manifest.json.wren-sync-alias-orig"
+    backup.write_text(_artifact("2026-08-04T10:00:00Z", "stale"), encoding="utf-8")
+    target.write_text(_artifact("2026-08-04T11:30:00Z", "fresh"), encoding="utf-8")
+    wcs._restore_or_discard(backup, target)
+    assert json.loads(target.read_text(encoding="utf-8"))["which"] == "fresh"
+    assert not backup.exists(), "the stale backup must be discarded, not kept armed"
+
+
+def test_heal_recovers_a_truncated_target_from_the_backup(tmp_path: Path) -> None:
+    """A kill mid-write leaves invalid JSON at the target; the loader used to die on
+    it before any heal could run, with the pristine backup sitting beside it."""
+    target = tmp_path / "manifest.json"
+    backup = tmp_path / "manifest.json.wren-sync-alias-orig"
+    backup.write_text(_artifact("2026-08-04T10:00:00Z", "original"), encoding="utf-8")
+    target.write_text('{"metadata": {"gen', encoding="utf-8")  # truncated write
+    wcs._restore_or_discard(backup, target)
+    assert json.loads(target.read_text(encoding="utf-8"))["which"] == "original"
+
+
+def test_heal_restores_when_the_target_is_missing(tmp_path: Path) -> None:
+    target = tmp_path / "manifest.json"
+    backup = tmp_path / "manifest.json.wren-sync-alias-orig"
+    backup.write_text(_artifact("2026-08-04T10:00:00Z", "original"), encoding="utf-8")
+    wcs._restore_or_discard(backup, target)
+    assert json.loads(target.read_text(encoding="utf-8"))["which"] == "original"
+
+
+def test_generate_heals_before_reading_the_manifest(tmp_path: Path) -> None:
+    """Renames must come from the true original: computing them from the sanitized
+    copy finds none, and the healed original then crashes the importer — the exact
+    failure the sanitizer exists to prevent, once per hard kill."""
+    dbt_project = tmp_path / "dbt_project"
+    (dbt_project / "target").mkdir(parents=True)
+    manifest_path = dbt_project / "target" / "manifest.json"
+    original = {"metadata": {"generated_at": "t0"}, "nodes": {
+        "model.a.x_dim": {**_model_node("x_dim", "dim"), "schema": "x"},
+        "model.a.y_dim": {**_model_node("y_dim", "dim"), "schema": "y"},
+    }}
+    sanitized = json.loads(json.dumps(original))
+    for uid in sanitized["nodes"]:
+        node = sanitized["nodes"][uid]
+        node["identifier"], node["alias"] = node["alias"], node["name"]
+    # Disk state after a SIGKILL mid-import: sanitized at the manifest name,
+    # original stranded at the backup name.
+    manifest_path.write_text(json.dumps(sanitized), encoding="utf-8")
+    manifest_path.with_suffix(".json.wren-sync-alias-orig").write_text(
+        json.dumps(original), encoding="utf-8")
+
+    wcs._heal_stranded_backups(dbt_project, manifest_path)
+    healed = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert healed["nodes"]["model.a.x_dim"]["alias"] == "dim", "original restored"
+    man = Manifest(healed, "m")
+    assert wcs._unique_wren_names({
+        uid: n for uid, n in man.models().items()
+    }), "renames recomputed from the original — the importer must not see collisions"
+
+
+# ---------------------------------------------------------------------------------------
 # MCP by flow — the sync emits a ready-to-register server, or a named remedy
 # ---------------------------------------------------------------------------------------
 
@@ -591,6 +746,21 @@ def test_mcp_config_skips_with_the_profile_remedy_for_warehouses(tmp_path: Path)
     assert rel is None and "wren profile add" in skip
     assert not (uc / "wren/mcp.json").exists(), (
         "a sync flow must not conjure credentials or emit a config that half-works")
+
+
+def test_migrating_off_duckdb_removes_the_stale_live_config(tmp_path: Path) -> None:
+    """A previously emitted config would keep an already-registered server answering
+    from the frozen local duckdb build after the project moved to a warehouse — no
+    error, no staleness signal. The skip path must remove it, not just decline."""
+    uc = _wren_project(tmp_path, "duckdb")
+    rel, skip = wcs.write_mcp_config("/opt/venv/bin/wren", uc, "toy")
+    assert rel is not None and (uc / "wren/mcp.json").exists()
+    (uc / "wren/wren_project.yml").write_text(
+        "schema_version: 5\nname: toy\ndata_source: bigquery\n", encoding="utf-8")
+    rel, skip = wcs.write_mcp_config("/opt/venv/bin/wren", uc, "toy")
+    assert rel is None and "wren profile add" in skip
+    assert not (uc / "wren/mcp.json").exists(), "stale live config left behind"
+    assert not (uc / "wren/.wren-home").exists(), "stale connection info left behind"
 
 
 def test_derived_mcp_state_never_enters_the_diff(tmp_path: Path) -> None:

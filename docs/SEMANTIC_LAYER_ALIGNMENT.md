@@ -62,13 +62,13 @@ reproduced inside the integration meant to prevent it.
 
 ## Why it diverges
 
-[`build_cubes()`](../scripts/wren_context_sync.py) builds cubes from `sm.get("measures")` —
-the **semantic model's** measures. `man.metrics` never reaches a cube; it goes to
+The now-removed `build_cubes()` built cubes from `sm.get("measures")` — the **semantic
+model's** measures. `man.metrics` never reached a cube; it went to
 `knowledge/rules/semantic-metrics.md` as prose. So the filter, the ratio, and the offset
-window exist only as English for the text-to-SQL layer to read.
+window existed only as English for the text-to-SQL layer to read.
 
-An LLM query might honour them. A `wren cube` query cannot — there is no `revenue` in the MDL
-to honour.
+An LLM query might have honoured them. A `wren cube` query could not — there was no
+`revenue` in the MDL to honour.
 
 The ontology has the same shape of problem, one level up. `concepts_markdown()` writes all 58
 concepts as a markdown bullet list, and the compiled MDL reports `views: 0`. The conformed
@@ -173,5 +173,6 @@ $ .venv-wren/bin/wren context --help
 ```
 
 `wren context validate` is the gate that makes compiled views reviewable without a warehouse.
-`wren cube` provides the structured measure/dimension queries that today bypass every metric
-definition.
+`wren cube` was the structured query surface that bypassed every metric definition — with
+cubes no longer generated, the governed surface for a metric is its view, over SQL and MCP
+alike.

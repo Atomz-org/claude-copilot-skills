@@ -84,7 +84,12 @@ def _oracle_rows(sql: str) -> list[dict]:
     proc = subprocess.run(
         [str(ORACLE_PY), "-c", script], capture_output=True, text=True, timeout=300,
     )
-    if proc.returncode != 0 and "duckdb" in (proc.stderr or ""):
+    # Skip ONLY when the duckdb module is genuinely absent. Every error DuckDB itself
+    # raises also spells "duckdb" in the traceback (duckdb.duckdb.BinderException...),
+    # so matching on that substring turned real failures — a stale oracle after a
+    # schema change, a corrupt file — into yellow skips on exactly the machine this
+    # gate exists for.
+    if proc.returncode != 0 and "No module named" in (proc.stderr or ""):
         pytest.skip(f"duckdb unavailable beside the wren CLI: {proc.stderr.strip()[:120]}")
     assert proc.returncode == 0, f"oracle failed: {proc.stderr}"
     return [json.loads(ln) for ln in proc.stdout.splitlines() if ln.strip()]

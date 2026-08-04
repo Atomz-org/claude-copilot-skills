@@ -576,8 +576,14 @@ def _grouped_metric_sql(idx: _SemanticIndex, metric: Dict[str, Any], value_alias
     select += [f"{col} AS {alias}" for alias, col in dim_cols]
     select.append(f"{agg_sql} AS {value_alias}")
     frm = model
+    # LEFT, because MetricFlow joins dimension sources LEFT OUTER: a base row with a
+    # NULL or unmatched foreign key stays in the aggregate (NULL dimension value).
+    # An INNER join silently dropped those rows — measured on the demo data, 15
+    # guest-checkout orders and $9,197.66 of revenue vanished from any foreign-dim
+    # cut. Filters like `region = 'EMEA'` are unaffected (NULL never equals), and
+    # `region IS NULL` now means what MetricFlow means by it.
     for jmodel, cond in joins:
-        frm += f"\n  JOIN {jmodel} ON {cond}"
+        frm += f"\n  LEFT JOIN {jmodel} ON {cond}"
     sql = "SELECT " + ",\n       ".join(select) + f"\nFROM {frm}"
     if where:
         sql += "\nWHERE " + "\n  AND ".join(where)
@@ -620,6 +626,11 @@ def _ratio_metric_sql(idx: _SemanticIndex, metric: Dict[str, Any], name: str,
         ref = tp.get(role)
         if not isinstance(ref, dict) or not ref.get("name"):
             return None, None, f"{role} is not a metric reference"
+        # A leg-level offset would compile as the plain metric with the offset
+        # silently dropped — `revenue / revenue offset 1 month` becoming exactly 1.0.
+        if ref.get("offset_window") or ref.get("offset_to_grain"):
+            return None, None, (f"{role} '{ref['name']}' carries an offset — "
+                                "no faithful compilation")
         base = idx.metrics.get(ref["name"])
         if not base:
             return None, None, f"{role} metric '{ref['name']}' not found"
@@ -660,13 +671,28 @@ def _derived_metric_sql(idx: _SemanticIndex, metric: Dict[str, Any],
     inputs = tp.get("metrics") or []
     if not expr or not inputs:
         return None, None, "derived metric without expr or input metrics"
-    grain: Optional[str] = None
+    # An offset leg only lines up on an equality join when the series grain equals
+    # the offset granularity: month-truncated times shifted by 7 days match nothing,
+    # so the leg would be NULL on every row while the view validates clean. Mixed
+    # offset granularities therefore have no faithful single-grain compilation, and
+    # `offset_to_grain` has no compilation here at all — both skip, counted, rather
+    # than shipping a view that quietly computes a different metric.
+    offset_grains = set()
     for i in inputs:
+        if i.get("offset_to_grain"):
+            return None, None, (f"input '{i.get('alias') or i.get('name')}' uses "
+                                "offset_to_grain — no faithful compilation")
         og = (i.get("offset_window") or {}).get("granularity")
-        if og and og in _GRAIN_ORDER and (
-            grain is None or _GRAIN_ORDER.index(og) > _GRAIN_ORDER.index(grain)
-        ):
-            grain = og
+        if og:
+            if og not in _GRAIN_ORDER:
+                return None, None, f"unknown offset granularity '{og}'"
+            offset_grains.add(og)
+    if len(offset_grains) > 1:
+        return None, None, (
+            "offset windows at different granularities ("
+            + ", ".join(sorted(offset_grains))
+            + ") cannot align on one series grain — no faithful compilation")
+    grain: Optional[str] = next(iter(offset_grains), None)
     ctes: List[Tuple[str, str]] = []
     base_alias: Optional[str] = None
     for i in inputs:
@@ -726,6 +752,19 @@ def _cumulative_metric_sql(idx: _SemanticIndex, metric: Dict[str, Any],
                             "on a model")
     if bool(window) == bool(g2d):
         return None, None, "cumulative needs exactly one of window / grain_to_date"
+    # The window is applied by re-aggregating daily values with SUM, which is only
+    # correct for aggs that are additive across days. A daily COUNT(DISTINCT) summed
+    # over 28 days counts a customer once per active day; daily AVG/MIN/MAX summed is
+    # not any statistic at all. Those need the distinct/avg computed over the joined
+    # window itself — no faithful compilation here, so: skipped and counted.
+    mref = tp.get("measure") or {}
+    m_sm = idx.measure_sm.get(mref.get("name") or "")
+    measure = next((m for m in (idx.sms.get(m_sm) or {}).get("measures") or []
+                    if m.get("name") == mref.get("name")), {})
+    agg = (measure.get("agg") or "").lower()
+    if agg not in ("sum", "count"):
+        return None, None, (f"cumulative over agg '{agg}' cannot be re-aggregated "
+                            "by summing daily values — no faithful compilation")
     inner = {"type_params": {"measure": tp.get("measure")}, "filter": metric.get("filter")}
     sql, _, err = _grouped_metric_sql(idx, inner, "v", grain="day", timespine=False)
     if err:
@@ -882,6 +921,61 @@ def build_metric_views(man: Manifest, catalog: Dict[str, Any],
 # ---------------------------------------------------------------------------------------
 
 
+def _restore_or_discard(backup: Path, target: Path) -> None:
+    """Heal a backup stranded by a hard kill — without destroying newer work.
+
+    A finally clause does not run on SIGKILL, so a sanitized copy (or nothing, or a
+    truncated write) can be at the target with the original stranded at the backup
+    name. Blindly restoring the backup was measured to destroy a manifest the user
+    re-parsed *after* the crash — the sync then regenerated from pre-crash models
+    while reporting success. So: restore only when the target is the sanitized copy
+    of the SAME dbt invocation (equal `metadata.generated_at`), or is missing or
+    unreadable; a target from a different invocation is newer work, and the stale
+    backup is discarded instead.
+    """
+    if not backup.exists():
+        return
+    if not target.exists():
+        backup.replace(target)
+        return
+    try:
+        current = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        # The kill landed mid-write; the backup is the only intact artifact.
+        backup.replace(target)
+        return
+    try:
+        original = json.loads(backup.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        backup.unlink(missing_ok=True)
+        return
+    same_generation = (
+        (current.get("metadata") or {}).get("generated_at")
+        == (original.get("metadata") or {}).get("generated_at")
+    )
+    if same_generation:
+        backup.replace(target)
+    else:
+        backup.unlink()
+
+
+def _heal_stranded_backups(dbt_project: Path, manifest_path: Path) -> None:
+    """Run both sanitizers' heals before anything reads the artifacts.
+
+    Ordering is the point: `generate()` loads the manifest before either context
+    manager is entered, so healing only inside the CMs meant a post-crash run
+    computed alias renames from the already-sanitized file (finding none), healed
+    the colliding original back, and handed it to the importer — the exact crash
+    the sanitizer exists to prevent. And a truncated manifest died in the loader
+    before any CM could heal it.
+    """
+    rr = dbt_project / "target" / "run_results.json"
+    _restore_or_discard(rr.with_suffix(".json.wren-sync-orig"), rr)
+    _restore_or_discard(
+        manifest_path.with_suffix(".json.wren-sync-alias-orig"), manifest_path
+    )
+
+
 @contextlib.contextmanager
 def _model_level_tests_hidden(dbt_project: Path, man: Manifest) -> Iterator[None]:
     """Hide model-level test rows from run_results.json for the duration of the import.
@@ -898,11 +992,9 @@ def _model_level_tests_hidden(dbt_project: Path, man: Manifest) -> Iterator[None
     rr = dbt_project / "target" / "run_results.json"
     backup = rr.with_suffix(".json.wren-sync-orig")
     # A finally clause does not run on SIGKILL. If a previous run was killed inside the
-    # window, the sanitized copy (or nothing) is on disk and the original is stranded at
-    # the backup name — heal that first, before reading, and never let a fresh rename
-    # clobber the stranded copy silently.
-    if backup.exists():
-        backup.replace(rr)
+    # window, heal first, before reading — and only in a way that cannot clobber an
+    # artifact regenerated after the crash (_restore_or_discard).
+    _restore_or_discard(backup, rr)
     if not rr.exists():
         yield
         return
@@ -942,8 +1034,7 @@ def _colliding_aliases_disambiguated(manifest_path: Path, man: Manifest) -> Iter
     discipline as `_model_level_tests_hidden`, including healing a stranded backup.
     """
     backup = manifest_path.with_suffix(".json.wren-sync-alias-orig")
-    if backup.exists():
-        backup.replace(manifest_path)
+    _restore_or_discard(backup, manifest_path)
     models = {uid: n for uid, n in man.models().items()
               if str((n.get("config") or {}).get("materialized", "")).lower() != "ephemeral"}
     renames = _unique_wren_names(models)
@@ -1015,6 +1106,10 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
     scratch.mkdir(parents=True)
 
     dbt_project = use_case / "dbt_project"
+    # Heal any hard-kill leftovers BEFORE the manifest is read: renames must be
+    # computed from the true original, and a truncated file must be recovered
+    # rather than dying in the loader with a pristine backup sitting beside it.
+    _heal_stranded_backups(dbt_project, manifest_path)
     man = Manifest.load(str(manifest_path))
     init = run_wren(cli, ["context", "init", "--empty", "--path", str(scratch)])
     if init.returncode != 0:
@@ -1210,6 +1305,12 @@ def write_mcp_config(cli: str, use_case: Path, slug: str) -> Tuple[Optional[str]
         return None, "no wren/ project yet"
     ds = _project_data_source(wren_dir)
     if ds != "duckdb":
+        # A previously emitted config would keep serving the OLD duckdb warehouse
+        # after the project migrated — an already-registered server answering from a
+        # frozen local build with no error. "Never a config that half-works" means
+        # removing it, not just declining to rewrite it.
+        (wren_dir / "mcp.json").unlink(missing_ok=True)
+        shutil.rmtree(wren_dir / ".wren-home", ignore_errors=True)
         return None, (
             f"data_source '{ds or '?'}' needs credentials — wren profile add "
             f"<name>, then: claude mcp add wren-{slug} -- {cli} serve mcp "
@@ -1267,6 +1368,10 @@ def sync(slug: str, manifest_arg: Optional[str], check: bool) -> Dict[str, Any]:
             "the project's own target; re-run dbt parse there instead"
         )
         return payload
+    # Heal before the existence check: a kill between the sanitizer's rename and its
+    # write leaves the manifest missing with the intact original at the backup name —
+    # that state must recover here, not demand a re-parse.
+    _heal_stranded_backups(use_case / "dbt_project", manifest_path)
     if not manifest_path.exists():
         payload["reason"] = "no manifest — dbt parse (or artifacts/refresh.sh)"
         return payload
