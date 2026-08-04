@@ -134,6 +134,47 @@ Day to day:
 Agents cannot push here: `.claude/hooks/block-dangerous-git.sh` blocks every `git push`,
 and `gh stack submit` pushes. An agent prepares the branches and commits; a human submits.
 
+## The rebase trap — read this before your first `gh stack rebase`
+
+The `generated` merge driver is `merge.generated.driver true`, which means "leave `%A`
+alone". Under `git merge`, `%A` is your branch, so your regenerated artifact wins. **Under
+`git rebase`, the roles invert**: rebase replays your commits onto upstream, so `%A` is
+*upstream* and the driver silently keeps upstream's artifact and drops yours.
+
+Measured, not theorized:
+
+| Operation | Which side survives |
+|---|---|
+| `git merge <trunk>` | yours — correct |
+| `git rebase <trunk>` | **upstream's — your regeneration is discarded** |
+
+Stacks rebase constantly: `gh stack rebase`, and GitHub's automatic retarget when a lower
+layer merges. So this is not an edge case here, it is the normal path.
+
+It fails loudly rather than silently — the artifact-currency gate
+(`use_case_sync.py --all --check`) goes red because the artifacts no longer match the
+sources — but the message points at staleness, not at the rebase that caused it.
+
+**The rule:** after any rebase that touched a generated path, regenerate before pushing.
+
+```bash
+gh stack rebase
+python3 scripts/use_case_sync.py --use-case <slug>   # in the top layer
+```
+
+This is the same doctrine `.gitattributes` already states — correctness comes from
+regenerating, never from the merge — extended to the operation stacks depend on.
+
+## CI cost, and why layers are capped at four
+
+The suite runs on every push to every branch, and `gh stack submit` pushes every layer at
+once. Three workflows (`ci.yml`, `ci-lite.yml`, `ci-quality-gate.yml`) declare no
+`concurrency` group, so nothing is cancelled: a four-layer stack multiplies an already
+multi-run PR pipeline by four.
+
+That is the real reason for the four-layer cap and for preferring one more commit over one
+more layer. If a stack needs a fifth layer, it is two deliveries.
+
 ## Concurrency across clients
 
 Two clients in flight at once is the normal case, and nothing about it is special:
@@ -156,7 +197,9 @@ own them. Do not widen that selector.
 3. One deliverable, one stack, at most four layers.
 4. Generated artifacts regenerate in the top layer only.
 5. Merge bottom-up. Never merge a layer whose parent is still open.
-6. One change lands from one checkout — this remote is cloned more than once
+6. Regenerate after any rebase that touched a generated path — the merge driver keeps the
+   wrong side under rebase.
+7. One change lands from one checkout — this remote is cloned more than once
    (`code-skills` and `claude-copilot-skills`), and starting the same work in both produces
    add/add conflicts between near-identical files.
-7. A stack that stops being reviewable in a week is too big; split it.
+8. A stack that stops being reviewable in a week is too big; split it.
