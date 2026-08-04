@@ -17,6 +17,7 @@ So the five are one command, in dependency order, and each stage reports what it
     graphify   the code graph, rebuilt             <- opt-in; must precede the merge
     graph      graphify fragment, merged           <- manifest
     alignment  the verdict                         <- project files + manifest
+    wren       wren/ WrenAI semantic-layer project <- manifest + catalog + ontology artifacts
 
 **A stage that cannot run says so and does not fail.** A fresh use-case has no manifest, and
 half of these need one; a checkout without sqlglot cannot parse columns. Reporting `skip`
@@ -362,6 +363,50 @@ def stage_alignment(use_case: Path, slug: str, manifest: Optional[Path]) -> Stag
     return Stage("alignment", OK, f"no errors, {warnings} warning(s){note}")
 
 
+def stage_wren(use_case: Path, slug: str, manifest: Optional[Path], check: bool) -> Stage:
+    """`wren/` — the WrenAI semantic-layer projection: native dbt import plus enrichment.
+
+    The heavy lifting is a subprocess because the emitter needs the `wren` CLI, and CLI
+    resolution (env, PATH, .venv-wren) plus every skip decision lives in one place there.
+    The emitter reports `skip` in its payload rather than by exit code, so a runner without
+    wrenai — or a use-case without a catalog.json — stays green with the reason on record.
+    """
+    cmd = [
+        sys.executable, str(REPO / "scripts/wren_context_sync.py"),
+        "--use-case", slug, "--format", "json",
+    ]
+    if manifest:
+        cmd += ["--manifest", str(manifest)]
+    if check:
+        cmd += ["--check"]
+    # 1800, not 600: the emitter budgets 300s per wren call and makes four. An outer
+    # timeout below that sum SIGKILLs the child inside the run_results sanitizer window,
+    # which a finally clause cannot survive.
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=1800)
+    payload = _first_json_line(proc.stdout)
+    if payload is None:
+        tail = (proc.stderr or proc.stdout).strip().splitlines()
+        return Stage("wren", FAIL, tail[-1] if tail else f"exit {proc.returncode}")
+
+    if payload["status"] == "skip":
+        return Stage("wren", SKIP, payload.get("reason", "unavailable"))
+
+    changed = [
+        str((use_case / "wren" / rel).relative_to(REPO))
+        for rel in payload.get("changed", []) + payload.get("deleted", [])
+    ]
+    detail = (
+        f"{payload.get('models', 0)} models, {payload.get('relationships', 0)} "
+        f"relationships, {payload.get('cubes', 0)} cubes, "
+        f"{payload.get('knowledge_files', 0)} knowledge files, "
+        f"{payload.get('validate_warnings', 0)} validate warning(s)"
+    )
+    stale = payload.get("stale", [])
+    if stale:
+        detail += f"; {len(stale)} hand-authored file(s) left alone"
+    return Stage("wren", CHANGED if changed else OK, detail, changed)
+
+
 # ---------------------------------------------------------------------------------------
 # Scaffolding a new use-case
 # ---------------------------------------------------------------------------------------
@@ -501,6 +546,10 @@ def sync(slug: str, check: bool, manifest_arg: Optional[str],
         run("graphify", lambda: stage_graphify_update(check))
     run("graph", lambda: stage_graph(use_case, manifest, check))
     run("alignment", lambda: stage_alignment(use_case, slug, manifest))
+    # Last on purpose: it projects the artifacts the earlier stages just refreshed
+    # (index.json, column-memory.json) into the Wren project, so running it earlier
+    # would enrich from the previous generation.
+    run("wren", lambda: stage_wren(use_case, slug, manifest, check))
 
     changed = [c for s in stages for c in s.changed]
     failed = [s for s in stages if s.status == FAIL]
@@ -525,7 +574,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--pack", default="dbt-skills", help="pack that owns a new use-case")
     p.add_argument("--manifest", help="manifest.json (default: <project>/target/manifest.json)")
     p.add_argument("--stage", action="append",
-                   choices=("ontology", "columns", "seeds", "graphify", "graph", "alignment"),
+                   choices=("ontology", "columns", "seeds", "graphify", "graph",
+                            "alignment", "wren"),
                    help="run only this stage (repeatable)")
     p.add_argument("--graphify-update", action="store_true",
                    help="rebuild the code graph before merging dbt lineage into it; never "

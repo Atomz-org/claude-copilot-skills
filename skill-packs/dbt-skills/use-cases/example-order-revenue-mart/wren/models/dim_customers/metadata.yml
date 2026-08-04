@@ -1,0 +1,71 @@
+name: dim_customers
+table_reference:
+  catalog: dev
+  schema: marts
+  table: dim_customers
+columns:
+- name: customer_id
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: customer_email
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Contact email. PII — masked outside prod.
+- name: country_code
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: ISO-3166 alpha-2, lowercased.
+- name: region
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Sales region derived from the customer''s country code by the mapping
+      owned by Finance
+
+      Analytics: EMEA, AMER, or OTHER.
+
+
+      `OTHER` is the deliberate catch-all for an unmapped country. It is never null,
+      so a new
+
+      market shows up as an `accepted_values` failure on this column rather than as
+      a
+
+      `not_null` failure three models downstream.
+
+
+      Guest checkouts have no customer and therefore no region. Those rows carry a
+      null region
+
+      and are still counted in revenue — see `fct_orders.customer_id`.'
+    accepted_values:
+    - EMEA
+    - AMER
+    - OTHER
+    dbt_tests: accepted_values
+    dbt_test_status: verified
+- name: first_seen_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Timestamp of the customer's first Shopify record.
+cached: false
+properties:
+  description: One row per customer, current state. Region is derived from the Shopify
+    country_code; customers with an unmapped country fall into 'OTHER'.
+  dbt_layer: mart
+  dbt_unique_id: model.analytics.dim_customers
+  dbt_resource_type: model
+primary_key: customer_id

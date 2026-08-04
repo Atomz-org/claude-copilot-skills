@@ -1,0 +1,41 @@
+Upstream defect: `wren context import dbt` crashes on model-level dbt tests
+===========================================================================
+
+Found while integrating WrenAI 0.13.2 into code-skills, against
+skill-packs/dbt-skills/use-cases/example-order-revenue-mart (a dbt project with
+singular and model-level dbt_utils tests, both of which carry `column_name: None`
+in manifest.json).
+
+`_build_verified_constraint_lines` groups test events by `(model_name, column_name)`
+and sorts the dict items. A None column name makes `sorted()` compare None to str:
+
+    TypeError: '<' not supported between instances of 'NoneType' and 'str'
+
+The importer already skips columnless entries *inside* the loop (`if not
+column_name: continue`) — the crash is only in the sort key, one line earlier.
+
+Local workaround: scripts/wren_context_sync.py filters model-level test rows out
+of run_results.json for the duration of the import (see
+`_model_level_tests_hidden`). Remove that workaround when this fix ships in the
+pinned wrenai wheel, and bump the pin in requirements.txt together with the
+external/WrenAI submodule SHA.
+
+To apply to the fork (PackMaaan/WrenAI) and send upstream:
+
+    cd external/WrenAI
+    git apply ../patches/wrenai-dbt-import-columnless-tests.patch
+    # commit on a branch, push to the fork, open a PR against Canner/WrenAI
+
+--- a/core/wren/src/wren/dbt.py
++++ b/core/wren/src/wren/dbt.py
+@@ -1198,7 +1198,9 @@ def _build_verified_constraint_lines(test_events):
+             entry["values"] = event.get("values") or []
+
+     lines: list[str] = []
+-    for (model_name, column_name), entry in sorted(grouped.items()):
++    for (model_name, column_name), entry in sorted(
++        grouped.items(), key=lambda kv: (kv[0][0], kv[0][1] or "")
++    ):
+         tests = entry["tests"]
+         if not column_name:
+             continue

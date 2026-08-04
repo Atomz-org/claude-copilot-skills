@@ -1,0 +1,73 @@
+name: stg_shopify__orders
+table_reference:
+  catalog: dev
+  schema: staging
+  table: stg_shopify__orders
+columns:
+- name: order_id
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Primary key. Shopify order id.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: customer_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: FK to stg_shopify__customers. Null for guest checkouts (~3%).
+    dbt_tests: not_null_proportion
+    dbt_test_status: verified
+- name: payment_status
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Shopify `financial_status`, lowercased and trimmed.
+- name: currency_code
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: order_amount
+  type: DECIMAL(28, 6)
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Gross order total in the order's own currency, before conversion.
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: is_test_order
+  type: BOOLEAN
+  is_calculated: false
+  not_null: true
+  properties:
+    description: True for Shopify test orders. Filtered out in intermediate.
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: ordered_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Order creation timestamp, UTC.
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: _loaded_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Fivetran sync timestamp. Used for freshness and arrival-lag measurement.
+cached: false
+properties:
+  description: One row per Shopify order, renamed and cast. Soft-deleted rows are
+    excluded here; test orders are NOT — they carry `is_test_order` and are filtered
+    in the intermediate layer, because a downstream QA model legitimately needs them.
+  dbt_layer: staging
+  dbt_unique_id: model.analytics.stg_shopify__orders
+  dbt_resource_type: model
+primary_key: order_id

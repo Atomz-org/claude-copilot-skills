@@ -1,0 +1,56 @@
+name: raw_order_lines
+table_reference:
+  catalog: dev
+  schema: raw
+  table: raw_order_lines
+columns:
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: order_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: product_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: quantity
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: price
+  type: DECIMAL(28, 6)
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: discount
+  type: DECIMAL(28, 6)
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: _fivetran_synced
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: _fivetran_deleted
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: One row per line item on an order.
+  dbt_layer: raw
+  dbt_unique_id: source.analytics.shopify.order_lines
+  dbt_resource_type: source
+primary_key: id

@@ -5,6 +5,13 @@ dbt_packages/
 logs/
 .user.yml
 
+# WrenAI derived state. `wren/target/` is already covered by the target/ rule above;
+# `.wren/` is the CLI's local memory index (LanceDB) and app registry, and `.wren.tmp/`
+# is scripts/wren_context_sync.py's scratch generation dir, deleted on exit but ignored
+# so an interrupted run cannot stage half a generation.
+.wren/
+.wren.tmp/
+
 # Credentials. A real project's profiles.yml lives in ~/.dbt/ and is never committed.
 profiles.yml
 .env

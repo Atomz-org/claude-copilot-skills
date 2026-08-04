@@ -9,6 +9,10 @@ This repository is a merged standalone scaffold that combines:
 
 - Git automation and reusable workflow infrastructure from `git-skills`
 - End-to-end dbt Core analytics engineering framework from `dbt-skill` (compat alias: `senior-analytics-engineer`)
+- The WrenAI semantic layer / GenBI engine as the serving tier over dbt use-cases —
+  source pinned at `external/WrenAI`, runtime pinned in `requirements.txt`, agent surface
+  in `skill-packs/wren-skills/`. See [docs/WRENAI_INTEGRATION.md](docs/WRENAI_INTEGRATION.md)
+  and run `./skill-packs/wren-skills/demo/run_wren_demo.sh` for the local end-to-end proof.
 
 It keeps all major assets from both repositories: agents, skills, commands, rules,
 scripts, templates, references, CI workflows, and tests.
@@ -63,7 +67,7 @@ no Node) reports `skipped` rather than failing.
 The gate worth understanding before you make your first edit is **activation drift**.
 `.claude/`, `references/`, and `templates/` are generated from `skill-packs/<pack>/`; an edit
 made directly in one of them works until the next activation silently reverts it. Edit the
-pack, then re-run `./scripts/activate_skill_stack.sh dbt-skills`.
+pack, then re-run `./scripts/activate_skill_stack.sh dbt-skills wren-skills`.
 
 ## Slash commands
 
@@ -127,7 +131,7 @@ materialised copy directly is silently reverted on the next activation.
 To activate a stack into live `.claude/` paths:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills
+./scripts/activate_skill_stack.sh dbt-skills wren-skills
 ```
 
 Future packs can follow the same pattern, for example:

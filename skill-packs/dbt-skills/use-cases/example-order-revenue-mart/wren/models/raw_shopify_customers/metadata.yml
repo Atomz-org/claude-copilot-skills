@@ -1,0 +1,46 @@
+name: raw_shopify_customers
+table_reference:
+  catalog: dev
+  schema: raw
+  table: raw_customers
+columns:
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: email
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: country_code
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: created_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: _fivetran_synced
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: _fivetran_deleted
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: One row per customer, current state. Mutable — snapshotted separately.
+  dbt_layer: raw
+  dbt_unique_id: source.analytics.shopify.customers
+  dbt_resource_type: source
+primary_key: id

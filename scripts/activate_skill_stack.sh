@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-stack="${1:-dbt-skills}"
+# One or more domain stacks, layered in argument order over the shared base.
+# `activate_skill_stack.sh dbt-skills wren-skills` composes the analytics stack with the
+# WrenAI serving tier; a single argument behaves exactly as before. Later stacks win on
+# a filename collision — `scripts/skill_map_scan.py --check` is the gate that reports one.
+# The no-arg default is the SAME stack list CI activates, so the documented bare
+# invocation and the CI drift gate can never diverge.
+stacks=("$@")
+if [[ ${#stacks[@]} -eq 0 ]]; then
+  stacks=("dbt-skills" "wren-skills")
+fi
 root="$(cd "$(dirname "$0")/.." && pwd)"
 shared_pack="${root}/skill-packs/github-skills/.claude"
-domain_pack="${root}/skill-packs/${stack}/.claude"
 live_claude="${root}/.claude"
 
 if [[ ! -d "${shared_pack}" ]]; then
@@ -12,11 +20,13 @@ if [[ ! -d "${shared_pack}" ]]; then
   exit 1
 fi
 
-if [[ ! -d "${domain_pack}" ]]; then
-  echo "Unknown stack '${stack}'. Available stacks:" >&2
-  ls -1 "${root}/skill-packs" >&2
-  exit 1
-fi
+for stack in "${stacks[@]}"; do
+  if [[ ! -d "${root}/skill-packs/${stack}/.claude" ]]; then
+    echo "Unknown stack '${stack}'. Available stacks:" >&2
+    ls -1 "${root}/skill-packs" >&2
+    exit 1
+  fi
+done
 
 mkdir -p "${live_claude}/commands" "${live_claude}/agents" "${live_claude}/skills" "${live_claude}/rules" "${live_claude}/hooks"
 
@@ -30,13 +40,15 @@ copy_component() {
   return 0
 }
 
-# Keep backward compatibility by layering shared first, then domain.
+# Keep backward compatibility by layering shared first, then each domain stack in order.
 for component in commands agents rules skills hooks; do
   copy_component "${shared_pack}/${component}" "${live_claude}/${component}"
 done
 
-for component in commands agents rules skills; do
-  copy_component "${domain_pack}/${component}" "${live_claude}/${component}"
+for stack in "${stacks[@]}"; do
+  for component in commands agents rules skills; do
+    copy_component "${root}/skill-packs/${stack}/.claude/${component}" "${live_claude}/${component}"
+  done
 done
 
 # Reference docs and artifact templates ship at the pack root, not under .claude/. Skills,
@@ -44,7 +56,11 @@ done
 # (one level deeper from skills/). Those paths resolve to the pack root while the file lives
 # in the pack, and to the repository root once the pack is activated. Materialising both
 # directories here keeps a single relative link valid in both locations.
-for pack in "${shared_pack%/.claude}" "${domain_pack%/.claude}"; do
+asset_packs=("${shared_pack%/.claude}")
+for stack in "${stacks[@]}"; do
+  asset_packs+=("${root}/skill-packs/${stack}")
+done
+for pack in "${asset_packs[@]}"; do
   for asset in references templates; do
     if [[ -d "${pack}/${asset}" ]]; then
       mkdir -p "${root}/${asset}"
@@ -66,4 +82,4 @@ if [[ -x "${root}/scripts/setup_git_merge_drivers.sh" ]]; then
   "${root}/scripts/setup_git_merge_drivers.sh" >/dev/null
 fi
 
-echo "Activated stack '${stack}' with shared github-skills base."
+echo "Activated stack(s) '${stacks[*]}' with shared github-skills base."

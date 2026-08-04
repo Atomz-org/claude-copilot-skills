@@ -1,0 +1,55 @@
+---
+description: Serve a use-case through the WrenAI semantic layer — regenerate, validate, and query its wren/ project
+argument-hint: "[use-case slug, defaults to example-order-revenue-mart] [question]"
+---
+
+Serve through WrenAI: **$ARGUMENTS**
+
+---
+
+## 0. Load the skill
+
+Follow the `wren-genbi` skill and `wren-rules.md`. The `wren` CLI resolves from
+`.venv-wren/bin/wren`; if missing: `python3 -m venv .venv-wren && .venv-wren/bin/pip
+install -r requirements.txt`.
+
+## 1. Regenerate the wren/ project (only if inputs changed)
+
+```bash
+python3 scripts/use_case_sync.py --use-case <slug> --stage wren
+```
+
+A `skip` names its remedy (`dbt parse`, `dbt docs generate`, or installing the CLI). A
+`changed` result must be committed — the wren/ project is a derived artifact like
+`ontology/`.
+
+## 2. Validate and build
+
+```bash
+wren context validate --path skill-packs/*/use-cases/<slug>/wren
+wren context build    --path skill-packs/*/use-cases/<slug>/wren
+```
+
+## 3. Answer the question through the layer
+
+Read the context first (`wren context instructions`, `knowledge/rules/*.md`) — the
+conformed column names, metric definitions, and drift caveats are there, not in the raw
+schema. Then:
+
+```bash
+wren dry-plan --sql '...'          # plan check, no database
+wren query --sql '...' --mdl <slug>/wren/target/mdl.json \
+    --connection-info '{"datasource":"duckdb","url":"<dbt_project dir>","format":"duckdb"}'
+wren cube query --cube <name> --measures ... --dimensions ...   # for metric questions
+```
+
+For a metric question, prefer the cube (the MetricFlow projection) over ad-hoc SQL.
+
+## 4. End-to-end demo
+
+```bash
+./skill-packs/wren-skills/demo/run_wren_demo.sh
+```
+
+Builds the example mart with dbt, regenerates its wren/ project, and cross-checks a
+governed query against direct DuckDB — the pass/fail is printed at the end.
