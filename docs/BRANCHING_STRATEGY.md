@@ -52,8 +52,11 @@ feat/ACME-42-acme-fortnox-04-hardening
 feat/PLAT-51-platform-wren-cubes-01-foundation
 ```
 
-`.github/ISSUE_TEMPLATE/stacked_delivery_plan.yml` generates these names, the merge order,
-and one-click PR links with the bases already chained — open the planning issue and copy.
+This grammar is not new: `.github/ISSUE_TEMPLATE/stacked_delivery_plan.yml` already emits
+exactly these names, plus the merge order and one-click PR links with the bases already
+chained. Open the planning issue and copy — nothing to migrate.
+
+`scripts/stack_lint.py` parses the same grammar and is gate 8 of `./scripts/check.sh`.
 
 ## What makes GitHub render a stack
 
