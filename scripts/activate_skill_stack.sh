@@ -57,4 +57,13 @@ if [[ -f "${live_claude}/hooks/block-dangerous-git.sh" ]]; then
   chmod +x "${live_claude}/hooks/block-dangerous-git.sh"
 fi
 
+# Merge drivers are per-clone git config; .gitattributes names them but cannot
+# register them. Activation is the one path every working clone passes through,
+# so registering here keeps the conflict-resolution behavior uniform without a
+# separate setup step. Quiet: config lands in .git/, invisible to the
+# activation-drift gate.
+if [[ -x "${root}/scripts/setup_git_merge_drivers.sh" ]]; then
+  "${root}/scripts/setup_git_merge_drivers.sh" >/dev/null
+fi
+
 echo "Activated stack '${stack}' with shared github-skills base."
