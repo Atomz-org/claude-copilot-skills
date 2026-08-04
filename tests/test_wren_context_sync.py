@@ -305,6 +305,27 @@ def test_wren_stage_maps_skip_payload(monkeypatch, tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------------------
+# Collection scope — the submodule must not join this repository's suite
+# ---------------------------------------------------------------------------------------
+
+
+def test_bare_pytest_collects_only_this_repository() -> None:
+    """`python -m pytest -q` is what all six CI call sites run.
+
+    external/WrenAI ships its own test tree, and ci.yml fetches submodules to verify the
+    pin — so without a collection scope, bare pytest imports upstream's connector tests
+    and fails on *their* dev dependencies (pyarrow, duckdb, orjson). That is exactly how
+    the baseline job broke. scripts/test_coverage_reporter.py is the second trap: a dbt
+    coverage CLI whose filename matches the test glob.
+    """
+    config = REPO / "pytest.ini"
+    assert config.is_file(), "pytest.ini is what scopes collection; CI runs bare pytest"
+    text = config.read_text(encoding="utf-8")
+    assert "testpaths = tests" in text
+    assert "external" in text, "the submodule's own tests must stay out of this suite"
+
+
+# ---------------------------------------------------------------------------------------
 # The real artifact (skips on runners without the toolchain)
 # ---------------------------------------------------------------------------------------
 
