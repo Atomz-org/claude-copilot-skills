@@ -4,6 +4,10 @@
 scripts/build_toon_rs.sh when `rustc` is available (GitHub's ubuntu runners
 ship it). Where rustc is genuinely absent, binary-dependent tests skip — the
 serializer is the only compiled artifact in an otherwise Python-tested repo.
+
+Under `pytest-xdist` the build has already happened on the controller (see the
+repository-root `conftest.py`, which owns execution policy), so the branch below
+is the serial path and the no-rustc path only.
 """
 from __future__ import annotations
 
