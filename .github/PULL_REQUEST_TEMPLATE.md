@@ -1,16 +1,37 @@
-## Summary
+## Pick a template
+
+## When to use full vs minimal
+
+- Use a full template when the PR is part of a multi-layer stack, has cross-team impact, changes contracts or generated artifacts, or needs explicit dependency and merge-order context.
+- Use a minimal template for small 1-2 day changes with a single concern, low risk, and straightforward validation.
+- If unsure, start with full and trim only if reviewers do not need the extra context.
+
+Use one of the stacked PR templates in `.github/PULL_REQUEST_TEMPLATE/`:
+
+- `platform-stack-full.md`
+- `client-stack-full.md`
+- `platform-stack-minimal.md`
+- `client-stack-minimal.md`
+
+If your PR is not stacked, you can still use a minimal template and leave stack-specific fields as `none`.
+
+## Quick fallback (if you do not switch templates)
+
+### Summary
 - What changed and why?
-- Reference the related issue or issue number if applicable.
 
-## Validation
+### Stack
+- Stack name:
+- Layer (x of n):
+- Depends on:
+- Blocks:
+- Merge order:
+
+### Validation
 - [ ] Relevant checks or tests were run
+- [ ] Generated artifacts were regenerated when applicable
 - [ ] Documentation was updated if needed
-- [ ] The shared AI core wrappers were used where appropriate
-- [ ] Branch naming and commit message conventions were followed
 
-## Labels and status
-- Suggested PR labels: `status: in-review`, `type: enhancement`, `P2`
-- If this closes an issue, mention it in the body with `Closes #123`
-
-## Notes
-- Call out any follow-up work, rollout considerations, or risks.
+### Risk
+- Risk level:
+- Rollback plan:

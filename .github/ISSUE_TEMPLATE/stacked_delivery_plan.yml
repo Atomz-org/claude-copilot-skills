@@ -1,0 +1,79 @@
+name: Stacked Delivery Plan
+description: Plan a platform or client stack and auto-generate stack IDs and branch-name suggestions.
+title: "[Stack] "
+labels:
+  - "status: backlog"
+  - "type: enhancement"
+  - P2
+  - "stack: planning"
+body:
+  - type: dropdown
+    id: lane_type
+    attributes:
+      label: Lane type
+      description: Pick the lane for this stacked delivery request.
+      options:
+        - Platform lane
+        - Client lane
+    validations:
+      required: true
+
+  - type: input
+    id: topic_slug
+    attributes:
+      label: Topic slug
+      description: Short lowercase topic for IDs and branches.
+      placeholder: wren-connector-dashboard
+    validations:
+      required: true
+
+  - type: input
+    id: client_code
+    attributes:
+      label: Client code
+      description: Required for client lane. Example ACME.
+      placeholder: ACME
+    validations:
+      required: false
+
+  - type: input
+    id: ticket_prefix
+    attributes:
+      label: Ticket prefix
+      description: Optional ticket prefix. Example ENG, ACME, BI.
+      placeholder: ENG
+    validations:
+      required: false
+
+  - type: dropdown
+    id: stack_size
+    attributes:
+      label: Preferred stack size
+      description: Keep stacks small and reviewable.
+      options:
+        - "2"
+        - "3"
+        - "4"
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope summary
+      description: What will this stack deliver?
+      placeholder: Connector onboarding, semantic models, dashboards, and hardening.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: governance
+    attributes:
+      label: Repository rules acknowledgment
+      options:
+        - label: One change lands from one checkout
+          required: true
+        - label: Generated artifacts will be regenerated, never hand-merged
+          required: true
+        - label: Branch names will follow type slash ticket-description
+          required: true
