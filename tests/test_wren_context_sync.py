@@ -485,6 +485,51 @@ def test_wren_stage_maps_skip_payload(monkeypatch, tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------------------
+# MCP by flow — the sync emits a ready-to-register server, or a named remedy
+# ---------------------------------------------------------------------------------------
+
+
+def _wren_project(tmp_path: Path, data_source: str) -> Path:
+    uc = tmp_path / "skill-packs/dbt-skills/use-cases/toy"
+    (uc / "wren").mkdir(parents=True)
+    (uc / "dbt_project").mkdir()
+    (uc / "wren/wren_project.yml").write_text(
+        f"schema_version: 5\nname: toy\ndata_source: {data_source}\n", encoding="utf-8")
+    return uc
+
+
+def test_mcp_config_is_live_and_credential_free_for_duckdb(tmp_path: Path) -> None:
+    uc = _wren_project(tmp_path, "duckdb")
+    rel, skip = wcs.write_mcp_config("/opt/venv/bin/wren", uc, "toy")
+    assert skip is None and rel is not None
+    cfg = json.loads((uc / "wren/mcp.json").read_text(encoding="utf-8"))
+    server = cfg["mcpServers"]["wren-toy"]
+    assert server["args"][:2] == ["serve", "mcp"]
+    assert "--no-connect" not in server["args"], "duckdb is local — live by default"
+    home = Path(server["env"]["WREN_HOME"])
+    conn = json.loads((home / "connection_info.json").read_text(encoding="utf-8"))
+    # The connection is a derivable local path, never a credential (rule 5 shape).
+    assert conn == {"datasource": "duckdb",
+                    "url": str((uc / "dbt_project").resolve()), "format": "duckdb"}
+
+
+def test_mcp_config_skips_with_the_profile_remedy_for_warehouses(tmp_path: Path) -> None:
+    uc = _wren_project(tmp_path, "bigquery")
+    rel, skip = wcs.write_mcp_config("/opt/venv/bin/wren", uc, "toy")
+    assert rel is None and "wren profile add" in skip
+    assert not (uc / "wren/mcp.json").exists(), (
+        "a sync flow must not conjure credentials or emit a config that half-works")
+
+
+def test_derived_mcp_state_never_enters_the_diff(tmp_path: Path) -> None:
+    root = tmp_path / "wren"
+    (root / ".wren-home").mkdir(parents=True)
+    (root / ".wren-home/connection_info.json").write_text("{}", encoding="utf-8")
+    (root / "mcp.json").write_text("{}", encoding="utf-8")
+    assert wcs._tree(root) == {}, "absolute-path per-clone files must not be diffed"
+
+
+# ---------------------------------------------------------------------------------------
 # Collection scope — the submodule must not join this repository's suite
 # ---------------------------------------------------------------------------------------
 

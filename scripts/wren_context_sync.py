@@ -83,7 +83,12 @@ GENERATED_HEADER = (
 # Files the upstream importer owns and regenerates under --force. Everything else in the
 # project tree that we did not generate is someone's hand-authored context: report, never
 # touch. `apps/` is agent-authored GenBI output; `.wren/` and `target/` are derived state.
-UNTOUCHED_DIRS = {"apps", ".wren", "target"}
+UNTOUCHED_DIRS = {"apps", ".wren", ".wren-home", "target"}
+
+# Derived per-clone state at the project root: carries absolute paths, so it is
+# gitignored and written straight to the target on sync — never through the scratch
+# diff, never reported as stale.
+UNTOUCHED_FILES = {"mcp.json"}
 
 # MetricFlow aggregation -> SQL projection. Anything not listed has no faithful
 # single-expression projection (percentile, median, sum_boolean) and is skipped,
@@ -965,7 +970,9 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
 
-    (scratch / ".gitignore").write_text("target/\n.wren/\n", encoding="utf-8")
+    (scratch / ".gitignore").write_text(
+        "target/\n.wren/\n.wren-home/\nmcp.json\n", encoding="utf-8"
+    )
 
     validate = run_wren(cli, ["context", "validate", "--path", str(scratch)])
     if validate.returncode != 0:
@@ -1013,6 +1020,8 @@ def _tree(root: Path) -> Dict[str, bytes]:
             continue
         rel = p.relative_to(root)
         if rel.parts and rel.parts[0] in UNTOUCHED_DIRS:
+            continue
+        if str(rel) in UNTOUCHED_FILES:
             continue
         files[str(rel)] = p.read_bytes()
     return files
@@ -1068,6 +1077,74 @@ def diff_and_sync(scratch: Path, target: Path,
     return changed, deleted, kept_stale
 
 
+def _project_data_source(wren_dir: Path) -> str:
+    """`data_source:` from wren_project.yml — importer-generated flat YAML, so a line
+    scan is the whole parser (same reasoning as the sources.yml insert-only rule:
+    never round-trip a file another tool owns)."""
+    project = wren_dir / "wren_project.yml"
+    if not project.exists():
+        return ""
+    for ln in project.read_text(encoding="utf-8").splitlines():
+        if ln.startswith("data_source:"):
+            return ln.split(":", 1)[1].strip()
+    return ""
+
+
+def write_mcp_config(cli: str, use_case: Path, slug: str) -> Tuple[Optional[str], Optional[str]]:
+    """Write wren/mcp.json + wren/.wren-home — the ready-to-register MCP server.
+
+    Returns (relative_path, skip_reason); exactly one is set.
+
+    `wren serve mcp` is upstream's own MCP server (in-process engine, no HTTP tier);
+    this pins it to the use-case's project. Connection handling is the decision:
+
+    - **duckdb**: the connection is a path to the local dbt project — zero credentials,
+      fully derivable — so the sync writes it into a repo-local WREN_HOME
+      (`wren/.wren-home/connection_info.json`, upstream's own env channel) and the
+      server comes up live: `run_sql` over the metric views works out of the box.
+    - **anything else**: the connection is credentials, and a sync flow must not
+      conjure or copy credentials (wren rule 9's instinct). Skipped, with the
+      `wren profile add` remedy named — never a config that half-works.
+
+    Absolute paths make these files correct for this clone and wrong for every other,
+    which is why both are gitignored and rewritten on each sync, like target/.
+    """
+    wren_dir = use_case / "wren"
+    if not wren_dir.is_dir():
+        return None, "no wren/ project yet"
+    ds = _project_data_source(wren_dir)
+    if ds != "duckdb":
+        return None, (
+            f"data_source '{ds or '?'}' needs credentials — wren profile add "
+            f"<name>, then: claude mcp add wren-{slug} -- {cli} serve mcp "
+            f"--project {wren_dir.resolve()} --profile <name>"
+        )
+    home = wren_dir / ".wren-home"
+    home.mkdir(exist_ok=True)
+    (home / "connection_info.json").write_text(
+        json.dumps({
+            "datasource": "duckdb",
+            "url": str((use_case / "dbt_project").resolve()),
+            "format": "duckdb",
+        }) + "\n",
+        encoding="utf-8",
+    )
+    server = {
+        "command": str(Path(cli).resolve()),
+        "args": ["serve", "mcp", "--project", str(wren_dir.resolve())],
+        "env": {"WREN_HOME": str(home.resolve())},
+    }
+    path = wren_dir / "mcp.json"
+    path.write_text(
+        json.dumps({"mcpServers": {f"wren-{slug}": server}}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    try:
+        return str(path.relative_to(REPO)), None
+    except ValueError:  # use-case outside the repo root (tests, embedding repos)
+        return str(path), None
+
+
 # ---------------------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------------------
@@ -1118,6 +1195,12 @@ def sync(slug: str, manifest_arg: Optional[str], check: bool) -> Dict[str, Any]:
     payload["changed"] = changed
     payload["deleted"] = deleted
     payload["stale"] = stale
+    if check:
+        payload["mcp"] = None
+    else:
+        payload["mcp"], mcp_skip = write_mcp_config(cli, use_case, slug)
+        if mcp_skip:
+            payload["mcp_skipped"] = mcp_skip
     return payload
 
 
@@ -1160,6 +1243,15 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(f"  {len(skipped)} metric(s) skipped rather than approximated:")
                 for reason in skipped[:10]:
                     print(f"    - {reason}")
+            if payload.get("mcp"):
+                cfg = json.loads((REPO / payload["mcp"]).read_text(encoding="utf-8"))
+                (server_name, server), = cfg["mcpServers"].items()
+                env = "".join(f"-e {k}={v} " for k, v in (server.get("env") or {}).items())
+                print(f"  mcp      {payload['mcp']} — register with:")
+                print(f"           claude mcp add {server_name} {env}-- "
+                      f"{server['command']} {' '.join(server['args'])}")
+            elif payload.get("mcp_skipped"):
+                print(f"  mcp      skipped: {payload['mcp_skipped']}")
 
     if payload["status"] == "changed" and args.check:
         return 1
