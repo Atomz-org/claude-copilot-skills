@@ -1,0 +1,202 @@
+name: Issue Stack Plan Suggestions
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  suggest-stack-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate stack ID and branch suggestions
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = (issue.labels || []).map((l) => l.name || "");
+            if (!labels.includes("stack: planning")) {
+              core.info("Issue is not a stack planning issue. Skipping.");
+              return;
+            }
+
+            const body = issue.body || "";
+
+            function escapeRegex(value) {
+              return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            }
+
+            function extractField(label) {
+              const pattern = new RegExp(`###\\s+${escapeRegex(label)}\\s*\\n([\\s\\S]*?)(?=\\n###\\s+|$)`, "i");
+              const match = body.match(pattern);
+              if (!match) {
+                return "";
+              }
+              return match[1].trim();
+            }
+
+            function slugify(value) {
+              return (value || "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "")
+                .replace(/-{2,}/g, "-")
+                .slice(0, 50);
+            }
+
+            function normalizeToken(value) {
+              return (value || "")
+                .toUpperCase()
+                .replace(/[^A-Z0-9]+/g, "")
+                .slice(0, 12);
+            }
+
+            const laneTypeRaw = extractField("Lane type");
+            const topicRaw = extractField("Topic slug");
+            const clientRaw = extractField("Client code");
+            const prefixRaw = extractField("Ticket prefix");
+            const stackSizeRaw = extractField("Preferred stack size");
+
+            const isPlatform = /platform/i.test(laneTypeRaw);
+            const lane = isPlatform ? "platform" : "client";
+
+            const topic = slugify(topicRaw) || "workstream";
+            const clientCode = normalizeToken(clientRaw) || "CLIENT";
+            const prefix = normalizeToken(prefixRaw) || (isPlatform ? "PLAT" : clientCode);
+
+            const created = new Date(issue.created_at || Date.now());
+            const ym = `${created.getUTCFullYear()}${String(created.getUTCMonth() + 1).padStart(2, "0")}`;
+            const issueNum = String(issue.number);
+
+            let stackSize = parseInt(stackSizeRaw, 10);
+            if (Number.isNaN(stackSize)) {
+              stackSize = 3;
+            }
+            stackSize = Math.max(2, Math.min(4, stackSize));
+
+            const stackId = isPlatform
+              ? `PLATFORM-${ym}-${issueNum}-${topic}`
+              : `CLIENT-${clientCode}-${ym}-${issueNum}-${topic}`;
+
+            const ticketId = `${prefix}-${issueNum}`;
+
+            const platformSuffixes = ["foundation", "semantic", "dashboards", "hardening"];
+            const clientSuffixes = ["connector", "semantic", "dashboards", "hardening"];
+            const suffixes = isPlatform ? platformSuffixes : clientSuffixes;
+
+            const branches = [];
+            for (let i = 0; i < stackSize; i += 1) {
+              const layer = String(i + 1).padStart(2, "0");
+              const suffix = suffixes[i] || `layer-${i + 1}`;
+              const descriptor = isPlatform
+                ? `platform-${topic}-${layer}-${suffix}`
+                : `${clientCode.toLowerCase()}-${topic}-${layer}-${suffix}`;
+              branches.push(`feat/${ticketId}-${descriptor}`);
+            }
+
+            const mergeOrder = branches.map((branch, idx) => `${idx + 1}. ${branch}`).join("\n");
+            const repoUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}`;
+            const templateRoot = `${repoUrl}/blob/main/.github/PULL_REQUEST_TEMPLATE`;
+            const allTemplates = {
+              platformFull: `${templateRoot}/platform-stack-full.md`,
+              clientFull: `${templateRoot}/client-stack-full.md`,
+              platformMinimal: `${templateRoot}/platform-stack-minimal.md`,
+              clientMinimal: `${templateRoot}/client-stack-minimal.md`,
+            };
+
+            const defaultTemplate = isPlatform
+              ? ".github/PULL_REQUEST_TEMPLATE/platform-stack-full.md"
+              : ".github/PULL_REQUEST_TEMPLATE/client-stack-full.md";
+            const minimalTemplate = isPlatform
+              ? ".github/PULL_REQUEST_TEMPLATE/platform-stack-minimal.md"
+              : ".github/PULL_REQUEST_TEMPLATE/client-stack-minimal.md";
+
+            function compareLink(base, head, templatePath) {
+              const baseRef = encodeURIComponent(base);
+              const headRef = encodeURIComponent(head);
+              const template = encodeURIComponent(templatePath);
+              return `${repoUrl}/compare/${baseRef}...${headRef}?expand=1&template=${template}`;
+            }
+
+            const quickCreateLinks = branches.map((branch, idx) => {
+              const base = idx === 0 ? "main" : branches[idx - 1];
+              return {
+                full: compareLink(base, branch, defaultTemplate),
+                minimal: compareLink(base, branch, minimalTemplate),
+                base,
+                head: branch,
+              };
+            });
+
+            const marker = "<!-- stack-plan-suggestions -->";
+            const note = [
+              marker,
+              "## Suggested Stack Plan",
+              "",
+              `Stack ID: ${stackId}`,
+              `Lane: ${isPlatform ? "Platform" : "Client"}`,
+              `Ticket ID base: ${ticketId}`,
+              "",
+              "### Suggested branch names",
+              ...branches.map((branch) => `- ${branch}`),
+              "",
+              "### Suggested PR merge order",
+              mergeOrder,
+              "",
+              "### PR Template Chooser",
+              "Use one of these templates directly:",
+              `- Platform full: ${allTemplates.platformFull}`,
+              `- Client full: ${allTemplates.clientFull}`,
+              `- Platform minimal: ${allTemplates.platformMinimal}`,
+              `- Client minimal: ${allTemplates.clientMinimal}`,
+              "",
+              "### One-click PR creation links",
+              "After you create and push the suggested branches, click one of these links per layer:",
+              ...quickCreateLinks.flatMap((item, idx) => [
+                `- Layer ${idx + 1} (${item.base} -> ${item.head}) full template: ${item.full}`,
+                `- Layer ${idx + 1} (${item.base} -> ${item.head}) minimal template: ${item.minimal}`,
+              ]),
+              "",
+              "### Copy/paste starter",
+              "```bash",
+              ...branches.map((branch, idx) =>
+                idx === 0
+                  ? `git checkout -b ${branch}`
+                  : `git checkout -b ${branch} <previous-branch>`
+              ),
+              "```",
+              "",
+              "If this issue changed, edit it and this suggestion comment will refresh automatically.",
+            ].join("\n");
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              per_page: 100,
+            });
+
+            const existing = comments.find((comment) =>
+              (comment.body || "").includes(marker) && comment.user?.type === "Bot"
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: note,
+              });
+              core.info("Updated existing stack suggestion comment.");
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: note,
+              });
+              core.info("Posted new stack suggestion comment.");
+            }
