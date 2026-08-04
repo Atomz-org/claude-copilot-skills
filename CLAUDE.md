@@ -505,6 +505,35 @@ After changing any pack asset:
 
 Unexpected modifications in that output mean an edit landed in a generated path.
 
+## Script core — three shared modules, no fourth
+
+Everything in `scripts/` is a standalone CLI that runs on the standard library. Three
+private modules carry what more than one of them needs, and nothing else belongs there:
+
+| Module | Owns |
+|---|---|
+| `_manifest.py` | reading dbt's JSON artifacts; the `Manifest` wrapper; `die` |
+| `_miniyaml.py` | YAML for the subset these files use, PyYAML when present |
+| `_paths.py` | the repository root, use-case lookup, dbt project resolution |
+
+`_paths.py` replaced four copies of `use_case_dir`, two of `project_root_of`, and
+twenty-three `Path(__file__).resolve().parent.parent` bootstraps. Two decisions in it
+are load-bearing and both were bugs first:
+
+- **The root is a parameter, never a closure.** `new_connector`, `use_case_sync`, and
+  `wren_context_sync` are all driven against a throwaway tree by
+  `monkeypatch.setattr(module, "REPO", tmp_path)`. A helper that read a module global at
+  call time searched the real repository instead — five tests failed on it. Each of
+  those modules keeps a one-line binding that forwards its own `REPO`.
+- **Nothing is cached.** The glob is a directory listing three levels deep over a handful
+  of packs, while `use_case_sync.py --init <slug>` creates a use-case and syncs it *in
+  the same process*. A cache populated before the `mkdir` reports the new use-case as
+  missing — a correctness bug traded for an unmeasurable saving.
+
+The two `use_case_dir` behaviours that existed are both kept, as two named functions
+rather than one function with a flag: `use_case_dir` returns `Optional[Path]`,
+`require_use_case_dir` exits 2 and lists the known slugs.
+
 ## RTK and memory integration
 
 - RTK registry and routes: `src/ai-core/rtk-setup.ts` and `src/ai-core/dbt-integration.ts`

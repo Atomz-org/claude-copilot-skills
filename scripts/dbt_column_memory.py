@@ -100,10 +100,15 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _manifest import Manifest, die  # noqa: E402
+import _paths  # noqa: E402
 import dbt_column_lineage as lineage_mod  # noqa: E402
 import ontology_generator as og  # noqa: E402
+from _paths import REPO, default_manifest  # noqa: E402,F401
 
-REPO = Path(__file__).resolve().parent.parent
+
+def use_case_dir(slug: str) -> Path:
+    """`_paths.require_use_case_dir` bound to this module's REPO; absence exits 2."""
+    return _paths.require_use_case_dir(slug, REPO)
 
 ARTIFACT_NAME = "column-memory.json"
 CACHE_DIR = REPO / ".dbt-column-cache"
@@ -1396,32 +1401,18 @@ def is_current(use_case: Path, digest: str) -> Tuple[bool, str]:
     return False, "the .sql on disk has changed since this was generated"
 
 
-def use_case_dir(slug: str) -> Path:
-    matches = [p for p in REPO.glob(f"skill-packs/*/use-cases/{slug}") if p.is_dir()]
-    if not matches:
-        die(f"no use-case '{slug}' under skill-packs/*/use-cases/")
-    return matches[0]
-
-
-def default_manifest(use_case: Path) -> Optional[Path]:
-    for candidate in (
-        use_case / "dbt_project" / "target" / "manifest.json",
-        use_case / "artifacts" / "prod" / "manifest.json",
-    ):
-        if candidate.is_file():
-            return candidate
-    return None
-
-
 def project_root_of(use_case: Path, manifest: Path) -> Path:
-    for candidate in [manifest.parent, *manifest.parents]:
-        if (candidate / "dbt_project.yml").is_file():
-            return candidate
-    sibling = use_case / "dbt_project"
-    if (sibling / "dbt_project.yml").is_file():
-        return sibling
-    die(f"could not locate a dbt_project.yml above {manifest}")
-    raise SystemExit(2)  # unreachable
+    """`_paths.project_root_of` with this module's argument order and fatal absence.
+
+    The order is `(use_case, manifest)` here and `(manifest, use_case)` in `_paths`;
+    both are kept because `tests/test_dbt_column_memory.py` monkeypatches this name
+    and the callers below pass positionally.
+    """
+    found = _paths.project_root_of(manifest, use_case)
+    if found is None:
+        die(f"could not locate a dbt_project.yml above {manifest}")
+        raise SystemExit(2)  # unreachable
+    return found
 
 
 # =======================================================================================

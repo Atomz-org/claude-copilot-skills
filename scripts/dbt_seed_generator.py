@@ -39,13 +39,13 @@ import re
 import sys
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _manifest import Manifest, die  # noqa: E402
 
-REPO = Path(__file__).resolve().parent.parent
+from _paths import REPO  # noqa: E402
 
 ROWS_PER_TABLE = 12
 EPOCH = date(2026, 1, 5)  # a Monday, so weekday-sensitive logic is stable
