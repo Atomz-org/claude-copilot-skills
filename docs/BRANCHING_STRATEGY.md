@@ -151,10 +151,16 @@ Measured, not theorized:
 | `git merge <trunk>` | yours — correct |
 | `git rebase <trunk>` | **upstream's — your regeneration is discarded** |
 
-Stacks rebase constantly: `gh stack rebase`, and GitHub's automatic retarget when a lower
-layer merges. So this is not an edge case here, it is the normal path.
+**This is a local hazard only, and the distinction matters.** A merge driver is per-clone
+git config — git cannot version one — so GitHub's servers do not have it. When GitHub
+auto-retargets a layer after the one below it merges, there is no `generated` driver in
+play: a genuine collision surfaces as a *conflict on the PR*, which is visible and safe.
+The silent wrong-side pick happens only where the driver exists, which is your machine:
+`gh stack rebase`, `git rebase`, `git pull --rebase`.
 
-It fails loudly rather than silently — the artifact-currency gate
+Stacks rebase locally often enough that this is the normal path, not an edge case.
+
+It does fail loudly in the end — the artifact-currency gate
 (`use_case_sync.py --all --check`) goes red because the artifacts no longer match the
 sources — but the message points at staleness, not at the rebase that caused it.
 
@@ -206,3 +212,11 @@ own them. Do not widen that selector.
    (`code-skills` and `claude-copilot-skills`), and starting the same work in both produces
    add/add conflicts between near-identical files.
 8. A stack that stops being reviewable in a week is too big; split it.
+9. **Close a stalled stack rather than letting it age.** Depth is capped at four layers;
+   age is capped at two weeks. A stack whose bottom layer has been open longer than that
+   gets landed as-is or closed — the upper layers can be reopened from fresh `main` later.
+
+Rule 9 exists because a stalled stack quietly becomes the thing this whole strategy rejects.
+`PR Auto Update` keeps the bottom layer merge-clean with `main`, which hides the drift: the
+branch stays green while its *intent* ages out from under it. Depth caps do not help — a
+two-layer stack stranded for six weeks is a long-lived branch wearing a stack's clothes.
