@@ -37,3 +37,23 @@ skill-packs/*/use-cases/*/ontology/column-memory.json merge=generated
 skill-packs/*/use-cases/*/ontology/index.json merge=generated
 skill-packs/*/use-cases/*/ontology/**/*.ttl merge=generated
 skill-packs/*/use-cases/*/dbt_project/seeds/sample/*.csv merge=generated
+# `properties.yml` comes out of the same generator pass as those CSVs
+# (dbt_seed_generator.py:358) and is a single index over every seed, so every
+# connector branch rewrites it. Listing only *.csv left the one file in that
+# directory that every branch touches without a driver.
+skill-packs/*/use-cases/*/dbt_project/seeds/sample/properties.yml merge=generated
+# The Wren semantic-layer projection is the same kind of file for the same reason:
+# `use_case_sync.py --stage wren` regenerates the whole tree from the manifest,
+# catalog, and ontology artifacts, so two branches that both regenerate it always
+# collide and a hand-merge is meaningless. Regenerating is the resolution.
+skill-packs/*/use-cases/*/wren/**/*.yml merge=generated
+skill-packs/*/use-cases/*/wren/**/*.md merge=generated
+
+# The activation mirror — 152 tracked files rebuilt wholesale by
+# scripts/activate_skill_stack.sh from skill-packs/<pack>/. Editing any pack asset
+# conflicted TWICE without this: once in the pack source, once again in its copy
+# here. The pack half is a real conflict a human must resolve; this half never is,
+# because activation is the authority on it. Resolve the pack, then re-activate.
+.claude/** merge=generated
+references/** merge=generated
+templates/** merge=generated
