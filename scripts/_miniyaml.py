@@ -1,8 +1,9 @@
 """A minimal YAML subset parser, used when PyYAML is not installed.
 
 Supports what dbt YAML actually uses: block mappings and sequences, nested structures,
-quoted and bare scalars, inline flow mappings `{a: b}` and sequences `[a, b]`, block
-scalars `>` and `|`, comments, and the `null`/`true`/`false`/number literals.
+quoted and bare scalars, inline flow mappings `{a: b}` and sequences `[a, b]` — including
+ones that continue across physical lines — block scalars `>` and `|`, comments, and the
+`null`/`true`/`false`/number literals.
 
 Deliberately NOT supported: anchors and aliases (`&a` / `*a`), multiple documents,
 complex keys, and tags. dbt YAML does not use them; if a file does, install PyYAML.
@@ -34,8 +35,15 @@ def parse(text: str) -> Any:
 
 
 def _logical_lines(text: str) -> List[Tuple[int, str, int]]:
-    """-> [(indent, content, line_number)] with blanks and comments removed."""
+    """-> [(indent, content, line_number)] with blanks and comments removed.
+
+    A flow collection (`[...]` / `{...}`) may continue across physical lines; the
+    continuations are folded onto the line that opened it, so the parser only ever
+    sees balanced flow text. Folding triggers only when the value *starts* with a
+    flow opener — a stray bracket inside a plain scalar never does.
+    """
     out: List[Tuple[int, str, int]] = []
+    pending = 0  # open-bracket depth of an unfinished flow collection
     for number, raw in enumerate(text.splitlines(), start=1):
         if "\t" in raw[: len(raw) - len(raw.lstrip())]:
             raise MiniYamlError(f"line {number}: tab in indentation")
@@ -45,9 +53,45 @@ def _logical_lines(text: str) -> List[Tuple[int, str, int]]:
         content = _strip_comment(raw).rstrip()
         if not content.strip():
             continue
+        if pending:
+            prev_indent, prev_content, prev_number = out[-1]
+            out[-1] = (prev_indent, prev_content + " " + content.strip(), prev_number)
+            pending += _flow_depth_delta(content)
+            if pending < 0:
+                raise MiniYamlError(f"line {number}: unbalanced flow collection")
+            continue
         indent = len(content) - len(content.lstrip())
         out.append((indent, content.strip(), number))
+        pending = max(0, _opened_flow_depth(content.strip()))
+    if pending:
+        raise MiniYamlError(f"line {out[-1][2]}: unclosed flow collection")
     return out
+
+
+def _opened_flow_depth(content: str) -> int:
+    """Net bracket depth of the flow collection this line's value opens, if any."""
+    key, sep, rest = _split_key(content)
+    candidate = rest.strip() if sep else content
+    if candidate.startswith("- "):
+        candidate = candidate[2:].strip()
+    return _flow_depth_delta(candidate) if _is_flow(candidate) else 0
+
+
+def _flow_depth_delta(text: str) -> int:
+    """Net `[`/`{` depth change across `text`, ignoring brackets inside quotes."""
+    depth = 0
+    quote: Optional[str] = None
+    for ch in text:
+        if quote:
+            if ch == quote:
+                quote = None
+        elif ch in ("'", '"'):
+            quote = ch
+        elif ch in "[{":
+            depth += 1
+        elif ch in "]}":
+            depth -= 1
+    return depth
 
 
 def _strip_comment(line: str) -> str:

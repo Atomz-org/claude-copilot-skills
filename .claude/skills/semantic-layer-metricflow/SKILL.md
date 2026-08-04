@@ -374,4 +374,68 @@ can carry an `entity:` **or** a `dimension:`, never both.
 - Defining forty metrics up front. Define the ones people ask for; each one is a maintenance
   commitment.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| `/dbt-semantic net revenue` | A semantic model over the mart, the metric, `mf validate-configs`, and a sanity query |
+| "what was revenue by region last quarter?" | `mf query` against the defined metric — not ad-hoc SQL that invents a definition |
+| "two dashboards disagree on revenue" | One canonical definition here, and the BI-side duplicate removed |
+| "mf validate-configs fails" | The missing `time_granularity`, checked first — it is the most common cause |
+
+**Worked example**
+
+> "two dashboards report different revenue — fix it"
+
+```
+Diagnosis
+  Finance dashboard : sum(total_amount) from fct_orders
+  Growth dashboard  : sum(total_amount) - refunds, excluding cancelled
+  Neither is wrong. There are two definitions and no canonical one.
+```
+
+```yaml
+# models/semantic/_semantic_models.yml
+semantic_models:
+  - name: orders
+    model: ref('fct_orders')              # a mart, never a staging model
+    defaults:
+      agg_time_dimension: ordered_at
+    entities:
+      - {name: order, type: primary, expr: order_id}
+      - {name: customer, type: foreign, expr: customer_id}
+    dimensions:
+      - name: ordered_at
+        type: time
+        type_params: {time_granularity: day}    # omit this and validation fails
+      - {name: order_status, type: categorical}
+    measures:
+      - {name: gross_amount, agg: sum, expr: total_amount}
+      - {name: refund_amount, agg: sum, expr: refund_amount}
+
+metrics:
+  - name: net_revenue
+    type: derived
+    type_params:
+      expr: gross_amount - refund_amount
+      metrics: [{name: gross_amount}, {name: refund_amount}]
+    filter: |                                    # {{ Dimension() }}, not raw SQL
+      {{ Dimension('order__order_status') }} != 'cancelled'
+```
+
+```bash
+dbt parse && mf validate-configs
+mf query --metrics net_revenue --group-by metric_time__quarter,customer__region
+```
+
+```
+Then: point both dashboards at net_revenue, and delete the BI-side formulas. A metric
+redefined in a BI tool is a second source of truth and the two will diverge again.
+```
+
+Before anyone builds on it, compare the `mf query` output against a known-good SQL query
+for one quarter. A metric that validates has correct syntax, not a correct number.
+
 Reference: [references/semantic_layer_metricflow.md](../../../references/semantic_layer_metricflow.md).

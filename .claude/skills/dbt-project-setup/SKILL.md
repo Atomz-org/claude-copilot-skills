@@ -346,4 +346,65 @@ freshness monitoring, and breaking-change detection all read them.
 | `dbt` command not found after install | Wrong venv activated, or installed with a different Python |
 | Everything is slow on a tiny project | `threads: 1`, or a suspended warehouse resuming on every query |
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| "set up a dbt project for Snowflake" | venv, adapter, `dbt_project.yml`, `profiles.yml` with `env_var()`, then `dbt debug` run for real |
+| "`dbt debug` fails" | The specific line it failed on — profile name, credentials, or network — not a rewritten config |
+| "add dbt_utils" | `packages.yml`, `dbt deps`, and `package-lock.yml` committed so teammates resolve the same versions |
+| "how do I look up dbt docs?" | The dbt MCP server wired for local Core, or the docs path if it is not available |
+
+**Worked example**
+
+> "set up a new dbt project on Snowflake"
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install dbt-core dbt-snowflake
+dbt --version                      # confirm the adapter is present before going further
+dbt init analytics
+```
+
+```yaml
+# dbt_project.yml
+name: analytics
+profile: analytics                 # must match the key in profiles.yml — mismatch is the #1 dbt debug failure
+require-dbt-version: [">=1.8.0", "<2.0.0"]
+models:
+  analytics:
+    staging:      {+materialized: view}
+    intermediate: {+materialized: ephemeral}
+    marts:        {+materialized: table}
+```
+
+```yaml
+# ~/.dbt/profiles.yml — no secrets in the repo
+analytics:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: TRANSFORMER
+      warehouse: TRANSFORMING
+      database: ANALYTICS
+      schema: dbt_<yourname>       # personal dev schema, never a shared one
+      threads: 8
+```
+
+```bash
+dbt debug                          # every line must be green before modeling starts
+dbt deps                           # then commit package-lock.yml
+dbt build --select stg_*
+dbt docs generate && dbt docs serve
+```
+
+Work the verification checklist above rather than declaring setup done at the first
+successful `dbt debug` — the schema and secrets rows are the ones that bite later.
+
 Next: [analytics-request-framing](../analytics-request-framing/SKILL.md).

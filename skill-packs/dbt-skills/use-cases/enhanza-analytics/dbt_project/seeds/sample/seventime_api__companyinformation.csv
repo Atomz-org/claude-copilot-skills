@@ -1,0 +1,13 @@
+OrgId,city,companyName,id
+ORG-1001,Bergen,Bergen Bygg AS,KEY-001
+ORG-1002,Uppsala,Uppsala Livsmedel AB,KEY-002
+ORG-1003,Aarhus,Aarhus Elektronik ApS,KEY-003
+ORG-1004,Tampere,Tampere Kone Oy,KEY-004
+ORG-1001,Stavanger,Stavanger Marine AS,KEY-005
+ORG-1002,Malmo,Malmo Emballage AB,KEY-006
+ORG-1003,Trondheim,Trondheim Verktoy AS,KEY-007
+ORG-1004,Odense,Odense Papir ApS,KEY-008
+ORG-1001,Stockholm,Astrid Lindqvist,KEY-009
+ORG-1002,Oslo,Henrik Dahl,KEY-010
+ORG-1003,Copenhagen,Mette Sorensen,KEY-011
+ORG-1004,Helsinki,Jukka Virtanen,KEY-012

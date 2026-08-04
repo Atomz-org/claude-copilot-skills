@@ -1,0 +1,13 @@
+OrgId,ArticleId,FreightCosts,Id,IsActive,IsServiceArticle,IsStock,Name,NetPrice,NetPriceWithDiscount,Number,PurchasePrice,SendToWebshop,StockBalanceAvailable,StockBalanceReserved,StockLocationReference,StockValue,UnitAbbreviation
+ORG-1001,ARTICL-001,137.50,KEY-001,false,false,false,Bergen Bygg AS,137.50,137.50,KEY-001,137.50,sendtowebshop_value_1,137.50,137.50,137.50,137.50,unitabbreviation_value_1
+ORG-1002,ARTICL-002,275.00,KEY-002,true,true,true,Uppsala Livsmedel AB,275.00,275.00,KEY-002,275.00,sendtowebshop_value_2,275.00,275.00,275.00,275.00,unitabbreviation_value_2
+ORG-1003,ARTICL-003,412.50,KEY-003,true,true,true,Aarhus Elektronik ApS,412.50,412.50,KEY-003,412.50,sendtowebshop_value_3,412.50,412.50,412.50,412.50,unitabbreviation_value_3
+ORG-1004,ARTICL-004,550.00,KEY-004,false,false,false,Tampere Kone Oy,550.00,550.00,KEY-004,550.00,sendtowebshop_value_4,550.00,550.00,550.00,550.00,unitabbreviation_value_4
+ORG-1001,ARTICL-005,687.50,KEY-005,true,true,true,Stavanger Marine AS,687.50,687.50,KEY-005,687.50,sendtowebshop_value_5,687.50,687.50,687.50,687.50,unitabbreviation_value_5
+ORG-1002,ARTICL-006,825.00,KEY-006,true,true,true,Malmo Emballage AB,825.00,825.00,KEY-006,825.00,sendtowebshop_value_6,825.00,825.00,825.00,825.00,unitabbreviation_value_6
+ORG-1003,ARTICL-007,962.50,KEY-007,false,false,false,Trondheim Verktoy AS,962.50,962.50,KEY-007,962.50,sendtowebshop_value_7,962.50,962.50,962.50,962.50,unitabbreviation_value_7
+ORG-1004,ARTICL-008,1100.00,KEY-008,true,true,true,Odense Papir ApS,1100.00,1100.00,KEY-008,1100.00,sendtowebshop_value_8,1100.00,1100.00,1100.00,1100.00,unitabbreviation_value_8
+ORG-1001,ARTICL-009,1237.50,KEY-009,true,true,true,Astrid Lindqvist,1237.50,1237.50,KEY-009,1237.50,sendtowebshop_value_9,1237.50,1237.50,1237.50,1237.50,unitabbreviation_value_9
+ORG-1002,ARTICL-010,1375.00,KEY-010,false,false,false,Henrik Dahl,1375.00,1375.00,KEY-010,1375.00,sendtowebshop_value_10,1375.00,1375.00,1375.00,1375.00,unitabbreviation_value_10
+ORG-1003,ARTICL-011,1512.50,KEY-011,true,true,true,Mette Sorensen,1512.50,1512.50,KEY-011,1512.50,sendtowebshop_value_11,1512.50,1512.50,1512.50,1512.50,unitabbreviation_value_11
+ORG-1004,ARTICL-012,1650.00,KEY-012,true,true,true,Jukka Virtanen,1650.00,1650.00,KEY-012,1650.00,sendtowebshop_value_12,1650.00,1650.00,1650.00,1650.00,unitabbreviation_value_12

@@ -110,7 +110,7 @@ adapters, enforced by tests.
 
 ## 9. What the spec got wrong
 
-Recorded per the definition of done in [use-cases/README.md](../../../../use-cases/README.md).
+Recorded per the definition of done in [docs/use-cases.md](../../../../docs/use-cases.md).
 
 - **The original grain sentence was wrong.** "One row per business event per organization
   per reporting date" describes no table in the project. The real grains are per layer, and

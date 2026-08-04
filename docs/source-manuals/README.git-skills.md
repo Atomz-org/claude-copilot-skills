@@ -1,3 +1,9 @@
+> **Frozen provenance copy — not live guidance.** The original README from the
+> `git-skills` source repository, preserved for history per
+> [README.md § Feature provenance](../../README.md). It may contradict current behavior and
+> must not be followed or edited to match. The live documentation is
+> [README.md](../../README.md).
+
 # GIT Skills
 
 This repository acts as a reusable, standards-oriented module for automation, documentation, and workflow scaffolding.
@@ -60,7 +66,7 @@ This repository is designed to be consumed as a Git submodule in a parent projec
 3. Remove the submodule cleanly from the parent repository:
 
    ```bash
-   ./cleanup-submodule.sh external/git-skills
+   ./scripts/cleanup-submodule.sh external/git-skills
    git commit -m "chore: remove external/git-skills submodule"
    ```
 

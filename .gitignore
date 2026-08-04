@@ -1,5 +1,6 @@
 # dbt build output
 target/
+target-sample/
 dbt_packages/
 logs/
 .user.yml
@@ -44,6 +45,10 @@ venv/
 # OS
 .DS_Store
 
+# Stray output from a backgrounded command. One was tracked for months; ignoring it means a
+# stray run cannot quietly add it back.
+nohup.out
+
 # NOTE: package-lock.yml SHOULD be committed, so CI resolves the same package versions
 #       you did.
 # NOTE: the synthetic artifacts under use-cases/example-order-revenue-mart/artifacts/ are
@@ -57,7 +62,39 @@ graphify-out/
 # graphify-out/cost.json      # local only
 # graphify-out/cache/         # optional: commit for speed, skip to keep repo small
 
+# Incremental cache for scripts/dbt_column_memory.py. Keyed on each model's content hash,
+# so it is derivable, large, and churns on every model edit — the same three properties that
+# keep manifest.json out of the repository while the graphify fragment stays in it. Deleting
+# it costs one full re-parse (1.6s on a 359-model project) and nothing else.
+.dbt-column-cache/
+
 # Local agentmemory artifacts for this scaffold
 .claude/agentmemory.json
 .claude/graph-state.json
 .claude/checkpoints/
+# Rust TOON serializer build output (scripts/build_toon_rs.sh)
+rust/toon/bin/
+
+# skill-map project scope: the SQLite DB and settings `sm init` provisions
+# (scripts/skill_map_scan.py). Local state and machine-specific, and leaving it
+# untracked is also what keeps the CI activation-drift gate seeing a clean tree
+# after a scan runs.
+.skill-map/
+
+# The Continue prompt router: source is committed, the binary is not — the same split as
+# `rust/toon/bin/` above. `.continue/continue2.sh` rebuilds it with
+# `rustc local_prompt_router.rs -O -o local_prompt_router` on every run, so nothing needs
+# the compiled artifact to be in the repository.
+#
+# This was a blanket `.continue/` until the 596 KB Mach-O arm64 binary underneath it was
+# noticed: ignored by this file and tracked by git at the same time, which is the state
+# where a rule stops meaning anything. It was also 7% of the entire tracked repository and
+# unusable on any machine that is not an Apple-silicon Mac. The rest of `.continue/` is
+# hand-written source that `tests/test_continue_runner.py` reads, so it is tracked
+# deliberately and must not be ignored.
+.continue/local_prompt_router
+.continue/__pycache__/
+
+# Local runtime state stores (machine-specific generated binaries)
+data/state_store.db/
+data/stream_store/

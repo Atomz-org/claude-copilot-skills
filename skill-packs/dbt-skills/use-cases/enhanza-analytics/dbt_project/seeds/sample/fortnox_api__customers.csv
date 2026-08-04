@@ -1,0 +1,13 @@
+OrgId,Active,Address1,Address2,Country,CustomerNumber,Email,EmailInvoice,InvoiceDiscount,Name,Phone1,Phone2,TermsOfPayment,Type
+ORG-1001,false,address1_value_1,address2_value_1,NO,C-1001,email_value_1,emailinvoice_value_1,137.50,Bergen Bygg AS,phone1_value_1,phone2_value_1,termsofpayment_value_1,type_value_1
+ORG-1002,true,address1_value_2,address2_value_2,SE,C-1002,email_value_2,emailinvoice_value_2,275.00,Uppsala Livsmedel AB,phone1_value_2,phone2_value_2,termsofpayment_value_2,type_value_2
+ORG-1003,true,address1_value_3,address2_value_3,DK,C-1003,email_value_3,emailinvoice_value_3,412.50,Aarhus Elektronik ApS,phone1_value_3,phone2_value_3,termsofpayment_value_3,type_value_3
+ORG-1004,false,address1_value_4,address2_value_4,FI,C-1004,email_value_4,emailinvoice_value_4,550.00,Tampere Kone Oy,phone1_value_4,phone2_value_4,termsofpayment_value_4,type_value_4
+ORG-1001,true,address1_value_5,address2_value_5,NO,C-1005,email_value_5,emailinvoice_value_5,687.50,Stavanger Marine AS,phone1_value_5,phone2_value_5,termsofpayment_value_5,type_value_5
+ORG-1002,true,address1_value_6,address2_value_6,SE,C-1001,email_value_6,emailinvoice_value_6,825.00,Malmo Emballage AB,phone1_value_6,phone2_value_6,termsofpayment_value_6,type_value_6
+ORG-1003,false,address1_value_7,address2_value_7,NO,C-1002,email_value_7,emailinvoice_value_7,962.50,Trondheim Verktoy AS,phone1_value_7,phone2_value_7,termsofpayment_value_7,type_value_7
+ORG-1004,true,address1_value_8,address2_value_8,DK,C-1003,email_value_8,emailinvoice_value_8,1100.00,Odense Papir ApS,phone1_value_8,phone2_value_8,termsofpayment_value_8,type_value_8
+ORG-1001,true,address1_value_9,address2_value_9,SE,C-1004,email_value_9,emailinvoice_value_9,1237.50,Astrid Lindqvist,phone1_value_9,phone2_value_9,termsofpayment_value_9,type_value_9
+ORG-1002,false,address1_value_10,address2_value_10,NO,C-1005,email_value_10,emailinvoice_value_10,1375.00,Henrik Dahl,phone1_value_10,phone2_value_10,termsofpayment_value_10,type_value_10
+ORG-1003,true,address1_value_11,address2_value_11,DK,C-1001,email_value_11,emailinvoice_value_11,1512.50,Mette Sorensen,phone1_value_11,phone2_value_11,termsofpayment_value_11,type_value_11
+ORG-1004,true,address1_value_12,address2_value_12,FI,C-1002,email_value_12,emailinvoice_value_12,1650.00,Jukka Virtanen,phone1_value_12,phone2_value_12,termsofpayment_value_12,type_value_12

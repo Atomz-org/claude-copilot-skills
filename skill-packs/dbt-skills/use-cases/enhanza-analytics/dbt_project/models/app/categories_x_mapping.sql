@@ -1,4 +1,15 @@
-{{ config(alias=(model_alias(model.name))) }}
+{{ config(
+  alias=(model_alias(model.name)),
+  enabled = any_source_enabled(['fortnox', 'tripletex', 'visma_eaccounting', 'visma_economic', 'xledger'])
+) }}
+{#-
+  The enabled gate replicates dimension_mapping_dbt's verbatim, because the d0_dbt CTE
+  below refs it unconditionally: this model cannot exist without it. It previously had no
+  gate at all, so any run whose enablement disabled dimension_mapping_dbt — every combo
+  without is_erp_enabled, and every erp run on a source outside its list — failed at parse
+  with "depends on a node which is disabled". Found by the sample build, which parses with
+  exactly one tenant's flags instead of refresh.sh's everything-on set.
+-#}
 
 {%- set org_enabled = any_source_enabled(['fortnox', 'seventime', 'tripletex', 'visma_eaccounting', 'visma_economic', 'upsales']) -%}
 

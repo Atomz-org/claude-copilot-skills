@@ -317,6 +317,54 @@ singular test for overlaps.
 The asymmetry matters: an incremental bug is recoverable with a full refresh; a snapshot
 that missed six months of changes is not recoverable at all.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| "should fct_events be incremental?" | The measured full-refresh cost first — incremental is a decision, not a default |
+| "why are there duplicates after last night's run?" | `unique_key` or the lookback window, checked against the invariant below |
+| "we need price history" | A snapshot on the *raw source* — a mart cannot recover history it never stored |
+| "how do I backfill 2025?" | A bounded window via a var, not `--full-refresh` on a 4 TB table |
+
+**Worked example**
+
+> "fct_orders takes 40 minutes to build — make it incremental"
+
+```sql
+-- models/marts/fct_orders.sql
+{{ config(
+    materialized='incremental',
+    unique_key='order_id',              -- required for merge; without it, rows duplicate
+    incremental_strategy='merge',
+    on_schema_change='append_new_columns'
+) }}
+
+select * from {{ ref('int_orders_enriched') }}
+
+{% if is_incremental() %}
+  -- Lookback: 3 days. Measured p99 arrival lag is 41 hours (query in the PR body,
+  -- re-measured 2026-07); anchored to max() in this table, never current_date.
+  where updated_at >= (select dateadd(day, -3, max(updated_at)) from {{ this }})
+{% endif %}
+```
+
+```bash
+# The invariant: the incremental result must equal the full-refresh result
+dbt build --select fct_orders --full-refresh
+create table analytics.audit.fct_orders_full as select * from analytics.marts.fct_orders;
+dbt build --select fct_orders            # incremental path
+# then compare — any diff means the model is corrupt, not "close enough"
+
+# Bounded backfill, via a var the model reads — not a 4 TB full refresh
+dbt build --select fct_orders --vars '{"backfill_start": "2025-01-01", "backfill_end": "2025-12-31"}'
+```
+
+Anchoring the filter to `current_date` instead of `max(updated_at)` in `{{ this }}` is the
+common defect: one skipped run silently leaves a permanent hole. And a lookback guessed
+rather than measured loses late rows forever — no test catches either.
+
 Next: [testing-and-documentation](../testing-and-documentation/SKILL.md), and
 [dbt-unit-testing](../dbt-unit-testing/SKILL.md) — incremental logic needs a unit test
 covering the `is_incremental()` branch.

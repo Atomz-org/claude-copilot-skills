@@ -295,3 +295,63 @@ python scripts/dimensional_model_validator.py --manifest target/manifest.json --
   questions. The dbt project is the physical truth — do not keep a second one.
 - **Bridge tables without an allocation factor** where the business expects allocated
   totals. Summing across a bridge double-counts by design.
+
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| `/data-model subscriptions` | Entities, ERD with cardinality *and* optionality, keys, grain, and the bus matrix row |
+| "star schema or one big table?" | A recommendation tied to this subject area, not a general comparison |
+| "marketing and finance disagree on what a customer is" | The conformed-dimension answer: one key, one definition, one table, one shared domain |
+| "how do we track price changes?" | The SCD decision made explicitly — and why Type 2 means a snapshot on the raw source |
+
+**Worked example**
+
+> `/data-model subscription revenue`
+
+```
+Entities (nouns that pass both tests)
+  customer, subscription, plan, invoice          — dimensions and one event
+  invoice_issued                                 — the business process
+
+ERD — optionality is the part people skip
+  customer ||--o{ subscription   a customer may have zero subscriptions
+  plan     ||--o{ subscription   every subscription has exactly one plan
+  subscription ||--o{ invoice    a subscription may have zero invoices (trials)
+  → the customer→subscription join is LEFT; an inner join drops trial-only customers.
+
+Keys
+  business  : subscription_id (Stripe, stable)
+  surrogate : generate_surrogate_key(['subscription_id','invoice_month'])
+              hashes exactly the grain columns — never plan_name, which changes.
+
+Grain
+  fct_subscription_revenue: one row per subscription per month.
+
+Measures and additivity
+  mrr_amount        semi-additive  — additive across subscriptions, NOT across months
+  discount_pct      non-additive   — store numerator and denominator; define as a metric
+
+SCD
+  dim_plan  Type 2 — price changes must not restate historical revenue.
+            → snapshot on the raw source; unique_key and strategy are permanent.
+  dim_customer Type 1 — nobody has asked for historical addresses.
+
+Bus matrix
+                     customer  plan  subscription  date
+  invoice_issued        X       X         X         X
+  trial_started         X       X         X         X
+  → customer and plan are conformed. Both stars must share the same keys.
+```
+
+```bash
+# Once the models exist, validate the physical against the design
+python scripts/erd_generator.py --manifest target/manifest.json --layer marts --out erd.md
+python scripts/dimensional_model_validator.py --manifest target/manifest.json --strict
+```
+
+Hand off to [dbt-model-design](../dbt-model-design/SKILL.md), one blueprint per table. The
+canvas is a decision record, not a second source of truth — the dbt project is physical
+truth once it exists.

@@ -276,4 +276,58 @@ python scripts/run_results_analyzer.py --run-results target/run_results.json \
 - A deploy with no stated rollback.
 - Never running a full refresh, so nobody notices the incremental invariant broke months ago.
 
+## Examples
+
+How this gets called in Claude Code, and what it should hand back.
+
+| Ask Claude | What you get |
+|---|---|
+| "set up slim CI" | `state:modified+` with `--defer`, and the artifact storage that makes it possible |
+| "our CI takes 40 minutes" | Almost always a whole-project rebuild — the selector is the fix |
+| "how do I roll this back?" | The rollback path stated *before* the deploy, with the full-refresh cost named |
+| "design the nightly job" | Freshness gate → snapshots → build → docs/artifacts, as separate steps that fail independently |
+
+**Worked example**
+
+> "set up slim CI for our dbt project"
+
+```yaml
+# .github/workflows/dbt_ci.yml
+- name: Fetch production artifacts        # without these, state:modified matches nothing
+  run: aws s3 cp s3://dbt-artifacts/prod/manifest.json prod/manifest.json
+
+- name: Build only what changed, and its children
+  run: |
+    dbt build --select state:modified+ --defer --state prod/ \
+      --warn-error-options '{"error":["NoNodesForSelectionCriteria"]}'
+```
+
+```bash
+# Production job — separate steps, so one failure does not block the rest
+dbt source freshness                     # 1. gate: building on stale sources publishes stale numbers
+dbt snapshot                             # 2. more frequent than marts; a missed change is permanent
+dbt build --select tag:nightly           # 3. the build
+dbt docs generate                        # 4. docs and artifacts
+
+# 5. Store artifacts even on failure — this is what slim CI, freshness monitoring,
+#    and impact detection all read
+aws s3 cp target/manifest.json    s3://dbt-artifacts/prod/manifest.json
+aws s3 cp target/run_results.json s3://dbt-artifacts/prod/run_results.json
+aws s3 cp target/sources.json     s3://dbt-artifacts/prod/sources.json
+```
+
+```
+Rollback, stated before the deploy
+  fct_orders (table)       git revert <sha> && dbt build --select fct_orders    ~2 min
+  fct_events (incremental) full refresh required                                ~50 min, ~$40
+                           → deploy behind a window, or accept the cost knowingly
+
+Post-deploy verification (scheduled, not assumed)
+  dbt build --select fct_orders --full-refresh in staging, monthly — the only thing that
+  catches an incremental invariant that broke silently.
+```
+
+Pointing `--state` at the current `target/` is the mistake that makes this look like it
+works: `state:modified` matches nothing and CI passes in seconds having built nothing.
+
 Reference: [references/state_and_ci.md](../../../references/state_and_ci.md).

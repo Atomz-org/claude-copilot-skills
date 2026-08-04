@@ -1,0 +1,13 @@
+OrgId,endDate,id,municipality,name
+ORG-1001,2026-01-05,KEY-001,municipality_value_1,Bergen Bygg AS
+ORG-1002,2026-01-12,KEY-002,municipality_value_2,Uppsala Livsmedel AB
+ORG-1003,2026-01-19,KEY-003,municipality_value_3,Aarhus Elektronik ApS
+ORG-1004,2026-01-26,KEY-004,municipality_value_4,Tampere Kone Oy
+ORG-1001,2026-02-02,KEY-005,municipality_value_5,Stavanger Marine AS
+ORG-1002,2026-02-09,KEY-006,municipality_value_6,Malmo Emballage AB
+ORG-1003,2026-02-16,KEY-007,municipality_value_7,Trondheim Verktoy AS
+ORG-1004,2026-02-23,KEY-008,municipality_value_8,Odense Papir ApS
+ORG-1001,2026-03-02,KEY-009,municipality_value_9,Astrid Lindqvist
+ORG-1002,2026-03-09,KEY-010,municipality_value_10,Henrik Dahl
+ORG-1003,2026-03-16,KEY-011,municipality_value_11,Mette Sorensen
+ORG-1004,2026-03-23,KEY-012,municipality_value_12,Jukka Virtanen

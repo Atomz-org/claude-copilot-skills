@@ -1,0 +1,181 @@
+version: 2
+
+sources:
+  - name: tripletex_api
+    description: 'Tripletex raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: tripletex_api_{{ var('uid') }}
+    tables:
+      - name: account
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Number
+          - name: OrgId
+          - name: department
+          - name: name
+          - name: number
+      - name: address
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: discountPercentage
+      - name: annual_account
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: end
+          - name: id
+          - name: start
+      - name: balance_sheet
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: balanceIn
+          - name: balanceOut
+      - name: currency
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: code
+      - name: customer
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: customerNumber
+          - name: department
+          - name: discountPercentage
+          - name: id
+          - name: invoicesDueIn
+          - name: isInactive
+          - name: isPrivateIndividual
+          - name: organizationNumber
+      - name: department
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: id
+          - name: isInactive
+          - name: name
+          - name: offset
+      - name: division
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: id
+          - name: name
+      - name: employee
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: discountPercentage
+      - name: employee_category
+      - name: employment
+      - name: employment_details
+      - name: inventory
+      - name: inventory_location
+      - name: invoice
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: amount
+          - name: amountExcludingVat
+          - name: amountOutstanding
+          - name: amountRoundoff
+          - name: creditedInvoice
+          - name: currency
+          - name: customer
+          - name: deliveryDate
+          - name: ehfSendStatus
+          - name: invoiceDate
+          - name: invoiceDueDate
+          - name: invoiceNumber
+          - name: isCreditNote
+          - name: reminders
+      - name: leave_of_absence
+      - name: leave_of_absence_type
+      - name: ledger
+      - name: ledger_posting
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: amount
+          - name: customer
+          - name: date
+          - name: department
+          - name: description
+          - name: project
+          - name: supplier
+          - name: voucher
+      - name: ledger_voucher
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: number
+      - name: municipality
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: name
+      - name: order
+      - name: payment_type
+      - name: product
+      - name: project
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: contact
+          - name: description
+          - name: endDate
+          - name: id
+          - name: isClosed
+          - name: isOffer
+          - name: isReadyForInvoicing
+          - name: number
+          - name: projectManager
+          - name: startDate
+      - name: purchase_order
+      - name: resultbudget
+      - name: salary_payslip
+      - name: stocktaking
+      - name: supplier
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: id
+          - name: isInactive
+          - name: name
+          - name: supplierNumber
+      - name: supplier_invoice
+      - name: supplier_product
+      - name: timesheet_allocated
+      - name: voucher_type
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: displayName
+

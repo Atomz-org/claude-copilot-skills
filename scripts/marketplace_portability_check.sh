@@ -6,6 +6,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 packs=(
   "skill-packs/github-skills"
   "skill-packs/dbt-skills"
+  "skill-packs/skill-map"
 )
 
 max_bytes=8192

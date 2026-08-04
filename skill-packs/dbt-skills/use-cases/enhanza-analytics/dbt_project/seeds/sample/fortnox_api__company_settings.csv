@@ -1,0 +1,13 @@
+OrgId,City,DatabaseNumber,Name
+ORG-1001,Bergen,DATABA-001,Bergen Bygg AS
+ORG-1002,Uppsala,DATABA-002,Uppsala Livsmedel AB
+ORG-1003,Aarhus,DATABA-003,Aarhus Elektronik ApS
+ORG-1004,Tampere,DATABA-004,Tampere Kone Oy
+ORG-1001,Stavanger,DATABA-005,Stavanger Marine AS
+ORG-1002,Malmo,DATABA-006,Malmo Emballage AB
+ORG-1003,Trondheim,DATABA-007,Trondheim Verktoy AS
+ORG-1004,Odense,DATABA-008,Odense Papir ApS
+ORG-1001,Stockholm,DATABA-009,Astrid Lindqvist
+ORG-1002,Oslo,DATABA-010,Henrik Dahl
+ORG-1003,Copenhagen,DATABA-011,Mette Sorensen
+ORG-1004,Helsinki,DATABA-012,Jukka Virtanen

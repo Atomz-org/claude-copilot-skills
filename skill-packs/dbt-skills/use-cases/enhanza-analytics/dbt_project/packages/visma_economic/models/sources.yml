@@ -1,0 +1,86 @@
+version: 2
+
+sources:
+  - name: visma_economic_api
+    description: 'Visma e-conomic raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: visma_economic_api_{{ var('uid') }}
+    tables:
+      - name: accounting_years
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: account
+          - name: amountInBaseCurrency
+          - name: date
+          - name: entryType
+          - name: fromDate
+          - name: invoiceNumber
+          - name: text
+          - name: toDate
+          - name: voucherNumber
+          - name: year
+      - name: accounts
+      - name: customer_groups
+      - name: customers
+      - name: employees
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: name
+      - name: entries
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: account
+          - name: amountInBaseCurrency
+          - name: date
+          - name: entryType
+          - name: invoiceNumber
+          - name: text
+          - name: voucherNumber
+      - name: invoices_booked
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: bookedInvoiceNumber
+          - name: date
+      - name: invoices_sent
+      - name: journals
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: journalNumber
+          - name: name
+      - name: orders_archived
+      - name: orders_drafts
+      - name: orders_sent
+      - name: products
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: costPrice
+          - name: inventory
+          - name: name
+          - name: productNumber
+          - name: unit
+      - name: self
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: company
+      - name: suppliers
+

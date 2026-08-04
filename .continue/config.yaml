@@ -1,0 +1,22 @@
+models:
+  - title: Local Hybrid (Graphify+RTK+MLX)
+    provider: openai
+    model: mlx-community/Qwen3.5-4B-MLX-8bit
+    apiBase: http://127.0.0.1:4000/v1
+    apiKey: local-only
+
+systemMessage: |
+  Workflow policy (local-only):
+  1) Run Graphify discovery first and narrow to 1-3 files or concepts.
+  2) Use RTK tools next and return structured, trimmed results only.
+  3) Ask local MLX only the final focused question.
+  4) Never route to cloud.
+  5) If input exceeds local limits, stop and ask to narrow scope.
+
+  Prompt budgets:
+  - preferred input <= 8000 tokens
+  - hard stop 12000 tokens
+  - preferred request <= 750KB
+  - hard stop 1MB
+  - max 4000 chars per tool result
+  - Graphify top_k <= 3 and <= 1000 chars per hit
