@@ -54,4 +54,4 @@ pytest-xdist>=3
 # Parses the generated Turtle in tests/test_ontology_generator.py to assert the
 # .ttl and index.json projections agree. Test-only: nothing in scripts/ imports it,
 # and the generator is deliberately written not to need a parser at runtime.
-rdflib>=7
+rdflib>=7.6.0
