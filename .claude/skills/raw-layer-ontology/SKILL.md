@@ -124,6 +124,8 @@ because it is the only one that does not need a manifest.
 ## Related
 
 - `analytics-request-framing` — the use-case spec, which runs before this
+- `column-annotation` — what each conformed column *means*, once models exist; this skill
+  says which entities to build, that one says how their columns may be used
 - `data-modeling` — the method for the judgements this skill collects (keys, grain, SCD,
   star-schema shape); read it when a mapping is genuinely hard
 - `dbt-model-design` — consumes the plan

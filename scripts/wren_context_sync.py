@@ -14,8 +14,12 @@ this repository already derives.
     relationships.yml (dbt tests)              <- ontology/index.json
     knowledge/rules/general.md               knowledge/rules/column-contracts.md
     knowledge/sql/*.md seed pairs              <- ontology/column-memory.json
-    wren_project.yml, AGENTS.md              knowledge/caveats/adapter-drift.md
+    wren_project.yml, AGENTS.md              knowledge/rules/column-semantics.md
+                                               <- ontology/column-annotations.json
+                                             knowledge/caveats/adapter-drift.md
                                                <- column-memory drift findings
+                                             knowledge/caveats/pii.md
+                                               <- column-annotations, PII class
                                              knowledge/rules/semantic-metrics.md
                                                <- manifest metrics (MetricFlow)
                                              views/<name>/metadata.yml
@@ -237,6 +241,9 @@ def contracts_markdown(memory: Dict[str, Any], slug: str) -> Optional[str]:
         "Conformed column lists per concept, derived from parsed column lineage across",
         "every connector's adapter model. When writing SQL against a conformed concept,",
         "these are the column names that exist on every supplier.", "",
+        "This file says which columns *exist*. What they *mean* — whether SUM() over one",
+        "is meaningful, what unit it carries, whether it is personal data — is in",
+        "`column-semantics.md` and `../caveats/pii.md`.", "",
     ]
     for c in sorted(contracts, key=lambda x: x.get("concept", "")):
         adapters = c.get("adapters") or {}
@@ -258,6 +265,120 @@ def contracts_markdown(memory: Dict[str, Any], slug: str) -> Optional[str]:
             )
         lines.append("")
     return "\n".join(lines) + "\n"
+
+
+def semantics_markdown(annotations: Dict[str, Any], slug: str) -> Optional[str]:
+    """The aggregation contract: which columns may be summed, and across what.
+
+    `column-contracts.md` says which columns exist. This says what they mean, and it leads
+    with the prohibitions because they are the ones an agent cannot infer: a name gives no
+    hint that `Price` is per unit and `QuantityInStock` is a level, so both look summable
+    and both produce a plausible wrong number. Definitions follow, because a correct
+    aggregation of the wrong column is still wrong.
+    """
+    columns = annotations.get("columns") or []
+    if not columns:
+        return None
+    non_additive = [c for c in columns if c.get("additivity") == "non_additive"]
+    semi_additive = [c for c in columns if c.get("additivity") == "semi_additive"]
+    additive = [c for c in columns if c.get("additivity") == "additive"]
+    domains = [c for c in columns if c.get("domain")]
+
+    lines = [GENERATED_HEADER.format(slug=slug), "", "# Column semantics", ""]
+    lines += [
+        "What each conformed column *means*, from the ontology's annotations. Facets are",
+        "independent: a column has a role, and separately an additivity, a unit, and a PII",
+        "class.", "",
+        "## Never SUM these", "",
+    ]
+    if non_additive:
+        lines += [
+            "Non-additive. Summing one across rows produces a number with no referent —",
+            "average or ratio it instead, or sum the additive column named in its",
+            "definition.", "",
+        ]
+        for c in sorted(non_additive, key=lambda x: x["column"]):
+            lines.append(f"- **{c['column']}** ({c.get('unit') or 'no unit'}) — "
+                         f"{c.get('definition', '')}")
+    else:
+        lines.append("None annotated.")
+    lines += ["", "## Never SUM these across time", ""]
+    if semi_additive:
+        lines += [
+            "Semi-additive: a level, not a flow. It sums across every dimension except",
+            "time — two month-end balances added together is not a two-month balance.", "",
+        ]
+        for c in sorted(semi_additive, key=lambda x: x["column"]):
+            lines.append(f"- **{c['column']}** ({c.get('unit') or 'no unit'}) — "
+                         f"{c.get('definition', '')}")
+    else:
+        lines.append("None annotated.")
+    lines += ["", "## Additive measures", ""]
+    if additive:
+        lines.append(", ".join(f"`{c['column']}`"
+                               for c in sorted(additive, key=lambda x: x["column"])))
+    else:
+        lines.append("None annotated.")
+    if domains:
+        lines += ["", "## Closed domains", "",
+                  "These columns take only the values listed. A filter on any other value",
+                  "returns nothing, and that is a bug in the query, not empty data.", ""]
+        for c in sorted(domains, key=lambda x: x["column"]):
+            values = ", ".join(f"`{v}`" for v in (c["domain"].get("values") or []))
+            lines.append(f"- **{c['column']}**: {values}")
+            lines.append(f"  - source: {c['domain'].get('source', '')}")
+    lines += ["", "## Definitions", "",
+              "| Column | Role | Unit | Carried by | Means |", "|---|---|---|---|---|"]
+    for c in sorted(columns, key=lambda x: x["column"]):
+        definition = str(c.get("definition") or "").replace("|", "\\|")
+        lines.append(
+            f"| `{c['column']}` | {c.get('role', '')} | {c.get('unit') or '-'} | "
+            f"{c.get('carried_by_count', 0)} | {definition} |"
+        )
+    unannotated = annotations.get("provenance", {}).get("unannotated")
+    if unannotated:
+        lines += ["",
+                  f"{unannotated} further conformed column(s) are not annotated yet. A "
+                  f"column absent from this file has no recorded meaning — treat its "
+                  f"additivity and PII class as unknown rather than assuming defaults."]
+    return "\n".join(lines) + "\n"
+
+
+def pii_markdown(annotations: Dict[str, Any], slug: str) -> Optional[str]:
+    """Which columns carry personal data, by class, because the remedies differ.
+
+    A caveat rather than a rule: it does not tell an agent how to write SQL, it tells it
+    what must not leave the warehouse in a chart somebody shares.
+    """
+    columns = [c for c in (annotations.get("columns") or []) if c.get("pii") not in (None, "none")]
+    if not columns:
+        return None
+    remedy = {
+        "direct": "identifies a person on its own — never select it into a shared "
+                  "dashboard, an export, or a sample; hash or drop it",
+        "quasi": "re-identifies in combination with other columns — safe only aggregated, "
+                 "never row-level beside a name, a date of birth, or a postcode",
+        "indirect": "identifies through a join — check what the joined table carries "
+                    "before it reaches a consumer",
+    }
+    lines = [GENERATED_HEADER.format(slug=slug), "", "# Personal data", ""]
+    lines += [
+        "Conformed columns carrying personal data, from the ontology's annotations",
+        "(rule 17). The class decides the remedy, which is why it is recorded as a class",
+        "and not as a flag.", "",
+    ]
+    for cls in ("direct", "quasi", "indirect"):
+        rows = [c for c in columns if c.get("pii") == cls]
+        if not rows:
+            continue
+        lines += [f"## {cls.title()} identifiers", "", remedy[cls], ""]
+        for c in sorted(rows, key=lambda x: x["column"]):
+            carried = ", ".join(sorted(c.get("connectors") or [])) or "-"
+            lines.append(f"- **{c['column']}** — carried by: {carried}")
+            if c.get("definition"):
+                lines.append(f"  - {c['definition']}")
+        lines.append("")
+    return "\n".join(lines).rstrip("\n") + "\n"
 
 
 def drift_markdown(memory: Dict[str, Any], slug: str) -> Optional[str]:
@@ -1141,8 +1262,12 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
          concepts_markdown(_optional_json(use_case / "ontology/index.json"), slug)),
         ("knowledge/rules/column-contracts.md",
          contracts_markdown(_optional_json(use_case / "ontology/column-memory.json"), slug)),
+        ("knowledge/rules/column-semantics.md",
+         semantics_markdown(_optional_json(use_case / "ontology/column-annotations.json"), slug)),
         ("knowledge/caveats/adapter-drift.md",
          drift_markdown(_optional_json(use_case / "ontology/column-memory.json"), slug)),
+        ("knowledge/caveats/pii.md",
+         pii_markdown(_optional_json(use_case / "ontology/column-annotations.json"), slug)),
         ("knowledge/rules/semantic-metrics.md", metrics_markdown(man, slug)),
     ):
         if content is None:

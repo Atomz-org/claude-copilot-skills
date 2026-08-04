@@ -106,7 +106,11 @@ PII_SHAPES: Tuple[Tuple[re.Pattern, str, str], ...] = (
     (re.compile(r"(Phone|Mobile|Tel)", re.I), "direct", "a telephone number identifies a person directly"),
     (re.compile(r"(Ssn|PersonalNumber|Personnummer|NationalId|Passport)", re.I), "direct",
      "a national identity number identifies a person directly"),
-    (re.compile(r"(Iban|Bankgiro|Plusgiro|AccountNumber|Bic|Swift)", re.I), "direct",
+    # `BankAccount`, never a bare `AccountNumber`: in a Swedish ERP an account number is a
+    # BAS ledger account (four digits, no personal data), and flagging all 4 of this
+    # project's `AccountNumber` columns as direct PII would put the chart of accounts
+    # behind a masking rule. Bankgiro/Plusgiro/IBAN are unambiguous.
+    (re.compile(r"(Iban|Bankgiro|Plusgiro|BankAccount|Bic|Swift)", re.I), "direct",
      "a bank identifier is directly identifying and financially sensitive"),
     (re.compile(r"(Address\d?$|Address[12]$|Street|ZipCode|PostalCode)", re.I), "quasi",
      "a street address re-identifies in combination with other fields"),
@@ -123,6 +127,25 @@ SEMI_ADDITIVE_SHAPES = re.compile(
 )
 # Ratios and rates. Storing them is what rule 11 forbids, so proposing one is also a finding.
 NON_ADDITIVE_SHAPES = re.compile(r"(Rate|Percent|Percentage|Ratio|Average|Avg|Margin)", re.I)
+
+# A definition the project wrote down outranks any shape read off the name — it is the one
+# piece of evidence here that a human authored about this column on purpose. Both entries
+# were name-shape errors first, each caught by reading the description beside it.
+DEFINITION_SIGNALS: Tuple[Tuple[re.Pattern, str, str, str], ...] = (
+    (re.compile(r"\bBAS\b|chart of accounts", re.I), "ledger_account",
+     "identifier",
+     "the description names a BAS chart-of-accounts entry: an identifier, not a quantity "
+     "and not a bank account"),
+    (re.compile(r"per unit|price per|unit price", re.I), "unit_price",
+     "measure",
+     "the description says the value is per unit — an intensive quantity, so summing it "
+     "across rows is meaningless (rule 11)"),
+)
+
+# Words that make a measure a count of things rather than an amount of money. Matched
+# against CamelCase words, never as a substring: `Discount` contains `count`, which read
+# `PriceAfterDiscount` as a quantity.
+QUANTITY_WORDS = {"quantity", "quantities", "stock", "count", "unit", "units", "number"}
 
 PLACEHOLDER = re.compile(r"(?i)\b(todo|tbd|fixme|xxx|\(placeholder\))\b")
 
@@ -291,20 +314,42 @@ def declared_domains(project: Path) -> Dict[str, Dict[str, Any]]:
 # ---------------------------------------------------------------------------------------
 
 
-def derive(name: str, types: Set[str], domain: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def _name_words(name: str) -> Set[str]:
+    """CamelCase / snake_case column name -> its lowercased words."""
+    spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", name.replace("_", " "))
+    return {w.lower() for w in spaced.split() if w}
+
+
+def derive(name: str, types: Set[str], domain: Optional[Dict[str, Any]],
+           definition: str = "") -> Dict[str, Any]:
     """Facet candidates for one column, each carrying the evidence that produced it.
 
-    Order matters: a declared domain outranks a name shape, and a name shape outranks a
-    cast type. `OrderNumber` is an int64 and an identifier, not a measure — summing it is
-    meaningless — so the identifier suffix has to win over the numeric type.
+    Order matters, strongest evidence first: a definition the project wrote outranks a
+    declared domain, which outranks a name shape, which outranks a cast type. `OrderNumber`
+    is an int64 and an identifier, not a measure — summing it is meaningless — so the
+    identifier suffix has to win over the numeric type; and `Account`, which carries no
+    suffix at all, is rescued only by its description naming the BAS chart of accounts.
     """
     evidence: List[str] = []
     role: Optional[str] = None
     confidence = "low"
 
+    signals = {kind: (forced, why) for pattern, kind, forced, why in DEFINITION_SIGNALS
+               if definition and pattern.search(definition)}
+    if "ledger_account" in signals:
+        # The account *number* identifies the account; anything else a BAS description
+        # covers — a class, a name — describes it. Both are on the wrong side of the
+        # numeric cast that would otherwise read them as measures.
+        role = ("identifier"
+                if (_name_words(name) & {"number", "no", "id"}) or name.lower().endswith("account")
+                else "dimension")
+        confidence = "high"
+        evidence.append(signals["ledger_account"][1])
+
     if domain:
-        role, confidence = "dimension", "high"
         evidence.append(f"declared accepted_values in {domain['declared_in']}")
+        if role is None:
+            role, confidence = "dimension", "high"
 
     if role is None:
         for pattern, shaped, why in NAME_SHAPES:
@@ -329,7 +374,10 @@ def derive(name: str, types: Set[str], domain: Optional[Dict[str, Any]]) -> Dict
 
     additivity: Optional[str] = None
     if role == "measure":
-        if NON_ADDITIVE_SHAPES.search(name):
+        if "unit_price" in signals:
+            additivity = "non_additive"
+            evidence.append(signals["unit_price"][1])
+        elif NON_ADDITIVE_SHAPES.search(name):
             additivity = "non_additive"
             evidence.append("name reads as a rate or ratio — rule 11 forbids storing it as a fact column")
         elif SEMI_ADDITIVE_SHAPES.search(name):
@@ -348,7 +396,12 @@ def derive(name: str, types: Set[str], domain: Optional[Dict[str, Any]]) -> Dict
 
     unit: Optional[str] = None
     if role == "measure":
-        unit = "quantity" if re.search(r"Quantity|Stock|Count", name, re.I) else "currency"
+        # A price *per unit* is money, not a count — `AmountPerUnit` carries the word
+        # `unit` and is denominated in currency, so the price signal decides first.
+        if "unit_price" in signals:
+            unit = "currency"
+        else:
+            unit = "quantity" if (_name_words(name) & QUANTITY_WORDS) else "currency"
         evidence.append(f"unit proposed as {unit} from the name")
     elif role == "timestamp":
         unit = "date"
@@ -381,8 +434,9 @@ def propose(use_case: Path, existing: Dict[str, Any]) -> Dict[str, Any]:
     for name, meta in columns.items():
         if name in decided:
             continue
-        candidate = derive(name, types.get(name, set()), domains.get(name))
-        candidate["definition"] = definitions.get(name, "")
+        definition = definitions.get(name, "")
+        candidate = derive(name, types.get(name, set()), domains.get(name), definition)
+        candidate["definition"] = definition
         candidate["concepts"] = meta["concepts"]
         candidate["connectors"] = meta["connectors"]
         proposed[name] = candidate
@@ -401,11 +455,29 @@ def propose(use_case: Path, existing: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def render_stub(proposal: Dict[str, Any], slug: str) -> str:
+def is_evidenced(cand: Dict[str, Any]) -> bool:
+    """Is every facet this candidate needs backed by something the project already wrote?
+
+    The bar is `build()`'s, restated as a predicate: a role was derived, the project
+    described the column in its own `schema.yml`, and a measure carries an additivity that
+    followed from its own definition or its name. Nothing here is a judgement call, which
+    is the whole point — it is the set that can be written down without inventing anything.
+    """
+    if cand["abstained"] or not cand.get("definition"):
+        return False
+    return not (cand["role"] == "measure" and not cand["additivity"])
+
+
+def render_stub(proposal: Dict[str, Any], slug: str, evidenced_only: bool = False) -> str:
     """An `annotations.yml` a human finishes.
 
     Ordered by leverage — the columns the most connectors carry first — because a reviewer
     who stops halfway should have spent that time on the columns that matter most.
+
+    `evidenced_only` emits the subset that is already complete and valid, so the first run
+    produces an artifact instead of a page of blanks. The rest are not dropped — they are
+    what `--coverage` reports as the backlog, and a column missing from this file is
+    honestly unannotated rather than annotated with a guess.
     """
     lines = [
         "# What each conformed column MEANS. HAND-AUTHORED; nothing regenerates this file.",
@@ -429,7 +501,8 @@ def render_stub(proposal: Dict[str, Any], slug: str) -> str:
         "columns:",
     ]
     ordered = sorted(
-        proposal["proposed"].items(),
+        ((n, c) for n, c in proposal["proposed"].items()
+         if not evidenced_only or is_evidenced(c)),
         key=lambda kv: (-len(kv[1]["connectors"]), kv[0]),
     )
     for name, cand in ordered:
@@ -572,6 +645,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--use-case", required=True)
     p.add_argument("--propose", action="store_true",
                    help="scaffold ontology/annotations.yml; refuses to overwrite")
+    p.add_argument("--evidenced-only", action="store_true",
+                   help="with --propose: emit only the columns the project already "
+                        "evidences (a description of its own, plus a derived role and, for "
+                        "a measure, an additivity). The rest stay in --coverage's backlog")
     p.add_argument("--coverage", action="store_true", help="report what is not annotated yet")
     p.add_argument("--check", action="store_true", help="exit 1 if stale or invalid")
     p.add_argument("--format", choices=("text", "json"), default="text")
@@ -602,16 +679,24 @@ def main(argv: Optional[List[str]] = None) -> int:
             )
             return 1
         source_path.parent.mkdir(parents=True, exist_ok=True)
-        source_path.write_text(render_stub(proposal, args.use_case), encoding="utf-8")
+        emitted = [n for n, c in proposal["proposed"].items()
+                   if not args.evidenced_only or is_evidenced(c)]
+        source_path.write_text(
+            render_stub(proposal, args.use_case, args.evidenced_only), encoding="utf-8")
         if args.format == "json":
             print(json.dumps({"use_case": args.use_case,
                               "written": str(source_path.relative_to(REPO)),
+                              "emitted": len(emitted),
                               "proposed": len(proposal["proposed"]),
                               "abstained": proposal["abstained"],
                               "declared_domains": proposal["declared_domains"]},
                              ensure_ascii=False))
         else:
             print(f"scaffolded {source_path.relative_to(REPO)}")
+            if args.evidenced_only:
+                print(f"  {len(emitted)} column(s) written of "
+                      f"{len(proposal['proposed'])} proposed — the evidenced subset; the "
+                      f"rest are the --coverage backlog")
             print(f"  {len(proposal['proposed'])} column(s) proposed, "
                   f"{len(proposal['abstained'])} abstained")
             print(f"  {len(proposal['declared_domains'])} closed domain(s) harvested from "

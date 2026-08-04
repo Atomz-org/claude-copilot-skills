@@ -109,6 +109,36 @@ def test_alignment_skips_without_a_dbt_project(tmp_path: Path) -> None:
     assert stage.status == sync.SKIP
 
 
+def test_annotations_skip_without_a_hand_authored_source(tmp_path: Path) -> None:
+    """Additivity and PII are decisions no schema contains, so an unwritten annotations.yml
+    is the normal state of a use-case rather than a failure — and the skip names the flag
+    that starts one."""
+    stage = sync.stage_annotations(tmp_path, "toy", check=True)
+    assert stage.status == sync.SKIP
+    assert "annotations.yml" in stage.detail and "--evidenced-only" in stage.detail
+
+
+def test_columns_and_annotations_are_sequenced_before_the_ontology(monkeypatch) -> None:
+    """The chain is columns -> annotations -> ontology: annotations are keyed on the
+    conformed columns, and the ontology projects the annotations into its Turtle and its
+    index. Run the ontology first and it describes the previous generation's columns —
+    silently, because every file still regenerates and every stage still says `ok`.
+    """
+    order: list[str] = []
+
+    def record(name):
+        def stage(*_a, **_k):
+            order.append(name)
+            return sync.Stage(name, sync.SKIP)
+        return stage
+
+    for name in ("taxonomy", "columns", "annotations", "ontology", "seeds",
+                 "graph", "alignment", "wren"):
+        monkeypatch.setattr(sync, f"stage_{name}", record(name))
+    sync.sync("enhanza-analytics", check=True, manifest_arg=None)
+    assert order.index("columns") < order.index("annotations") < order.index("ontology")
+
+
 def test_a_failing_stage_does_not_abort_the_others(monkeypatch, tmp_path: Path) -> None:
     """One broken generator must not cost the four reports that would have been correct."""
     def explode(*_args, **_kwargs):

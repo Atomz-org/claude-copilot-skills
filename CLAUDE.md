@@ -362,9 +362,10 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 | Stage | Produces | Needs |
 |---|---|---|
 | `taxonomy` | `ontology/conceptual-model.json` — what the project *should* build | `sources.yml`, `taxonomy.yml` |
-| `ontology` | `ontology/connectors/*.ttl`, `topology/*.ttl` | `connectors.yml` |
-| `index` | `ontology/index.json` — the machine-facing projection | same generator pass |
 | `columns` | `ontology/column-memory.json` — the column contract | manifest, sqlglot |
+| `annotations` | `ontology/column-annotations.json` — what each column *means* | `annotations.yml`, column-memory |
+| `ontology` | `ontology/connectors/*.ttl`, `topology/*.ttl` | `connectors.yml`, annotations |
+| `index` | `ontology/index.json` — the machine-facing projection | same generator pass |
 | `seeds` | `dbt_project/seeds/sample/*.csv` | manifest, sqlglot, reference data |
 | `graphify` | the code graph, rebuilt | `--graphify-update` |
 | `graph` | dbt lineage + connector/concept topology merged into `graphify-out/graph.json` | manifest |
@@ -374,6 +375,22 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 The `wren` stage is sequenced last on purpose: it projects the artifacts the earlier
 stages just refreshed (`index.json`, `column-memory.json`), so running it earlier would
 enrich from the previous generation.
+
+`columns → annotations → ontology` is one chain, and it is the whole path from raw data to
+a served semantic layer:
+
+```
+raw layer ─ taxonomy ─┐
+                      ├─ columns ─ annotations ─ ontology ─ wren ─ BI / MCP
+dbt models ───────────┘             (decisions)   (RDF+index)  (knowledge)
+```
+
+Each link reads the one before it. Annotations are keyed on the conformed columns
+`columns` derives; the ontology projects them into `topology/column-semantics.ttl` and
+`index.json`'s `column_semantics`; the `wren` stage turns that into
+`knowledge/rules/column-semantics.md` and `knowledge/caveats/pii.md`. Run `ontology` first
+— where it used to sit — and every artifact still regenerates, every stage still reports
+`ok`, and the ontology describes the previous generation's columns.
 
 `/new-use-case` and `/new-connector` both end here. The gate is the existing test suite —
 `tests/test_use_case_sync.py` asserts the committed artifacts are current — so **do not add
@@ -485,10 +502,22 @@ domain (rule 28). Measured before this existed: **272 conformed columns, 1 accep
 test in the entire project**, and nothing anywhere recording additivity or PII.
 
 ```bash
+python3 scripts/column_annotations.py --use-case <slug> --propose --evidenced-only  # bootstrap
 python3 scripts/column_annotations.py --use-case <slug> --propose    # candidates + evidence
 python3 scripts/column_annotations.py --use-case <slug>              # the artifact
 python3 scripts/column_annotations.py --use-case <slug> --coverage   # what is unannotated
 ```
+
+Annotated here: **89 of 272 conformed columns** — 78 whose every facet the project already
+evidenced, plus 11 measures whose additivity is a decision, each recorded with its reason.
+5 columns carry PII; 9 may not be summed the way their names suggest. The remaining 183 are
+in `--coverage`'s backlog, unannotated rather than guessed at.
+
+`--propose --evidenced-only` is what makes the first run produce an artifact instead of a
+page of blanks: it emits exactly the columns whose facets are already backed — a description
+the project wrote in its own `schema.yml`, a role derived from a cast or a name, and for a
+measure an additivity that followed from its definition. Everything else is left out, and
+a column absent from the file is honestly unannotated.
 
 The consequence was concrete: `wren/knowledge/rules/column-contracts.md`, the file an agent
 reads before writing SQL, lists `QuantityInStock` beside `TotalToPay` as bare names — so the
@@ -514,7 +543,9 @@ Four decisions shape the artifact:
   — it is what a reader already assumes, so proposing it removes the prompt to decide while
   adding nothing.
 
-Two derivation rules were wrong first and are pinned:
+Six derivation rules were wrong first and are pinned. The last four were found by reading
+the project's own descriptions next to what the deriver had proposed for the same column —
+which is the argument for harvesting definitions rather than paraphrasing them:
 
 - **A regex cannot read a cast.** `cast(nullif(c.city,'') as string) City` is the ordinary
   form here, and a `[^()]*` body stops at the inner paren — so the simple case read and every
@@ -522,15 +553,58 @@ Two derivation rules were wrong first and are pinned:
 - **An identifier suffix outranks a numeric cast.** `OrderNumber` is an `int64` and summing
   it is meaningless. The Swedish accounting reference states the same rule for account
   numbers: *"They are identifiers, not quantities; arithmetic on them is always a bug."*
+- **A definition outranks a name shape.** `Account` carries no suffix and casts to `numeric`,
+  so nothing in its name or type stops it being read as a measure — only its own description,
+  *"BAS account number, consists of four digits"*, does. Same signal makes `AccountClass` a
+  dimension rather than a quantity.
+- **A BAS account number is not a bank account.** The bank-identifier shape matched a bare
+  `AccountNumber`, so all four of this project's were classed as **direct PII** — putting the
+  chart of accounts behind a masking rule. `BankAccount`, Bankgiro, Plusgiro and IBAN still
+  match; the bare form does not.
+- **A price per unit is non-additive at every grain.** Nothing in `AmountPerUnit` reads as a
+  rate, so the name shapes left it additive by omission; *"Price per unit (day, hour etc.)"*
+  is what makes summing it meaningless. Its unit is currency, not a count.
+- **`Discount` contains `count`.** Matching quantity words as substrings proposed
+  `PriceAfterDiscount` as a quantity. Words, not substrings.
+
+The one enum this project declares, Shopify's `FinancialStatus`, is **not** a conformed
+column, so the annotated set has zero closed domains — and `AccountClass`, which obviously
+has one, gets none: the class *names* live in a warehouse lookup this repo cannot read, and
+BAS class names transliterated from memory would be exactly the invented enum rule 5
+forbids. Refusing there is the rule working, not a gap in it.
 
 Shaped after the annotation and taxonomy skills the request cited — poly-hierarchical facets
 rather than one tree, per-item confidence with an explicit abstain, evidence bound to every
 node, and refuse-to-overwrite-a-decision.
 
+### Where the annotations go — the ontology, then the serving tier
+
+An annotation nothing carries forward reaches neither BI nor an agent, which are the two
+consumers that need it. Three projections, all from the one artifact:
+
+| Destination | Holds | Why |
+|---|---|---|
+| `ontology/topology/column-semantics.ttl` | one `conn:ConformedColumn` per column, facets as triples | the ontology is where a concept's meaning already lives; **869 triples, rdflib-clean** |
+| `ontology/index.json` → `column_semantics` | the same facets, flat | backs the `describe_column` MCP tool; `rdflib` is optional here, so a server cannot parse Turtle at request time |
+| `wren/knowledge/rules/column-semantics.md` + `caveats/pii.md` | the aggregation contract and the disclosure rule, in prose | what an agent reads before it writes `SUM(...)` |
+
+The Turtle **declares the vocabulary it uses** — `conn:ConformedColumn`, `conn:role`,
+`conn:additivity`, `conn:pii` — rather than assuming it, because a consumer meeting
+`conn:additivity` for the first time has nowhere else to look it up. Index and Turtle come
+out of one pass and `test_index_and_turtle_agree_on_every_annotated_column` fails if they
+diverge, exactly as for models and mappings.
+
+`column-semantics.md` **leads with the prohibitions**, because those are the part a name
+cannot convey: `Price` is per unit and `QuantityInStock` is a level, so both look summable
+and both produce a plausible wrong number. It also states what it does not cover — a file
+listing 89 columns and silent about the other 183 reads as complete, and an agent then
+assumes defaults for the rest.
+
 ### Serving it later — `index.json`
 
 `ontology/index.json` is a flat projection of the same facts the Turtle asserts: four
-uniform record lists (`connectors`, `concepts`, `models`, `mappings`) plus `gaps` and a
+uniform record lists (`connectors`, `concepts`, `models`, `mappings`,
+`column_semantics`) plus `gaps` and a
 `provenance` block, with `mcp_tools` naming the key that backs each tool. Both artifacts come
 out of one generator pass, and `test_index_and_turtle_agree_on_every_model` fails if they
 diverge.

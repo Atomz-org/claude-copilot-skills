@@ -326,6 +326,70 @@ def test_index_and_turtle_agree_on_every_model() -> None:
     )
 
 
+def test_column_semantics_turtle_declares_the_vocabulary_it_uses() -> None:
+    """A consumer meeting `conn:additivity` for the first time has nowhere else to look it
+    up, so the properties are declared in the file that uses them rather than assumed."""
+    ttl = og.render_column_semantics(
+        [{"column": "Price", "role": "measure", "additivity": "non_additive",
+          "unit": "currency", "pii": "none", "definition": "Price from the price list",
+          "concepts": ["dim_articles"], "connectors": ["fortnox"], "carried_by_count": 1}],
+        og.OntologyConfig(),
+    )
+    assert "conn:ConformedColumn a owl:Class" in ttl
+    for prop in ("role", "additivity", "pii", "unit", "carriedBy"):
+        assert f"conn:{prop} a owl:DatatypeProperty" in ttl
+    assert 'conn:additivity "non_additive"' in ttl
+    assert "conn:realises topo:Article" in ttl, \
+        "the concept IRI is the one concept-coverage.ttl already minted, not a new spelling"
+
+
+def test_a_use_case_with_no_annotations_still_renders_a_whole_ontology() -> None:
+    """Absent annotations are the normal state of a fresh use-case, not a failure. What is
+    lost is the layer saying what a column means — the index key stays, empty, because a
+    tool backed by a key that vanishes breaks at request time rather than in a test."""
+    index = og.render_index([], og.OntologyConfig(), "demo", {}, None)
+    assert index["column_semantics"] == []
+    assert index["provenance"]["annotated_columns"] == 0
+    assert any(t["backed_by"] == "column_semantics" for t in index["mcp_tools"])
+
+
+@needs_ontology
+def test_index_and_turtle_agree_on_every_annotated_column() -> None:
+    """Same rule as the models and the mappings: the projection cannot lead the graph."""
+    index = json.loads((ONTOLOGY / "index.json").read_text(encoding="utf-8"))
+    ttl = ONTOLOGY / "topology/column-semantics.ttl"
+    if not index["column_semantics"]:
+        assert not ttl.exists(), "no annotations, so nothing should have been written"
+        return
+
+    from_index = {(c["column"], c["role"], c["additivity"] or "", c["pii"])
+                  for c in index["column_semantics"]}
+    from_turtle: set[tuple[str, str, str, str]] = set()
+    name = role = additivity = pii = ""
+    for line in ttl.read_text(encoding="utf-8").splitlines():
+        if line.startswith("col:"):
+            name, role, additivity, pii = line.split()[0][4:], "", "", ""
+        elif not name:
+            # The property declarations at the top of the file use the same predicates
+            # they declare; only a line inside a `col:` block describes a column.
+            continue
+        elif line.strip().startswith("conn:role "):
+            role = line.split('"')[1]
+        elif line.strip().startswith("conn:additivity "):
+            additivity = line.split('"')[1]
+        elif line.strip().startswith("conn:pii "):
+            pii = line.split('"')[1]
+        elif not line.strip():
+            from_turtle.add((name, role, additivity, pii))
+            name = ""
+    if name:  # the last block, which no blank line follows
+        from_turtle.add((name, role, additivity, pii))
+    assert from_index == from_turtle, (
+        f"only in index: {sorted(from_index - from_turtle)[:5]}; "
+        f"only in turtle: {sorted(from_turtle - from_index)[:5]}"
+    )
+
+
 @needs_ontology
 @needs_manifest
 def test_index_and_turtle_agree_on_every_column_mapping() -> None:

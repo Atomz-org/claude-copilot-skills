@@ -130,6 +130,44 @@ def test_pii_shapes_are_high_recall_and_classed(name: str, expected: str) -> Non
     assert ca.derive(name, set(), None)["pii"] == expected
 
 
+def test_a_bas_account_number_is_not_a_bank_identifier() -> None:
+    """The bank shape used to match a bare `AccountNumber`, so all four of this project's
+    were classed as direct PII. In a Swedish ERP an account number is a BAS ledger
+    account, and putting the chart of accounts behind a masking rule is the wrong error to
+    make in the safe direction. `BankAccount` and the giro/IBAN forms still match."""
+    assert ca.derive("AccountNumber", {"int64"}, None,
+                     "BAS account number, consists of four digits")["pii"] == "none"
+    assert ca.derive("BankAccountNumber", {"string"}, None)["pii"] == "direct"
+    assert ca.derive("Bankgiro", {"string"}, None)["pii"] == "direct"
+
+
+def test_a_definition_outranks_the_cast_that_contradicts_it() -> None:
+    """`Account` carries no identifier suffix and casts to numeric, so nothing in its name
+    or type stops it being read as a measure. Its own description does: a BAS account is an
+    identifier, and the class beside it is a dimension — neither is a quantity."""
+    ledger = "BAS account number, consists of four digits, e.g. 1234"
+    assert ca.derive("Account", {"numeric"}, None, ledger)["role"] == "identifier"
+    assert ca.derive("AccountClass", {"int64"}, None,
+                     "BAS account class defined by first account digit")["role"] == "dimension"
+
+
+def test_a_price_per_unit_is_non_additive_on_the_projects_own_words() -> None:
+    """Nothing in `AmountPerUnit` reads as a rate, so the name shapes leave it additive by
+    omission. The description — 'Price per unit (day, hour etc.)' — is what makes summing
+    it meaningless, and it is money rather than a count."""
+    got = ca.derive("AmountPerUnit", {"float64"}, None, "Salary: Price per unit (day, hour etc.)")
+    assert got["additivity"] == "non_additive"
+    assert got["unit"] == "currency"
+
+
+def test_discount_is_not_a_count() -> None:
+    """`re.search('Count', name)` matched `PriceAfterDis*count*`, so a currency column was
+    proposed as a quantity. Words, not substrings."""
+    assert ca.derive("PriceAfterDiscount", {"float64"}, None)["unit"] == "currency"
+    assert ca.derive("NumberOfUnits", {"float64"}, None)["unit"] == "quantity"
+    assert ca.derive("QuantityInStock", {"float64"}, None)["unit"] == "quantity"
+
+
 # --- proposing ------------------------------------------------------------------------
 
 def test_a_declared_accepted_values_test_becomes_a_sourced_domain(tmp_path, monkeypatch) -> None:
@@ -151,6 +189,34 @@ def test_definitions_are_harvested_not_invented(tmp_path, monkeypatch) -> None:
         "The customer's number in the source system."
     assert result["proposed"]["TotalToPay"]["definition"] == "", \
         "a column nobody described gets no definition, rather than a paraphrase"
+
+
+def test_evidenced_only_emits_what_the_project_already_justifies(tmp_path, monkeypatch) -> None:
+    """The full stub is a page of blanks that `build()` then rejects column by column.
+    `--evidenced-only` writes the subset that is already valid — a description the project
+    wrote, a derived role, and an additivity where a measure needs one — so the first run
+    produces an artifact. What it leaves out is not annotated with a guess; it is the
+    backlog `--coverage` reports."""
+    use_case = _tree(tmp_path)
+    assert _run(tmp_path, monkeypatch,
+                ["--use-case", "demo", "--propose", "--evidenced-only"]) == 0
+    body = (use_case / "ontology/annotations.yml").read_text(encoding="utf-8")
+    assert "CustomerNumber:" in body, "it has a description and an identifier suffix"
+    assert "TotalToPay:" not in body, "a measure with no description and no additivity"
+    assert _run(tmp_path, monkeypatch, ["--use-case", "demo"]) == 0, \
+        "the emitted subset must build with zero problems"
+
+
+def test_is_evidenced_holds_the_same_bar_as_build() -> None:
+    """Two predicates that disagree would emit a stub that immediately fails to build."""
+    assert not ca.is_evidenced({"abstained": True, "definition": "x", "role": "text",
+                                "additivity": None})
+    assert not ca.is_evidenced({"abstained": False, "definition": "", "role": "text",
+                                "additivity": None})
+    assert not ca.is_evidenced({"abstained": False, "definition": "x", "role": "measure",
+                                "additivity": None})
+    assert ca.is_evidenced({"abstained": False, "definition": "x", "role": "measure",
+                            "additivity": "semi_additive"})
 
 
 def test_propose_refuses_to_overwrite_confirmed_annotations(tmp_path, monkeypatch) -> None:
@@ -238,6 +304,29 @@ def test_the_committed_conformed_layer_is_readable_and_large() -> None:
     assert len(columns) > 200
     shared = [c for c, m in columns.items() if len(m["connectors"]) > 1]
     assert len(shared) > 100, "annotating at the conformed level is the leverage argument"
+
+
+@pytest.mark.skipif(
+    not (ENHANZA / "ontology/annotations.yml").exists(),
+    reason="no committed annotations.yml on this branch",
+)
+def test_the_committed_annotations_build_without_a_single_problem() -> None:
+    """Every refusal in `build()` is silent downstream — a measure with no additivity is a
+    dashboard that double-counts, a domain with no source is an enum somebody invented. The
+    committed file is the one BI and the MCP server read, so it holds to all of them."""
+    import _miniyaml
+
+    source = _miniyaml.load(
+        (ENHANZA / "ontology/annotations.yml").read_text(encoding="utf-8")) or {}
+    model, problems = ca.build(ENHANZA, "enhanza-analytics", source)
+    assert problems == []
+    assert model["provenance"]["annotated"] > 80
+    additivity = {c["column"]: c["additivity"] for c in model["columns"]
+                  if c["role"] == "measure"}
+    assert additivity["QuantityInStock"] == "semi_additive", "a stock level is not a flow"
+    assert additivity["Price"] == "non_additive", "a unit price has no meaningful sum"
+    assert additivity["SalesValue"] == "additive"
+    assert all(v for v in additivity.values()), "rule 11: every measure states its additivity"
 
 
 @needs_memory
