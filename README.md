@@ -9,6 +9,10 @@ This repository is a merged standalone scaffold that combines:
 
 - Git automation and reusable workflow infrastructure from `git-skills`
 - End-to-end dbt Core analytics engineering framework from `dbt-skill` (compat alias: `senior-analytics-engineer`)
+- The WrenAI semantic layer / GenBI engine as the serving tier over dbt use-cases —
+  source pinned at `external/WrenAI`, runtime pinned in `requirements.txt`, agent surface
+  in `skill-packs/wren-skills/`. See [docs/WRENAI_INTEGRATION.md](docs/WRENAI_INTEGRATION.md)
+  and run `./skill-packs/wren-skills/demo/run_wren_demo.sh` for the local end-to-end proof.
 
 It keeps all major assets from both repositories: agents, skills, commands, rules,
 scripts, templates, references, CI workflows, and tests.

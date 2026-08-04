@@ -1,0 +1,137 @@
+name: fct_orders
+table_reference:
+  catalog: dev
+  schema: marts
+  table: fct_orders
+columns:
+- name: order_id
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Primary key. Shopify order id.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: customer_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: FK to dim_customers. Null for guest checkouts (~3% of orders).
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: region
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Sales region derived from the customer''s country code by the mapping
+      owned by Finance
+
+      Analytics: EMEA, AMER, or OTHER.
+
+
+      `OTHER` is the deliberate catch-all for an unmapped country. It is never null,
+      so a new
+
+      market shows up as an `accepted_values` failure on this column rather than as
+      a
+
+      `not_null` failure three models downstream.
+
+
+      Guest checkouts have no customer and therefore no region. Those rows carry a
+      null region
+
+      and are still counted in revenue — see `fct_orders.customer_id`.
+
+      AS-IS, NOT AS-WAS. This is the customer''s region at the time this model last
+      built, denormalized from dim_customers so a dashboard need not join. Because
+      dim_customers is SCD Type 1 (overwrite), a customer who moves has ALL of their
+      historical orders re-attributed to the new region on the next run.
+
+      Finance accepted that: they report on where a customer is now. If you need revenue
+      attributed to the region the customer was in when the order was placed, join
+      fct_orders to customers_snapshot on the half-open dbt_valid_from / dbt_valid_to
+      interval instead — that is what the snapshot exists for.'
+- name: order_status
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: 'The order''s business status, normalized from Shopify''s `financial_status`.
+
+
+      Precedence: a refund overrides any fulfillment state. An order that shipped
+      and was then
+
+      refunded reports `refunded`, because the finance question this mart answers
+      is "what did
+
+      we keep", not "what left the warehouse".
+
+
+      A status Shopify introduces that we have not mapped falls through to `unknown`
+      rather
+
+      than null. Shopify has added enum values twice; `unknown` turns that into a
+      loud
+
+      `accepted_values` failure instead of silent nulls.
+
+
+      Values: `pending`, `paid`, `fulfilled`, `refunded`, `cancelled`, `unknown`.'
+    accepted_values:
+    - pending
+    - paid
+    - fulfilled
+    - refunded
+    - cancelled
+    - unknown
+    dbt_tests: accepted_values,not_null
+    dbt_test_status: verified
+- name: line_item_count
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Number of line items. Zero for orders with no lines (data defect
+      upstream).
+- name: order_amount_usd
+  type: DECIMAL(28, 6)
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Gross order amount in USD, before refunds. Includes tax and shipping.
+    dbt_tests: accepted_range,not_null
+    dbt_test_status: verified
+- name: net_line_amount_usd
+  type: DECIMAL(28, 6)
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Sum of line amounts less discounts, USD. Excludes tax and shipping.
+- name: ordered_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Order creation timestamp, UTC.
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: ordered_date
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Order creation date, UTC. Clustering key.
+cached: false
+properties:
+  description: One row per order at its current status. Excludes internal test accounts
+    (`is_test_order`). Amounts are USD at the order-date rate. Guest checkouts have
+    a null `customer_id` and a null `region` — they are included in revenue.
+  dbt_layer: mart
+  dbt_unique_id: model.analytics.fct_orders
+  dbt_resource_type: model
+primary_key: order_id

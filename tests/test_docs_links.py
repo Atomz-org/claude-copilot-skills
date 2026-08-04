@@ -30,6 +30,10 @@ SKIP_DIRS = {
     # third-party and their links are not ours to keep green.
     "dbt_packages",
     "target",
+    # Submodules: upstream's tree at a pinned SHA. WrenAI's docs/ links are written for
+    # its docs site (site-absolute /oss/... targets), correct there and unresolvable as
+    # files here — the same not-ours-to-keep-green reasoning as dbt_packages.
+    "external",
 }
 
 # [label](target) — the target group stops at the first closing paren, which is fine
