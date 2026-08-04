@@ -361,6 +361,7 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 
 | Stage | Produces | Needs |
 |---|---|---|
+| `taxonomy` | `ontology/conceptual-model.json` — what the project *should* build | `sources.yml`, `taxonomy.yml` |
 | `ontology` | `ontology/connectors/*.ttl`, `topology/*.ttl` | `connectors.yml` |
 | `index` | `ontology/index.json` — the machine-facing projection | same generator pass |
 | `columns` | `ontology/column-memory.json` — the column contract | manifest, sqlglot |
@@ -410,6 +411,70 @@ Three further rules decide whether the output can be trusted:
   IRI root and its own concept classes, so renaming a directory cannot silently reissue
   every identifier the ontology has published. The shared ERP/CRM vocabulary stays in
   `scripts/ontology_generator.py`; a domain's own concepts go in its `ontology.yml`.
+
+### The other direction — ontology before models
+
+Every artifact above is derived from `manifest.json`, so all of them describe what the dbt
+project **is**. That is the right direction for keeping an ontology honest and the wrong
+one for building a project: rule 6 wants the conceptual model to precede the physical one,
+and a model derived from the manifest cannot exist until the models do.
+
+`scripts/raw_taxonomy.py` runs the other way. Its inputs are the raw layer and the
+use-case spec; its output declares what the project **should** build:
+
+```bash
+python3 scripts/raw_taxonomy.py --use-case <slug> --propose   # candidates + evidence
+python3 scripts/raw_taxonomy.py --use-case <slug>             # ontology/conceptual-model.json
+python3 scripts/raw_taxonomy.py --use-case <slug> --plan      # entities with no dbt model yet
+```
+
+The two directions meet at `--plan`: every declared entity is either realised by a dbt
+model or reported as an open gap, so the conceptual model is falsifiable the same way
+`test_every_declared_dbt_model_exists` makes the generated Turtle falsifiable. Agent
+surface: skill `raw-layer-ontology`, command `/raw-ontology`.
+
+**One input is hand-authored and it is the only one.** Whether `tblCust01` is a Customer,
+which column identifies it, and what one row means are judgements no schema contains.
+`--propose` emits candidates *with their evidence*; a human confirms them into
+`ontology/taxonomy.yml`; everything downstream is derived. Same split, same reason, as
+`connectors.yml`.
+
+Three rules, each enforced rather than documented:
+
+- **An attribute that is not a declared source column does not exist** (rule 5). This
+  artifact is written before anything can check it, so an entity attribute tracing to no
+  column in `sources.yml` is reported and kept out — otherwise the output is a beautiful
+  description of a warehouse nobody can build. This is why source column contracts are a
+  prerequisite, not a nicety.
+- **A grain is declared or the entity is incomplete** (rule 4). No schema supplies "one row
+  per customer per tenant", so the taxonomy carries it and an entity without one fails.
+  Silence here is what makes a measure double-count three layers down while every test
+  passes.
+- **A proposal never overwrites a decision.** `--propose` refuses when `taxonomy.yml`
+  exists. Name matching is evidence for a human, and rewriting a curated mapping would make
+  the guess authoritative over the judgement — the same rule that stops the source-column
+  emitter touching a table that already declares `columns:`.
+
+A fourth rule was a bug first, found by running the pipeline end to end on a two-entity
+demo: **a gap is a concept this domain asked for**, meaning one its own `ontology.yml`
+declares. Counting every concept in the shared ERP/CRM vocabulary as a gap buried the one
+that mattered under 56 nobody had requested — rule 3, and the same unbounded-dump problem
+as the untested-model list. The shared ones are now `shared_vocabulary_unused`: a count
+plus a ten-name sample.
+
+Measured against this repo's raw layer: **200 declared tables across 12 `sources.yml`, 807
+declared columns, 40 concepts matched by name, 97 tables matched nothing** (each reported,
+never guessed at). The key-shape heuristic earns its keep and was wrong first: requiring a
+stem before `Number`/`Code` meant `accounts.Number` — the account number — was not a
+candidate while `OrgId` and `SalaryCode` were. With a bare stem allowed, the top-ranked
+candidate for `dim_accounts`, `dim_customers`, and `dim_articles` is `Number`,
+`CustomerNumber`, `ArticleNumber`. A bare `Id` stays excluded: it identifies a row in
+whichever table it sits in and names no entity.
+
+**No `taxonomy.yml` is committed for enhanza-analytics, deliberately.** Only 10 of its 359
+models state a grain anywhere, so authoring one would mean inventing ~40 grain sentences —
+rule 5, and the exact failure this script exists to prevent. The tool ships; the taxonomy
+is a human deliverable, and the stage skips with the remedy named until someone writes it.
 
 ### Serving it later — `index.json`
 

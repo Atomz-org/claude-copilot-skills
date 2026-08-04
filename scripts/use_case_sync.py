@@ -10,6 +10,7 @@ mode an ontology is famous for.
 
 So the stages are one command, in dependency order, and each reports what it did:
 
+    taxonomy   ontology/conceptual-model.json      <- sources.yml + taxonomy.yml; no manifest
     ontology   connectors/*.ttl + topology/*.ttl   <- registry, manifest, column lineage
     index      index.json                          <- same pass as the Turtle
     columns    ontology/column-memory.json         <- the .sql on disk, parsed and cached
@@ -162,6 +163,44 @@ def stage_ontology(use_case: Path, slug: str, manifest: Optional[Path], check: b
         return Stage(which, CHANGED if changed[which] else OK, detail, changed[which])
 
     return [build("ontology"), build("index")]
+
+
+def stage_taxonomy(use_case: Path, slug: str, check: bool) -> Stage:
+    """`ontology/conceptual-model.json` — what the project should build, from the raw layer.
+
+    First, and the only stage that takes no manifest: its inputs are `sources.yml` and the
+    hand-authored `ontology/taxonomy.yml`, both of which exist before a single model does.
+    That is the whole point of it — rule 6 wants the conceptual model to precede the
+    physical one, and every other stage here can only describe a project that already
+    exists.
+
+    Skips rather than fails in the two states that are correct-but-incomplete: no raw layer
+    yet, and a raw layer nobody has mapped. Every use-case is in the second state the day
+    this lands, and a gate that goes red on it gets switched off within a week.
+    """
+    if not (use_case / "ontology" / "taxonomy.yml").exists():
+        return Stage("taxonomy", SKIP, "no ontology/taxonomy.yml — run raw_taxonomy.py --propose")
+    cmd = [sys.executable, str(REPO / "scripts/raw_taxonomy.py"),
+           "--use-case", slug, "--format", "json"]
+    if check:
+        cmd.append("--check")
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=600)
+    payload = _first_json_line(proc.stdout)
+    if payload is None:
+        tail = (proc.stderr or proc.stdout).strip().splitlines()
+        return Stage("taxonomy", FAIL, tail[-1] if tail else f"exit {proc.returncode}")
+    if payload.get("status") == "skip":
+        return Stage("taxonomy", SKIP, str(payload.get("reason", "")))
+    changed = [payload["artifact"]] if payload.get("changed") else []
+    if payload.get("problems"):
+        return Stage("taxonomy", FAIL, "; ".join(payload["problems"][:3]), changed)
+    detail = (
+        f"{payload.get('entities', 0)} entities from "
+        f"{payload.get('raw_tables_mapped', 0)} of "
+        f"{payload.get('raw_tables_declared', 0)} raw table(s), "
+        f"{payload.get('gaps', 0)} concept(s) with no source"
+    )
+    return Stage("taxonomy", CHANGED if changed else OK, detail, changed)
 
 
 def stage_columns(use_case: Path, slug: str, manifest: Optional[Path], check: bool) -> Stage:
@@ -563,6 +602,9 @@ def sync(slug: str, check: bool, manifest_arg: Optional[str],
             return
         stages.extend(produced if isinstance(produced, list) else [produced])
 
+    # First, and manifest-free: it declares what the project should build, which the
+    # manifest-derived stages below can only describe once it has been built.
+    run("taxonomy", lambda: stage_taxonomy(use_case, slug, check))
     run("ontology", lambda: stage_ontology(use_case, slug, manifest, check))
     run("columns", lambda: stage_columns(use_case, slug, manifest, check))
     run("seeds", lambda: stage_seeds(use_case, slug, manifest, check))
@@ -599,8 +641,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--pack", default="dbt-skills", help="pack that owns a new use-case")
     p.add_argument("--manifest", help="manifest.json (default: <project>/target/manifest.json)")
     p.add_argument("--stage", action="append",
-                   choices=("ontology", "columns", "seeds", "graphify", "graph",
-                            "alignment", "wren"),
+                   choices=("taxonomy", "ontology", "columns", "seeds", "graphify",
+                            "graph", "alignment", "wren"),
                    help="run only this stage (repeatable)")
     p.add_argument("--graphify-update", action="store_true",
                    help="rebuild the code graph before merging dbt lineage into it; never "

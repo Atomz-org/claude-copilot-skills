@@ -458,3 +458,95 @@ def test_a_dry_run_never_reaches_the_topology_merge(monkeypatch, tmp_path: Path)
     )
     assert stage.status == sync.OK, stage.detail
     assert not (tmp_path / "scripts/topology-ran.txt").exists()
+
+
+# ---------------------------------------------------------------------------------------
+# The taxonomy stage
+# ---------------------------------------------------------------------------------------
+#
+# First in the order and the only stage that takes no manifest, which is the property worth
+# pinning: every other stage can only describe a project that already exists, so a taxonomy
+# stage that quietly needed a manifest would be useless in exactly the state it exists for.
+
+_RAW_SOURCES = """version: 2
+
+sources:
+  - name: acme_api
+    schema: acme_{{ var('uid') }}
+    tables:
+      - name: customers
+        columns:
+          - name: CustomerNumber
+          - name: Name
+"""
+
+_TAXONOMY = """version: 1
+entities:
+  dim_customers:
+    core_class: erp:Customer
+    grain: "one row per customer per tenant"
+    natural_key:
+      - CustomerNumber
+    sources:
+      - source: acme_api
+        table: customers
+"""
+
+
+def _taxonomy_tree(tmp_path: Path, taxonomy: str | None) -> Path:
+    use_case = tmp_path / "skill-packs/dbt-skills/use-cases/demo"
+    models = use_case / "dbt_project/models"
+    models.mkdir(parents=True)
+    (models / "sources.yml").write_text(_RAW_SOURCES, encoding="utf-8")
+    (use_case / "ontology").mkdir(parents=True)
+    (use_case / "ontology/ontology.yml").write_text(
+        "namespace: https://example.test/demo/\ntitle: Demo\nconcept_classes: {}\n",
+        encoding="utf-8",
+    )
+    if taxonomy is not None:
+        (use_case / "ontology/taxonomy.yml").write_text(taxonomy, encoding="utf-8")
+    return use_case
+
+
+def test_taxonomy_skips_without_a_taxonomy_file(tmp_path: Path) -> None:
+    """The state every use-case is in the day this lands."""
+    use_case = _taxonomy_tree(tmp_path, None)
+    stage = sync.stage_taxonomy(use_case, "demo", check=False)
+    assert stage.status == sync.SKIP
+    assert "--propose" in stage.detail
+
+
+def test_taxonomy_runs_with_no_manifest_at_all(monkeypatch, tmp_path: Path) -> None:
+    """The property the whole stage exists for: it precedes the physical model."""
+    use_case = _taxonomy_tree(tmp_path, _TAXONOMY)
+    monkeypatch.setattr(sync, "REPO", tmp_path)
+    (tmp_path / "scripts").mkdir(exist_ok=True)
+    (tmp_path / "scripts/raw_taxonomy.py").write_bytes(
+        (REPO / "scripts/raw_taxonomy.py").read_bytes()
+    )
+    for helper in ("_paths.py", "_miniyaml.py", "_manifest.py", "ontology_generator.py",
+                   "dbt_column_lineage.py"):
+        src = REPO / "scripts" / helper
+        if src.exists():
+            (tmp_path / "scripts" / helper).write_bytes(src.read_bytes())
+    assert not (use_case / "dbt_project/target/manifest.json").exists()
+    stage = sync.stage_taxonomy(use_case, "demo", check=False)
+    assert stage.status in (sync.OK, sync.CHANGED), stage.detail
+    assert "1 entities" in stage.detail
+    assert (use_case / "ontology/conceptual-model.json").exists()
+
+
+def test_taxonomy_reports_problems_as_a_failure(monkeypatch, tmp_path: Path) -> None:
+    """A natural key no source declares is rule 5 in the direction that matters, and the
+    stage must surface it rather than reporting a green artifact built around it."""
+    use_case = _taxonomy_tree(tmp_path, _TAXONOMY.replace("CustomerNumber", "CustomerUuid"))
+    monkeypatch.setattr(sync, "REPO", tmp_path)
+    (tmp_path / "scripts").mkdir(exist_ok=True)
+    for helper in ("raw_taxonomy.py", "_paths.py", "_miniyaml.py", "_manifest.py",
+                   "ontology_generator.py", "dbt_column_lineage.py"):
+        src = REPO / "scripts" / helper
+        if src.exists():
+            (tmp_path / "scripts" / helper).write_bytes(src.read_bytes())
+    stage = sync.stage_taxonomy(use_case, "demo", check=False)
+    assert stage.status == sync.FAIL
+    assert "CustomerUuid" in stage.detail
