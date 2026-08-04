@@ -190,6 +190,25 @@ def test_alignment_check_with_explicit_format_is_left_alone(monkeypatch, tmp_pat
     assert toon_graphify_pipe.rewrite(cmd) is None
 
 
+def test_column_lineage_is_rewritten_to_json_toon(monkeypatch, tmp_path):
+    """Lineage edges are a uniform 5-field list: 5445 -> 3212 bytes, -41%.
+
+    `--limit` (default 40) applies to text and json alike, so both byte counts
+    describe the same 40 records — TOON is not winning by truncating.
+    """
+    fake = tmp_path / "graph_to_toon"
+    fake.write_text("#!/bin/sh\ncat\n", encoding="utf-8")
+    fake.chmod(0o755)
+    monkeypatch.setattr(toon_graphify_pipe, "RUST_BIN", fake)
+
+    cmd = "python3 scripts/dbt_column_lineage.py --manifest target/manifest.json"
+    rewritten = toon_graphify_pipe.rewrite(cmd)
+    assert rewritten is not None
+    assert "--format json" in rewritten
+    assert rewritten.endswith("--passthrough")
+    assert rewritten.startswith("set -o pipefail;")
+
+
 def test_manifest_emitter_is_not_rewritten(monkeypatch, tmp_path):
     """Its text output is already smaller than its JSON; TOON would cost tokens."""
     fake = tmp_path / "graph_to_toon"
@@ -199,6 +218,32 @@ def test_manifest_emitter_is_not_rewritten(monkeypatch, tmp_path):
 
     cmd = "python3 scripts/dbt_manifest_to_graphify.py --manifest x.json"
     assert toon_graphify_pipe.rewrite(cmd) is None
+
+
+def test_measured_losers_stay_unrouted(monkeypatch, tmp_path):
+    """Routing is decided by bytes, not by how tabular the output looks.
+
+    Each of these was measured on real enhanza-analytics data and came out larger
+    as TOON than as prose, because its text form is a handful of lines of counts
+    rather than a record list. `dbt_column_memory.py --concept` is the instructive
+    one: it *looks* like a record list and briefly measured as a 82% win, but that
+    was `--format json` silently ignoring `--concept` and emitting the summary
+    instead. With the projection fixed the honest number is +30%, so it stays out.
+    """
+    fake = tmp_path / "graph_to_toon"
+    fake.write_text("#!/bin/sh\ncat\n", encoding="utf-8")
+    fake.chmod(0o755)
+    monkeypatch.setattr(toon_graphify_pipe, "RUST_BIN", fake)
+
+    for cmd in (
+        "python3 scripts/dbt_column_memory.py --use-case enhanza-analytics",
+        "python3 scripts/dbt_column_memory.py --use-case enhanza-analytics --concept dim_articles",
+        "python3 scripts/ontology_generator.py --use-case enhanza-analytics --check",
+        "python3 scripts/use_case_sync.py --use-case enhanza-analytics --check",
+        "python3 scripts/wren_context_sync.py --use-case enhanza-analytics --check",
+        "python3 scripts/dbt_seed_generator.py --use-case enhanza-analytics --dry-run",
+    ):
+        assert toon_graphify_pipe.rewrite(cmd) is None, f"unexpectedly routed: {cmd}"
 
 
 def test_script_rewrite_stays_silent_without_the_binary(monkeypatch, tmp_path):

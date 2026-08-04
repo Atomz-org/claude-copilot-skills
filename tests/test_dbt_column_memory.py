@@ -674,6 +674,52 @@ def test_stale_only_exits_nonzero_when_stale_and_zero_when_current():
     assert result.returncode == (0 if payload["current"] else 1)
 
 
+def test_concept_is_projected_into_json_not_silently_dropped():
+    """`--concept X --format json` must answer about X, not about the whole store.
+
+    It used to emit the summary counts and drop the contract entirely — byte-identical
+    to the run without `--concept`. A caller asking for one concept got the whole-store
+    summary with no error to indicate the flag had been ignored, and any measurement
+    taken through that path was measuring the wrong payload.
+    """
+    use_case = REPO_ROOT / "skill-packs/dbt-skills/use-cases/enhanza-analytics"
+    if not (use_case / "dbt_project/target/manifest.json").is_file():
+        pytest.skip("no manifest")
+
+    scoped = run_cli(
+        "--use-case", "enhanza-analytics", "--concept", "dim_articles", "--format", "json"
+    )
+    whole = run_cli("--use-case", "enhanza-analytics", "--format", "json")
+    assert scoped.returncode == 0 and whole.returncode == 0
+    assert scoped.stdout != whole.stdout, "--concept was ignored under --format json"
+
+    concept = json.loads(scoped.stdout.strip().splitlines()[-1])["concept"]
+    assert concept["found"] is True
+    assert concept["name"] == "dim_articles"
+    assert concept["columns"], "the contract's column list is the point of --concept"
+    assert concept["suppliers"], "a conformed concept names the connectors supplying it"
+    assert concept["binding_count"] >= len(concept["bindings"]), "truncation states the total"
+
+    # The default payload is unchanged, so existing consumers keep parsing it.
+    assert "concept" not in json.loads(whole.stdout.strip().splitlines()[-1])
+
+
+def test_an_unknown_concept_is_reported_not_confused_with_an_ignored_flag():
+    """`found: false` distinguishes "no such concept" from "the flag did nothing"."""
+    use_case = REPO_ROOT / "skill-packs/dbt-skills/use-cases/enhanza-analytics"
+    if not (use_case / "dbt_project/target/manifest.json").is_file():
+        pytest.skip("no manifest")
+
+    result = run_cli(
+        "--use-case", "enhanza-analytics", "--concept", "no_such_concept", "--format", "json"
+    )
+
+    assert result.returncode == 0
+    assert json.loads(result.stdout.strip().splitlines()[-1])["concept"] == {
+        "name": "no_such_concept", "found": False,
+    }
+
+
 def test_a_missing_manifest_is_a_skip_not_a_failure(tmp_path: Path):
     """A gate that goes red on a correct state gets switched off within a week."""
     result = run_cli(

@@ -55,25 +55,47 @@ It also encodes **arbitrary JSON**, not only graphify output — plain JSON on s
 back as TOON. So a repo script that wants TOON emits `--format json` and pipes; it does not
 get its own serializer.
 
-**Route a script through TOON only when it was measured to help.** Measured here:
+**Route a script through TOON only when it was measured to help.** Every emitter that
+offers `--format json` was measured on real enhanza-analytics data. Bytes, not looks:
 
-| Command | text | TOON | |
-|---|---|---|---|
-| `connector_alignment_check.py --connector erp` (28 findings) | 7447 | **2624** | −64.8% |
-| `dbt_manifest_to_graphify.py --dry-run` | **271** | 639 | +136% |
-| `dbt_column_memory.py` (default report) | **297** | 806 | +171% |
+| Command | text | TOON | | |
+|---|---|---|---|---|
+| `dbt_column_lineage.py` (40 edges) | 5445 | **3212** | −41% | routed |
+| `connector_alignment_check.py` (all connectors) | 1332 | **909** | −31% | routed |
+| `dbt_column_lineage.py --column OrgName` | 3378 | **2442** | −27% | routed |
+| `dbt_seed_generator.py --dry-run` | 228 | 207 | −9% | rejected, noise |
+| `ontology_generator.py --check` | **195** | 225 | +15% | rejected |
+| `dbt_column_memory.py --concept dim_articles` | **4042** | 5292 | +30% | rejected |
+| `wren_context_sync.py --check` | **145** | 211 | +45% | rejected |
+| `use_case_sync.py --check` | **587** | 854 | +45% | rejected |
+| `dbt_manifest_to_graphify.py --dry-run` | **271** | 633 | +136% | rejected |
+| `dbt_column_memory.py` (default report) | **297** | 694 | +133% | rejected |
 
-The checker wins because its findings are a uniform record list: the message template and
-the shared path prefix are each stated once instead of 28 times, so
-`scripts/hooks/toon_graphify_pipe.py` rewrites bare invocations to
-`--format json | graph_to_toon`. The emitter loses because its text output is already four
-lines of counts — it is deliberately **not** in that hook's `_TOON_SCRIPTS`, and adding it
-would cost tokens. `--format json` still exists there for machine consumption.
+The two winners are the two whose payload is *one uniform record list* — drift findings,
+and 5-field lineage edges — so field names and the shared path prefix are stated once
+instead of once per row. Both are in `scripts/hooks/toon_graphify_pipe.py`'s
+`_TOON_SCRIPTS`; `--limit` (default 40) applies to text and json alike, so those byte
+counts describe the same rows and TOON is not winning by truncating.
 
-`dbt_column_memory.py` loses for the same reason and is out for the same reason: its default
-report is six lines of counts, and its detailed view (`--concept`) is a contract header plus
-two differently-shaped lists, not one uniform record set. The **artifact** is where its
-uniform lists live, and that is already JSON.
+Everything else loses for one reason: its text output is already a handful of lines of
+counts, while the JSON form carries more fields than the prose states. A format cannot
+rescue output that is not a record list. `--format json` still exists on all of them for
+machine consumption.
+
+`dbt_column_memory.py --concept` is the instructive rejection. It first measured as an
+82% *win* — which was `--format json` silently ignoring `--concept` and printing the
+whole-store summary instead, byte-identical to the run without the flag. The projection
+now exists (`concept.found`, `columns`, `suppliers`, `bindings`), the honest number is
++30%, and it stays out. **A measurement through a broken code path measures the broken
+path.** Pinned by `test_concept_is_projected_into_json_not_silently_dropped`.
+
+Rejections are pinned too, in `test_measured_losers_stay_unrouted` — otherwise the next
+person re-derives the table from scratch.
+
+The committed artifacts stay JSON, and that is also measured: `column-memory.json` is
+−54% and `index.json` −33% as TOON, but both are read by machines. The one that would
+*not* benefit is the big one — `graphify-fragment.json` gains **1%**, because its nodes
+carry four different key-sets, so no single tabular header covers the array.
 
 Two rules that fall out of this:
 

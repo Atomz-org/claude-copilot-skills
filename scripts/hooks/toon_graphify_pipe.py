@@ -26,14 +26,34 @@ _GRAPHIFY_RE = re.compile(r"^\s*graphify\s+(query|path|explain)\b")
 _UNSAFE_CHARS = set("|;&<>\n")
 
 # Repo scripts whose findings are a uniform record list, and whose `--format json` output is
-# measurably cheaper as TOON than as prose. Measured on the 28-finding drift case:
-# 7447 chars of text -> 2624 as TOON, a 64.8% cut, because the message template and the
-# shared path prefix are each stated once instead of 28 times.
+# measurably cheaper as TOON than as prose. Membership is decided by measurement on real
+# enhanza-analytics data, never by how tabular the output looks:
 #
-# `dbt_manifest_to_graphify.py` is deliberately NOT here. Its text output is already four
-# lines of counts; the JSON form carries more fields and comes out *larger* (271 -> 639).
-# Routing it through TOON would cost tokens, not save them.
-_TOON_SCRIPTS = ("scripts/connector_alignment_check.py",)
+#   connector_alignment_check.py   1332 -> 909 bytes   -31%   (28-finding case: -64.8%)
+#   dbt_column_lineage.py          5445 -> 3212 bytes  -41%   (--column OrgName: -27%)
+#
+# Both emit one uniform record list — findings, and 5-field lineage edges — so the field
+# names and the shared path prefix are stated once instead of once per row. `--limit`
+# applies to text *and* json alike (default 40), so those two byte counts describe the
+# same 40 records; TOON is not winning by truncating.
+#
+# Deliberately NOT here, each rejected on its own numbers:
+#
+#   dbt_manifest_to_graphify.py --dry-run    271 -> 633    +136%
+#   dbt_column_memory.py (report)            297 -> 694    +133%
+#   ontology_generator.py --check            195 -> 225     +15%
+#   use_case_sync.py --check                 587 -> 854     +45%
+#   wren_context_sync.py --check             145 -> 211     +45%
+#   dbt_seed_generator.py --dry-run          228 -> 207      -9%   (21 bytes; noise)
+#
+# The first five lose for one reason: their text output is already a handful of lines of
+# counts, and the JSON form carries more fields than the prose states. A format cannot
+# rescue output that is not a record list. The sixth wins by an amount smaller than a
+# single log line, which is not worth a rewritten command.
+_TOON_SCRIPTS = (
+    "scripts/connector_alignment_check.py",
+    "scripts/dbt_column_lineage.py",
+)
 
 
 def serializer_command() -> str | None:
