@@ -1,0 +1,49 @@
+Parse parameterized DECIMAL/NUMERIC in map_data_type instead of falling back to Utf8
+
+`map_data_type` matches "decimal" and "numeric" only as exact strings, and the
+fallthrough arm hands anything else to Arrow's `DataType::from_str`, which does not
+speak SQL type syntax. So `DECIMAL(28, 6)` — the form every warehouse catalog and the
+dbt importer's own `models/*/metadata.yml` emit — fails both, and `try_map_data_type`
+silently registers the column as Utf8.
+
+Model queries survive because the planner never sees the user's aggregate (the CTE
+rewriter only plans bare projections). A *view's* statement is planned whole, so any
+`SUM(<decimal column>)` inside a view dies with:
+
+    Error during planning: Function 'sum' failed to match any signature ...
+    received String (DataType: Utf8)
+
+Reproduced against wrenai 0.13.2 / the pinned submodule with a view over a dbt-imported
+DuckDB model carrying `DECIMAL(28, 6)`. BIGINT and TIMESTAMP columns plan fine in the
+same view; only parameterized decimal falls through.
+
+The bridge in this repository works around it by CASTing bare decimal measure columns
+to their own catalog type inside generated view SQL (scripts/wren_context_sync.py,
+`_typed_column`); that workaround can be dropped when this lands upstream.
+
+--- a/core/wren-core/core/src/logical_plan/utils.rs
++++ b/core/wren-core/core/src/logical_plan/utils.rs
+@@ -115,6 +115,21 @@ pub fn map_data_type(data_type: &str) -> Result<DataType> {
+     if lower_data_type.starts_with("struct") {
+         return create_struct_type(lower_data_type);
+     }
++    // Parameterized decimal forms: DECIMAL(p), DECIMAL(p, s), NUMERIC(p, s).
++    // The exact-string arms below only cover the bare names, and Arrow's
++    // from_str in the fallthrough does not parse SQL type syntax — so without
++    // this, every catalog-typed decimal column degrades to Utf8 and aggregates
++    // over it fail to plan inside views.
++    for prefix in ["decimal", "numeric", "bignumeric"] {
++        if let Some(rest) = lower_data_type.strip_prefix(prefix) {
++            let rest = rest.trim();
++            if let Some(args) = rest.strip_prefix('(').and_then(|r| r.strip_suffix(')')) {
++                let mut parts = args.split(',').map(str::trim);
++                if let Some(Ok(precision)) = parts.next().map(str::parse::<u8>) {
++                    let scale = parts.next().map_or(Ok(0), str::parse::<i8>).unwrap_or(0);
++                    return Ok(DataType::Decimal128(precision, scale));
++                }
++            }
++        }
++    }
+     let result = match lower_data_type {
+         // Wren Definition Types
+         "bool" | "boolean" => DataType::Boolean,
