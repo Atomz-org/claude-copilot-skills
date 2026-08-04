@@ -476,6 +476,57 @@ models state a grain anywhere, so authoring one would mean inventing ~40 grain s
 rule 5, and the exact failure this script exists to prevent. The tool ships; the taxonomy
 is a human deliverable, and the stage skips with the remedy named until someone writes it.
 
+### Column annotations — what a column *means*
+
+`column-memory.json` records which raw column feeds which conformed column. Nothing recorded
+what the conformed column **is**, and three binding rules need exactly that: additivity per
+measure (rule 11), PII declared and tagged (rule 17), `accepted_values` on every closed
+domain (rule 28). Measured before this existed: **272 conformed columns, 1 accepted_values
+test in the entire project**, and nothing anywhere recording additivity or PII.
+
+```bash
+python3 scripts/column_annotations.py --use-case <slug> --propose    # candidates + evidence
+python3 scripts/column_annotations.py --use-case <slug>              # the artifact
+python3 scripts/column_annotations.py --use-case <slug> --coverage   # what is unannotated
+```
+
+The consequence was concrete: `wren/knowledge/rules/column-contracts.md`, the file an agent
+reads before writing SQL, lists `QuantityInStock` beside `TotalToPay` as bare names — so the
+agent cannot know that summing the first across time is wrong, or that `RecipientEmail` must
+not reach a shared dashboard.
+
+Four decisions shape the artifact:
+
+- **Facets, not a tree.** A column is several things at once — `TotalToPay` is a measure
+  *and* additive *and* currency-denominated *and* not PII. A single hierarchy has to pick one
+  of those as the parent and loses the rest, so `role` / `additivity` / `pii` / `unit` /
+  `domain` are independent.
+- **Annotated at the conformed column, not per model.** Conformance already asserts
+  `ArticleNumber` means the same thing in Fortnox and Shopify. Measured: **272 decisions
+  cover 952 (column, connector) pairs**, and a per-model annotation would let one column be a
+  measure in one connector and a dimension in another — the drift the conformed layer exists
+  to prevent.
+- **Evidence, never invention.** Candidates come from cast types, name shapes, existing
+  `accepted_values` tests, and the project's own column descriptions — **97 definitions
+  harvested** rather than paraphrased. A closed domain with no cited source is refused
+  (rule 5): a wrong enum passes every `accepted_values` test, because it generated them.
+- **Abstain rather than guess.** 49 of 272 columns abstain, and `additive` is never proposed
+  — it is what a reader already assumes, so proposing it removes the prompt to decide while
+  adding nothing.
+
+Two derivation rules were wrong first and are pinned:
+
+- **A regex cannot read a cast.** `cast(nullif(c.city,'') as string) City` is the ordinary
+  form here, and a `[^()]*` body stops at the inner paren — so the simple case read and every
+  wrapped one silently lost its type. Balanced-paren scan instead: type coverage 179 of 272.
+- **An identifier suffix outranks a numeric cast.** `OrderNumber` is an `int64` and summing
+  it is meaningless. The Swedish accounting reference states the same rule for account
+  numbers: *"They are identifiers, not quantities; arithmetic on them is always a bug."*
+
+Shaped after the annotation and taxonomy skills the request cited — poly-hierarchical facets
+rather than one tree, per-item confidence with an explicit abstain, evidence bound to every
+node, and refuse-to-overwrite-a-decision.
+
 ### Serving it later — `index.json`
 
 `ontology/index.json` is a flat projection of the same facts the Turtle asserts: four
