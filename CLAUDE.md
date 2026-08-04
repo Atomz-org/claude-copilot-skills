@@ -414,6 +414,46 @@ have to reify `models` and `mappings` into graph shapes they do not have, and on
 only the prefixes would parse while dropping nearly every statement. The graph stays in the
 `.ttl` files. Details in the use-case's `ontology/README.md`.
 
+### Seeing it — `scripts/ontology_ui.py`
+
+`index.json` answers one question per call for a machine. The same file also answers
+"what does this project actually track, and where does it come from?" for a person who
+has never heard of an ontology — which is what `scripts/ontology_ui.py` renders:
+
+```bash
+python3 scripts/ontology_ui.py --use-case enhanza-analytics   # -> public/<slug>-ontology.html
+python3 scripts/ontology_ui.py --all --check                  # the CI gate form
+python3 scripts/ontology_ui.py --use-case <slug> --fragment   # body-only, for embedding
+```
+
+One self-contained HTML file per use-case, standard library only, **no external
+reference of any kind** — it opens from `file://` and under a CSP that blocks every
+other host, same as `public/decision-path.html` beside it. Four views over the same
+payload: entity cards grouped by family, a systems × things coverage grid, per-system
+detail, and the gaps. It is a framework rather than a page: everything comes from
+`index.json`, whose shape is identical for every use-case, so a use-case scaffolded
+tomorrow renders with no new code.
+
+Three rules decide whether the picture can be trusted:
+
+- **It draws the three edges the ontology asserts, and no fourth.** `providedBy`,
+  `conformsTo`, and the property mappings. `fact_*` beside `dim_*` invites drawing a
+  foreign key between them and this ontology asserts none — a crow's foot here would be
+  a contract the model never made (rule 5). Model-level foreign keys are a real but
+  *different* question, answered by `scripts/erd_generator.py` from dbt's
+  `relationships` tests. `test_every_drawn_link_exists_in_the_index` pins it.
+- **A disagreement is shown, never averaged.** `implemented_by` is a claim the connector
+  registry makes; a row in `models` is evidence read out of the dbt project. On
+  enhanza-analytics they disagree: **112 declared links, 110 with a model behind them** —
+  `seventime/fact_work_orders` and `tripletex/dim_voucher_series` are declared and
+  unbuilt. Reporting 112 overstates coverage, reporting 110 hides that the registry is
+  wrong, so the page reports both and names the pairs. This was found *by building the
+  visualisation*, which is the argument for having one.
+- **No coverage state is colour alone.** Every cell carries a glyph (`●` `○` `▲` `·`)
+  and a text label beside the status hue, so the grid survives print, forced-colours,
+  and full colour-vision deficiency. Palette is the validated reference set; the two
+  categorical hues were run through the validator and pass every gate in both modes.
+
 ## WrenAI serving tier
 
 WrenAI is included as this repository's semantic-layer serving tier: source pinned as a
