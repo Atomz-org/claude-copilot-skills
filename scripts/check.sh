@@ -4,7 +4,7 @@
 #
 #   ./scripts/check.sh
 #
-# It runs the same seven gates as .github/workflows/pr-decision-diagram.yml, in the same
+# It runs the same eight gates as .github/workflows/pr-decision-diagram.yml, in the same
 # order, so the answer here is the answer there. When a gate fails it says what the gate
 # was protecting and prints the exact command that fixes it — no prior knowledge of this
 # repository assumed.
@@ -47,7 +47,7 @@ fail() {
     printf '\n'
 }
 
-printf '\nRunning the seven gates a pull request has to pass.\n\n'
+printf '\nRunning the eight gates a pull request has to pass.\n\n'
 
 # ---------------------------------------------------------------------------------------
 # 1. Branch naming
@@ -91,7 +91,7 @@ fi
 # is not, so this compares before and after instead of resetting anything. Nothing you have
 # not committed is ever discarded here.
 BEFORE="$(git status --porcelain)"
-if ./scripts/activate_skill_stack.sh dbt-skills >/dev/null 2>&1; then
+if ./scripts/activate_skill_stack.sh dbt-skills wren-skills >/dev/null 2>&1; then
     AFTER="$(git status --porcelain)"
     if [ "$BEFORE" = "$AFTER" ]; then
         pass "activation drift" "pack and mirror in sync"
@@ -99,12 +99,12 @@ if ./scripts/activate_skill_stack.sh dbt-skills >/dev/null 2>&1; then
         CHANGED="$(comm -13 <(printf '%s\n' "$BEFORE" | sort) <(printf '%s\n' "$AFTER" | sort) | head -1)"
         fail "activation drift" "${CHANGED:-a generated file changed}" \
             ".claude/, references/ and templates/ are copies, rebuilt from skill-packs/. Editing a copy works until the next rebuild silently reverts it." \
-            "make the same edit under skill-packs/dbt-skills/, then: ./scripts/activate_skill_stack.sh dbt-skills"
+            "make the same edit under skill-packs/<pack>/, then: ./scripts/activate_skill_stack.sh dbt-skills wren-skills"
     fi
 else
     fail "activation drift" "activation script failed" \
         "The step that rebuilds .claude/ from skill-packs/ did not finish." \
-        "./scripts/activate_skill_stack.sh dbt-skills    # run it directly to see the error"
+        "./scripts/activate_skill_stack.sh dbt-skills wren-skills    # run it directly to see the error"
 fi
 
 # ---------------------------------------------------------------------------------------
@@ -171,9 +171,30 @@ else
 fi
 
 # ---------------------------------------------------------------------------------------
+# 8. Stack hygiene — the branch grammar, and where generated artifacts may land
+# ---------------------------------------------------------------------------------------
+# Gate 1 checks only the `<type>/` prefix. Everything after it — the lane that routes the
+# review and the layer ordinal that orders the stack — went unenforced, and so did the rule
+# that keeps a stack from conflicting with itself: generated artifacts belong to the top
+# layer alone. A legacy `<type>/<description>` branch warns and passes; most of this
+# repository's history is that form.
+if [ ! -f scripts/stack_lint.py ]; then
+    skip "stack hygiene" "linter not present on this branch"
+else
+    OUT="$("$PY" scripts/stack_lint.py --check 2>&1)"
+    if [ $? -eq 0 ]; then
+        pass "stack hygiene" "$(printf '%s' "$OUT" | sed -n 2p | sed 's/^ *//')"
+    else
+        fail "stack hygiene" "$(printf '%s' "$OUT" | grep ERROR | head -1 | sed 's/^ *//')" \
+            "A stack layer that commits regenerated artifacts collides with its own siblings, and an off-grammar branch cannot be routed or ordered." \
+            "$PY scripts/stack_lint.py    # prints the fix for each finding"
+    fi
+fi
+
+# ---------------------------------------------------------------------------------------
 printf '\n'
 if [ "$FAILED" -eq 0 ]; then
-    printf '  %s%s of 7 gates passed%s' "$GREEN" "$PASSED" "$OFF"
+    printf '  %s%s of 8 gates passed%s' "$GREEN" "$PASSED" "$OFF"
     [ "$SKIPPED" -gt 0 ] && printf ', %s skipped' "$SKIPPED"
     printf '. Nothing is blocking this change.\n\n'
     exit 0
