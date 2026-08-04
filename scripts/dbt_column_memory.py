@@ -1484,6 +1484,33 @@ def _report(store: ColumnStore, args: argparse.Namespace) -> None:
             print(f"  ... {len(store.drift) - args.limit} more (raise --limit)")
 
 
+def _concept_payload(store: "ColumnStore", args) -> Dict[str, Any]:
+    """The `--concept` contract as data, mirroring what `_report` prints.
+
+    Without this, `--concept X --format json` printed the summary counts and dropped
+    the contract entirely — byte-identical to the run without `--concept`, so a caller
+    asking for one concept silently got the whole-store summary and no error. Text mode
+    had the projection; JSON mode did not.
+
+    `found: false` rather than an omitted key, so a consumer can tell "no such concept"
+    apart from "the flag was ignored". `bindings` honours `--limit` exactly as the text
+    report does, and states the full count beside the truncated list.
+    """
+    contract = next((c for c in store.contracts if c["concept"] == args.concept), None)
+    if contract is None:
+        return {"name": args.concept, "found": False}
+    rows = [b for b in store.bindings if b["concept"] == args.concept]
+    return {
+        "name": contract["concept"],
+        "found": True,
+        "core_class": contract["core_class"],
+        "suppliers": contract["suppliers"],
+        "columns": contract["columns"],
+        "binding_count": len(rows),
+        "bindings": rows[: args.limit],
+    }
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Ontology-aligned, incrementally rebuilt column lineage for a dbt project.",
@@ -1644,23 +1671,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         written, memory_note = remember(records, url=args.memory_url)
 
     if args.format == "json":
-        print(
-            json.dumps(
-                {
-                    "use_case": args.use_case,
-                    "artifact": _rel(path),
-                    "written": bool(args.write),
-                    "contracts": len(store.contracts),
-                    "bindings": len(store.bindings),
-                    "drift": len(store.drift),
-                    "memories_written": written,
-                    "memory_note": memory_note,
-                    "graphify": merged,
-                    "provenance": store.provenance,
-                    "run": store.run,
-                }
-            )
-        )
+        payload = {
+            "use_case": args.use_case,
+            "artifact": _rel(path),
+            "written": bool(args.write),
+            "contracts": len(store.contracts),
+            "bindings": len(store.bindings),
+            "drift": len(store.drift),
+            "memories_written": written,
+            "memory_note": memory_note,
+            "graphify": merged,
+            "provenance": store.provenance,
+            "run": store.run,
+        }
+        if args.concept:
+            payload["concept"] = _concept_payload(store, args)
+        print(json.dumps(payload))
         return 0
 
     _report(store, args)
