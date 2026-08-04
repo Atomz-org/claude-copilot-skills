@@ -407,11 +407,16 @@ Three rules decide whether a change here is correct:
   projections — into files the importer does not own. The two generators' file sets are
   disjoint, and hand-authored knowledge in other filenames is reported `stale`, never
   touched or deleted.
-- **Cube types are read from `catalog.json` or the part is skipped and counted** (rule 5:
-  never invent). Measured on example-order-revenue-mart: 13 models, 3 relationships,
-  2 cubes, validate clean, governed query equal to direct DuckDB row for row —
+- **Metrics compile to MDL views, typed from `catalog.json` or skipped and counted**
+  (rule 5: never invent). A metric's view carries its whole MetricFlow definition —
+  filter, ratio, offset, window — so `SELECT * FROM revenue` *is* the metric, for BI
+  and for agents over the per-use-case MCP server (`wren/mcp.json`, emitted by the
+  sync). Measured on example-order-revenue-mart: 13 models, 3 relationships, 8 metric
+  views, validate clean, view revenue = 277,183.41 (the filtered metric, not the
+  289,470.66 raw measure the old cube projection shipped), every view row-for-row
+  equal to a hand-written oracle (`tests/test_wren_semantic_equivalence.py`) —
   `./skill-packs/wren-skills/demo/run_wren_demo.sh` re-proves this end to end, locally,
-  with no Docker and no API keys.
+  with no Docker and no API keys. Analysis: `docs/SEMANTIC_LAYER_ALIGNMENT.md`.
 - **An upstream defect becomes a bridge workaround plus a patch in `external/patches/`,
   never a fork-drift.** The wrenai 0.13.2 importer crash on model-level dbt tests is the
   worked example: rows are hidden from `run_results.json` only for the import's duration

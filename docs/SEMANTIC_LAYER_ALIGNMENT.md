@@ -74,18 +74,22 @@ The ontology has the same shape of problem, one level up. `concepts_markdown()` 
 concepts as a markdown bullet list, and the compiled MDL reports `views: 0`. The conformed
 entity is narrated, never planned against.
 
-## The second gap: this path has never run
+## The second gap: this path had never run
 
-The two halves live in different use-cases:
+The two halves lived in different use-cases (state before the fix):
 
 | Use-case | MetricFlow | ontology + topology | `wren/` |
 |---|---|---|---|
 | `example-order-revenue-mart` | ✅ 2 semantic models, 7 metrics | ❌ `column-memory.json` only | ✅ 13 models, 2 cubes |
 | `enhanza-analytics` | ❌ none | ✅ 58 concepts, 19 connectors, 92 mappings | ❌ absent |
 
-So `concepts_markdown()` and `drift_markdown()` produce nothing in the committed state — the
-ontology→Wren path is unexercised code. Whatever gets built has to be proven on
-`enhanza-analytics`, which is where the ontology actually lives.
+So `concepts_markdown()` and `drift_markdown()` produced nothing in the committed state — the
+ontology→Wren path was unexercised code. It is now proven on `enhanza-analytics`: 176
+models imported (272 dropped for missing column info, stated in the payload), 101
+relationships, 58 concepts and the conformed column contracts in `knowledge/`, the
+whole project served over MCP. Two further upstream defects surfaced at that scale and
+got the workaround-plus-patch treatment: alias collisions across connectors (21) and
+the `[mcp]` extra resolving an incompatible mcp 2.x.
 
 ## The architecture: one definition, two compilations
 
@@ -94,7 +98,7 @@ Not "keep two semantic layers in sync" — extend the doctrine
 entities and concepts as well. dbt and the ontology stay authoritative; MDL becomes compiled
 output, never hand-authored.
 
-| Source of truth | Wren MDL primitive | Today |
+| Source of truth | Wren MDL primitive | At assessment time |
 |---|---|---|
 | MetricFlow measure | cube `measures` | ✅ |
 | MetricFlow dimension | cube `dimensions` / `time_dimensions` | ✅ |
@@ -128,23 +132,26 @@ Recommendation: take the view, treat MetricFlow as authoritative, and carry the 
 header contract every other artifact here already carries. It is a real second copy and
 should not be presented as anything else. Simple and ratio metrics compile exactly.
 
-## Scope
+## Scope, and where it stands
 
-Four pieces:
+1. **Compile metrics to MDL views — done.** `build_metric_views()` compiles simple,
+   ratio, derived (offset), cumulative (window / grain-to-date), and saved queries;
+   8/8 on the example project, each equal to a hand-written oracle. Cubes are no
+   longer generated; committed ones deleted as generation-owned orphans.
+2. **Ontology concepts as MDL views — deliberately not built.** The conformed concept
+   *is already a dbt model* here (the `erp_union()` marts), and those models are in the
+   MDL after import. Compiling a second union in Wren SQL would duplicate dbt logic —
+   the exact thing the bridge refuses to do. The ontology's job in the MDL is context
+   (`knowledge/rules/ontology-concepts.md`, column contracts), and that now ships.
+3. **MetricFlow entities into `relationships.yml` — not done.** `relationships.yml` is
+   importer-owned (wren rule 1); overwriting it from the bridge would break the
+   disjoint-generators contract. Revisit only with an upstream seam.
+4. **Drift into `knowledge/caveats/` — done** (`adapter-drift.md`, when drift exists).
 
-1. Compile metrics to MDL views.
-2. Compile ontology concepts to MDL views over the adapter union.
-3. Project MetricFlow entities into `relationships.yml` (rather than dbt relationship tests).
-4. Project topology coverage and adapter drift into `knowledge/caveats/`.
-
-Then:
-
-- Prove it on `enhanza-analytics`, which needs a `wren/` project it does not yet have.
-- Add an **equivalence gate** — the numeric check above, as a test — so a metric that drifts
-  from its cube fails CI instead of surfacing in a dashboard.
-
-Ordering: start with metric-to-view compilation. That is the piece producing a wrong number
-today.
+Proven on `enhanza-analytics` (which now has a `wren/` project), and the
+**equivalence gate** is `tests/test_wren_semantic_equivalence.py`: every metric view
+row-for-row against an oracle restating its definition — a metric that drifts from its
+view fails a test instead of surfacing in a dashboard.
 
 ## Appendix — CLI surface this relies on
 
