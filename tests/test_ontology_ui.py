@@ -261,6 +261,22 @@ def _run(args: list[str]) -> subprocess.CompletedProcess:
 
 
 @needs_index
+def test_the_committed_page_is_current() -> None:
+    """`--check` is the gate; a stale committed page is a wrong picture of the model.
+
+    This gate lives in the same layer as the page it gates. Lower layers of the stack
+    carry hand-written source only, so a currency assertion there would fail on a
+    correct state — which is how gates get switched off.
+    """
+    result = _run(["--use-case", "enhanza-analytics", "--check", "--format", "json"])
+    assert result.returncode == 0, (
+        "public/enhanza-analytics-ontology.html is stale — regenerate with "
+        "`python3 scripts/ontology_ui.py --use-case enhanza-analytics`"
+    )
+    assert json.loads(result.stdout)["results"][0]["status"] == "current"
+
+
+@needs_index
 def test_check_writes_nothing() -> None:
     before = PAGE.read_bytes() if PAGE.is_file() else None
     _run(["--use-case", "enhanza-analytics", "--check"])
