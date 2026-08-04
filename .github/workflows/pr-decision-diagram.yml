@@ -90,7 +90,7 @@ jobs:
           # PR head instead; an empty value means "checkout default".
           ref: ${{ github.event_name == 'workflow_dispatch' && steps.ctx.outputs.head_sha || '' }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: 'pip'
