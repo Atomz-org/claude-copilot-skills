@@ -485,6 +485,78 @@ def test_wren_stage_maps_skip_payload(monkeypatch, tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------------------
+# Alias collisions — multi-connector projects must import, with binding untouched
+# ---------------------------------------------------------------------------------------
+
+
+def _model_node(name: str, alias: str, package: str = "p") -> dict:
+    return {"resource_type": "model", "name": name, "alias": alias,
+            "package_name": package, "config": {}}
+
+
+def test_colliding_aliases_rename_to_node_names() -> None:
+    models = {
+        "model.a.fortnox_bi_dim_accounts": _model_node("fortnox_bi_dim_accounts", "dim_accounts"),
+        "model.a.tripletex_bi_dim_accounts": _model_node("tripletex_bi_dim_accounts", "dim_accounts"),
+        "model.a.unrelated": _model_node("unrelated", "unrelated"),
+    }
+    renames = wcs._unique_wren_names(models)
+    assert renames == {
+        "model.a.fortnox_bi_dim_accounts": "fortnox_bi_dim_accounts",
+        "model.a.tripletex_bi_dim_accounts": "tripletex_bi_dim_accounts",
+    }, "colliding aliases fall back to dbt names; untouched nodes stay out of the map"
+
+
+def test_second_order_collisions_escalate_until_unique() -> None:
+    """Renaming an alias-holder to its node name can itself collide with another
+    node's alias (measured: shopify_bi_dim_articles). The escalation chain
+    alias -> name -> package_name -> unique_id must land every node on a unique
+    final name, deterministically."""
+    models = {
+        "model.a.a_first": _model_node("a_first", "shopify_bi_dim_articles"),
+        "model.a.shopify_bi_dim_articles": _model_node("shopify_bi_dim_articles",
+                                                       "dim_articles", package="shop"),
+        "model.a.z_other": _model_node("z_other", "dim_articles"),
+    }
+    renames = wcs._unique_wren_names(models)
+    final = {uid: renames.get(uid, n.get("alias") or n["name"])
+             for uid, n in models.items()}
+    assert len(set(final.values())) == len(models), f"names still collide: {final}"
+    # The node whose own name was already claimed escalated past it.
+    assert final["model.a.shopify_bi_dim_articles"] == "shop_shopify_bi_dim_articles"
+    assert wcs._unique_wren_names(models) == renames, "must be deterministic"
+
+
+def test_alias_sanitizer_pins_identifier_and_restores(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    data = {"nodes": {
+        "model.a.x_dim": {**_model_node("x_dim", "dim"), "schema": "x"},
+        "model.a.y_dim": {**_model_node("y_dim", "dim"), "schema": "y"},
+    }}
+    manifest_path.write_text(json.dumps(data), encoding="utf-8")
+    original = manifest_path.read_bytes()
+    man = Manifest(data, "m")
+    with wcs._colliding_aliases_disambiguated(manifest_path, man):
+        during = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for uid, name in (("model.a.x_dim", "x_dim"), ("model.a.y_dim", "y_dim")):
+            node = during["nodes"][uid]
+            assert node["alias"] == name, "the importer must see a unique alias"
+            assert node["identifier"] == "dim", (
+                "identifier outranks alias in the table chain — the physical "
+                "relation must not move")
+    assert manifest_path.read_bytes() == original, "manifest restored byte-identical"
+
+
+def test_alias_sanitizer_is_a_no_op_without_collisions(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    data = {"nodes": {"model.a.solo": _model_node("solo", "solo")}}
+    manifest_path.write_text(json.dumps(data), encoding="utf-8")
+    before = manifest_path.stat().st_mtime_ns
+    with wcs._colliding_aliases_disambiguated(manifest_path, Manifest(data, "m")):
+        assert manifest_path.stat().st_mtime_ns == before, "file rewritten needlessly"
+
+
+# ---------------------------------------------------------------------------------------
 # MCP by flow — the sync emits a ready-to-register server, or a named remedy
 # ---------------------------------------------------------------------------------------
 

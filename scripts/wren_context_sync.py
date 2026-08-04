@@ -923,6 +923,90 @@ def _model_level_tests_hidden(dbt_project: Path, man: Manifest) -> Iterator[None
         backup.rename(rr)
 
 
+@contextlib.contextmanager
+def _colliding_aliases_disambiguated(manifest_path: Path, man: Manifest) -> Iterator[None]:
+    """Make colliding dbt aliases importable, without touching what they bind to.
+
+    A multi-connector project aliases one conformed name per connector —
+    `fortnox_bi_dim_accounts` and `tripletex_bi_dim_accounts` are both `dim_accounts`,
+    in different schemas. dbt is fine with that (relations are schema-qualified); the
+    importer names Wren models `alias or name` and dies on the first duplicate —
+    measured on enhanza-analytics: 21 colliding aliases across 359 models (fix staged
+    at external/patches/).
+
+    The importer computes the Wren model *name* and the physical *table* independently,
+    and `identifier` outranks `alias` in its table chain. So for colliding models only,
+    the manifest is rewritten for the import's duration: `alias` becomes the node's
+    name (unique in any dbt project) and `identifier` pins the original alias, which
+    keeps `table_reference` byte-identical to what dbt built. Same set-aside/restore
+    discipline as `_model_level_tests_hidden`, including healing a stranded backup.
+    """
+    backup = manifest_path.with_suffix(".json.wren-sync-alias-orig")
+    if backup.exists():
+        backup.replace(manifest_path)
+    models = {uid: n for uid, n in man.models().items()
+              if str((n.get("config") or {}).get("materialized", "")).lower() != "ephemeral"}
+    renames = _unique_wren_names(models)
+    if not renames:
+        yield
+        return
+    data = load_json(str(manifest_path), "manifest")
+    for uid, new_name in renames.items():
+        node = data.get("nodes", {}).get(uid)
+        if node is None:
+            continue
+        original = node.get("alias") or node.get("name") or ""
+        node["identifier"] = node.get("identifier") or original
+        node["alias"] = new_name
+    manifest_path.rename(backup)
+    try:
+        manifest_path.write_text(json.dumps(data), encoding="utf-8")
+        yield
+    finally:
+        manifest_path.unlink(missing_ok=True)
+        backup.rename(manifest_path)
+
+
+def _unique_wren_names(models: Dict[str, Dict[str, Any]]) -> Dict[str, str]:
+    """uid -> replacement alias, for exactly the nodes whose importer name collides.
+
+    Uniqueness is decided over the FINAL name set, not per collision class: renaming a
+    colliding alias to its node name can itself collide with another node's alias
+    (measured: `shopify_bi_dim_articles` is one model's *name* and another's *alias*).
+    Escalation per node is deterministic — alias -> name -> package_name -> unique_id —
+    and every step keeps nodes the importer would accept unchanged.
+    """
+    initial = {
+        uid: (n.get("alias") or n.get("name") or "") for uid, n in models.items()
+    }
+    counts: Dict[str, int] = {}
+    for name in initial.values():
+        counts[name] = counts.get(name, 0) + 1
+
+    taken: set = set()
+    final: Dict[str, str] = {}
+    for uid in sorted(models):
+        n = models[uid]
+        node_name = n.get("name") or ""
+        for cand in (
+            initial[uid],
+            node_name,
+            f"{n.get('package_name')}_{node_name}",
+            uid.replace(".", "_"),
+        ):
+            if not cand or cand in taken:
+                continue
+            # A contested initial name belongs to the node it is the dbt *name* of
+            # (names are unique per project, so at most one such node); every
+            # alias-holder escalates instead of racing for it.
+            if cand == initial[uid] and counts[cand] > 1 and cand != node_name:
+                continue
+            taken.add(cand)
+            final[uid] = cand
+            break
+    return {uid: name for uid, name in final.items() if name != initial[uid]}
+
+
 def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
              catalog_path: Path, scratch: Path) -> Dict[str, Any]:
     """Run importer + enrichment into `scratch`; return generation stats."""
@@ -935,7 +1019,8 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
     init = run_wren(cli, ["context", "init", "--empty", "--path", str(scratch)])
     if init.returncode != 0:
         die(f"wren context init failed: {_tail(init)}")
-    with _model_level_tests_hidden(dbt_project, man):
+    with _model_level_tests_hidden(dbt_project, man), \
+            _colliding_aliases_disambiguated(manifest_path, man):
         imp = run_wren(cli, [
             "context", "import", "dbt",
             "--project-dir", str(dbt_project),
@@ -944,6 +1029,13 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
         ])
     if imp.returncode != 0:
         die(f"wren context import dbt failed: {_tail(imp)}")
+    # The importer drops any model it has no column information for (neither catalog
+    # nor schema.yml). Locally that can be most of a project — enhanza's sample DuckDB
+    # catalogs 4 of 359 relations — and a summary that says "176 models" without saying
+    # what it left out is the silently-partial trap this repo documents twice already.
+    m = re.search(r"skipped (\d+) node\(s\) without catalog columns",
+                  imp.stdout + imp.stderr)
+    models_without_columns = int(m.group(1)) if m else 0
 
     catalog = load_json(str(catalog_path), "catalog")
 
@@ -977,7 +1069,10 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
     validate = run_wren(cli, ["context", "validate", "--path", str(scratch)])
     if validate.returncode != 0:
         die(f"wren context validate failed: {_tail(validate)}")
-    warnings = sum(
+    # The CLI prints an aggregate ("Warnings: 120 total" / "120 warning(s)"); counting
+    # lines that start with "warning" reported that as 1.
+    wm = re.search(r"(\d+)\s+(?:warning\(s\)|total)", validate.stdout)
+    warnings = int(wm.group(1)) if wm else sum(
         1 for ln in validate.stdout.splitlines() if ln.strip().lower().startswith("warning")
     )
     build = run_wren(cli, ["context", "build", "--path", str(scratch)])
@@ -997,6 +1092,7 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
         )
     return {
         "models": models,
+        "models_without_columns": models_without_columns,
         "relationships": relationships,
         "views": len(views),
         "views_skipped": sorted(views_skipped),
@@ -1225,8 +1321,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         if status == "skip":
             print(f"skip  {payload['use_case']}: {payload['reason']}")
         else:
+            without = payload.get("models_without_columns", 0)
+            coverage = f" ({without} dropped: no column info)" if without else ""
             print(
-                f"{status:<5} {payload['use_case']}: {payload.get('models', 0)} models, "
+                f"{status:<5} {payload['use_case']}: {payload.get('models', 0)} models"
+                f"{coverage}, "
                 f"{payload.get('relationships', 0)} relationships, "
                 f"{payload.get('views', 0)} metric views, "
                 f"{payload.get('knowledge_files', 0)} knowledge files, "
