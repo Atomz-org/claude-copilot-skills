@@ -3,7 +3,7 @@ name: skill-map
 description: "Audit this repository's AI harness — skills, commands, and agents as one graph, with collisions, dead references, and reserved-name shadowing. Deterministic; no LLM."
 ---
 
-# /skill-map
+# `/skill-map`
 
 Map the harness and report what is structurally wrong with it.
 

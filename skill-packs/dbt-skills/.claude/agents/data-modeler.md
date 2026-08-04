@@ -1,7 +1,7 @@
 ---
 name: data-modeler
 description: Designs the conceptual and logical data model before any dbt model exists — entity discovery, ERDs with cardinality and optionality, business vs surrogate keys, grain declarations, normalization decisions, the Kimball bus matrix and conformed dimensions, star schema design, fact and dimension types, and slowly changing dimension strategy. Use when starting a new subject area, when several models are needed rather than one, when two teams define the same entity differently, or when asked "how should we model this", "what entities do we need", "star schema or one big table", or "how do we track history".
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
 # Data Modeler

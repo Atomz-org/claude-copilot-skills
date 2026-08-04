@@ -195,7 +195,7 @@ Regeneration is automatic — a `PostToolUse` hook rebuilds the store when a `.s
    no invented tables or columns. This is deliberate: a planned connector's schema is not
    known here, and an ontology that looks finished and maps to nothing is worse than an
    obviously empty one ([rule 5](../../../../../.claude/rules/analytics-engineering-rules.md)).
-3. **Build the connector** — `/new-connector`, then `CONNECTORS.md`.
+3. **Build the connector** — `/new-connector`, then `../CONNECTORS.md`.
 4. **Flip `status` to `implemented`** and regenerate. Now the classes carry real models,
    source tables, and column mappings, and the tests start holding you to them.
 
@@ -229,4 +229,4 @@ a new one: a generated `properties.yml` gives each seed the alias and schema tha
 `demo` target with `uid: demo`. From there, `scripts/dbt_sample_build.py` builds the
 unified union locally on DuckDB — dbt seeds and compiles, sqlglot transpiles the BigQuery
 SQL, DuckDB executes — and requires every enabled connector to contribute rows. The full
-how-to, scope, and troubleshooting: [`dbt_project/seeds/sample/README.md`](../dbt_project/seeds/sample/README.md).
+how-to, scope, and troubleshooting: [dbt_project/seeds/sample/README.md](../dbt_project/seeds/sample/README.md).

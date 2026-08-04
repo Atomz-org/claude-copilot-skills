@@ -38,15 +38,12 @@ sm-process-jobs/
 # on a laptop. Left scannable, its wiki Markdown enters the graph as ~14 extra
 # nodes, and the node and link counts then differ between CI and every laptop.
 #
-# Excluding it makes nodes and links identical in both environments. One
-# difference survives and cannot be fixed here: CLAUDE.md:24 points at
-# `graphify-out/GRAPH_REPORT.md`, and `reference-broken` resolves against the
-# graph *or the disk*, so that single pointer resolves on a runner and is
-# reported broken on a laptop — a ±1 swing in the reference-broken count.
-#
-# That is cosmetic by design. `reference-broken` is deliberately not one of
-# GATE_ANALYZERS (see scripts/skill_map_scan.py), so the gate's verdict is
-# unaffected; only the number shown in the diagram's findings box moves.
+# Excluding it makes nodes and links identical in both environments. The
+# CLAUDE.md pointers into this tree are additionally covered by the committed
+# ignored-references match-list on core/reference-broken
+# (.skill-map/settings.json), so they are never reported broken on a laptop
+# where the tree does not exist — the historical CI/laptop ±1 swing in the
+# reference-broken count is gone.
 graphify-out/
 
 # --- Python and Rust build artefacts -----------------------------------------

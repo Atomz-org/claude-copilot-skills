@@ -1,7 +1,7 @@
 ---
 name: analytics-quality-guardian
 description: Decides whether a dbt Core change is safe to merge — designs the data-test and unit-test plan, audits coverage weighted by blast radius, checks documentation and exposures, and returns a merge verdict with the specific gaps that block it. Use when a model is written and needs testing, when reviewing a dbt PR, when asked "what tests should this have" or "is this ready to merge", or when auditing an existing project's quality.
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
 # Analytics Quality Guardian

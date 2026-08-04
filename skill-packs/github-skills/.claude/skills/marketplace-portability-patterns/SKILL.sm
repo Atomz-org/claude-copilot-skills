@@ -1,0 +1,15 @@
+annotations:
+  issueSuppressions:
+    - analyzer: core/reference-broken
+      note: 'Deliberate broken-link example: this skill teaches portability fixes'
+      value: .claude/skills/marketplace-portability-patterns/skill-packs/dbt-skills/references/data_modeling.md
+    - analyzer: core/link-self-loop
+      note: Self-reference is the pattern being taught
+      value: .claude/skills/marketplace-portability-patterns/SKILL.md
+    - analyzer: core/reference-broken
+      note: 'Deliberate broken-link example: the error message being taught'
+      value: references/data_modeling.md
+identity:
+  bodyHash: 85680f6fd6ba3118a47f104309dabd4b34361217f57d1d8f2856f025fad6a57b
+  frontmatterHash: 30fd14ca444ba514c8cb90c0e022a2ce350b562db99bda4afe3057f233060062
+  path: .claude/skills/marketplace-portability-patterns/SKILL.md

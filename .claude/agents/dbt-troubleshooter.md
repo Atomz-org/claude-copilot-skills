@@ -1,7 +1,7 @@
 ---
 name: dbt-troubleshooter
 description: Diagnoses failed or degraded dbt Core runs from the artifacts — compile and parse errors, failing data tests, warehouse errors, incremental corruption, freshness breaches, and build slowdowns. Reads run_results.json, manifest.json, and compiled SQL rather than guessing. Use when a dbt run/test/build failed, when a scheduled job errors, when a model got slow, when results changed unexpectedly, or when asked "why did this fail" or "why is this slow".
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
 # dbt Troubleshooter

@@ -1,7 +1,7 @@
 ---
 name: dbt-model-designer
 description: Designs and implements dbt Core models — declares the grain, assigns work to staging/intermediate/mart layers, resolves join fan-out, chooses the materialization and incremental strategy, and writes the SQL. Use when a use-case spec exists and the question is how the DAG and the SQL should actually look, when a model needs refactoring, or when asked "should this be incremental", "where does this logic belong", or "why is this model duplicating rows".
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
 # dbt Model Designer

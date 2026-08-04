@@ -16,7 +16,7 @@
     "author": "Crystian",
     "source": "https://github.com/PackMaaan/skill-map",
     "package": "@skill-map/cli",
-    "pinnedVersion": "0.99.1",
+    "pinnedVersion": "1.2.3",
     "license": "MIT",
     "integration": "wrapper",
     "runner": "scripts/skill_map_scan.py"

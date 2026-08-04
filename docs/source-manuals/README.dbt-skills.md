@@ -418,9 +418,9 @@ deciding *what the models are*. That is now stage 2:
 | `data-modeler` agent | Entities, ERD, keys, grain matrix, bus matrix, SCD strategy |
 | `data-modeling` skill | Conceptual → logical → physical, normalization, paradigm choice |
 | `/data-model` command | The fixed procedure |
-| `dimensional_modeling.md` | Kimball's four steps, fact and dimension types, SCD 0–6, bridges, the date dimension |
-| `data_modeling_paradigms.md` | Kimball, Inmon, Data Vault 2.0, OBT, Activity Schema, medallion — and how to choose |
-| 3 templates | `data-model-canvas.md`, `bus-matrix.md`, `star-schema-spec.md` |
+| `../../references/dimensional_modeling.md` | Kimball's four steps, fact and dimension types, SCD 0–6, bridges, the date dimension |
+| `../../references/data_modeling_paradigms.md` | Kimball, Inmon, Data Vault 2.0, OBT, Activity Schema, medallion — and how to choose |
+| 3 templates | `../../templates/data-model-canvas.md`, `../../templates/bus-matrix.md`, `../../templates/star-schema-spec.md` |
 | 2 analyzers | `erd_generator.py`, `dimensional_model_validator.py` |
 | Rules 6–12 | Conceptual model first; one entity one definition; explicit optionality; no keys from mutable attributes; grain before columns; additivity recorded; SCD type chosen |
 

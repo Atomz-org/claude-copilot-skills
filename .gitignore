@@ -75,6 +75,18 @@ graphify-out/
 # Rust TOON serializer build output (scripts/build_toon_rs.sh)
 rust/toon/bin/
 
+# skill-map project scope. The DB and caches stay untracked, but
+# settings.json IS committed: it carries the team-shared analyzer policy
+# (core/reference-broken's ignored-references match-list -- the sanctioned
+# escape hatch for targets that are known-dead by design: generated trees,
+# consumer-workspace futures, naming-convention examples). sm's own
+# .skill-map/.gitignore keeps the generated artifacts out; this carve-out
+# only lets the committed policy file through. The DB and caches remain local
+# state, which is also what keeps the CI activation-drift gate seeing a clean
+# tree after a scan runs (a scan never rewrites settings.json).
+.skill-map/*
+!.skill-map/settings.json
+.continue/
 # skill-map project scope: the SQLite DB and settings `sm init` provisions
 # (scripts/skill_map_scan.py). Local state and machine-specific, and leaving it
 # untracked is also what keeps the CI activation-drift gate seeing a clean tree

@@ -1,6 +1,6 @@
 ---
 description: Run the dbt project health sweep and return a ranked, actionable list
-argument-hint: [path or layer, defaults to the whole project]
+argument-hint: "[path or layer, defaults to the whole project]"
 ---
 
 Audit the project: **$ARGUMENTS**
