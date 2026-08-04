@@ -42,7 +42,7 @@ mcp<2
 
 # The suite itself. CI installs this separately; listed here so one command gives
 # a working development environment.
-pytest>=8
+pytest>=9.1.1
 
 # Parallel test execution. The suite is subprocess-bound — nearly every test shells
 # out to a script in scripts/ — so it ran 97s at 70% CPU on a 10-core machine.
