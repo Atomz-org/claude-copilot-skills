@@ -172,52 +172,221 @@ def test_sanitizer_is_a_no_op_when_nothing_is_columnless(tmp_path: Path) -> None
 
 
 def _semantic_manifest() -> Manifest:
+    """A miniature but complete semantic layer: two semantic models joined by an
+    entity, one metric of every compilable type, a saved query, and a time spine —
+    the same shapes the example use-case exercises end to end."""
+    flt = lambda tmpl: {"where_filters": [{"where_sql_template": tmpl}]}  # noqa: E731
     return Manifest({
+        "nodes": {
+            "model.p.fct_orders": {"resource_type": "model", "name": "fct_orders"},
+            "model.p.dim_customers": {"resource_type": "model", "name": "dim_customers"},
+            "model.p.spine": {
+                "resource_type": "model", "name": "spine",
+                "time_spine": {"standard_granularity_column": "date_day"},
+            },
+        },
         "semantic_models": {
             "semantic_model.p.orders": {
                 "name": "orders",
                 "description": "Order facts.",
+                "defaults": {"agg_time_dimension": "ordered_at"},
                 "depends_on": {"nodes": ["model.p.fct_orders"]},
+                "entities": [
+                    {"name": "order", "type": "primary", "expr": "order_id"},
+                    {"name": "customer", "type": "foreign", "expr": "customer_id"},
+                ],
                 "measures": [
-                    {"name": "order_total", "agg": "sum", "expr": "amount"},
+                    {"name": "order_total", "agg": "sum", "expr": "amount",
+                     "join_to_timespine": True, "fill_nulls_with": 0},
                     {"name": "order_count", "agg": "count", "expr": "order_id"},
                     {"name": "p50", "agg": "percentile", "expr": "amount"},
                 ],
                 "dimensions": [
                     {"name": "status", "type": "categorical", "expr": "status"},
-                    {"name": "ordered_at", "type": "time", "expr": "ordered_at"},
-                    {"name": "ghost", "type": "categorical", "expr": "not_a_column"},
+                    {"name": "ordered_at", "type": "time",
+                     "type_params": {"time_granularity": "day"}},
                 ],
+            },
+            "semantic_model.p.customers": {
+                "name": "customers",
+                "defaults": {"agg_time_dimension": "first_seen_at"},
+                "depends_on": {"nodes": ["model.p.dim_customers"]},
+                "entities": [{"name": "customer", "type": "primary", "expr": "customer_id"}],
+                "measures": [{"name": "customer_count", "agg": "count", "expr": "customer_id"}],
+                "dimensions": [
+                    {"name": "region", "type": "categorical"},
+                    {"name": "first_seen_at", "type": "time",
+                     "type_params": {"time_granularity": "day"}},
+                ],
+            },
+        },
+        "metrics": {
+            "metric.p.revenue": {
+                "name": "revenue", "type": "simple",
+                "description": "Gross revenue, excluding cancelled.",
+                "type_params": {"measure": {"name": "order_total",
+                                            "join_to_timespine": True,
+                                            "fill_nulls_with": 0}},
+                "filter": flt("{{ Dimension('order__status') }} != 'cancelled'"),
+            },
+            "metric.p.orders_n": {
+                "name": "orders_n", "type": "simple",
+                "type_params": {"measure": {"name": "order_count"}},
+            },
+            "metric.p.emea_share": {
+                "name": "emea_share", "type": "ratio",
+                "type_params": {
+                    "numerator": {"name": "revenue",
+                                  "filter": flt("{{ Dimension('customer__region') }} = 'EMEA'")},
+                    "denominator": {"name": "revenue"},
+                },
+            },
+            "metric.p.growth": {
+                "name": "growth", "type": "derived",
+                "type_params": {
+                    "expr": "(revenue - prev) * 100.0 / nullif(prev, 0)",
+                    "metrics": [
+                        {"name": "revenue"},
+                        {"name": "revenue", "alias": "prev",
+                         "offset_window": {"count": 1, "granularity": "month"}},
+                    ],
+                },
+            },
+            "metric.p.trailing": {
+                "name": "trailing", "type": "cumulative",
+                "type_params": {
+                    "measure": {"name": "order_total"},
+                    "cumulative_type_params": {"window": {"count": 28, "granularity": "day"}},
+                },
+            },
+            "metric.p.mtd": {
+                "name": "mtd", "type": "cumulative",
+                "type_params": {
+                    "measure": {"name": "order_total"},
+                    "cumulative_type_params": {"grain_to_date": "month"},
+                },
+            },
+            "metric.p.conversions": {
+                "name": "conversions", "type": "conversion",
+                "type_params": {},
+            },
+            "metric.p.fct_orders": {  # name collides with a model
+                "name": "fct_orders", "type": "simple",
+                "type_params": {"measure": {"name": "order_count"}},
+            },
+        },
+        "saved_queries": {
+            "saved_query.p.weekly": {
+                "name": "weekly",
+                "query_params": {
+                    "metrics": ["revenue", "emea_share"],
+                    "group_by": ["TimeDimension('metric_time', 'week')",
+                                 "Dimension('customer__region')"],
+                    "where": flt("{{ Dimension('customer__region') }} is not null"),
+                },
             },
         },
     }, "m")
 
 
 def _catalog() -> dict:
-    return {"nodes": {"model.p.fct_orders": {"columns": {
-        "amount": {"type": "DECIMAL(18,2)"},
-        "order_id": {"type": "INTEGER"},
-        "status": {"type": "VARCHAR"},
-        "ordered_at": {"type": "TIMESTAMP"},
-    }}}}
+    return {"nodes": {
+        "model.p.fct_orders": {"columns": {
+            "amount": {"type": "DECIMAL(18, 2)"},
+            "order_id": {"type": "INTEGER"},
+            "customer_id": {"type": "INTEGER"},
+            "status": {"type": "VARCHAR"},
+            "ordered_at": {"type": "TIMESTAMP"},
+        }},
+        "model.p.dim_customers": {"columns": {
+            "customer_id": {"type": "INTEGER"},
+            "region": {"type": "VARCHAR"},
+            "first_seen_at": {"type": "TIMESTAMP"},
+        }},
+        "model.p.spine": {"columns": {"date_day": {"type": "DATE"}}},
+    }}
 
 
-def test_cube_types_come_from_the_catalog_or_the_part_is_skipped() -> None:
-    cubes, skipped = wcs.build_cubes(_semantic_manifest(), _catalog(), "toy")
-    assert list(cubes) == ["orders"]
-    text = cubes["orders"]
-    assert "SUM(amount)" in text and "type: DOUBLE" in text
-    assert "expression: status" in text and "type: VARCHAR" in text
-    assert "type: TIMESTAMP" in text  # time dimension typed from the catalog
-    # percentile has no faithful single-expression projection; ghost is not a column.
-    assert any("p50" in s for s in skipped)
-    assert any("ghost" in s for s in skipped)
-    assert "not_a_column" not in text
+def _views() -> tuple[dict, list]:
+    return wcs.build_metric_views(_semantic_manifest(), _catalog(), "toy")
+
+
+def test_every_compilable_metric_type_becomes_a_view() -> None:
+    views, skipped = _views()
+    assert sorted(views) == [
+        "emea_share", "growth", "mtd", "orders_n", "revenue", "trailing", "weekly",
+    ]
+    # Unsupported type and model-name collision are skips, never approximations.
+    assert any("conversions" in s and "conversion" in s for s in skipped)
+    assert any("fct_orders" in s and "model name" in s for s in skipped)
+
+
+def test_simple_metric_carries_filter_cast_and_timespine_fill() -> None:
+    views, _ = _views()
+    text = views["revenue"]
+    # The metric's filter is IN the SQL — the 4.4% cube divergence was this filter
+    # existing only as prose.
+    assert "!= 'cancelled'" in text
+    # Parameterized DECIMAL casts to its own catalog type (space stripped), because
+    # wren-core registers it as Utf8 when planning a view statement.
+    assert "CAST(fct_orders.amount AS DECIMAL(18,2))" in text
+    # join_to_timespine + fill_nulls_with compile to the spine join and COALESCE,
+    # bounded to the observed range.
+    assert "FROM spine" in text and "COALESCE(base.revenue, 0)" in text
+    assert "BETWEEN (SELECT MIN(metric_time)" in text
+    assert "metric_type: simple" in text and "source: dbt_metric" in text
+
+
+def test_ratio_filters_the_numerator_leg_only() -> None:
+    views, _ = _views()
+    text = views["emea_share"]
+    num = text[text.index("num AS"):text.index("den AS")]
+    den = text[text.index("den AS"):]
+    assert "= 'EMEA'" in num and "JOIN dim_customers" in num
+    assert "= 'EMEA'" not in den and "JOIN dim_customers" not in den
+    # A group with no numerator rows is 0, not a vanished row.
+    assert "COALESCE(num.num, 0)" in text and "LEFT JOIN num" in text
+
+
+def test_derived_offset_shifts_the_offset_leg_forward() -> None:
+    views, _ = _views()
+    text = views["growth"]
+    assert "INTERVAL '1 month'" in text
+    # The formula is verbatim — never re-derived.
+    assert "(revenue - prev) * 100.0 / nullif(prev, 0)" in text
+    # Offset input compiles at the offset's grain.
+    assert "date_trunc('month'" in text and "grain: month" in text
+
+
+def test_cumulative_compiles_window_and_grain_to_date() -> None:
+    views, _ = _views()
+    assert "INTERVAL '28 day'" in views["trailing"]
+    assert "date_trunc('month', spine.metric_time)" in views["mtd"]
+    for name in ("trailing", "mtd"):
+        assert "FROM spine LEFT JOIN daily" in views[name]
+
+
+def test_cumulative_without_a_time_spine_is_skipped_not_guessed() -> None:
+    man = _semantic_manifest()
+    del man.nodes["model.p.spine"]
+    views, skipped = wcs.build_metric_views(man, _catalog(), "toy")
+    assert "trailing" not in views and "mtd" not in views
+    assert any("time spine" in s for s in skipped)
+
+
+def test_saved_query_joins_metric_ctes_on_the_full_group_key() -> None:
+    views, _ = _views()
+    text = views["weekly"]
+    assert "date_trunc('week'" in text
+    assert "region" in text and "is not null" in text
+    # Null-safe join on every group key: a NULL dimension value must still align.
+    assert "IS NOT DISTINCT FROM" in text
+    assert "metric_type: saved_query" in text
 
 
 def test_a_semantic_model_missing_from_the_catalog_is_skipped_whole() -> None:
-    cubes, skipped = wcs.build_cubes(_semantic_manifest(), {"nodes": {}}, "toy")
-    assert cubes == {} and any("not in catalog.json" in s for s in skipped)
+    views, skipped = wcs.build_metric_views(_semantic_manifest(), {"nodes": {}}, "toy")
+    assert views == {} and any("not in catalog.json" in s for s in skipped)
 
 
 def test_empty_artifacts_produce_no_enrichment_file() -> None:
@@ -248,17 +417,28 @@ def test_orphaned_generated_files_are_deleted_and_hand_authored_kept(tmp_path: P
     (target / "cubes/orphan").mkdir(parents=True)
     (target / "cubes/orphan/metadata.yml").write_text(
         "name: orphan\nproperties:\n  source: dbt_semantic_model\n", encoding="utf-8")
+    (target / "views/old_metric").mkdir(parents=True)
+    (target / "views/old_metric/metadata.yml").write_text(
+        "name: old_metric\nstatement: SELECT 1\nproperties:\n  source: dbt_metric\n",
+        encoding="utf-8")
+    (target / "views/hand_authored").mkdir(parents=True)
+    hand_view = target / "views/hand_authored/metadata.yml"
+    hand_view.write_text("name: hand_authored\nstatement: SELECT 2\n", encoding="utf-8")
     (target / "knowledge/rules").mkdir(parents=True)
     hand = target / "knowledge/rules/tribal-knowledge.md"
     hand.write_text("# Never sum refunds twice\n", encoding="utf-8")
 
     changed, deleted, stale = wcs.diff_and_sync(scratch, target, check=True)
-    assert deleted == ["cubes/orphan/metadata.yml"]
-    assert stale == ["knowledge/rules/tribal-knowledge.md"]
+    assert deleted == ["cubes/orphan/metadata.yml", "views/old_metric/metadata.yml"]
+    assert stale == ["knowledge/rules/tribal-knowledge.md",
+                     "views/hand_authored/metadata.yml"]
     assert (target / "cubes/orphan/metadata.yml").exists(), "--check must write nothing"
 
     changed, deleted, stale = wcs.diff_and_sync(scratch, target, check=False)
     assert not (target / "cubes/orphan/metadata.yml").exists(), "orphan not deleted on sync"
+    assert not (target / "views/old_metric/metadata.yml").exists(), (
+        "a renamed metric's generated view must not survive")
+    assert hand_view.exists(), "hand-authored view was touched"
     assert hand.exists(), "hand-authored file was touched"
 
 
@@ -351,4 +531,4 @@ def test_committed_wren_project_is_current() -> None:
         f"committed wren/ is stale: {payload.get('changed')} — run "
         f"scripts/use_case_sync.py --use-case example-order-revenue-mart --stage wren"
     )
-    assert payload["models"] > 0 and payload["cubes"] > 0
+    assert payload["models"] > 0 and payload["views"] > 0

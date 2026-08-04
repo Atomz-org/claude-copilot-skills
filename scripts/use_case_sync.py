@@ -397,7 +397,7 @@ def stage_wren(use_case: Path, slug: str, manifest: Optional[Path], check: bool)
     ]
     detail = (
         f"{payload.get('models', 0)} models, {payload.get('relationships', 0)} "
-        f"relationships, {payload.get('cubes', 0)} cubes, "
+        f"relationships, {payload.get('views', 0)} metric views, "
         f"{payload.get('knowledge_files', 0)} knowledge files, "
         f"{payload.get('validate_warnings', 0)} validate warning(s)"
     )
