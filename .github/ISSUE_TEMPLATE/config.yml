@@ -1,2 +1,8 @@
 blank_issues_enabled: false
-contact_links: []
+contact_links:
+  - name: How to use stacked delivery planning
+    url: https://docs.github.com/en/pull-requests/get-started/about-stacked-prs
+    about: Open "Stacked Delivery Plan" issue type, fill lane/topic/size, then use the bot comment's PR Template Chooser links to create PRs with the right template in one click.
+  - name: PR template index (internal)
+    url: https://github.com/PackMaaan/claude-copilot-skills/blob/main/.github/PULL_REQUEST_TEMPLATE.md
+    about: Choose platform/client and full/minimal PR templates from one index page before opening stacked pull requests.
