@@ -8,18 +8,19 @@ see what each tool in [scripts/](../../../../scripts/) outputs against a real ma
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install 'dbt-core~=2.0.0' 'dbt-duckdb~=1.9.0'
+.venv/bin/pip install 'dbt-core~=1.9.0' 'dbt-duckdb~=1.9.0'
 
-cd use-cases/example-order-revenue-mart/dbt_project
+cd skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project
 ./run_local.sh
 ```
 
-About 20 seconds. It seeds the raw tables, checks source freshness, builds every model,
-runs 40 data tests and 6 unit tests, takes an SCD2 snapshot, proves the incremental result
+About 40 seconds. It seeds the raw tables from **two source systems** — the Shopify web
+shop and the Demo POS in-store till — checks source freshness, builds every model, runs
+52 data tests and 6 unit tests, takes an SCD2 snapshot, proves the incremental result
 equals the full-refresh result, generates the catalog, and then runs every analyzer
 against the artifacts it just produced.
 
-Expected result: **53 pass, 1 warn, 0 errors.** The warning is intentional — see
+Expected result: **67 pass, 1 warn, 0 errors.** The warning is intentional — see
 "the deliberate warning" below.
 
 ### Other warehouses
@@ -55,6 +56,7 @@ and is visible in the project as:
 | [star-schema-spec.md](star-schema-spec.md) | Kimball's four steps for "an order is placed", including the measure that was rejected for being at the wrong grain |
 | [dbt_project/](dbt_project/) | The runnable project: `dbt_project.yml`, `profiles.yml`, macros, seeds, models, snapshot, semantic layer |
 | [dbt_project/seeds/generate_seeds.py](dbt_project/seeds/generate_seeds.py) | Generates the raw CSVs, with the awkward cases planted deliberately |
+| [dbt_project/models/staging/demopos/](dbt_project/models/staging/demopos/) | The second connector — a worked example of onboarding a new source system, below |
 | [dbt_project/run_local.sh](dbt_project/run_local.sh) | The end-to-end run above |
 | [artifacts/](artifacts/) | A **separate, synthetic** artifact set carrying planted defects, so each tool has something to find |
 | [artifacts/build_artifacts.py](artifacts/build_artifacts.py) | Regenerates those synthetic artifacts |
@@ -70,6 +72,52 @@ and is visible in the project as:
 
 A healthy project makes a poor tool demo — most analyzers return "clean". The synthetic
 set exists so every rule has something to report. Run the tools against both.
+
+## The second connector — Demo POS
+
+The project has two source systems on purpose. Shopify is the original; **Demo POS** — a
+synthetic in-store till — was onboarded afterwards, with the repository's own tooling, as
+the worked example of adding a connector to a use-case that already has one. To retrace
+it, from the repository root (four levels above this file):
+
+```bash
+# 1. Dry-run the scaffold. It detects THIS project's conventions (stg_<src>__<table>
+#    staging names, the enable var, the source name) from the busiest existing
+#    connector, and prints them for review instead of assuming.
+python3 scripts/new_connector.py demopos \
+    --use-case example-order-revenue-mart \
+    --tables customers,receipts --display-name "Demo POS" --dry-run
+
+# 2. The convention gate. Run it any time; CI runs it via use_case_sync.
+python3 scripts/connector_alignment_check.py --use-case example-order-revenue-mart --check
+```
+
+One hand adjustment to notice when retracing: the scaffolder prints the source block and
+suggests pasting it into the existing `_shopify__sources.yml`, and would write a generic
+`schema.yml`. This project keeps one sources file and one models file per connector, so
+the block went into a new `_demopos__sources.yml` (and the stubs became
+`_demopos__models.yml`) instead — the project's own conventions outrank the tool's
+suggestion, which is rule 47 in practice.
+
+What to look at, and why it looks that way:
+
+| File | The lesson |
+|---|---|
+| [_demopos__sources.yml](dbt_project/models/staging/demopos/_demopos__sources.yml) | The source contract: the raw columns staging depends on, declared where removal becomes a detectable breaking change. The raw names (`customer_ref`, `receipt_ref`, `status`) are deliberately not our names |
+| [stg_demopos__receipts.sql](dbt_project/models/staging/demopos/stg_demopos__receipts.sql) | Staging quarantines the source: every rename and cast happens here, nothing downstream ever sees a raw column |
+| [_demopos__models.yml](dbt_project/models/staging/demopos/_demopos__models.yml) | Tests on the things that can actually break: keys, the nullable FK (walk-in sales), a closed status domain |
+| `is_demopos_enabled` in [dbt_project.yml](dbt_project/dbt_project.yml) | Connectors are switched on per deployment by a string-matched var — the var name, directory, and file prefix must all carry the same key |
+
+Two details worth noticing:
+
+- **The checker caught real drift during this very onboarding.** Demo POS arrived with an
+  enable var; Shopify predated the pattern and had none. `connector_alignment_check.py`
+  errored with `no-enable-var` — two connectors doing it two ways — and the fix was to
+  converge Shopify onto the pattern, not to silence the checker.
+- **Demo POS is source-aligned only.** Its receipts are not unioned into `fct_orders`,
+  because no consumer has asked for in-store revenue in the mart yet
+  (rule 3: name the consumer before the model). The day one does, the staging layer is
+  ready and the decision is recorded here.
 
 ## The planted defects
 
@@ -95,8 +143,8 @@ compare the two.
 
 ```bash
 cd /path/to/code-skills
-A=use-cases/example-order-revenue-mart/artifacts
-M=use-cases/example-order-revenue-mart/dbt_project/models
+A=skill-packs/dbt-skills/use-cases/example-order-revenue-mart/artifacts
+M=skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project/models
 
 # Regenerate the artifacts (optional — they are committed)
 python3 $A/build_artifacts.py
@@ -249,7 +297,7 @@ not been through delivery yet.
 ## Regenerating
 
 ```bash
-python3 use-cases/example-order-revenue-mart/artifacts/build_artifacts.py
+python3 skill-packs/dbt-skills/use-cases/example-order-revenue-mart/artifacts/build_artifacts.py
 ```
 
 Edit `build_artifacts.py` to change the synthetic project. It is deliberately readable: the

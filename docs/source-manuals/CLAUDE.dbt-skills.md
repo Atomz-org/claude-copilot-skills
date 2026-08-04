@@ -172,7 +172,7 @@ python3 -m venv .venv && .venv/bin/pip install 'dbt-core~=1.9.0' 'dbt-duckdb~=1.
 cd skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project && ./run_local.sh
 ```
 
-DuckDB, no credentials, ~20 seconds: seeds, source freshness, every model, 40 data tests,
+DuckDB, no credentials, ~40 seconds: seeds, source freshness, every model, 52 data tests,
 6 unit tests, an SCD2 snapshot, a full-refresh-vs-incremental equivalence check, the
 catalog, and then all eleven analyzers against the artifacts it just produced. The same
 project runs on BigQuery and Snowflake via `./run_local.sh bigquery|snowflake` — the

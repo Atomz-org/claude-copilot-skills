@@ -1,5 +1,10 @@
 # code-skills
 
+> **New here — or not a data engineer at all?** Read
+> [docs/START_HERE.md](docs/START_HERE.md): a plain-language tour of what this repository
+> is, the one command that answers "would my change be accepted?", and a working miniature
+> you can run on a laptop in about forty seconds.
+
 This repository is a merged standalone scaffold that combines:
 
 - Git automation and reusable workflow infrastructure from `git-skills`

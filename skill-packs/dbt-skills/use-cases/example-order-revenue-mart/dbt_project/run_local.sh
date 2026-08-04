@@ -3,7 +3,7 @@
 # End-to-end run of the worked example on DuckDB, then every analyzer in scripts/
 # against the artifacts it just produced.
 #
-#   ./run_local.sh                 # DuckDB, no credentials, ~20 seconds
+#   ./run_local.sh                 # DuckDB, no credentials, ~40 seconds
 #   ./run_local.sh bigquery        # needs DBT_BQ_PROJECT etc. — see profiles.yml
 #   ./run_local.sh snowflake       # needs DBT_SF_ACCOUNT etc. — see profiles.yml
 #
