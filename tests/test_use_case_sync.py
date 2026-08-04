@@ -115,11 +115,13 @@ def test_a_failing_stage_does_not_abort_the_others(monkeypatch, tmp_path: Path) 
         raise RuntimeError("generator is broken")
 
     monkeypatch.setattr(sync, "stage_ontology", explode)
+    monkeypatch.setattr(sync, "stage_wren",
+                        lambda *a, **k: sync.Stage("wren", sync.SKIP))
     result = sync.sync("enhanza-analytics", check=True, manifest_arg=str(tmp_path / "nope.json"))
     stages = _stages(result)
     assert stages["ontology"]["status"] == sync.FAIL
     assert "generator is broken" in stages["ontology"]["detail"]
-    assert {"spec", "seeds", "graph", "alignment"} <= set(stages)
+    assert {"spec", "seeds", "graph", "alignment", "wren"} <= set(stages)
 
 
 def test_a_refused_downgrade_fails_the_stage_that_was_refused(monkeypatch, tmp_path: Path) -> None:
@@ -221,6 +223,7 @@ def test_the_graph_rebuild_runs_before_the_dbt_merge(monkeypatch) -> None:
     monkeypatch.setattr(sync, "stage_ontology", lambda *a, **k: [])
     monkeypatch.setattr(sync, "stage_seeds", lambda *a, **k: sync.Stage("seeds", sync.SKIP))
     monkeypatch.setattr(sync, "stage_alignment", lambda *a, **k: sync.Stage("alignment", sync.SKIP))
+    monkeypatch.setattr(sync, "stage_wren", lambda *a, **k: sync.Stage("wren", sync.SKIP))
 
     sync.sync("enhanza-analytics", check=False, manifest_arg=None, graphify_update=True)
     assert order == ["graphify", "graph"], order
@@ -237,6 +240,7 @@ def test_the_rebuild_is_opt_in_and_skipped_under_check(monkeypatch) -> None:
     monkeypatch.setattr(sync, "stage_seeds", lambda *a, **k: sync.Stage("seeds", sync.SKIP))
     monkeypatch.setattr(sync, "stage_graph", lambda *a, **k: sync.Stage("graph", sync.SKIP))
     monkeypatch.setattr(sync, "stage_alignment", lambda *a, **k: sync.Stage("alignment", sync.SKIP))
+    monkeypatch.setattr(sync, "stage_wren", lambda *a, **k: sync.Stage("wren", sync.SKIP))
     sync.sync("enhanza-analytics", check=False, manifest_arg=None)
     assert called == [], "the rebuild must not run unless asked for"
 

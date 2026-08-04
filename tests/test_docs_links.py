@@ -22,6 +22,7 @@ SKIP_DIRS = {
     ".git",
     ".venv",
     ".venv-dbt",
+    ".venv-wren",
     "node_modules",
     "graphify-out",
     "__pycache__",

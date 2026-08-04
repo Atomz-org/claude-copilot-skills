@@ -103,9 +103,17 @@ def find_wren_cli() -> Optional[str]:
 
 
 def run_wren(cli: str, args: List[str]) -> subprocess.CompletedProcess:
+    # Per-call budget deliberately below stage_wren's whole-script timeout in
+    # use_case_sync.py (1800s): four wren calls at 300s each leave headroom, so the outer
+    # timeout can never SIGKILL this process while the run_results sanitizer is open.
     return subprocess.run(
-        [cli, *args], capture_output=True, text=True, timeout=600, cwd=REPO,
+        [cli, *args], capture_output=True, text=True, timeout=300, cwd=REPO,
     )
+
+
+def _tail(proc: subprocess.CompletedProcess) -> str:
+    lines = (proc.stderr or proc.stdout).strip().splitlines()
+    return lines[-1] if lines else "no output"
 
 
 # ---------------------------------------------------------------------------------------
@@ -114,10 +122,23 @@ def run_wren(cli: str, args: List[str]) -> subprocess.CompletedProcess:
 # ---------------------------------------------------------------------------------------
 
 
+# Plain scalars YAML 1.1 loads as something other than a string. `on` becomes True,
+# `no` becomes False, `~` becomes null — and a column literally named `no` exists in the
+# wild (Norwegian country codes).
+_YAML_SPECIALS = {"true", "false", "yes", "no", "on", "off", "null", "none", "y", "n", "~"}
+
+
 def _yml_scalar(value: str) -> str:
     """Quote a YAML scalar defensively; identifiers pass through unquoted."""
     if value == "" or value != value.strip():
         return json.dumps(value)
+    if value.lower() in _YAML_SPECIALS:
+        return json.dumps(value)
+    try:  # all-digit and float-ish forms (1.5, 1e3, .inf) must stay strings
+        float(value)
+        return json.dumps(value)
+    except ValueError:
+        pass
     plain = all(c.isalnum() or c in "_-." for c in value)
     return value if plain else json.dumps(value)
 
@@ -254,20 +275,51 @@ def metrics_markdown(man: Manifest, slug: str) -> Optional[str]:
             lines.append(f"Formula: `{expr}`")
         num, den = params.get("numerator"), params.get("denominator")
         if num or den:
-            def _ref(side: Any) -> str:
-                return side.get("name", "?") if isinstance(side, dict) else str(side)
-            lines.append(f"Ratio: `{_ref(num)}` / `{_ref(den)}`")
-        flt = m.get("filter")
-        if isinstance(flt, dict):
-            flt = flt.get("where_filters") or flt.get("where_sql_template")
+            # A ratio leg can carry its own filter and alias — emea_revenue_share's
+            # numerator is revenue *filtered to EMEA*. Dropping that renders the metric
+            # as revenue/revenue, a wrong definition presented as canonical.
+            lines.append(f"Ratio: {_metric_ref(num)} / {_metric_ref(den)}")
+        flt = _filter_sql(m.get("filter"))
         if flt:
-            lines.append(f"Filter: `{' '.join(str(flt).split())}`")
+            lines.append(f"Filter: `{flt}`")
         lines.append("")
     return "\n".join(lines) + "\n"
 
 
-def _node_name(unique_id: str) -> str:
-    return unique_id.rsplit(".", 1)[-1]
+def _filter_sql(flt: Any) -> str:
+    """Flatten MetricFlow's filter shapes to the SQL templates they carry."""
+    if not flt:
+        return ""
+    if isinstance(flt, dict):
+        templates = [
+            w.get("where_sql_template", "") for w in flt.get("where_filters", [])
+            if isinstance(w, dict)
+        ]
+        flt = " AND ".join(t for t in templates if t) or flt.get("where_sql_template", "")
+    return " ".join(str(flt).split())
+
+
+def _metric_ref(side: Any) -> str:
+    if not isinstance(side, dict):
+        return f"`{side}`"
+    ref = f"`{side.get('name', '?')}`"
+    leg_filter = _filter_sql(side.get("filter"))
+    if leg_filter:
+        ref += f" filtered by `{leg_filter}`"
+    if side.get("alias"):
+        ref += f" (as {side['alias']})"
+    return ref
+
+
+def _model_name(man: Manifest, unique_id: str) -> str:
+    """The model's declared name — from the manifest node, never the unique_id.
+
+    A versioned model's unique_id is `model.<pkg>.<name>.v<version>`, so splitting the
+    id string yields `v2` as the "name". The node's own `name` field is what the wrenai
+    importer emits as the Wren model name, so it is the only join key that holds.
+    """
+    node = man.all_nodes().get(unique_id) or {}
+    return node.get("name") or unique_id.rsplit(".", 1)[-1]
 
 
 def build_cubes(man: Manifest, catalog: Dict[str, Any],
@@ -275,17 +327,24 @@ def build_cubes(man: Manifest, catalog: Dict[str, Any],
     """One cube per dbt semantic model, typed from the warehouse catalog."""
     cubes: Dict[str, str] = {}
     skipped: List[str] = []
+    rejected: set = set()
     catalog_nodes = catalog.get("nodes") or {}
 
     for key in sorted(man.semantic_models):
         sm = man.semantic_models[key]
-        name = sm.get("name", _node_name(key))
+        name = sm.get("name") or key.rsplit(".", 1)[-1]
+        if name in cubes or name in rejected:
+            skipped.append(f"{name}: cube name collides across semantic models "
+                           f"({key}); rename one — no winner is emitted silently")
+            cubes.pop(name, None)
+            rejected.add(name)
+            continue
         model_ids = [u for u in (sm.get("depends_on") or {}).get("nodes", [])
                      if u.startswith("model.")]
         if len(model_ids) != 1:
             skipped.append(f"{name}: semantic model does not sit on exactly one model")
             continue
-        base_object = _node_name(model_ids[0])
+        base_object = _model_name(man, model_ids[0])
         catalog_cols = {
             c.lower(): (meta or {}).get("type", "")
             for c, meta in ((catalog_nodes.get(model_ids[0]) or {}).get("columns") or {}).items()
@@ -356,6 +415,13 @@ def _model_level_tests_hidden(dbt_project: Path, man: Manifest) -> Iterator[None
     the import exits.
     """
     rr = dbt_project / "target" / "run_results.json"
+    backup = rr.with_suffix(".json.wren-sync-orig")
+    # A finally clause does not run on SIGKILL. If a previous run was killed inside the
+    # window, the sanitized copy (or nothing) is on disk and the original is stranded at
+    # the backup name — heal that first, before reading, and never let a fresh rename
+    # clobber the stranded copy silently.
+    if backup.exists():
+        backup.replace(rr)
     if not rr.exists():
         yield
         return
@@ -367,7 +433,6 @@ def _model_level_tests_hidden(dbt_project: Path, man: Manifest) -> Iterator[None
     if len(kept) == len(data.get("results", [])):
         yield
         return
-    backup = rr.with_suffix(".json.wren-sync-orig")
     rr.rename(backup)
     try:
         rr.write_text(json.dumps({**data, "results": kept}), encoding="utf-8")
@@ -388,7 +453,7 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
     man = Manifest.load(str(manifest_path))
     init = run_wren(cli, ["context", "init", "--empty", "--path", str(scratch)])
     if init.returncode != 0:
-        die(f"wren context init failed: {(init.stderr or init.stdout).strip().splitlines()[-1]}")
+        die(f"wren context init failed: {_tail(init)}")
     with _model_level_tests_hidden(dbt_project, man):
         imp = run_wren(cli, [
             "context", "import", "dbt",
@@ -397,7 +462,7 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
             "--path", str(scratch), "--force",
         ])
     if imp.returncode != 0:
-        die(f"wren context import dbt failed: {(imp.stderr or imp.stdout).strip().splitlines()[-1]}")
+        die(f"wren context import dbt failed: {_tail(imp)}")
 
     catalog = load_json(str(catalog_path), "catalog")
 
@@ -428,15 +493,13 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
 
     validate = run_wren(cli, ["context", "validate", "--path", str(scratch)])
     if validate.returncode != 0:
-        tail = (validate.stderr or validate.stdout).strip().splitlines()
-        die(f"wren context validate failed: {tail[-1] if tail else 'no output'}")
+        die(f"wren context validate failed: {_tail(validate)}")
     warnings = sum(
         1 for ln in validate.stdout.splitlines() if ln.strip().lower().startswith("warning")
     )
     build = run_wren(cli, ["context", "build", "--path", str(scratch)])
     if build.returncode != 0:
-        tail = (build.stderr or build.stdout).strip().splitlines()
-        die(f"wren context build failed: {tail[-1] if tail else 'no output'}")
+        die(f"wren context build failed: {_tail(build)}")
     # Build output validated, then discarded: target/ is derived state and stays out of
     # the committed tree — a fresh clone rebuilds it with one command.
     shutil.rmtree(scratch / "target", ignore_errors=True)
@@ -479,18 +542,49 @@ def _tree(root: Path) -> Dict[str, bytes]:
     return files
 
 
-def diff_and_sync(scratch: Path, target: Path, check: bool) -> Tuple[List[str], List[str]]:
+# Paths the generation pipeline owns wholesale — a stale file here is an orphan of a
+# renamed or deleted dbt node, not somebody's hand work.
+_OWNED_PREFIXES = ("models/", "cubes/")
+_OWNED_FILES = {"wren_project.yml", "relationships.yml", "AGENTS.md", ".gitignore"}
+
+
+def _generation_owned(rel: str, blob: bytes) -> bool:
+    if rel in _OWNED_FILES or rel.startswith(_OWNED_PREFIXES):
+        return True
+    # Knowledge files are shared ground: the importer's and this script's carry markers;
+    # anything else there is hand-authored context (including `wren memory store` pairs).
+    text = blob.decode("utf-8", errors="replace")
+    return (
+        "Generated by scripts/wren_context_sync.py" in text
+        or "source: dbt" in text  # importer-seeded NL->SQL pairs and rules
+    )
+
+
+def diff_and_sync(scratch: Path, target: Path,
+                  check: bool) -> Tuple[List[str], List[str], List[str]]:
+    """Returns (changed, deleted, kept_stale).
+
+    `deleted` is generation-owned orphans — a cube whose semantic model was removed, a
+    model dir for a renamed dbt node. Leaving them would ship a committed tree that
+    references dropped tables while `--check` stays green, so they count as changes and
+    are removed on sync. `kept_stale` is everything else: hand-authored files, reported
+    and never touched.
+    """
     generated, committed = _tree(scratch), _tree(target)
     changed = sorted(
         rel for rel, blob in generated.items() if committed.get(rel) != blob
     )
     stale = sorted(set(committed) - set(generated))
+    deleted = [rel for rel in stale if _generation_owned(rel, committed[rel])]
+    kept_stale = [rel for rel in stale if rel not in set(deleted)]
     if not check:
         for rel in changed:
             dest = target / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_bytes(generated[rel])
-    return changed, stale
+        for rel in deleted:
+            (target / rel).unlink(missing_ok=True)
+    return changed, deleted, kept_stale
 
 
 # ---------------------------------------------------------------------------------------
@@ -508,9 +602,17 @@ def sync(slug: str, manifest_arg: Optional[str], check: bool) -> Dict[str, Any]:
     if not (use_case / "dbt_project").exists():
         payload["reason"] = "no dbt_project yet"
         return payload
-    manifest_path = Path(manifest_arg) if manifest_arg else (
-        use_case / "dbt_project/target/manifest.json"
-    )
+    default_manifest = use_case / "dbt_project/target/manifest.json"
+    manifest_path = Path(manifest_arg) if manifest_arg else default_manifest
+    # The wrenai importer always reads <dbt_project>/target/ itself; honoring a foreign
+    # --manifest here would sanitize and enrich from one manifest while the importer
+    # reads another — two internally consistent halves of different generations.
+    if manifest_arg and manifest_path.resolve() != default_manifest.resolve():
+        payload["reason"] = (
+            "--manifest points outside dbt_project/target/ — the wren importer reads "
+            "the project's own target; re-run dbt parse there instead"
+        )
+        return payload
     if not manifest_path.exists():
         payload["reason"] = "no manifest — dbt parse (or artifacts/refresh.sh)"
         return payload
@@ -526,13 +628,14 @@ def sync(slug: str, manifest_arg: Optional[str], check: bool) -> Dict[str, Any]:
     scratch = use_case / ".wren.tmp"
     try:
         stats = generate(cli, use_case, slug, manifest_path, catalog_path, scratch)
-        changed, stale = diff_and_sync(scratch, use_case / "wren", check)
+        changed, deleted, stale = diff_and_sync(scratch, use_case / "wren", check)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
 
     payload.update(stats)
-    payload["status"] = "changed" if changed else "ok"
+    payload["status"] = "changed" if (changed or deleted) else "ok"
     payload["changed"] = changed
+    payload["deleted"] = deleted
     payload["stale"] = stale
     return payload
 
@@ -567,8 +670,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             )
             for rel in payload.get("changed", []):
                 print(f"  changed  wren/{rel}")
+            for rel in payload.get("deleted", []):
+                print(f"  deleted  wren/{rel} (generation-owned orphan)")
             for rel in payload.get("stale", []):
-                print(f"  stale    wren/{rel} (not generated; left alone)")
+                print(f"  stale    wren/{rel} (hand-authored; left alone)")
             skipped = payload.get("cubes_skipped", [])
             if skipped:
                 print(f"  {len(skipped)} cube part(s) skipped rather than approximated:")

@@ -12,6 +12,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          # Resolves the external/WrenAI pin on every run, so an unpushed or
+          # rewritten submodule SHA fails here instead of on the next fresh clone.
+          submodules: true
 
       - name: Set up Python
         uses: actions/setup-python@v7

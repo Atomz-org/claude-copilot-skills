@@ -83,7 +83,7 @@ flowchart LR
     Activation copies a pack into the live `.claude/` tree. It is idempotent — a clean `git status` afterwards is the check that nothing drifted.
 
     ```bash Terminal
-    ./scripts/activate_skill_stack.sh dbt-skills
+    ./scripts/activate_skill_stack.sh dbt-skills wren-skills
     git status --short
     ```
   </Step>
@@ -398,7 +398,7 @@ The complete list lives in [the analytics engineering rules](/CLAUDE) and is loa
 <CodeGroup>
 ```bash Everything
 pytest -q
-./scripts/activate_skill_stack.sh dbt-skills && git status --short
+./scripts/activate_skill_stack.sh dbt-skills wren-skills && git status --short
 ./scripts/marketplace_portability_check.sh
 ```
 

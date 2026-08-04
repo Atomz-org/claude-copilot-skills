@@ -67,7 +67,7 @@ no Node) reports `skipped` rather than failing.
 The gate worth understanding before you make your first edit is **activation drift**.
 `.claude/`, `references/`, and `templates/` are generated from `skill-packs/<pack>/`; an edit
 made directly in one of them works until the next activation silently reverts it. Edit the
-pack, then re-run `./scripts/activate_skill_stack.sh dbt-skills`.
+pack, then re-run `./scripts/activate_skill_stack.sh dbt-skills wren-skills`.
 
 ## Slash commands
 
@@ -131,7 +131,7 @@ materialised copy directly is silently reverted on the next activation.
 To activate a stack into live `.claude/` paths:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills
+./scripts/activate_skill_stack.sh dbt-skills wren-skills
 ```
 
 Future packs can follow the same pattern, for example:

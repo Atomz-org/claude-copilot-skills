@@ -135,6 +135,27 @@ def test_sanitizer_restores_even_when_the_import_dies(tmp_path: Path) -> None:
     assert rr.read_text(encoding="utf-8") == original
 
 
+def test_sanitizer_heals_a_stranded_backup_from_a_hard_kill(tmp_path: Path) -> None:
+    """finally does not run on SIGKILL. A previous run killed inside the window leaves
+    the sanitized copy at run_results.json and the original stranded at the backup name;
+    the next entry must restore the original BEFORE reading, and must never let a fresh
+    rename clobber the stranded copy."""
+    rr = _run_results(tmp_path)
+    original = rr.read_text(encoding="utf-8")
+    backup = rr.with_suffix(".json.wren-sync-orig")
+    rr.rename(backup)
+    rr.write_text(json.dumps({"results": [
+        {"unique_id": "test.p.column_level", "status": "pass"},
+    ]}), encoding="utf-8")  # the sanitized survivor of a killed run
+
+    man = _manifest_with_tests(tmp_path)
+    with wcs._model_level_tests_hidden(tmp_path / "dbt_project", man):
+        during = json.loads(rr.read_text(encoding="utf-8"))
+        assert [r["unique_id"] for r in during["results"]] == ["test.p.column_level"]
+    assert rr.read_text(encoding="utf-8") == original, "stranded original was not healed"
+    assert not backup.exists()
+
+
 def test_sanitizer_is_a_no_op_when_nothing_is_columnless(tmp_path: Path) -> None:
     rr = _run_results(tmp_path)
     man = Manifest({"nodes": {
@@ -216,6 +237,42 @@ def test_enrichment_files_carry_the_generated_header() -> None:
     assert "--use-case toy --stage wren" in md
 
 
+def test_orphaned_generated_files_are_deleted_and_hand_authored_kept(tmp_path: Path) -> None:
+    """A cube whose semantic model was removed must not survive in the committed tree
+    with --check green; a hand-authored knowledge file must never be touched."""
+    scratch, target = tmp_path / "scratch", tmp_path / "wren"
+    (scratch / "models/kept").mkdir(parents=True)
+    (scratch / "models/kept/metadata.yml").write_text("name: kept\n", encoding="utf-8")
+    (target / "models/kept").mkdir(parents=True)
+    (target / "models/kept/metadata.yml").write_text("name: kept\n", encoding="utf-8")
+    (target / "cubes/orphan").mkdir(parents=True)
+    (target / "cubes/orphan/metadata.yml").write_text(
+        "name: orphan\nproperties:\n  source: dbt_semantic_model\n", encoding="utf-8")
+    (target / "knowledge/rules").mkdir(parents=True)
+    hand = target / "knowledge/rules/tribal-knowledge.md"
+    hand.write_text("# Never sum refunds twice\n", encoding="utf-8")
+
+    changed, deleted, stale = wcs.diff_and_sync(scratch, target, check=True)
+    assert deleted == ["cubes/orphan/metadata.yml"]
+    assert stale == ["knowledge/rules/tribal-knowledge.md"]
+    assert (target / "cubes/orphan/metadata.yml").exists(), "--check must write nothing"
+
+    changed, deleted, stale = wcs.diff_and_sync(scratch, target, check=False)
+    assert not (target / "cubes/orphan/metadata.yml").exists(), "orphan not deleted on sync"
+    assert hand.exists(), "hand-authored file was touched"
+
+
+def test_a_foreign_manifest_override_skips_rather_than_splitting_generations(
+        tmp_path: Path, monkeypatch) -> None:
+    slug = _use_case(tmp_path, monkeypatch, with_project=True, with_manifest=True,
+                     with_catalog=True)
+    other = tmp_path / "elsewhere/manifest.json"
+    other.parent.mkdir(parents=True)
+    other.write_text("{}", encoding="utf-8")
+    payload = wcs.sync(slug, str(other), check=True)
+    assert payload["status"] == "skip" and "target" in payload["reason"]
+
+
 # ---------------------------------------------------------------------------------------
 # Stage wiring
 # ---------------------------------------------------------------------------------------
@@ -263,6 +320,11 @@ needs_catalog = pytest.mark.skipif(
 @needs_wren
 @needs_catalog
 def test_committed_wren_project_is_current() -> None:
+    """Honest scope: this gate runs where the toolchain and a generated catalog exist —
+    a laptop after the demo, not a bare CI runner (which skips both marks above). The
+    always-on gates for the committed artifact are the demo script and the unit tests;
+    CI-side currency would require committing catalog.json and installing wrenai in CI,
+    a cost/benefit call deliberately not taken here."""
     payload = wcs.sync("example-order-revenue-mart", None, check=True)
     assert payload["status"] == "ok", (
         f"committed wren/ is stale: {payload.get('changed')} — run "

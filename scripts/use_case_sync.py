@@ -379,7 +379,10 @@ def stage_wren(use_case: Path, slug: str, manifest: Optional[Path], check: bool)
         cmd += ["--manifest", str(manifest)]
     if check:
         cmd += ["--check"]
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=600)
+    # 1800, not 600: the emitter budgets 300s per wren call and makes four. An outer
+    # timeout below that sum SIGKILLs the child inside the run_results sanitizer window,
+    # which a finally clause cannot survive.
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=1800)
     payload = _first_json_line(proc.stdout)
     if payload is None:
         tail = (proc.stderr or proc.stdout).strip().splitlines()
@@ -390,7 +393,7 @@ def stage_wren(use_case: Path, slug: str, manifest: Optional[Path], check: bool)
 
     changed = [
         str((use_case / "wren" / rel).relative_to(REPO))
-        for rel in payload.get("changed", [])
+        for rel in payload.get("changed", []) + payload.get("deleted", [])
     ]
     detail = (
         f"{payload.get('models', 0)} models, {payload.get('relationships', 0)} "

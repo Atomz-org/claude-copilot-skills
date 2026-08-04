@@ -53,7 +53,11 @@ governed="$("${wren}" query --sql "${sql}" \
 echo "${governed}"
 
 step "5/5 cross-check against DuckDB directly"
-GOVERNED="${governed}" DEMO_DB="${dbt_project}/dev.duckdb" "${root}/.venv-wren/bin/python" - <<'EOF'
+# Use the interpreter co-located with the resolved CLI: its venv carries duckdb via the
+# wrenai dependency, and this keeps a WREN_CLI override working end to end.
+py="$(dirname "${wren}")/python"
+[[ -x "${py}" ]] || py=python3
+GOVERNED="${governed}" DEMO_DB="${dbt_project}/dev.duckdb" "${py}" - <<'EOF'
 import json, os, sys
 import duckdb
 

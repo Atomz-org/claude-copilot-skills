@@ -18,21 +18,21 @@ Ratio: `revenue` / `order_count`
 Label: EMEA Revenue Share
 Type: ratio
 Definition: Share of revenue from EMEA customers. Guest checkouts have no region and are excluded from the numerator but included in the denominator.
-Ratio: `revenue` / `revenue`
+Ratio: `revenue` filtered by `{{ Dimension('customer__region') }} = 'EMEA'` (as emea_revenue) / `revenue`
 
 ## order_count
 
 Label: Orders
 Type: simple
 Definition: Count of non-cancelled orders, excluding internal test accounts.
-Filter: `[{'where_sql_template': "{{ Dimension('order__order_status') }} != 'cancelled'"}]`
+Filter: `{{ Dimension('order__order_status') }} != 'cancelled'`
 
 ## revenue
 
 Label: Revenue
 Type: simple
 Definition: Gross order revenue in USD, excluding cancelled orders and internal test accounts. Verified against the NetSuite ledger for 2026-06 (0.02% variance). NOT net of refunds — use net_revenue for that.
-Filter: `[{'where_sql_template': "{{ Dimension('order__order_status') }} != 'cancelled'"}]`
+Filter: `{{ Dimension('order__order_status') }} != 'cancelled'`
 
 ## revenue_growth_mom
 

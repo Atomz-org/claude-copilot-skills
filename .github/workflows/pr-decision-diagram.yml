@@ -191,7 +191,7 @@ jobs:
           fi
 
           # 3. Generated-path drift: activation must leave the tree clean
-          if ./scripts/activate_skill_stack.sh dbt-skills >/dev/null 2>&1 && [ -z "$(git status --porcelain)" ]; then
+          if ./scripts/activate_skill_stack.sh dbt-skills wren-skills >/dev/null 2>&1 && [ -z "$(git status --porcelain)" ]; then
             record "activation drift" pass "pack and mirror in sync"
           else
             record "activation drift" fail "$(git status --porcelain | head -1) (edit the pack, not the mirror)"

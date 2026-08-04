@@ -5,9 +5,11 @@ set -euo pipefail
 # `activate_skill_stack.sh dbt-skills wren-skills` composes the analytics stack with the
 # WrenAI serving tier; a single argument behaves exactly as before. Later stacks win on
 # a filename collision — `scripts/skill_map_scan.py --check` is the gate that reports one.
+# The no-arg default is the SAME stack list CI activates, so the documented bare
+# invocation and the CI drift gate can never diverge.
 stacks=("$@")
 if [[ ${#stacks[@]} -eq 0 ]]; then
-  stacks=("dbt-skills")
+  stacks=("dbt-skills" "wren-skills")
 fi
 root="$(cd "$(dirname "$0")/.." && pwd)"
 shared_pack="${root}/skill-packs/github-skills/.claude"

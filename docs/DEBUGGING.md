@@ -20,7 +20,7 @@ Running the seven gates a pull request has to pass.
                     skill-packs/. Editing a copy works until the next rebuild
                     silently reverts it.
      how to fix     make the same edit under skill-packs/dbt-skills/, then:
-                    ./scripts/activate_skill_stack.sh dbt-skills
+                    ./scripts/activate_skill_stack.sh dbt-skills wren-skills
 ```
 
 A `—` is a gate that could not run, not a gate that failed. Rust and Node are optional here;
@@ -62,7 +62,7 @@ Edit the pack, then re-run activation:
 
 ```bash
 $EDITOR skill-packs/dbt-skills/.claude/skills/<name>/SKILL.md
-./scripts/activate_skill_stack.sh dbt-skills
+./scripts/activate_skill_stack.sh dbt-skills wren-skills
 ```
 
 Both copies must be committed. Skills link to shared files with a single relative path that
