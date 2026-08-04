@@ -65,8 +65,28 @@ they are the connector's contract, and a reviewer must see them as a hand-writte
 
 ## 4. Write the columns
 
+**Declare the raw columns in the source block first.** They are the only input in a connector
+that cannot be derived from something else in the repository — every other column is a rename
+of them. Declare what you consume, not what the API returns:
+
+```yaml
+      - name: articles
+        columns:
+          - name: id
+          - name: name
+```
+
+`connector_alignment_check.py` then raises `undeclared-source-column` when staging reads
+outside that list — a typo, or a dependency nothing in the repo records. For a connector
+already built, recover the list instead of typing it:
+
+```bash
+python3 scripts/dbt_column_memory.py --use-case <slug> --emit-source-columns --write
+```
+
 Staging quarantines the source: rename, cast, coerce here and nowhere else, every column
-enumerated ([rules 15, 25](../rules/analytics-engineering-rules.md)).
+enumerated ([rules 15, 25](../rules/analytics-engineering-rules.md)). Its job is to land the
+**contract's** column names — read the contract before writing this, not after.
 
 Adapters must match the other connectors' adapters for the same concept **column for column
 and in order**. Diff against an existing one. A missing column fails at compile time and is
@@ -115,8 +135,25 @@ one relation, and dbt then refuses to build either.
 With `sqlglot` installed it also compares your adapter's **columns** against the other
 adapters for the same ERP concept. Column-level drift is invisible to a single-connector
 build: `erp_union()` stacks one adapter per enabled source, so a missing column only breaks
-the union when two connectors are on at once. Before writing the adapter, read what the
-existing ones map:
+the union when two connectors are on at once.
+
+**Read the contract before writing the adapter, not after the union fails.** The column
+memory holds it, resolved from the SQL rather than from documentation:
+
+```bash
+python3 scripts/dbt_column_memory.py --use-case <slug> --concept <dim_or_fact_name>
+```
+
+That prints the exact column list every existing adapter declares **in order**, the
+conformed property each column realises, any column a peer is missing, and — per connector
+— the raw source column the value came from at the far end of the chain. Copying the
+existing connectors' source columns is how you find out that `dim_articles.ArticleName`
+comes from `Description` in Fortnox and from something else entirely in Shopify.
+
+Order is not cosmetic. A column in the wrong position with a compatible type unions cleanly
+and transposes the data silently.
+
+For one column across the whole project rather than one concept:
 
 ```bash
 python3 scripts/dbt_column_lineage.py \

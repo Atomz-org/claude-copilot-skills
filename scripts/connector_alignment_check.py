@@ -71,6 +71,7 @@ CHECK_DETAIL: Dict[str, str] = {
     "undeclared-schema": "model directory has no `+schema`; it shares target.schema with every other undeclared directory",
     "unregistered-connector": "staging models with no registry entry — nothing downstream will union them",
     "adapter-column-drift": "adapter omits columns the other adapters for this concept supply — the UNION only breaks when two sources are enabled at once",
+    "undeclared-source-column": "staging reads a column its source does not declare — a typo, or a dependency nothing in the repo records",
 }
 
 # `arguments:` nesting under a generic test is dbt >= 1.10. A project pinned below that
@@ -421,6 +422,103 @@ def _model_files(conv: Conventions, connector: str) -> List[Path]:
         if sibling.name == connector or sibling.name.startswith(f"{connector}_"):
             files.extend(sorted(sibling.rglob("*.sql")))
     return files
+
+
+def check_source_columns(
+    manifest: Dict[str, Any], connector: Optional[str] = None
+) -> List[Finding]:
+    """Staging reading a column its source does not declare.
+
+    Adding a connector has exactly one input nobody can derive: the raw table's column list.
+    Every other column in the project is a rename of it. Where a source declares `columns:`,
+    that list is a **contract** — a statement of what this project depends on — and a staging
+    model reading outside it is one of two defects, both silent today:
+
+      * a typo or a stale column name, which fails only when the warehouse is reached;
+      * an undeclared dependency, which means an upstream field can be removed with nothing
+        in the repository recording that we were reading it.
+
+    Bootstrap the contracts with
+    `dbt_column_memory.py --use-case <slug> --emit-source-columns --write`.
+
+    **A source with no declared columns is skipped, not failed.** Most of a project will have
+    no contract the day this check lands, and a gate that goes red on a correct state gets
+    switched off inside a week — taking the real failures with it. This becomes meaningful
+    per source table as each one gains a contract, which is also the order somebody would
+    adopt it in.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import dbt_column_lineage as lineage_mod
+    except ImportError:  # pragma: no cover - the module ships beside this one
+        return []
+    if lineage_mod.sqlglot is None:
+        return []
+
+    from _manifest import Manifest  # local import: only the manifest checks need it
+
+    man = Manifest(manifest)
+    declared: Dict[str, Tuple[str, str, Set[str]]] = {}
+    for node in man.sources.values():
+        columns = node.get("columns") or {}
+        if not columns:
+            continue
+        joined = f"{node.get('source_name', '')}{lineage_mod.SOURCE_SEP}{node.get('name', '')}"
+        declared[joined] = (
+            node.get("source_name", ""),
+            node.get("name", ""),
+            {str(c) for c in columns},
+        )
+    if not declared:
+        return []
+
+    lineage = lineage_mod.build_lineage(man)
+    model_names = {
+        n.get("name") for n in man.nodes.values() if n.get("resource_type") == "model"
+    }
+    connector_of = {
+        n.get("name"): (n.get("tags") or [None])[0] for n in man.nodes.values()
+    }
+
+    # `{model: {joined_source: {columns it reads}}}` — one finding per model per source,
+    # never one per column, or a renamed source table would produce forty identical rows.
+    undeclared: Dict[Tuple[str, str], Set[str]] = {}
+    for edge in lineage["edges"]:
+        if edge.upstream_model in model_names or not edge.upstream_column:
+            continue
+        if edge.upstream_column in ("*", "(macro)"):
+            continue
+        entry = declared.get(edge.upstream_model)
+        if entry is None:
+            continue
+        if edge.upstream_column in entry[2]:
+            continue
+        undeclared.setdefault((edge.model, edge.upstream_model), set()).add(
+            edge.upstream_column
+        )
+
+    out: List[Finding] = []
+    for (model, joined), columns in sorted(undeclared.items()):
+        source, table, _ = declared[joined]
+        owner = next(
+            (c for c in (connector_of.get(model),) if c and c not in LAYER_TAGS),
+            model.split("_")[0],
+        )
+        if connector and owner != connector:
+            continue
+        out.append(
+            Finding(
+                ERROR,
+                owner,
+                "undeclared-source-column",
+                f"`{model}` reads {len(columns)} column(s) that `{source}.{table}` does not "
+                f"declare: {', '.join(sorted(columns)[:6])}"
+                + (f" (+{len(columns) - 6} more)" if len(columns) > 6 else "")
+                + " — add them to the source's `columns:` or fix the reference",
+                subject=model,
+            )
+        )
+    return out
 
 
 def check_dependency_discipline(files: Iterable[Path], connector: str, conv: Conventions) -> List[Finding]:
@@ -809,6 +907,7 @@ def run(use_case_slug: str, connector: Optional[str], manifest_path: Optional[st
         findings += check_alias_collisions(manifest, connector)
         findings += check_undeclared_schema(manifest, conv, connector)
         findings += check_adapter_column_drift(manifest, connector)
+        findings += check_source_columns(manifest, connector)
 
     return findings
 

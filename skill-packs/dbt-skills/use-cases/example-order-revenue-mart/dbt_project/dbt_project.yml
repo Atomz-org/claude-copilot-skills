@@ -20,6 +20,16 @@ vars:
   #   dbt build --select fct_orders --vars '{order_lookback_days: 30}'
   order_lookback_days: 3
 
+  # --- Connectors. Each connector's staging models are gated on its own enable var
+  # (the config() line at the top of each staging model). The var name, the
+  # staging/<connector>/ directory, and the stg_<connector>__ filename prefix are
+  # string-matched, never resolved — they must all carry the same key, and
+  # connector_alignment_check.py errors when a connector declares no default here.
+  # This worked example ships with both connectors on, so run_local.sh exercises them;
+  # a multi-tenant project would default these false and enable per deployment.
+  is_shopify_enabled: true
+  is_demopos_enabled: true
+
   # --- Schema isolation. Read macros/generate_schema_name.sql before changing these. ---
   #
   # Targets whose environment is a separate DATABASE, and which may therefore write
@@ -49,6 +59,8 @@ models:
     staging:
       +materialized: view
       +schema: staging
+      demopos:
+        +tags: ['demopos']
     intermediate:
       +materialized: ephemeral
       +schema: intermediate

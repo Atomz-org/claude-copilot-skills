@@ -82,7 +82,7 @@ jobs:
             printf 'head_sha=%s\n' "$HEAD_SHA"
           } >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # pull_request keeps the default merge ref — the tree that would

@@ -1,2 +1,13 @@
 pytest
 graphifyy==0.9.31
+
+# sqlglot is optional at runtime — dbt_column_lineage.py degrades to structural resolution
+# without it, the same shape as orjson in _manifest.py. It is not optional for CI. Without
+# it every test that exercises the SQL parser skips, and the merge gate reports "test suite
+# pass" over a run that never touched the code the change is about.
+#
+# Pinned like graphifyy above, and for the same reason: the parser decides what the tests
+# assert. sqlglot 30 renamed `exp.Select`'s `from` argument to `from_`, which turned every
+# edge `unresolved` in silence — an unpinned upgrade moves the results with no diff to point
+# at.
+sqlglot==30.14.0

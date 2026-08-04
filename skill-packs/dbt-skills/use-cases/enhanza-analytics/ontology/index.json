@@ -11,9 +11,9 @@
   },
   "provenance": {
     "column_lineage_available": true,
-    "models_parsed": 223,
-    "models_macro_only": 131,
-    "models_parse_failed": 5
+    "models_parsed": 225,
+    "models_macro_only": 134,
+    "models_parse_failed": 0
   },
   "mcp_tools": [
     {

@@ -1,0 +1,50 @@
+version: 2
+
+sources:
+  - name: demopos
+    description: >
+      Raw Demo POS (point-of-sale) tables — the in-store till next to the Shopify web
+      shop. A nightly job exports the till database in full; there is no change tracking
+      and no delete flag, each export simply replaces the last. Demo POS is synthetic
+      (its "upstream" is seeds/generate_seeds.py) and exists as the worked example of
+      onboarding a second connector into a use-case that already has one.
+    # Same stand-in trick as the shopify source: the "raw" tables are seeds, so `schema`
+    # is the seed schema and `identifier` maps onto the seed relation name. See
+    # _shopify__sources.yml for why run_local.sh seeds in its own step.
+    schema: raw
+    loaded_at_field: exported_at
+    # The export is nightly — a fact of this synthetic system, set by generate_seeds.py,
+    # not a guess. One missed export warns; two is an error.
+    freshness:
+      warn_after:  {count: 26, period: hour}
+      error_after: {count: 50, period: hour}
+    tables:
+      - name: customers
+        identifier: raw_demopos_customers
+        description: >
+          One row per customer registered at the till, full snapshot per export.
+          The columns declared here are the connector's source contract: exactly what
+          staging reads, not everything the till could export.
+        columns:
+          - name: customer_ref
+            description: Till customer reference. Primary key.
+            data_tests: [unique, not_null]
+          - name: email_address
+          - name: country
+          - name: signed_up_at
+          - name: exported_at
+
+      - name: receipts
+        identifier: raw_demopos_receipts
+        description: One row per printed receipt. Walk-in sales carry no customer_ref.
+        columns:
+          - name: receipt_ref
+            description: Receipt number. Primary key.
+            data_tests: [unique, not_null]
+          - name: customer_ref
+          - name: status
+          - name: currency
+          - name: total_amount
+          - name: sold_at
+          - name: register_id
+          - name: exported_at

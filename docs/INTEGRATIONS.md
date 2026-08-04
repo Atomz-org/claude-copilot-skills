@@ -131,6 +131,13 @@ What the repository does with it:
   that cannot be recovered from the repository — why a choice was made, what was
   ruled out — is worth persisting. The decision leads the stored content; the entry
   and checkpoint trail it as provenance.
+- `scripts/dbt_column_memory.py --remember` mirrors a dbt project's **column contract**
+  and its **adapter drift**, plus one locator record saying where the full artifact lives
+  and how to regenerate it. It never writes the binding set: `:3111` is one global corpus
+  with BM25 recall, so 1024 mechanical records would outrank the decisions it exists to
+  hold. Caps are `MAX_MEMORY_CONTRACTS`/`MAX_MEMORY_DRIFT` and are reported when they bite;
+  `--remember-bindings` adds resolved bindings, capped at 120. Same health-probe-then-POST
+  contract as `sync_context.sh`, so an absent server is a skip and exit 0.
 - `src/ai-core/memory-store.ts` exposes `AgentMemoryClient` (`health`, `remember`,
   `recall`) and `createBridgedMemoryStore()`, which probes the server and falls back to
   the in-memory `MemoryStore`. TypeScript call sites route through this wrapper, never

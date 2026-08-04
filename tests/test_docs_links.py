@@ -118,3 +118,41 @@ def test_activation_script_mirrors_every_asset_directory() -> None:
             f"activate_skill_stack.sh no longer mirrors {asset}/, so links into it "
             f"will dangle once a pack is activated"
         )
+
+
+# ---------------------------------------------------------------------------------------
+# Install instructions printed at the moment someone is already stuck
+# ---------------------------------------------------------------------------------------
+
+# `%` and `\` terminate the path because these instructions are usually inside a printf
+# format string, and swallowing the trailing `%s\n` turns a correct path into a failure.
+_INSTALL_HINT = re.compile(r"pip install\s+(?:-\w+\s+)*-r\s+([^\s\"')%\\]+)")
+
+
+def _repo_scripts() -> list[Path]:
+    return sorted(
+        p for p in (ROOT / "scripts").rglob("*")
+        if p.suffix in {".py", ".sh"} and "__pycache__" not in p.parts
+    )
+
+
+@pytest.mark.parametrize("script", _repo_scripts(), ids=lambda p: p.name)
+def test_every_install_instruction_points_at_a_file_that_exists(script: Path) -> None:
+    """A wrong install path is worse than none: it fires exactly when someone is stuck.
+
+    Two scripts told the reader to `pip install -r requirements.txt` at the moment sqlglot
+    turned out to be missing. There is no requirements.txt in this repository — the file is
+    `.github/requirements/ci.txt` — so the one instruction printed on the failure path sent
+    people to a path that does not exist.
+
+    Only requirement files this repository owns are checked. The dbt reference material
+    describes a *dbt project's* own requirements.txt, which is correct there and absent here.
+    """
+    text = script.read_text(encoding="utf-8")
+    for target in _INSTALL_HINT.findall(text):
+        if target.startswith(("$", "{", "%")) or "<" in target:
+            continue  # a variable or a placeholder, not a path this repository owns
+        assert (ROOT / target).is_file(), (
+            f"{script.relative_to(ROOT)} tells the reader to install from {target!r}, "
+            f"which does not exist. Requirements live in .github/requirements/ci.txt."
+        )

@@ -105,6 +105,68 @@ class ColumnEdge:
 # ---------------------------------------------------------------------------------------
 
 
+_RE_JINJA_TAG = re.compile(
+    r"\{%-?\s*(if|elif|else|endif|set|endset|for|endfor)\b[^%]*?-?%\}", re.S | re.I
+)
+
+
+def resolve_jinja_blocks(sql: str) -> str:
+    """Resolve `{% if %}` and `{% set %}` blocks before the statement tags are deleted.
+
+    Deleting `{% ... %}` tags and keeping everything between them is wrong for the two
+    block forms that carry SQL, and it is wrong in a way that produces text no parser can
+    accept. Both were found by running this over a real project:
+
+      * `{% if a %} X {% else %} NULL {% endif %} as Col` collapses to `X NULL as Col`.
+        Every branch survives and they concatenate. `logic_bi_fact_sales` failed exactly
+        here, and `categories_x_mapping` lost the `when` of a CASE the same way, leaving a
+        bare `then`.
+      * `{% set q %} select ... {% endset %}` assigns SQL to a *variable*. It is not emitted
+        at that position, so keeping the body splices a whole second query into the middle
+        of the first.
+
+    So: keep the first branch of a conditional, drop `set` block bodies entirely. Keeping
+    the first branch rather than all of them is a real choice — the lineage reported is that
+    of one branch, which is a subset of the truth and is parseable, where the concatenation
+    is neither.
+
+    This does not make the module a Jinja renderer, and it is not trying to be. A model whose
+    output columns only exist after `{% set %}` variables are interpolated back in still
+    cannot be read from `raw_code`; it needs `dbt compile` and a warehouse. Those are counted
+    and named, never guessed at.
+    """
+    out: List[str] = []
+    pos = 0
+    keep_stack: List[bool] = []      # False once a conditional's first branch has ended
+    set_depth = 0
+
+    for match in _RE_JINJA_TAG.finditer(sql):
+        tag = match.group(1).lower()
+        if set_depth == 0 and all(keep_stack):
+            out.append(sql[pos : match.start()])
+        pos = match.end()
+
+        if tag == "if":
+            keep_stack.append(True)
+        elif tag in ("elif", "else"):
+            if keep_stack:
+                keep_stack[-1] = False
+        elif tag == "endif":
+            if keep_stack:
+                keep_stack.pop()
+        elif tag == "set":
+            # `{% set x = 1 %}` is a one-liner with no body; only the block form opens a
+            # scope. The block form is the one with no `=` in the tag.
+            if "=" not in match.group(0):
+                set_depth += 1
+        elif tag == "endset":
+            set_depth = max(0, set_depth - 1)
+
+    if set_depth == 0 and all(keep_stack):
+        out.append(sql[pos:])
+    return "".join(out)
+
+
 def strip_jinja(sql: str, macro_form: str = MACRO_MARKER) -> str:
     """Turn a dbt model body into something a SQL parser accepts.
 
@@ -113,6 +175,7 @@ def strip_jinja(sql: str, macro_form: str = MACRO_MARKER) -> str:
     macro-generated column list from being silently read as a single column.
     """
     sql = _RE_CONFIG.sub("", sql)
+    sql = resolve_jinja_blocks(sql)
     sql = _RE_REF.sub(r"\1", sql)
     sql = _RE_SOURCE.sub(rf"\1{SOURCE_SEP}\2", sql)
     sql = _RE_JINJA_EXPR.sub(macro_form, sql)
@@ -335,21 +398,77 @@ def _absorbed_a_column(tree: Any) -> bool:
     return False
 
 
+# How many macro occurrences the per-occurrence fallback will try combinations for.
+# Cost is len(_MACRO_FORMS) ** n parses at roughly 2 ms each, so 4 occurrences is ~0.5 s and
+# 5 would be ~2 s. The fallback only runs for a model no uniform form could parse — one in
+# 361 here — so a bound this low costs nothing and cannot turn into a hang.
+MAX_MIXED_MACROS = 4
+
+
+def _substitute_per_occurrence(sql: str, forms: Sequence[str]) -> str:
+    """Replace the i-th `{{ ... }}` with `forms[i]`."""
+    index = 0
+
+    def swap(_match: Any) -> str:
+        nonlocal index
+        form = forms[index] if index < len(forms) else MACRO_MARKER
+        index += 1
+        return form
+
+    return _RE_JINJA_EXPR.sub(swap, sql)
+
+
 def parse_model_sql(raw_code: str, dialect: str) -> Tuple[Any, Optional[str]]:
-    """Parse a dbt model body, trying each macro substitution until one succeeds."""
+    """Parse a dbt model body, trying each macro substitution until one succeeds.
+
+    Two passes. The uniform pass applies one substitution to every macro in the model and
+    handles all but a handful; the mixed pass exists because a model can hold macros in
+    *different* syntactic positions at once, and then no single substitution is valid
+    anywhere. `logic_bi_dim_articles` is the case that forced it: one macro sits in the
+    select list and needs `, NULL as X`, another sits after the FROM and needs a boolean —
+    the uniform pass fails all four forms and reported the model as unparseable when its
+    column list was perfectly readable.
+
+    The mixed pass is a fallback, not the default, because it is exponential in the number
+    of macros and the uniform pass already answers for 224 of 225 models here.
+    """
     first_error: Optional[str] = None
-    for form in _MACRO_FORMS:
-        sql = strip_jinja(raw_code, form)
+
+    def attempt(sql: str) -> Optional[Any]:
+        nonlocal first_error
         if not has_literal_select(sql):
-            continue
+            return None
         try:
             tree = sqlglot.parse_one(sql, dialect=dialect)
         except Exception as exc:  # sqlglot raises several types; none are actionable here
             if first_error is None:
                 first_error = f"{type(exc).__name__}: {str(exc).splitlines()[0][:120]}"
-            continue
+            return None
         if tree is not None and not _absorbed_a_column(tree):
+            return tree
+        return None
+
+    for form in _MACRO_FORMS:
+        tree = attempt(strip_jinja(raw_code, form))
+        if tree is not None:
             return tree, None
+
+    prepared = _RE_JINJA_STMT.sub(
+        "", _RE_SOURCE.sub(rf"\1{SOURCE_SEP}\2", _RE_REF.sub(
+            r"\1", resolve_jinja_blocks(_RE_CONFIG.sub("", raw_code))
+        ))
+    )
+    occurrences = len(_RE_JINJA_EXPR.findall(prepared))
+    if 1 < occurrences <= MAX_MIXED_MACROS:
+        import itertools
+
+        for combination in itertools.product(_MACRO_FORMS, repeat=occurrences):
+            if len(set(combination)) == 1:
+                continue  # already covered by the uniform pass
+            tree = attempt(_substitute_per_occurrence(prepared, combination).strip())
+            if tree is not None:
+                return tree, None
+
     return None, first_error or "empty parse"
 
 
