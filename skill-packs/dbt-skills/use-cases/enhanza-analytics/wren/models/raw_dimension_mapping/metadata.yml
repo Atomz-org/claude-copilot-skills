@@ -1,0 +1,26 @@
+name: raw_dimension_mapping
+table_reference:
+  catalog: enhanza_sample
+  schema: app_canonical
+  table: dimension_mapping
+columns:
+- name: CategoryId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DimensionId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_erp_bi.app.dimension_mapping
+  dbt_resource_type: source

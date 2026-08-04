@@ -1,0 +1,88 @@
+name: fact_offer_rows
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_offer_rows
+columns:
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Original currency used in Fortnox
+- name: CurrencyRate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Exchange rate from Fortnox, used to convert all values to SEK
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: DiscountType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: PERCENT or AMOUNT
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: PriceAfterDiscount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: NET price in SEK after all discounts applied
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: NET value in SEK, discounts applied
+- name: isVATIncluded
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: TRUE is VAT is originally included in article price. Already used
+      in calculations
+cached: false
+properties:
+  description: Offer detailed to sold articles, all values in SEK, only not cancelled
+    and with article details. See Document-level info in fortnox_bi.fact_offers
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_offer_rows
+  dbt_resource_type: model

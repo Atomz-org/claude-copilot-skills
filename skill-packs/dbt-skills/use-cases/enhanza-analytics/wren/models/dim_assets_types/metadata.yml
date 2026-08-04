@@ -1,0 +1,122 @@
+name: dim_assets_types
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_assets_types
+columns:
+- name: AccountAsset
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The general ledger account where the asset’s acquisition value is
+      recorded
+- name: AccountDepreciation
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The account used to record depreciation expenses for this asset
+- name: AccountRevaluation
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The account used if the asset is revalued (increase/decrease in book
+      value)
+- name: AccountSaleLoss
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Account for recording losses if the asset is sold below book value
+- name: AccountSaleWin
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Account for recording gains if the asset is sold above book value
+- name: AccountValueLoss
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Account used when the asset’s value is impaired or written down
+- name: AccountWriteDown
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The account for reducing the asset’s book value
+- name: AccountWriteDownAck
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The account used to acknowledge or finalize a previous write-down
+      of an asset
+- name: AssetType
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Type of the asset
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: AssetTypeId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of assets types
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: AssetTypeUrl
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: A link to additional documentation or reference related to this asset
+      type
+- name: Description
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Text description of the asset type
+- name: InUse
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Boolean indicating whether this asset type is actively used in the
+      system
+- name: Notes
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Additional notes for internal reference
+- name: Number
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS account number
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: relationships
+    dbt_test_status: verified
+cached: false
+properties:
+  description: Detailed information on assets types
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_assets_types
+  dbt_resource_type: model
+primary_key: AssetTypeId

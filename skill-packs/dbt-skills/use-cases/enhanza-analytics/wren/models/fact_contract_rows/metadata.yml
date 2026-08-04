@@ -1,0 +1,63 @@
+name: fact_contract_rows
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_contract_rows
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ContractId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Original transaction currency used in Fortnox
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Net value in SEK, discounts applied
+cached: false
+properties:
+  description: Contract transaction details, article level. Only rows with specified
+    Price included
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_contract_rows
+  dbt_resource_type: model

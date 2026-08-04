@@ -1,0 +1,31 @@
+name: raw_vouchers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: vouchers
+columns:
+- name: ReferenceType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VoucherNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VoucherSeries
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Year
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_erp_bi.fortnox_api_demo.vouchers
+  dbt_resource_type: source

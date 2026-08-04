@@ -1,0 +1,66 @@
+name: raw_project
+table_reference:
+  catalog: enhanza_sample
+  schema: tripletex_api_canonical
+  table: project
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: contact
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: description
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: endDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isClosed
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isOffer
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isReadyForInvoicing
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: number
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: projectManager
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: startDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tripletex.tripletex_api.project
+  dbt_resource_type: source

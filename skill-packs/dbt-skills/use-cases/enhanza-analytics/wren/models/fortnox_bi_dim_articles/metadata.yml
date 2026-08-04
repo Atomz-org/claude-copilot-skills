@@ -1,0 +1,47 @@
+name: fortnox_bi_dim_articles
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_articles
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique Article identifier for the workspace
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: QuantityInStock
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Current amount in stock from fortnox_bi.fact_stockbalance
+- name: ReservedQuantity
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Difference between total amount in stock and available stock
+- name: isBundleSubItem
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: TRUE if the article is part of a bundle
+cached: false
+properties:
+  description: Datailed information on sold articles (items)
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_articles
+  dbt_resource_type: model
+primary_key: ArticleId

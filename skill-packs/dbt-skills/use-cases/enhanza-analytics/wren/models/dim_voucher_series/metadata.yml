@@ -1,0 +1,21 @@
+name: dim_voucher_series
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_voucher_series
+columns:
+- name: VoucherSeriesId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique voucher series identifyer based on financial year
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_voucher_series
+  dbt_resource_type: model
+primary_key: VoucherSeriesId

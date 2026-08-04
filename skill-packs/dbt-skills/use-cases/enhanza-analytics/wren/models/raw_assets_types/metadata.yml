@@ -1,0 +1,36 @@
+name: raw_assets_types
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: assets_types
+columns:
+- name: Id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: InUse
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Type
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Url
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_erp_bi.fortnox_api_demo.assets_types
+  dbt_resource_type: source

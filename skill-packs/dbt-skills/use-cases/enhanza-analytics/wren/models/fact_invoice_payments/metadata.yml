@@ -1,0 +1,33 @@
+name: fact_invoice_payments
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_invoice_payments
+columns:
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: VoucherSeriesId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique identifier of Voucher series, , no reference since it's a
+      deprecated dimension
+cached: false
+properties:
+  description: Net in SEK
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_invoice_payments
+  dbt_resource_type: model

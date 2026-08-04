@@ -1,0 +1,16 @@
+name: raw_voucher_type
+table_reference:
+  catalog: enhanza_sample
+  schema: tripletex_api_canonical
+  table: voucher_type
+columns:
+- name: displayName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tripletex.tripletex_api.voucher_type
+  dbt_resource_type: source

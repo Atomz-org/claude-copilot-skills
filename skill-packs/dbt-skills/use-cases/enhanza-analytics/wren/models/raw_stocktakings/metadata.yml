@@ -1,0 +1,41 @@
+name: raw_stocktakings
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: stocktakings
+columns:
+- name: Name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: responsible
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: state
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: usingStockPoints
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.stocktakings
+  dbt_resource_type: source

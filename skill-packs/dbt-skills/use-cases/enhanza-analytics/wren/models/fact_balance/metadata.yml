@@ -1,0 +1,100 @@
+name: fact_balance
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_balance
+columns:
+- name: AccountCategoryBreakdownID
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: BalanceCarriedForward
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Final current balance for the financial year
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: DefaultCurrency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Default currency based on the connected ERP system(s)
+- name: Description
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DescriptionRows
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: FinancialYearId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Month
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Month presented by it's last calendar day
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: PeriodBalance
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Change during the period
+- name: PeriodOpeningBalance
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Balance at the beginning of the month
+- name: TransactionDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Transaction Date
+- name: TransactionInformation
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VoucherNumber
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VoucherSeries
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_balance
+  dbt_resource_type: model

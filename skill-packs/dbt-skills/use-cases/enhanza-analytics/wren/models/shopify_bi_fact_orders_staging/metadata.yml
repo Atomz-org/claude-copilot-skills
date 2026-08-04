@@ -1,0 +1,58 @@
+name: shopify_bi_fact_orders_staging
+table_reference:
+  catalog: enhanza_sample
+  schema: shopify_staging_demo
+  table: shopify_bi_fact_orders
+columns:
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Owning customer. Nullable — Shopify guest checkout produces orders
+      with no customer. The relationships test ignores nulls by design.
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: FinancialStatus
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Shopify payment state. Closed domain defined by the Shopify API.
+    accepted_values:
+    - pending
+    - authorized
+    - partially_paid
+    - paid
+    - partially_refunded
+    - refunded
+    - voided
+    dbt_tests: accepted_values
+    dbt_test_status: verified
+- name: OrderDate
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Order creation date, from `created_at`.
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: OrderId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Shopify order id, cast to string. Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+cached: false
+properties:
+  description: One row per Shopify order, excluding orders cancelled in Shopify (`cancelled_at`
+    set) and orders older than five years. The five-year window mirrors the same filter
+    in fortnox_bi_fact_orders_staging. Amounts are in the shop's own currency, so
+    no FX conversion is applied.
+  dbt_layer: staging
+  dbt_unique_id: model.enhanza_shopify.shopify_bi_fact_orders_staging
+  dbt_resource_type: model
+primary_key: OrderId

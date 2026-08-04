@@ -1,0 +1,104 @@
+name: article_prices
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_flat_demo
+  table: article_prices
+columns:
+- name: Active
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Whether the article in Fortnox is marked as active or inactive
+- name: ArticleNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The article number indicated on the line where applicable
+- name: Comments
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Short comment about the article
+- name: Description
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Article name retrieved from the article register for the specified
+      article number
+- name: DirectCost
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Used for automatically suggesting a purchase price when registering
+      with this article
+- name: FromQuantity
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Identify the from quantity for the price
+- name: Note
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Short note made on article
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Organization ID of your company(s) in Fortnox
+- name: OrgName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Your company(s) in Fortnox
+- name: PreselectedPricelist
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Price
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Price from Price list
+- name: Pricelist
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: PurchasePrice
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Estimated price of the item. The value of the item line is used
+- name: SalesPrice
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Net price at which the item is sold
+- name: Supplier
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of the supplier, taken from the supplier register, who sent
+      the item
+cached: false
+properties:
+  description: 'Overview of Articles available in Fortnox with their respective prices.
+    NOTE: Articles are listed multiple times if they''re available in different stocks'
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_flat_article_prices
+  dbt_resource_type: model

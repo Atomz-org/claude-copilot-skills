@@ -1,0 +1,10 @@
+schema_version: 5
+name: enhanza_erp_bi
+version: 1.0.0
+catalog: wren
+schema: public
+data_source: duckdb
+dbt:
+  project_dir: ../dbt_project
+  profile: enhanza_sample
+  target: dev

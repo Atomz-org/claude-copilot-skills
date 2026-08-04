@@ -1,0 +1,51 @@
+name: raw_salary_transactions
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: salary_transactions
+columns:
+- name: Amount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EmployeeId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Number
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalaryCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Total
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VAT
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.salary_transactions
+  dbt_resource_type: source

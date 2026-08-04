@@ -1,0 +1,35 @@
+name: fortnox_bi_fact_rolling_sum
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: rolling_sum
+columns:
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: FinancialYearId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_rolling_sum
+  dbt_resource_type: model

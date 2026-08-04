@@ -1,0 +1,50 @@
+name: fortnox_bi_time_reporting_registrations
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: time_reporting_registrations
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Service to which time registration is linked
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: UserNo
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: UserId available in Fortnox UI only
+cached: false
+properties:
+  description: Reporting time spent in Fortnox
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_time_reporting_registrations
+  dbt_resource_type: model

@@ -1,0 +1,165 @@
+name: fact_sales
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_sales
+columns:
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ContributionValue
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Sold value minus estimated price of the item. The item row value
+      is used
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: Date
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date of quote / order / invoice
+- name: DefaultCurrency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Default currency based on the connected ERP system(s)
+- name: DocumentId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DocumentNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique number of selected document type
+- name: DocumentType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Filter between opportunities, quotes, orders and invoices
+- name: FinancialYearId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Labels
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: PriceAfterDiscount
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: PriceBeforeDiscount
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Quantity
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The number of items invoiced/ordered
+- name: SalesRep
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The contact person in your organization for the current document.
+      Enter the seller to track it
+- name: SalesRepGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesValue
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The total value of the selected document type line in SEK after discounts
+- name: SupplierId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isNewCustomer
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: Full overview of sales transaction from opportunity/quote to invoice
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_sales
+  dbt_resource_type: model

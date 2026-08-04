@@ -1,0 +1,128 @@
+name: logic_bi_dim_accounts
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_accounts
+columns:
+- name: Account
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS account number, consists of four digits, e.g. 1234, and the name
+      of the account in the chart of accounts
+- name: AccountCategory
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS account category defined by first two account digits
+- name: AccountCategoryBreakdownID
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountCategoryId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountClass
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS account class defined by first account digit
+- name: AccountClassId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: unique
+    dbt_test_status: verified
+- name: AccountIdForGrouping
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Technical field for easy in-app grouping
+- name: AccountName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The name of the account in the chart of accounts
+- name: AccountNameLatest
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountNumber
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS account number, consists of four digits, e.g. 1234
+- name: AccountSubClass
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS sub-category defined by first three account digits
+- name: AccountSubClassId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: AccountSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: FinancialYear
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Financial year dates for this account
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_accounts
+  dbt_resource_type: model

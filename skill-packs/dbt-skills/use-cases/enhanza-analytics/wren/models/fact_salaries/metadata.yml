@@ -1,0 +1,113 @@
+name: fact_salaries
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_salaries
+columns:
+- name: AmountPerUnit
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Price per unit (day, hour etc.)'
+- name: CauseCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Absence/attendance: standard abbreviation of absence/attendance
+      reason'
+- name: CauseCodeName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Absence/attendance: detailed explanation of absence/attendance reason'
+- name: Comments
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Comments to the salary transactions if any'
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: Date
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Transaction date, i.e. 2024-03-25
+- name: DefaultCurrency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Default currency based on the connected ERP system(s)
+- name: EmployeeId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: NumberOfUnits
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Number of days, hours etc. the employee is paid for'
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: RegisteredHours
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Absence/attendance: registered amount of hours'
+- name: SalaryCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Standard unique slary type identifier'
+- name: SalaryVat
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: The amount of VAT applied to the paid wage'
+- name: TotalSalary
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Final wage the employee is paid'
+- name: TransactionType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Filter on salary payments or absence/attendance
+cached: false
+properties:
+  description: Overview of salary, absence and attendance transactions
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_salaries
+  dbt_resource_type: model

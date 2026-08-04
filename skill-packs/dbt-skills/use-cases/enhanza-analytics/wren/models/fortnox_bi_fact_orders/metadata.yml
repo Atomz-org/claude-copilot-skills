@@ -1,0 +1,78 @@
+name: fortnox_bi_fact_orders
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_orders
+columns:
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Original currency used in Fortnox
+- name: CurrencyRate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Exchange rate from Fortnox, used to convert all values to SEK
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: InvoiceReference
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 0 if no invoice is created for this order yet
+- name: Labels
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Order label, only one label per document is supported. For more details,
+      use fortnox_bi.dim_labels
+- name: OrderNo
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: RecipientEmail
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Additional email details, EmailAddressTo
+- name: RecipientPhone
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Phone1 field in Fortnox
+- name: StockPointId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+cached: false
+properties:
+  description: Order detailed to individual documents, all values in SEK, only not
+    cancelled. See Article-level info in fortnox_bi.fact_order_rows
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_orders
+  dbt_resource_type: model

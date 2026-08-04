@@ -1,0 +1,16 @@
+name: raw_visma_economic_api_employees
+table_reference:
+  catalog: enhanza_sample
+  schema: visma_economic_api_canonical
+  table: employees
+columns:
+- name: name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_visma_economic.visma_economic_api.employees
+  dbt_resource_type: source

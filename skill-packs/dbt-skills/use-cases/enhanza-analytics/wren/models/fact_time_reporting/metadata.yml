@@ -1,0 +1,155 @@
+name: fact_time_reporting
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_time_reporting
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ChargeHours
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: DefaultCurrency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Default currency based on the connected ERP system(s)
+- name: DocumentNo
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DocumentType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EndTime
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date and time the work/absence ended
+- name: IssueCategory1
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: RegisteredDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: RegisteredSubType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: RegisteredType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Filter work or absence registration
+- name: StartTime
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date and time the work/absence started
+- name: UnitCost
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: UnitPrice
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: UserGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: UserGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: UserId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique identifier of ERP user who registered the transaction
+- name: UserSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: UserSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: UserSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: UserSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: WorkedHours
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isInvoicable
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties:
+    description: TRUE if transaction is invoicable
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_time_reporting
+  dbt_resource_type: model

@@ -1,0 +1,84 @@
+name: logic_bi_dim_articles
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_articles
+columns:
+- name: ArticleGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ArticleGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique Article identifier used as a primary key
+    dbt_tests: unique
+    dbt_test_status: verified
+- name: ArticleName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Description of the article (including its number)
+- name: ArticleNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ArticlePurchasePrice
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Price at which the article is purchased from the supplier
+- name: ArticleSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ArticleSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ArticleSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ArticleSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: Manufacturer
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isActive
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Indicates whether the article is currently active
+cached: false
+properties:
+  description: List of all Articles (items) and their purchase price
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_articles
+  dbt_resource_type: model

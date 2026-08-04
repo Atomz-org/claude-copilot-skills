@@ -1,0 +1,46 @@
+name: raw_expenseitems
+table_reference:
+  catalog: enhanza_sample
+  schema: seventime_api_canonical
+  table: expenseitems
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: _id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: articleNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: distributor
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: distributorName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isActive
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: unitCost
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_seventime.seventime_api.expenseitems
+  dbt_resource_type: source
