@@ -1,0 +1,20 @@
+# What graphify must not walk into.
+#
+# gitignore syntax. Committed, deliberately: the graph is the first move under the
+# Graphify-first rule in CLAUDE.md, so which files become nodes has to mean the same
+# thing in every checkout. Same reasoning as the committed `.skillmapignore`.
+
+# Vendored upstream. `external/WrenAI` is a pinned submodule (74bf59e) — upstream's
+# source, not this repository's. Measured before this file existed: 7105 of 12704
+# graph nodes, 56%, were WrenAI's own code. That is not extra context, it is
+# dilution — every `graphify query` spent most of its node budget on a dependency
+# nobody here edits, and the answer to a question about *this* repo came back
+# ranked against upstream's internals.
+#
+# The submodule is still pinned, still buildable, still documented in
+# docs/WRENAI_INTEGRATION.md. It is simply not part of this repository's map.
+external/
+
+# graphify's own output, including the converted sidecars it writes for PDFs and
+# images. Re-extracting them feeds the graph its own tail.
+graphify-out/
