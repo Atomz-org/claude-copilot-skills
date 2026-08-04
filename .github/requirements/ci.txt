@@ -1,4 +1,12 @@
 pytest
+
+# Parallel execution. The suite is subprocess-bound — nearly every test shells out to a
+# script in scripts/ — so it ran 97s at 70% CPU on a 10-core machine and 34s with this
+# installed. `_pytest_parallel.py` (named from pytest.ini's addopts) switches it on only
+# when the import succeeds, so bare `python -m pytest -q` stays the command either way and
+# a runner without it is slow rather than broken.
+pytest-xdist
+
 graphifyy==0.9.31
 
 # sqlglot is optional at runtime — dbt_column_lineage.py degrades to structural resolution

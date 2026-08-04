@@ -534,6 +534,43 @@ The two `use_case_dir` behaviours that existed are both kept, as two named funct
 rather than one function with a flag: `use_case_dir` returns `Optional[Path]`,
 `require_use_case_dir` exits 2 and lists the known slugs.
 
+## Running the tests
+
+`python -m pytest -q` — that exact command, from the repository root, is what all six CI
+call sites run and what `tests/test_wren_context_sync.py` pins.
+
+It runs **across cores when `pytest-xdist` is installed and serially when it is not**.
+Measured on a 10-core machine: 97s at 70% CPU serial, **34s** parallel, three
+consecutive runs identical. The suite is subprocess-bound — nearly every test shells out
+to a script in `scripts/` — so a third of the machine was idle.
+
+The wiring is two files, and the split is forced by pytest, not chosen:
+
+- `_pytest_parallel.py`, named in `pytest.ini`'s `addopts` via `-p`. Only
+  `pytest_load_initial_conftests` is early enough to add `-n`, and pytest fires it
+  *while* loading conftests — so the same hook in a `conftest.py` never runs. It stayed
+  silently at 97s until this moved to a `-p` plugin. `-n auto` in `addopts` directly
+  would make bare `pytest` fail with "unrecognized arguments" wherever xdist is absent.
+- `conftest.py` at the root, which assigns each test an xdist group.
+
+**Grouping is correctness, not tuning.** Distribution is `loadgroup` with each test
+grouped by its filename, reproducing `loadfile`'s guarantee, except that three files
+share one group: `test_dbt_column_memory.py`, `test_dbt_column_memory_watch.py`, and
+`test_use_case_sync.py`. The first two define the *same* end-to-end test — append a
+probe comment to a real `.sql`, rebuild, assert, restore in a `finally` — so on separate
+workers they mutate one `.sql` and one `column-memory.json` concurrently. Measured: two
+reproducible failures, and four un-restored `-- hook test probe` lines accumulated in a
+committed dbt model, because each worker's `finally` restored the *other's* probe as if
+it were the original. The third file joins them because its `columns` stage runs
+`--check` against that same artifact.
+
+Those tests were always order-dependent; running serially was hiding it. The grouping
+costs no wall time — the three total ~16s, under the ~23s of `test_dbt_sample_build.py`,
+which bounds the run anyway.
+
+Escape hatches: `-n`/`--dist` on the command line wins, `-p no:xdist` disables it, and
+`CODE_SKILLS_NO_XDIST=1` forces serial for bisecting a flake.
+
 ## RTK and memory integration
 
 - RTK registry and routes: `src/ai-core/rtk-setup.ts` and `src/ai-core/dbt-integration.ts`
