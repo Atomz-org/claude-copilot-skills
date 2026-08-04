@@ -1,0 +1,49 @@
+name: stg_demopos__customers
+table_reference:
+  catalog: dev
+  schema: staging
+  table: stg_demopos__customers
+columns:
+- name: customer_id
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Primary key. Till customer reference (`pc_…` — a different id namespace
+      from Shopify's `c_…`; the two are deliberately not conformed until a consumer
+      asks for a cross-channel customer dimension).
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: customer_email
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Contact email. PII — masked outside prod.
+- name: country_code
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: ISO-3166 alpha-2, lowercased and trimmed.
+- name: first_seen_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Timestamp the customer was first registered at the till.
+- name: _loaded_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: One row per customer registered at the in-store till, renamed and cast.
+    The source is a nightly full snapshot with no delete flag, so unlike stg_shopify__customers
+    there is nothing to filter here — a customer removed upstream stops appearing.
+  dbt_layer: staging
+  dbt_unique_id: model.analytics.stg_demopos__customers
+  dbt_resource_type: model
+primary_key: customer_id

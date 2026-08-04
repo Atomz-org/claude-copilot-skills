@@ -245,7 +245,7 @@ This command:
 Use:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills
+./scripts/activate_skill_stack.sh dbt-skills wren-skills
 ```
 
 This layers shared GitHub skills first, then overlays the selected domain pack.

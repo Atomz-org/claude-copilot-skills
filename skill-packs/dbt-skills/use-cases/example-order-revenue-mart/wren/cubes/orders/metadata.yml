@@ -1,0 +1,26 @@
+name: orders
+base_object: fct_orders
+measures:
+- name: order_total
+  expression: "SUM(order_amount_usd)"
+  type: DOUBLE
+- name: net_line_total
+  expression: "SUM(net_line_amount_usd)"
+  type: DOUBLE
+- name: order_count
+  expression: "COUNT(order_id)"
+  type: BIGINT
+- name: distinct_customers
+  expression: "COUNT(DISTINCT customer_id)"
+  type: BIGINT
+dimensions:
+- name: order_status
+  expression: order_status
+  type: VARCHAR
+time_dimensions:
+- name: ordered_at
+  expression: ordered_at
+  type: TIMESTAMP
+properties:
+  description: "Order facts. One row per order."
+  source: dbt_semantic_model

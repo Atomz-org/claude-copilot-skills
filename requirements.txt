@@ -25,6 +25,14 @@ sqlglot>=30,<31
 # only time.
 orjson>=3.9
 
+# WrenAI semantic layer CLI (scripts/wren_context_sync.py and the `wren` stage of
+# scripts/use_case_sync.py). Source is pinned as a submodule at external/WrenAI;
+# this wheel is the runtime. Without it the `wren` stage reports `skip` with a
+# reason. Pinned exactly: the stage shells out to the CLI, and CLI surface moved
+# between 0.x minors. Bump together with the external/WrenAI submodule SHA.
+# wrenai requires sqlglot>=29, satisfied by the 30.x pin above.
+wrenai==0.13.2
+
 # --- tests --------------------------------------------------------------------
 
 # The suite itself. CI installs this separately; listed here so one command gives

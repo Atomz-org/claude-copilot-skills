@@ -7,6 +7,7 @@ packs=(
   "skill-packs/github-skills"
   "skill-packs/dbt-skills"
   "skill-packs/skill-map"
+  "skill-packs/wren-skills"
 )
 
 max_bytes=8192

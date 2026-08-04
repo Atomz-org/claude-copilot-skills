@@ -1,0 +1,10 @@
+schema_version: 5
+name: analytics
+version: 1.0.0
+catalog: wren
+schema: public
+data_source: duckdb
+dbt:
+  project_dir: ../dbt_project
+  profile: analytics
+  target: duckdb_dev

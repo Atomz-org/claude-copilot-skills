@@ -1,0 +1,77 @@
+name: stg_demopos__receipts
+table_reference:
+  catalog: dev
+  schema: staging
+  table: stg_demopos__receipts
+columns:
+- name: receipt_id
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Primary key. Receipt number from the till.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: customer_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: FK to stg_demopos__customers. Null for walk-in sales.
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: register_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which till printed the receipt (reg_01–reg_03).
+- name: receipt_status
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Till status, lowercased and trimmed.
+    accepted_values:
+    - paid
+    - refunded
+    - void
+    dbt_tests: accepted_values
+    dbt_test_status: verified
+- name: currency_code
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: receipt_amount
+  type: DECIMAL(28, 6)
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Receipt total in the receipt's own currency.
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: sold_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Time of sale at the register, UTC.
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: _loaded_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: 'One row per printed receipt. Walk-in cash sales have no customer (~25%
+    of rows) — the nullable-FK case. Voided receipts are kept, with receipt_status
+    = ''void'': whether a void counts as a sale is a business decision that belongs
+    downstream, not in staging.'
+  dbt_layer: staging
+  dbt_unique_id: model.analytics.stg_demopos__receipts
+  dbt_resource_type: model
+primary_key: receipt_id

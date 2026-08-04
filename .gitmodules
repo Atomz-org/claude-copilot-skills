@@ -1,0 +1,3 @@
+[submodule "external/WrenAI"]
+	path = external/WrenAI
+	url = https://github.com/PackMaaan/WrenAI

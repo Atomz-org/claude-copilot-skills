@@ -1,0 +1,25 @@
+relationships:
+- name: fct_orders_to_dim_customers
+  models:
+  - fct_orders
+  - dim_customers
+  join_type: MANY_TO_ONE
+  condition: fct_orders.customer_id = dim_customers.customer_id
+  properties:
+    source: dbt_test
+- name: stg_demopos__receipts_to_stg_demopos__customers
+  models:
+  - stg_demopos__receipts
+  - stg_demopos__customers
+  join_type: MANY_TO_ONE
+  condition: stg_demopos__receipts.customer_id = stg_demopos__customers.customer_id
+  properties:
+    source: dbt_test
+- name: stg_shopify__order_lines_to_stg_shopify__orders
+  models:
+  - stg_shopify__order_lines
+  - stg_shopify__orders
+  join_type: MANY_TO_ONE
+  condition: stg_shopify__order_lines.order_id = stg_shopify__orders.order_id
+  properties:
+    source: dbt_test

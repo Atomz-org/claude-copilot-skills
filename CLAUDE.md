@@ -7,6 +7,7 @@ This repository combines:
 - Git workflow automation and reusable scaffold operations
 - Senior analytics-engineering methods for dbt Core projects
 - RTK-style toolkit routing, graph state, and memory capture
+- The WrenAI semantic-layer serving tier over dbt use-cases (`docs/WRENAI_INTEGRATION.md`)
 
 ## Graphify-first rule
 
@@ -344,6 +345,11 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 | `graphify` | the code graph, rebuilt | `--graphify-update` |
 | `graph` | dbt lineage merged into `graphify-out/graph.json` | manifest |
 | `alignment` | the convention-drift verdict | a dbt project |
+| `wren` | `wren/` — the WrenAI semantic-layer project | manifest, catalog.json, wrenai CLI |
+
+The `wren` stage is sequenced last on purpose: it projects the artifacts the earlier
+stages just refreshed (`index.json`, `column-memory.json`), so running it earlier would
+enrich from the previous generation.
 
 `/new-use-case` and `/new-connector` both end here. The gate is the existing test suite —
 `tests/test_use_case_sync.py` asserts the committed artifacts are current — so **do not add
@@ -385,6 +391,36 @@ parser is absent. It is deliberately **not** JSON-LD: a `@context` covering thes
 have to reify `models` and `mappings` into graph shapes they do not have, and one covering
 only the prefixes would parse while dropping nearly every statement. The graph stays in the
 `.ttl` files. Details in the use-case's `ontology/README.md`.
+
+## WrenAI serving tier
+
+WrenAI is included as this repository's semantic-layer serving tier: source pinned as a
+submodule at `external/WrenAI`, runtime as the `wrenai` wheel pinned in `requirements.txt`
+(the two move together), agent surface as `skill-packs/wren-skills/` (skill `wren-genbi`,
+command `/wren`). Full architecture and rationale: `docs/WRENAI_INTEGRATION.md`.
+
+Three rules decide whether a change here is correct:
+
+- **The bridge enriches; it never duplicates.** `wren context import dbt` is upstream's
+  and produces the mechanical layer. `scripts/wren_context_sync.py` adds only what dbt
+  cannot know — ontology concepts, column contracts, drift caveats, MetricFlow
+  projections — into files the importer does not own. The two generators' file sets are
+  disjoint, and hand-authored knowledge in other filenames is reported `stale`, never
+  touched or deleted.
+- **Cube types are read from `catalog.json` or the part is skipped and counted** (rule 5:
+  never invent). Measured on example-order-revenue-mart: 13 models, 3 relationships,
+  2 cubes, validate clean, governed query equal to direct DuckDB row for row —
+  `./skill-packs/wren-skills/demo/run_wren_demo.sh` re-proves this end to end, locally,
+  with no Docker and no API keys.
+- **An upstream defect becomes a bridge workaround plus a patch in `external/patches/`,
+  never a fork-drift.** The wrenai 0.13.2 importer crash on model-level dbt tests is the
+  worked example: rows are hidden from `run_results.json` only for the import's duration
+  and restored on any exit, pinned by `tests/test_wren_context_sync.py`.
+
+Guides are never copied out of the CLI: `wren skills get <name>` serves them
+version-matched to the installed wheel, which is why the skill is a discovery stub.
+`wren genbi deploy` is data egress and needs explicit per-deploy user confirmation
+(`wren-rules.md` rule 9).
 
 ## Harness cartography — skill-map
 
@@ -459,7 +495,7 @@ Exceptions maintained directly at repository level, because no pack owns them:
 After changing any pack asset:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills && git status --short
+./scripts/activate_skill_stack.sh dbt-skills wren-skills && git status --short
 ```
 
 Unexpected modifications in that output mean an edit landed in a generated path.
