@@ -179,164 +179,33 @@ Neither substitutes for the other, and conflating them is the most common mistak
 
 ## The decision path
 
-When a prompt arrives, most of what happens next is **not the model deciding**. A short chain of small programs reads the command the model intends to run and passes it, edits it, or stops it — before the command reaches the shell. Everything below is measured from this repository, not illustrative.
+When a prompt arrives, most of what happens next is **not the model deciding**. A chain of hooks reads the command the model intends to run and passes it, edits it, or blocks it — before it reaches the shell. That chain, the token budget deciding what the model is allowed to see, and the dbt lineage under one reported figure have their own page, with an interactive version of every diagram.
 
-```mermaid
-flowchart LR
-    U["your prompt"] --> H1["UserPromptSubmit<br/>toon_prompt_context.sh"]
-    H1 --> M["the model<br/>picks a command"]
-    M --> G{"block-dangerous-git.sh<br/>six string patterns"}
-    G -->|"matches"| X["BLOCKED · exit 2<br/>never reaches the shell"]
-    G -->|"no match"| T{"toon_graphify_pipe.py"}
-    T -->|"bare graphify query,<br/>or the alignment check"| R["REWRITTEN<br/>output compressed"]
-    T -->|"anything else,<br/>or any pipe present"| P["passed through<br/>unchanged"]
-    R --> F["graphify hook-guard<br/>graph-first reminder"]
-    P --> F
-    F --> S["the command runs"]
-```
+<Card title="The Decision Path" icon="route" href="/decision-path">
+  Four requests and their four verdicts, the budget curve that cuts a 176-node search down to eleven, and the 378-model lineage behind a single business number. Every figure measured from this repository, and the artifact-derived ones pinned by `tests/test_decision_path_page.py`.
+</Card>
 
-Each box is a real file registered in `.claude/settings.json`, and every verdict is decided by plain text matching. No model is consulted at any point in that chain.
+## System architecture
 
-### Four requests, four outcomes
+The decision path above answers *how a prompt becomes an action*. This answers *what the thing is*: nineteen source systems, 378 dbt models, 58 conformed concepts, and one semantic layer served to BI and to agents — plus the gates that decide whether any of it can be trusted.
 
-<Tabs param="request">
-  <Tab title="A question">
-    `"Where does the TOON serializer get used?"` — the model reaches for the graph, and the command it asked for is not the command that runs.
-
-    | Checkpoint | Verdict | Why |
-    |---|---|---|
-    | `toon_prompt_context.sh` | pass | One sentence stapled to every prompt, unconditionally |
-    | `block-dangerous-git.sh` | pass | Starts with `graphify`; none of the six patterns match |
-    | `toon_graphify_pipe.py` | **rewrite** | Bare `graphify query`, serializer present, no pipe to break |
-    | `graphify hook-guard` | pass | Injects the graph-first reminder |
-
-    ```bash Terminal
-    # what the model asked for
-    graphify query "how does the TOON serializer connect to the graphify hook"
-
-    # what actually ran
-    graphify query "..." | rust/toon/bin/graph_to_toon --passthrough
-    ```
-
-    The result: 176 nodes found, 11 returned inside a 400-token budget, **1,375 characters** of TOON instead of 1,701 of prose. The model is never told its command was edited.
-  </Tab>
-
-  <Tab title="A push">
-    `"Push my branch when you're done."` — refused at the second checkpoint, before anything executes.
-
-    ```bash Terminal
-    git push origin main
-    # BLOCKED: dangerous git command is not allowed by repository guardrails
-    # exit 2 — no network call, no branch moved, no remote touched
-    ```
-
-    The guardrail evaluates no intent and reads no context. It matches the start of the command against six patterns — `push`, `reset --hard`, `clean -f`, `branch -D`, `checkout .`, `restore .` — and exits. The model sees the refusal and must choose a different approach; it cannot retry its way past a checkpoint.
-  </Tab>
-
-  <Tab title="A shell one-liner">
-    `"How many analysis scripts are there?"` — passed through untouched, on purpose.
-
-    ```bash Terminal
-    ls scripts/*.py | wc -l
-    ```
-
-    The rewriter **declines** any command containing `|`, `;`, `&`, `<`, or `>`. Rewriting a command that already redirects its own output risks changing what it means, so a composed command is left completely alone. Restraint here is what makes the rewrite safe everywhere else.
-  </Tab>
-
-  <Tab title="/new-connector favrit">
-    One prompt, six shell commands, three different verdicts — and the last one refused.
-
-    ```bash Terminal
-    /new-connector favrit --use-case enhanza-analytics
-    ```
-
-    | # | Command | Verdict |
-    |---|---|---|
-    | 1 | slash command loads the `connector-onboarding` skill | *no gate* — nothing executed yet |
-    | 2 | `ls skill-packs/*/use-cases/` | pass |
-    | 3 | `python3 scripts/new_connector.py favrit --dry-run` | pass |
-    | 4 | `python3 scripts/connector_alignment_check.py --check` | **rewrite** |
-    | 5 | `git switch -c feat/ENH-1-favrit-connector` | pass |
-    | 6 | `git push -u origin HEAD` | **BLOCKED** |
-
-    Step 1 touches no checkpoint at all — a slash command is a markdown file describing how to work, and the checkpoints only wake up once the model reaches for the shell.
-
-    Step 3 prints the conventions it inferred from the project's busiest existing connector rather than assuming them, and refuses to write the connector's contract for you:
-
-    ```text
-    Detected conventions, from 'fortnox'
-      staging model    favrit_bi_<model>_staging
-      adapter model    favrit_erp_bi_<concept>
-      source name      favrit_api
-      enable var       is_favrit_enabled
-
-    Would create 2 file(s)
-    Left alone, already present (3)
-    ```
-
-    `sources.yml`, the registry, and `dbt_project.yml` are printed to paste by hand, so a reviewer sees the contract as a human diff rather than as generated text.
-
-    Step 4 is the only repository script on the compression list, because its findings are a uniform record list — measured elsewhere at 7,447 characters down to 2,624. The rewriter prepends `set -o pipefail`; without it a failing `--check` would report the compressor's exit code and a red gate would go silently green.
-
-    Step 6 is refused even though the command file itself says *push only when asked*. That sentence is a document the model could ignore; the checkpoint is not, and it does not care that five commands already succeeded.
-  </Tab>
-</Tabs>
-
-:::note[The safety property, stated plainly]
-It does not rest on the model choosing well. It rests on six string patterns in a 38-line shell script that runs **before** the model's command reaches the computer.
-:::
-
-### What the model actually sees
-
-A graph query is not handed over whole. The question's words are matched to starting nodes, the search walks outward exactly two steps, and the result is then **cut to fit a token budget**, keeping the best-connected nodes. Measured on one real question that reaches 176 nodes:
-
-| `--budget` | nodes kept | characters returned |
-|---|---|---|
-| 200 | 6 of 176 | 1,196 |
-| 400 | 11 of 176 | 1,701 |
-| 800 | 22 of 176 | 2,946 |
-| 1,500 | 41 of 176 | 4,984 |
-| 3,000 | 80 of 176 | 9,505 |
-| 6,000 | 153 of 176 | 18,467 |
-
-This is why a vague question gets a vague answer: at a 400-token budget the search finds 176 relevant things and shows eleven. The fix is a narrower question, not a bigger model.
-
-### One number, and everything holding it up
-
-`graphify` maps code; it has no SQL parser, so dbt models enter the code graph as isolated file nodes. The lineage comes from dbt's own build manifest instead — every edge compiled, none inferred. Tracing one finished figure in the worked use-case:
-
-```mermaid
-flowchart LR
-    S0["raw tables<br/>75"] --> S1["step 1<br/>59"]
-    S1 --> S2["step 2<br/>18"]
-    S2 --> S3["step 3<br/>13"]
-    S3 --> S4["step 4<br/>7"]
-    S4 --> S5["step 5<br/>1"]
-    S5 --> S6["step 6<br/>5"]
-    S6 --> S7["logic_bi_fact_sales"]
-```
-
-That single figure stands on **178 other tables through 231 computed links, seven steps deep**, starting from 75 raw source tables across eleven connectors — of which one, `fortnox`, accounts for 170 of the project's 359 models. Every block to the left of the figure has to be correct, on time, and unchanged in shape for the number to be right.
-
-:::warning[Never run `graphify update` after a dbt merge]
-A rebuild deletes all 359 models and their 1,288 edges, because there is no SQL parser to re-extract them from — and leaves a graph that still looks populated. This is not hypothetical: it happened in this checkout, leaving 104 of 688 lineage links. Re-running `--merge` restored all 688 and dropped isolated nodes from 353 to 94. Rebuild **before** the merge, never after.
-:::
-
-### See it move
-
-The interactive version renders the same data as live diagrams — a clickable map of the 248 code neighbourhoods, the two-step search with a draggable budget, and a lineage tracer that lights up every table feeding a chosen figure.
+Three lanes, and the arrow between the first two runs **both ways**. Meaning is derived from the warehouse — dbt's own `manifest.json` is the input to every ontology artifact — and the business layer is then generated back *from* that meaning. A conventional layer diagram flattens that into one direction and loses the only structurally interesting thing here.
 
 <iframe
-  src="/decision-path.html"
-  title="The Decision Path — how code-skills answers a prompt"
+  src="/code-skills-architecture.html"
+  title="code-skills system architecture — data flow, derivation pipeline, and layers"
   width="100%"
   height="900"
   loading="lazy"
 ></iframe>
 
 :::tip[If the frame is blank]
-The page is committed at `public/decision-path.html`, which serves at `/decision-path.html` under Astro's static-asset convention. If Blume publishes assets from a different root, adjust the `src` above — the file is entirely self-contained, with no external requests, so it works from any path that serves it.
+The page is committed at `public/code-skills-architecture.html` and serves at `/code-skills-architecture.html` under Astro's static-asset convention — the same arrangement as the decision path above. It is entirely self-contained, with no external requests, so it works from any path that serves it.
 :::
+
+Every figure on that page taken from a committed artifact is checked against that artifact by `tests/test_architecture_diagram.py`, so the picture cannot quietly stop being true. Figures that need a rebuild — the test count, the size of the code graph — are deliberately left unpinned and the page names the command that re-derives each: a gate that goes red because somebody added a test is a gate that gets switched off.
+
+The sticky PR comment `scripts/pr_decision_diagram.py` posts is a different view and no longer a projection of this stack: it draws the *impact subgraph* of the PR's own diff — the code-graph nodes it touches plus one hop either side — because that is the part a reviewer cannot read off the file list.
 
 ## Repository layout
 
@@ -430,5 +299,8 @@ python scripts/test_coverage_reporter.py --manifest target/manifest.json --layer
   </Card>
   <Card title="Integrations" icon="plug" href="/docs/INTEGRATIONS">
     RTK, Graphify, TOON, and AgentMemory — setup and operational commands.
+  </Card>
+  <Card title="The decision path" icon="route" href="/decision-path">
+    How a prompt becomes an action: the checkpoints, the token budget, and the lineage under one number.
   </Card>
 </CardGroup>

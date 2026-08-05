@@ -1,0 +1,36 @@
+name: logic_bi_dim_company
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_company
+columns:
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: OrgName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Your company(s) in Fortnox
+cached: false
+properties:
+  description: The conformed `dim_company`, one row per row of the union across its
+    suppliers (fortnox, seventime, tripletex, upsales, visma_eaccounting, visma_economic).
+    Carries the 2 column(s) whose meaning is recorded; 1 conformed column(s) are not
+    annotated yet and none is withheld.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_company
+  dbt_resource_type: model

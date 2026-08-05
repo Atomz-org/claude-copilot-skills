@@ -9,47 +9,12 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: account
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: amountInBaseCurrency
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: date
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: entryType
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: fromDate
   type: TEXT
   is_calculated: false
   not_null: false
   properties: {}
-- name: invoiceNumber
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: text
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: toDate
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: voucherNumber
   type: TEXT
   is_calculated: false
   not_null: false

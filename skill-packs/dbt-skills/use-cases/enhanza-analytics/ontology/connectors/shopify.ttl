@@ -22,6 +22,7 @@ shopify:connector a conn:CommerceConnector ;
 
 shopify:Article a owl:Class ;
     rdfs:subClassOf erp:Article ;
+    rdfs:label "Shopify Article"@en ;
     conn:conformsTo erp:Article ;
     conn:providedBy shopify:connector ;
     conn:dbtModel "shopify_erp_bi_dim_articles" ;
@@ -44,6 +45,7 @@ shopify:Article-resourceNumber-ArticleNumber a conn:Mapping ;
 
 shopify:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Shopify Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy shopify:connector ;
     conn:dbtModel "shopify_erp_bi_dim_customers" ;
@@ -61,6 +63,7 @@ shopify:Customer-partyNumber-CustomerNumber a conn:Mapping ;
 
 shopify:OrderRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Shopify Order Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy shopify:connector ;
     conn:dbtModel "shopify_erp_bi_fact_order_rows" ;
@@ -78,6 +81,7 @@ shopify:OrderRow-documentDate-OrderDate a conn:Mapping ;
 
 shopify:Order a owl:Class ;
     rdfs:subClassOf erp:Order ;
+    rdfs:label "Shopify Order"@en ;
     conn:conformsTo erp:Order ;
     conn:providedBy shopify:connector ;
     conn:dbtModel "shopify_erp_bi_fact_orders" ;

@@ -17,6 +17,14 @@ This replaced an earlier diagram that drew the same fixed gate chain on every
 PR — identical by construction, and therefore worthless as a diagram. The
 gates now render as a table, and the diagram carries PR-specific structure.
 
+A second section used to project the same changed paths onto the six-layer
+stack from `public/code-skills-architecture.html`. It is removed, by the rule
+above applied honestly: the stack is fixed, only the highlighting varied, and
+on most PRs it highlighted the same two layers — a diagram that restates the
+Files-changed tab in fewer words. It also cost a classification rule per naming
+convention in this repository, which is upkeep for a section nobody read. The
+page still documents the layer stack; nothing now claims to project it.
+
 GitHub renders ```mermaid fences natively in PR comments and in
 $GITHUB_STEP_SUMMARY, so the same document serves both. It also scales the
 rendered SVG down to the container width, which makes the widest rank — not

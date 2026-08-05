@@ -4,31 +4,6 @@ table_reference:
   schema: fortnox_api_canonical
   table: financial_years
 columns:
-- name: Amount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Currency
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: CurrencyRate
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Date
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: DocumentNumber
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: FromDate
   type: TEXT
   is_calculated: false
@@ -39,42 +14,12 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: OfferDate
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: OrderReference
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: OrgId
   type: TEXT
   is_calculated: false
   not_null: false
   properties: {}
-- name: SalaryCode
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: ToDate
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Total
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VAT
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VATIncluded
   type: TEXT
   is_calculated: false
   not_null: false

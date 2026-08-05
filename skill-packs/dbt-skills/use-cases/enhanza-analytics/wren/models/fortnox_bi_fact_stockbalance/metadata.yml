@@ -1,0 +1,34 @@
+name: fortnox_bi_fact_stockbalance
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_stockbalance
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: stockPointId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+cached: false
+properties:
+  description: Balance of article stock, valid at the date of latest sync. Articles
+    with 0 in stock will not appear in Fortnox API
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_stockbalance
+  dbt_resource_type: model

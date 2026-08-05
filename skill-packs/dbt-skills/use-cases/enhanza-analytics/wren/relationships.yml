@@ -23,14 +23,6 @@ relationships:
   condition: dim_prices.ArticleId = fortnox_bi_dim_articles.ArticleId
   properties:
     source: dbt_test
-- name: dim_supplier_invoice_files_to_fact_supplier_invoices
-  models:
-  - dim_supplier_invoice_files
-  - fact_supplier_invoices
-  join_type: ONE_TO_ONE
-  condition: dim_supplier_invoice_files.SupplierInvoiceId = fact_supplier_invoices.SupplierInvoiceId
-  properties:
-    source: dbt_test
 - name: dim_supplier_items_to_fortnox_bi_dim_articles
   models:
   - dim_supplier_items
@@ -45,22 +37,6 @@ relationships:
   - fortnox_bi_dim_suppliers
   join_type: ONE_TO_ONE
   condition: dim_supplier_items.SupplierId = fortnox_bi_dim_suppliers.SupplierId
-  properties:
-    source: dbt_test
-- name: fact_absence_transactions_to_fortnox_bi_dim_company
-  models:
-  - fact_absence_transactions
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_absence_transactions.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_absence_transactions_to_fortnox_bi_dim_employees
-  models:
-  - fact_absence_transactions
-  - fortnox_bi_dim_employees
-  join_type: MANY_TO_ONE
-  condition: fact_absence_transactions.EmployeeId = fortnox_bi_dim_employees.EmployeeId
   properties:
     source: dbt_test
 - name: fact_asset_rows_to_fortnox_bi_dim_company
@@ -93,46 +69,6 @@ relationships:
   - fortnox_bi_dim_company
   join_type: MANY_TO_ONE
   condition: fact_assets.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_attendance_transactions_to_fortnox_bi_dim_company
-  models:
-  - fact_attendance_transactions
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_attendance_transactions.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_attendance_transactions_to_fortnox_bi_dim_employees
-  models:
-  - fact_attendance_transactions
-  - fortnox_bi_dim_employees
-  join_type: MANY_TO_ONE
-  condition: fact_attendance_transactions.EmployeeId = fortnox_bi_dim_employees.EmployeeId
-  properties:
-    source: dbt_test
-- name: fact_budgets_to_fortnox_bi_dim_accounts
-  models:
-  - fact_budgets
-  - fortnox_bi_dim_accounts
-  join_type: MANY_TO_ONE
-  condition: fact_budgets.AccountId = fortnox_bi_dim_accounts.AccountId
-  properties:
-    source: dbt_test
-- name: fact_budgets_to_fortnox_bi_dim_company
-  models:
-  - fact_budgets
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_budgets.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_budgets_to_fortnox_bi_dim_financial_years
-  models:
-  - fact_budgets
-  - fortnox_bi_dim_financial_years
-  join_type: MANY_TO_ONE
-  condition: fact_budgets.FinancialYearId = fortnox_bi_dim_financial_years.FinancialYearId
   properties:
     source: dbt_test
 - name: fact_contract_rows_to_fortnox_bi_dim_articles
@@ -279,54 +215,6 @@ relationships:
   condition: fact_invoice_payments.CustomerId = fortnox_bi_dim_customers.CustomerId
   properties:
     source: dbt_test
-- name: fact_invoice_rows_to_fortnox_bi_dim_accounts
-  models:
-  - fact_invoice_rows
-  - fortnox_bi_dim_accounts
-  join_type: MANY_TO_ONE
-  condition: fact_invoice_rows.AccountId = fortnox_bi_dim_accounts.AccountId
-  properties:
-    source: dbt_test
-- name: fact_invoice_rows_to_fortnox_bi_dim_articles
-  models:
-  - fact_invoice_rows
-  - fortnox_bi_dim_articles
-  join_type: MANY_TO_ONE
-  condition: fact_invoice_rows.ArticleId = fortnox_bi_dim_articles.ArticleId
-  properties:
-    source: dbt_test
-- name: fact_invoice_rows_to_fortnox_bi_dim_company
-  models:
-  - fact_invoice_rows
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_invoice_rows.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_invoice_rows_to_fortnox_bi_dim_customers
-  models:
-  - fact_invoice_rows
-  - fortnox_bi_dim_customers
-  join_type: MANY_TO_ONE
-  condition: fact_invoice_rows.CustomerId = fortnox_bi_dim_customers.CustomerId
-  properties:
-    source: dbt_test
-- name: fact_invoice_rows_to_fortnox_bi_dim_financial_years
-  models:
-  - fact_invoice_rows
-  - fortnox_bi_dim_financial_years
-  join_type: MANY_TO_ONE
-  condition: fact_invoice_rows.FinancialYearId = fortnox_bi_dim_financial_years.FinancialYearId
-  properties:
-    source: dbt_test
-- name: fact_invoice_rows_to_fortnox_bi_fact_invoices
-  models:
-  - fact_invoice_rows
-  - fortnox_bi_fact_invoices
-  join_type: MANY_TO_ONE
-  condition: fact_invoice_rows.InvoiceId = fortnox_bi_fact_invoices.InvoiceId
-  properties:
-    source: dbt_test
 - name: fact_locked_period_to_fortnox_bi_dim_company
   models:
   - fact_locked_period
@@ -367,22 +255,6 @@ relationships:
   condition: fact_offer_rows.CustomerId = fortnox_bi_dim_customers.CustomerId
   properties:
     source: dbt_test
-- name: fact_offers_to_fortnox_bi_dim_company
-  models:
-  - fact_offers
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_offers.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_offers_to_fortnox_bi_dim_customers
-  models:
-  - fact_offers
-  - fortnox_bi_dim_customers
-  join_type: MANY_TO_ONE
-  condition: fact_offers.CustomerId = fortnox_bi_dim_customers.CustomerId
-  properties:
-    source: dbt_test
 - name: fact_production_orders_to_dim_stockpoints
   models:
   - fact_production_orders
@@ -407,140 +279,12 @@ relationships:
   condition: fact_production_orders.OrgId = fortnox_bi_dim_company.OrgId
   properties:
     source: dbt_test
-- name: fact_salary_transactions_to_dim_expenses
-  models:
-  - fact_salary_transactions
-  - dim_expenses
-  join_type: MANY_TO_ONE
-  condition: fact_salary_transactions.ExpenseId = dim_expenses.ExpenseId
-  properties:
-    source: dbt_test
-- name: fact_salary_transactions_to_fortnox_bi_dim_accounts
-  models:
-  - fact_salary_transactions
-  - fortnox_bi_dim_accounts
-  join_type: MANY_TO_ONE
-  condition: fact_salary_transactions.AccountId = fortnox_bi_dim_accounts.AccountId
-  properties:
-    source: dbt_test
-- name: fact_salary_transactions_to_fortnox_bi_dim_company
-  models:
-  - fact_salary_transactions
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_salary_transactions.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_salary_transactions_to_fortnox_bi_dim_employees
-  models:
-  - fact_salary_transactions
-  - fortnox_bi_dim_employees
-  join_type: MANY_TO_ONE
-  condition: fact_salary_transactions.EmployeeId = fortnox_bi_dim_employees.EmployeeId
-  properties:
-    source: dbt_test
-- name: fact_stockbalance_to_dim_stockpoints
-  models:
-  - fact_stockbalance
-  - dim_stockpoints
-  join_type: MANY_TO_ONE
-  condition: fact_stockbalance.stockPointId = dim_stockpoints.stockPointId
-  properties:
-    source: dbt_test
-- name: fact_stockbalance_to_fortnox_bi_dim_articles
-  models:
-  - fact_stockbalance
-  - fortnox_bi_dim_articles
-  join_type: MANY_TO_ONE
-  condition: fact_stockbalance.ArticleId = fortnox_bi_dim_articles.ArticleId
-  properties:
-    source: dbt_test
-- name: fact_stockbalance_to_fortnox_bi_dim_company
-  models:
-  - fact_stockbalance
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_stockbalance.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_stocktakings_to_dim_stockpoints
-  models:
-  - fact_stocktakings
-  - dim_stockpoints
-  join_type: MANY_TO_ONE
-  condition: fact_stocktakings.StockPointId = dim_stockpoints.StockPointId
-  properties:
-    source: dbt_test
-- name: fact_stocktakings_to_fortnox_bi_dim_articles
-  models:
-  - fact_stocktakings
-  - fortnox_bi_dim_articles
-  join_type: MANY_TO_ONE
-  condition: fact_stocktakings.ArticleId = fortnox_bi_dim_articles.ArticleId
-  properties:
-    source: dbt_test
-- name: fact_stocktakings_to_fortnox_bi_dim_company
-  models:
-  - fact_stocktakings
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_stocktakings.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
 - name: fact_supplier_invoice_accruals_to_fortnox_bi_dim_company
   models:
   - fact_supplier_invoice_accruals
   - fortnox_bi_dim_company
   join_type: MANY_TO_ONE
   condition: fact_supplier_invoice_accruals.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_supplier_invoice_rows_to_fortnox_bi_dim_accounts
-  models:
-  - fact_supplier_invoice_rows
-  - fortnox_bi_dim_accounts
-  join_type: MANY_TO_ONE
-  condition: fact_supplier_invoice_rows.AccountId = fortnox_bi_dim_accounts.AccountId
-  properties:
-    source: dbt_test
-- name: fact_supplier_invoice_rows_to_fortnox_bi_dim_articles
-  models:
-  - fact_supplier_invoice_rows
-  - fortnox_bi_dim_articles
-  join_type: MANY_TO_ONE
-  condition: fact_supplier_invoice_rows.ArticleId = fortnox_bi_dim_articles.ArticleId
-  properties:
-    source: dbt_test
-- name: fact_supplier_invoice_rows_to_fortnox_bi_dim_company
-  models:
-  - fact_supplier_invoice_rows
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_supplier_invoice_rows.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_supplier_invoice_rows_to_fortnox_bi_dim_suppliers
-  models:
-  - fact_supplier_invoice_rows
-  - fortnox_bi_dim_suppliers
-  join_type: MANY_TO_ONE
-  condition: fact_supplier_invoice_rows.SupplierId = fortnox_bi_dim_suppliers.SupplierId
-  properties:
-    source: dbt_test
-- name: fact_supplier_invoices_to_fortnox_bi_dim_company
-  models:
-  - fact_supplier_invoices
-  - fortnox_bi_dim_company
-  join_type: MANY_TO_ONE
-  condition: fact_supplier_invoices.OrgId = fortnox_bi_dim_company.OrgId
-  properties:
-    source: dbt_test
-- name: fact_supplier_invoices_to_fortnox_bi_dim_suppliers
-  models:
-  - fact_supplier_invoices
-  - fortnox_bi_dim_suppliers
-  join_type: MANY_TO_ONE
-  condition: fact_supplier_invoices.SupplierId = fortnox_bi_dim_suppliers.SupplierId
   properties:
     source: dbt_test
 - name: fortnox_bi_dim_accounts_to_fortnox_bi_dim_financial_years
@@ -567,6 +311,118 @@ relationships:
   condition: fortnox_bi_dim_financial_years.OrgId = fortnox_bi_dim_company.OrgId
   properties:
     source: dbt_test
+- name: fortnox_bi_dim_supplier_invoice_files_to_fortnox_bi_fact_supplier_invoices
+  models:
+  - fortnox_bi_dim_supplier_invoice_files
+  - fortnox_bi_fact_supplier_invoices
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_dim_supplier_invoice_files.SupplierInvoiceId = fortnox_bi_fact_supplier_invoices.SupplierInvoiceId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_absence_transactions_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_absence_transactions
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_absence_transactions.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_absence_transactions_to_fortnox_bi_dim_employees
+  models:
+  - fortnox_bi_fact_absence_transactions
+  - fortnox_bi_dim_employees
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_absence_transactions.EmployeeId = fortnox_bi_dim_employees.EmployeeId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_attendance_transactions_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_attendance_transactions
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_attendance_transactions.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_attendance_transactions_to_fortnox_bi_dim_employees
+  models:
+  - fortnox_bi_fact_attendance_transactions
+  - fortnox_bi_dim_employees
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_attendance_transactions.EmployeeId = fortnox_bi_dim_employees.EmployeeId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_budgets_to_fortnox_bi_dim_accounts
+  models:
+  - fortnox_bi_fact_budgets
+  - fortnox_bi_dim_accounts
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_budgets.AccountId = fortnox_bi_dim_accounts.AccountId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_budgets_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_budgets
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_budgets.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_budgets_to_fortnox_bi_dim_financial_years
+  models:
+  - fortnox_bi_fact_budgets
+  - fortnox_bi_dim_financial_years
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_budgets.FinancialYearId = fortnox_bi_dim_financial_years.FinancialYearId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_invoice_rows_to_fortnox_bi_dim_accounts
+  models:
+  - fortnox_bi_fact_invoice_rows
+  - fortnox_bi_dim_accounts
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_invoice_rows.AccountId = fortnox_bi_dim_accounts.AccountId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_invoice_rows_to_fortnox_bi_dim_articles
+  models:
+  - fortnox_bi_fact_invoice_rows
+  - fortnox_bi_dim_articles
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_invoice_rows.ArticleId = fortnox_bi_dim_articles.ArticleId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_invoice_rows_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_invoice_rows
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_invoice_rows.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_invoice_rows_to_fortnox_bi_dim_customers
+  models:
+  - fortnox_bi_fact_invoice_rows
+  - fortnox_bi_dim_customers
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_invoice_rows.CustomerId = fortnox_bi_dim_customers.CustomerId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_invoice_rows_to_fortnox_bi_dim_financial_years
+  models:
+  - fortnox_bi_fact_invoice_rows
+  - fortnox_bi_dim_financial_years
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_invoice_rows.FinancialYearId = fortnox_bi_dim_financial_years.FinancialYearId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_invoice_rows_to_fortnox_bi_fact_invoices
+  models:
+  - fortnox_bi_fact_invoice_rows
+  - fortnox_bi_fact_invoices
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_invoice_rows.InvoiceId = fortnox_bi_fact_invoices.InvoiceId
+  properties:
+    source: dbt_test
 - name: fortnox_bi_fact_invoices_to_fortnox_bi_dim_company
   models:
   - fortnox_bi_fact_invoices
@@ -589,6 +445,22 @@ relationships:
   - fortnox_bi_dim_financial_years
   join_type: MANY_TO_ONE
   condition: fortnox_bi_fact_invoices.FinancialYearId = fortnox_bi_dim_financial_years.FinancialYearId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_offers_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_offers
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_offers.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_offers_to_fortnox_bi_dim_customers
+  models:
+  - fortnox_bi_fact_offers
+  - fortnox_bi_dim_customers
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_offers.CustomerId = fortnox_bi_dim_customers.CustomerId
   properties:
     source: dbt_test
 - name: fortnox_bi_fact_order_rows_to_fortnox_bi_dim_accounts
@@ -701,6 +573,134 @@ relationships:
   - fortnox_bi_dim_financial_years
   join_type: MANY_TO_ONE
   condition: fortnox_bi_fact_rolling_sum.FinancialYearId = fortnox_bi_dim_financial_years.FinancialYearId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_salary_transactions_to_dim_expenses
+  models:
+  - fortnox_bi_fact_salary_transactions
+  - dim_expenses
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_salary_transactions.ExpenseId = dim_expenses.ExpenseId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_salary_transactions_to_fortnox_bi_dim_accounts
+  models:
+  - fortnox_bi_fact_salary_transactions
+  - fortnox_bi_dim_accounts
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_salary_transactions.AccountId = fortnox_bi_dim_accounts.AccountId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_salary_transactions_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_salary_transactions
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_salary_transactions.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_salary_transactions_to_fortnox_bi_dim_employees
+  models:
+  - fortnox_bi_fact_salary_transactions
+  - fortnox_bi_dim_employees
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_salary_transactions.EmployeeId = fortnox_bi_dim_employees.EmployeeId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_stockbalance_to_dim_stockpoints
+  models:
+  - fortnox_bi_fact_stockbalance
+  - dim_stockpoints
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_stockbalance.stockPointId = dim_stockpoints.stockPointId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_stockbalance_to_fortnox_bi_dim_articles
+  models:
+  - fortnox_bi_fact_stockbalance
+  - fortnox_bi_dim_articles
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_stockbalance.ArticleId = fortnox_bi_dim_articles.ArticleId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_stockbalance_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_stockbalance
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_stockbalance.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_stocktakings_to_dim_stockpoints
+  models:
+  - fortnox_bi_fact_stocktakings
+  - dim_stockpoints
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_stocktakings.StockPointId = dim_stockpoints.StockPointId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_stocktakings_to_fortnox_bi_dim_articles
+  models:
+  - fortnox_bi_fact_stocktakings
+  - fortnox_bi_dim_articles
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_stocktakings.ArticleId = fortnox_bi_dim_articles.ArticleId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_stocktakings_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_stocktakings
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_stocktakings.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_supplier_invoice_rows_to_fortnox_bi_dim_accounts
+  models:
+  - fortnox_bi_fact_supplier_invoice_rows
+  - fortnox_bi_dim_accounts
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_supplier_invoice_rows.AccountId = fortnox_bi_dim_accounts.AccountId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_supplier_invoice_rows_to_fortnox_bi_dim_articles
+  models:
+  - fortnox_bi_fact_supplier_invoice_rows
+  - fortnox_bi_dim_articles
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_supplier_invoice_rows.ArticleId = fortnox_bi_dim_articles.ArticleId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_supplier_invoice_rows_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_supplier_invoice_rows
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_supplier_invoice_rows.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_supplier_invoice_rows_to_fortnox_bi_dim_suppliers
+  models:
+  - fortnox_bi_fact_supplier_invoice_rows
+  - fortnox_bi_dim_suppliers
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_supplier_invoice_rows.SupplierId = fortnox_bi_dim_suppliers.SupplierId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_supplier_invoices_to_fortnox_bi_dim_company
+  models:
+  - fortnox_bi_fact_supplier_invoices
+  - fortnox_bi_dim_company
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_supplier_invoices.OrgId = fortnox_bi_dim_company.OrgId
+  properties:
+    source: dbt_test
+- name: fortnox_bi_fact_supplier_invoices_to_fortnox_bi_dim_suppliers
+  models:
+  - fortnox_bi_fact_supplier_invoices
+  - fortnox_bi_dim_suppliers
+  join_type: MANY_TO_ONE
+  condition: fortnox_bi_fact_supplier_invoices.SupplierId = fortnox_bi_dim_suppliers.SupplierId
   properties:
     source: dbt_test
 - name: fortnox_bi_fact_vouchers_to_fortnox_bi_dim_accounts

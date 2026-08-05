@@ -1,0 +1,74 @@
+name: fortnox_bi_fact_offers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_offers
+columns:
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Original currency used in Fortnox
+- name: CurrencyRate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Exchange rate from Fortnox, used to convert all values to SEK
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: Labels
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Invoice label, only one label per document is supported. For more
+      details, use fortnox_bi.dim_labels
+- name: OrderReference
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 0 if no order is created for this offer yet
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: RecipientEmail
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Additional email details, EmailAddressTo
+- name: RecipientPhone
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Phone1 field in Fortnox
+cached: false
+properties:
+  description: Offer detailed to individual documents, all values in SEK, only not
+    cancelled. See Article-level info in fortnox_bi.fact_offer_rows
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_offers
+  dbt_resource_type: model

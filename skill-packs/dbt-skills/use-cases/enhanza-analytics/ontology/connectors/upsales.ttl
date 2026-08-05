@@ -23,6 +23,7 @@ upsales:connector a conn:CRMConnector ;
 
 upsales:Article a owl:Class ;
     rdfs:subClassOf erp:Article ;
+    rdfs:label "Upsales Article"@en ;
     conn:conformsTo erp:Article ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_erp_bi_dim_articles" ;
@@ -46,6 +47,7 @@ upsales:Article-resourceNumber-id a conn:Mapping ;
 
 upsales:Company a owl:Class ;
     rdfs:subClassOf erp:Organisation ;
+    rdfs:label "Upsales Company"@en ;
     conn:conformsTo erp:Organisation ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_erp_bi_dim_company" ;
@@ -64,6 +66,7 @@ upsales:Company-partyName-client a conn:Mapping ;
 
 upsales:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Upsales Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_erp_bi_dim_customers" ;
@@ -72,6 +75,7 @@ upsales:Customer a owl:Class ;
 
 upsales:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "Upsales Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_erp_bi_dim_financial_years" ;
@@ -85,6 +89,7 @@ upsales:FinancialYear-orgId-OrgId a conn:Mapping ;
 
 upsales:Activitie a owl:Class ;
     rdfs:subClassOf crm:Activity ;
+    rdfs:label "Upsales Activitie"@en ;
     conn:conformsTo crm:Activity ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_bi_fact_activities_staging" ;
@@ -98,6 +103,7 @@ upsales:Activitie-orgId-OrgId a conn:Mapping ;
 
 upsales:Appointment a owl:Class ;
     rdfs:subClassOf crm:Appointment ;
+    rdfs:label "Upsales Appointment"@en ;
     conn:conformsTo crm:Appointment ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_bi_fact_appointments_staging" ;
@@ -111,6 +117,7 @@ upsales:Appointment-orgId-OrgId a conn:Mapping ;
 
 upsales:Opportunitie a owl:Class ;
     rdfs:subClassOf crm:Opportunity ;
+    rdfs:label "Upsales Opportunitie"@en ;
     conn:conformsTo crm:Opportunity ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_bi_fact_opportunities_staging" ;
@@ -129,6 +136,7 @@ upsales:Opportunitie-orgId-OrgId a conn:Mapping ;
 
 upsales:OpportunityRow a owl:Class ;
     rdfs:subClassOf crm:OpportunityLine ;
+    rdfs:label "Upsales Opportunity Row"@en ;
     conn:conformsTo crm:OpportunityLine ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_bi_fact_opportunity_rows_staging" ;
@@ -147,6 +155,7 @@ upsales:OpportunityRow-orgId-OrgId a conn:Mapping ;
 
 upsales:OrderRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Upsales Order Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_erp_bi_fact_order_rows" ;
@@ -155,6 +164,7 @@ upsales:OrderRow a owl:Class ;
 
 upsales:Order a owl:Class ;
     rdfs:subClassOf erp:Order ;
+    rdfs:label "Upsales Order"@en ;
     conn:conformsTo erp:Order ;
     conn:providedBy upsales:connector ;
     conn:dbtModel "upsales_erp_bi_fact_orders" ;

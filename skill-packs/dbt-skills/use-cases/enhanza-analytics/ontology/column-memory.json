@@ -32,14 +32,14 @@
     "sqlglot": "30.14.0",
     "dialect": "bigquery",
     "freshness": {
-      "digest": "d93efa8942c2a3b5e7aceaf84cc654f391cb6adb6dad4b29ed207775a2e36572",
-      "models": 359,
-      "fresh": 359,
+      "digest": "fbd94b239de27b7bdf9abd3474730aa6eadaa0a13699df43b928fdfedbc8b5f3",
+      "models": 378,
+      "fresh": 378,
       "changed": 0,
       "missing": 0,
       "untracked_sql": 0
     },
-    "models_parsed": 225,
+    "models_parsed": 244,
     "models_macro_only": 134,
     "models_parse_failed": 0,
     "models_no_parser": 0,

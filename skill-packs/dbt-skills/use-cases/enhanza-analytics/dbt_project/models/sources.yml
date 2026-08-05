@@ -28,12 +28,8 @@ sources:
         # from the staging SQL that reads them, so this is a statement of what we depend on and
         # not an inventory of what the API returns. Removing one upstream is a breaking change.
         columns:
-          - name: Active
-          - name: CostCenterSettings
           - name: Description
           - name: Number
-          - name: ProjectSettings
-          - name: Year
       - name: articles
         # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
         # from the staging SQL that reads them, so this is a statement of what we depend on and
@@ -124,98 +120,31 @@ sources:
         # from the staging SQL that reads them, so this is a statement of what we depend on and
         # not an inventory of what the API returns. Removing one upstream is a breaking change.
         columns:
-          - name: AdministrationFee
-          - name: AdministrationFeeVAT
-          - name: Balance
-          - name: BasisTaxReduction
-          - name: Booked
-          - name: Cancelled
           - name: ContributionPercent
           - name: ContributionValue
-          - name: Currency
-          - name: CurrencyRate
-          - name: CurrencyUnit
           - name: DocumentNumber
-          - name: Freight
-          - name: FreightVAT
-          - name: Gross
           - name: HouseWork
-          - name: InvoiceType
-          - name: Net
-          - name: NotCompleted
-          - name: Reminders
-          - name: RoundOff
-          - name: Sent
-          - name: TaxReduction
-          - name: TaxReductionType
           - name: Total
-          - name: TotalToPay
-          - name: TotalVAT
-          - name: VATIncluded
-          - name: VoucherNumber
-          - name: VoucherSeries
-          - name: VoucherYear
-          - name: WarehouseReady
       - name: v2_offers
         # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
         # from the staging SQL that reads them, so this is a statement of what we depend on and
         # not an inventory of what the API returns. Removing one upstream is a breaking change.
         columns:
-          - name: AdministrationFee
-          - name: AdministrationFeeVAT
-          - name: BasisTaxReduction
-          - name: Cancelled
           - name: ContributionPercent
           - name: ContributionValue
-          - name: Currency
-          - name: CurrencyRate
-          - name: CurrencyUnit
           - name: DocumentNumber
-          - name: Freight
-          - name: FreightVAT
-          - name: Gross
           - name: HouseWork
-          - name: Net
-          - name: NotCompleted
-          - name: RoundOff
-          - name: Sent
-          - name: TaxReduction
-          - name: TaxReductionType
           - name: Total
-          - name: TotalToPay
-          - name: TotalVAT
-          - name: VATIncluded
       - name: v2_orders
         # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
         # from the staging SQL that reads them, so this is a statement of what we depend on and
         # not an inventory of what the API returns. Removing one upstream is a breaking change.
         columns:
-          - name: AdministrationFee
-          - name: AdministrationFeeVAT
-          - name: BasisTaxReduction
-          - name: Cancelled
           - name: ContributionPercent
           - name: ContributionValue
-          - name: Currency
-          - name: CurrencyRate
-          - name: CurrencyUnit
           - name: DocumentNumber
-          - name: Freight
-          - name: FreightVAT
-          - name: Gross
           - name: HouseWork
-          - name: Net
-          - name: NotCompleted
-          - name: OrderType
-          - name: RoundOff
-          - name: Sent
-          - name: TaxReduction
-          - name: TaxReductionType
           - name: Total
-          - name: TotalToPay
-          - name: TotalVAT
-          - name: VATIncluded
-          - name: WarehouseReady
       - name: voucher_series
       - name: vouchers
         # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
@@ -223,9 +152,6 @@ sources:
         # not an inventory of what the API returns. Removing one upstream is a breaking change.
         columns:
           - name: ReferenceType
-          - name: VoucherNumber
-          - name: VoucherSeries
-          - name: Year
   
   - name: favrit_api_demo
     description: 'FAVRIT DEMO raw data'

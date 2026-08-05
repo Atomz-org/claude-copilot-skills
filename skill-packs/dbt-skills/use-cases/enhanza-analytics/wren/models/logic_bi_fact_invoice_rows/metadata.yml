@@ -1,0 +1,85 @@
+name: logic_bi_fact_invoice_rows
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_invoice_rows
+columns:
+- name: AccountNumber
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: BAS account number, consists of four digits, e.g. 1234
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: ArticleNumber
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: The article number indicated on the line where applicable
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: ContributionValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Sold value minus estimated price of the item. The item row value
+      is used
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: InvoiceDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date the document is issued
+- name: InvoiceNo
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Document number
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: InvoiceType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: '''Sales'' for Customer invoices, ''Supplier'' for Supplier invoices'
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: PriceAfterDiscount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: NET price in SEK after all discounts applied
+- name: SalesValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The total value of the selected document type line in SEK after discounts
+cached: false
+properties:
+  description: The conformed `fact_invoice_rows`, one row per row of the union across
+    its suppliers (fortnox, seventime, visma_eaccounting, visma_economic). Carries
+    the 9 column(s) whose meaning is recorded; 13 conformed column(s) are not annotated
+    yet and none is withheld.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_invoice_rows
+  dbt_resource_type: model
