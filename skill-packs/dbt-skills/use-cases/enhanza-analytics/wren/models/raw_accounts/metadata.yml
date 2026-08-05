@@ -4,32 +4,12 @@ table_reference:
   schema: fortnox_api_canonical
   table: accounts
 columns:
-- name: Active
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: CostCenterSettings
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: Description
   type: TEXT
   is_calculated: false
   not_null: false
   properties: {}
 - name: Number
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: ProjectSettings
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Year
   type: TEXT
   is_calculated: false
   not_null: false

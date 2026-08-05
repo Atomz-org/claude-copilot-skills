@@ -4,11 +4,6 @@ table_reference:
   schema: fortnox_api_canonical
   table: customers
 columns:
-- name: Active
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: Address1
   type: TEXT
   is_calculated: false

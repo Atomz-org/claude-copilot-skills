@@ -194,6 +194,10 @@ def concept_candidates(table: str, vocabulary: Dict[str, str]) -> List[Tuple[str
     return out
 
 
+# Below this many column-declaring tables, prevalence says nothing — see `propose`.
+MIN_TABLES_FOR_PARTITION = 10
+
+
 def propose(
     tables: List[RawTable], vocabulary: Dict[str, str], existing: Dict[str, Any]
 ) -> Dict[str, Any]:
@@ -241,6 +245,23 @@ def propose(
     # proposed for a concept. One table cannot evidence a *cross-source* key, so a
     # single-table concept gets candidates by shape alone and says so.
     by_key = {t.key: t for t in tables}
+
+    # A key-shaped column on most tables in the project is the partition, not the entity.
+    # `OrgId` is on 81 of 112 declaring tables here and the next-most-common is on 20, so
+    # the separation is not a judgement call. It stays a candidate — it is genuinely part of
+    # the grain, "one row per customer per tenant" — but it ranks last, because on its own it
+    # identifies the tenant and names no entity. Same reasoning that excludes a bare `Id`.
+    declaring = [t for t in tables if t.columns]
+    prevalence: Dict[str, int] = {}
+    for raw in declaring:
+        for col in set(raw.columns):
+            prevalence[col] = prevalence.get(col, 0) + 1
+    # A floor before "on most tables" means anything: on two tables a column is on 100% of
+    # them and that is not evidence of anything. Ten is where the real corpus separates
+    # cleanly (81 of 112 versus a next-most-common 20) and a fixture-sized one cannot.
+    partition_at = len(declaring) / 2 if len(declaring) >= MIN_TABLES_FOR_PARTITION else 0
+    partition_cols = {c for c, n in prevalence.items() if partition_at and n > partition_at}
+
     keys: Dict[str, List[Dict[str, Any]]] = {}
     for concept, rows in proposed.items():
         counts: Dict[str, int] = {}
@@ -254,14 +275,25 @@ def propose(
                 "declared_by": n,
                 "of_tables": len(rows),
                 "evidence": (
+                    f"on {prevalence.get(col, 0)} of {len(declaring)} tables project-wide — "
+                    f"a partition key, not an entity key"
+                    if col in partition_cols else
                     f"key-shaped, declared by {n} of {len(rows)} proposed tables"
                     if n > 1 else "key-shaped in the only proposed table — unconfirmed"
                 ),
             }
-            for col, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+            for col, n in sorted(
+                counts.items(),
+                key=lambda kv: (kv[0] in partition_cols, -kv[1], kv[0]),
+            )
         ]
         if candidates:
-            keys[concept] = candidates[:5]
+            # The cap applies to entity candidates. A demoted partition key survives it,
+            # because the grain sentence needs it — "one row per customer **per tenant**" —
+            # and a reviewer who never sees the column cannot write that.
+            entity = [c for c in candidates if c["column"] not in partition_cols]
+            partition = [c for c in candidates if c["column"] in partition_cols]
+            keys[concept] = entity[:5] + partition[:1]
 
     return {
         "proposed": {k: proposed[k] for k in sorted(proposed)},

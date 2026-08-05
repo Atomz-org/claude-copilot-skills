@@ -66,6 +66,16 @@ Read `ontology/taxonomy.yml`. Every entry is a **name match**, nothing more. For
 - **Which SCD type?** Rule 12: chosen, never defaulted. Leave it absent if genuinely
   undecided — absent is a state worth seeing.
 
+A language model can draft the grains and keys under review — same prepare/apply/promote
+loop, same refusals, and a natural key naming a column no candidate table declares is
+dropped rather than promoted:
+
+```bash
+python3 scripts/lm_propose.py --use-case <slug> --target taxonomy --prepare --out batch.json
+python3 scripts/lm_propose.py --use-case <slug> --target taxonomy --apply answers.json
+python3 scripts/lm_propose.py --use-case <slug> --target taxonomy --review   # then --promote
+```
+
 Bring the unmatched tables to the user rather than guessing. Each is either a concept the
 vocabulary lacks (add it to `ontology/ontology.yml`'s `concept_classes`) or genuinely out
 of scope, and only someone who knows the domain can say which.

@@ -19,37 +19,12 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: Active
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: CostCenterSettings
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: MainAccount
   type: TEXT
   is_calculated: false
   not_null: false
   properties: {}
-- name: Number
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: ProjectSettings
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: SubAccount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Year
   type: TEXT
   is_calculated: false
   not_null: false

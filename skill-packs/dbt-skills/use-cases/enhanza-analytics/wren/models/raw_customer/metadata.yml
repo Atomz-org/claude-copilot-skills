@@ -19,11 +19,6 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: discountPercentage
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: id
   type: TEXT
   is_calculated: false

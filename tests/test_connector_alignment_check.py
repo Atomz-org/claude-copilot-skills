@@ -723,3 +723,58 @@ def test_source_columns_check_degrades_without_sqlglot(monkeypatch):
     monkeypatch.setattr(lineage_mod, "sqlglot", None)
 
     assert checker.check_source_columns(_real_manifest()) == []
+
+
+def _manifest_reading(raw_code: str) -> dict:
+    """A manifest with one contracted source pair and one model reading them."""
+    return {
+        "nodes": {
+            "model.p.stg": {
+                "resource_type": "model", "name": "stg", "package_name": "p",
+                "tags": ["fortnox"], "raw_code": raw_code,
+                "depends_on": {"nodes": ["source.p.fortnox_api.accounts",
+                                         "source.p.fortnox_api.vouchers"]},
+            }
+        },
+        "sources": {
+            "source.p.fortnox_api.accounts": {
+                "resource_type": "source", "source_name": "fortnox_api", "name": "accounts",
+                "package_name": "p", "columns": {"Number": {"name": "Number"}},
+            },
+            "source.p.fortnox_api.vouchers": {
+                "resource_type": "source", "source_name": "fortnox_api", "name": "vouchers",
+                "package_name": "p", "columns": {"Number": {"name": "Number"}},
+            },
+        },
+        "macros": {}, "metrics": {}, "exposures": {}, "semantic_models": {},
+        "parent_map": {}, "child_map": {},
+    }
+
+
+def test_a_qualified_read_outside_the_contract_is_still_an_error():
+    """The gate has to keep working, or the ambiguity exemption is just a way to switch it
+    off. `a.Ghost` names its table, so nothing excuses it."""
+    if _lineage.sqlglot is None:
+        pytest.skip("needs sqlglot")
+    sql = ("select a.Ghost from {{ source('fortnox_api','accounts') }} a "
+           "join {{ source('fortnox_api','vouchers') }} v on v.Number = a.Number")
+
+    findings = checker.check_source_columns(_manifest_reading(sql))
+
+    assert [f.check for f in findings] == ["undeclared-source-column"]
+    assert "Ghost" in findings[0].message
+
+
+def test_an_ambiguous_read_neither_writes_a_contract_nor_fails_one():
+    """The emitter refuses to declare a column it cannot attribute; this gate must refuse to
+    blame a table for one, or the same weak binding fails a contract it was never allowed to
+    write. `Amount` is unqualified with two tables in scope, so it belongs to exactly one of
+    them and the SQL does not say which."""
+    if _lineage.sqlglot is None:
+        pytest.skip("needs sqlglot")
+    sql = ("select Amount from {{ source('fortnox_api','accounts') }} a "
+           "join {{ source('fortnox_api','vouchers') }} v on v.Number = a.Number")
+
+    findings = checker.check_source_columns(_manifest_reading(sql))
+
+    assert findings == [], [f.message for f in findings]

@@ -488,6 +488,13 @@ def check_source_columns(
             continue
         if edge.upstream_column in ("*", "(macro)"):
             continue
+        # Symmetric with the emitter: an unqualified reference with several tables in scope
+        # binds to each of them, and exactly one is right. That binding is too weak to write
+        # a contract from, so it is also too weak to fail one with — blaming `accounts` for
+        # a bare `Amount` that five tables could own is the same guess in the other
+        # direction. Both sides read `ambiguous` off the same edge.
+        if edge.ambiguous:
+            continue
         entry = declared.get(edge.upstream_model)
         if entry is None:
             continue

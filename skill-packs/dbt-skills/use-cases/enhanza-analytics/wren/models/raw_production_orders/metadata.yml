@@ -4,37 +4,12 @@ table_reference:
   schema: fortnox_api_canonical
   table: production_orders
 columns:
-- name: EndDate
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: OrgId
   type: TEXT
   is_calculated: false
   not_null: false
   properties: {}
 - name: id
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: note
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: productionDate
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: productionState
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: startDate
   type: TEXT
   is_calculated: false
   not_null: false
