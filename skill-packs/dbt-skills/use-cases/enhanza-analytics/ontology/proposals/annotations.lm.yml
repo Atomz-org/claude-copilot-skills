@@ -1,0 +1,287 @@
+# annotations proposed by a language model. NOT AN ARTIFACT — a staging file.
+#
+# Written by `lm_propose.py --use-case enhanza-analytics --target annotations --apply`. Every
+# entry carries the confidence it was given and the evidence it cited. Nothing here
+# reaches a committed artifact until it is marked `reviewed: true` and promoted:
+#
+#     python3 scripts/lm_propose.py --use-case enhanza-analytics --target annotations --review
+#     python3 scripts/lm_propose.py --use-case enhanza-analytics --target annotations --promote
+#
+# A generated field is a proposal with a provenance, not a fact. Read the evidence
+# before marking one reviewed — that reading is the whole safeguard.
+
+version: 1
+source: lm
+
+columns:
+  ChargeHours:
+    reviewed: false
+    confidence: high
+    # evidence: lineage: seventime_api__timelogs.invoiceableTime derived — the invoiceable portion
+    # evidence: concept_siblings WorkedHours and nonInvoiceable on the same registration
+    # evidence: the deriver proposed unit currency from the name, which the lineage contradicts
+    role: measure
+    additivity: additive
+    unit: duration
+    pii: none
+    definition: "Hours on the time registration that are chargeable to the customer — the invoiceable part of WorkedHours."
+
+  City:
+    reviewed: false
+    confidence: medium
+    # evidence: harvested_definition: "Customer and Supplier's address, city"
+    # evidence: concept_siblings include Address, Address1, Address2, Country, ZipCode-style fields, so this is one component of a postal address
+    # evidence: lineage: seventime_api__companyinformation.city renamed
+    role: dimension
+    unit: none
+    pii: quasi
+    definition: "The city of the customer's or supplier's postal address, conformed from each connector's own address block."
+
+  ContactPerson:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: tripletex_api__project.contact renamed
+    # evidence: lineage: fortnox_api__projects.ContactPerson direct
+    # evidence: concept dim_projects, siblings ProjectLeader and Description
+    role: text
+    unit: none
+    pii: quasi
+    definition: "Name of the customer-side contact person for the project."
+
+  ContractReference:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: fortnox_api__v2_invoices.ContractReference direct
+    # evidence: concepts fact_invoices and fact_invoice_rows
+    # evidence: cast_types: int and string — the connectors disagree on its type
+    role: identifier
+    unit: none
+    pii: none
+    definition: "Reference to the contract an invoice was raised from, present only where the invoice originated in one."
+
+  DeliveredQuantity:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: favrit_api__orderline.delivered_quantity derived
+    # evidence: lineage: shopify_api__order_lines.fulfillable_quantity derived — a different definition of the same conformed column
+    # evidence: cast_types: float64 on a line-grain concept, fact_invoice_rows and fact_order_rows
+    role: measure
+    additivity: additive
+    unit: quantity
+    pii: none
+    definition: "Quantity of the line actually delivered rather than ordered; on Shopify it comes from the line's fulfillable quantity, which is not the same event."
+
+  Discount:
+    reviewed: false
+    confidence: medium
+    # evidence: concept_siblings include DiscountType, whose own description is "PERCENT or AMOUNT"
+    # evidence: lineage: favrit_api__orderline.discount_amount derived
+    # evidence: cast_types: float64
+    role: measure
+    additivity: non_additive
+    pii: none
+    definition: "Discount applied to the line, expressed either as a percentage or as an amount according to DiscountType — so its unit is not fixed and summing it mixes the two."
+
+  DiscountType:
+    reviewed: false
+    confidence: high
+    # evidence: harvested_definition: "PERCENT or AMOUNT" — the permitted values, written by the project itself
+    # evidence: lineage: fortnox_bi_fact_invoice_rows_staging.DiscountType direct
+    # evidence: cast_types: string
+    role: dimension
+    unit: none
+    pii: none
+    definition: "Whether the line's Discount is a percentage of the price or a fixed amount."
+    domain:
+      closed: true
+      source: "the project's own schema.yml description of DiscountType: 'PERCENT or AMOUNT'"
+      values:
+        - PERCENT
+        - AMOUNT
+
+  FinancialYear:
+    reviewed: false
+    confidence: medium
+    # evidence: harvested_definition: "Financial year dates for this account"
+    # evidence: concept_siblings FinancialYearId, FromDate, ToDate show the key and the bounds are separate columns
+    # evidence: lineage: tripletex_api__annual_account.start and .end are derived into it
+    role: dimension
+    unit: none
+    pii: none
+    definition: "Label of the financial year the row belongs to; FinancialYearId is its key and FromDate/ToDate its bounds."
+
+  FromDate:
+    reviewed: false
+    confidence: high
+    # evidence: lineage: visma_eaccounting_api__fiscalyears.StartDate renamed
+    # evidence: lineage: visma_economic_api__accounting_years.fromDate renamed
+    # evidence: concept dim_financial_years, paired with ToDate
+    role: timestamp
+    unit: date
+    pii: none
+    definition: "First day of the financial year, taken from each ERP's own fiscal-year start field."
+
+  FyCounter:
+    reviewed: false
+    confidence: high
+    # evidence: harvested_definition: "Current financial year is '0', previous is '-1' and so on"
+    # evidence: lineage derives it from fortnox_api__financial_years FromDate and ToDate rather than from a stored field
+    role: dimension
+    unit: none
+    pii: none
+    definition: "Offset of the financial year relative to the current one, so a filter can select 'this year' without naming a year."
+
+  Id:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: tripletex_api__annual_account.id derived
+    # evidence: lineage: visma_economic_api__accounting_years.year derived — that connector has no id and uses the year
+    # evidence: cast_types: string
+    role: identifier
+    unit: none
+    pii: none
+    definition: "The source ERP's own identifier for the financial year, or the year number itself where the ERP has no separate id."
+
+  InvoiceId:
+    reviewed: false
+    confidence: high
+    # evidence: lineage: fortnox_api__v2_invoices.DocumentNumber derived and fortnox_api__invoice_payments.OrgId renamed — it is composed of both
+    # evidence: concepts fact_invoices, fact_invoice_rows and fact_invoice_payments — the three it joins
+    # evidence: cast_types: string
+    role: identifier
+    unit: none
+    pii: none
+    definition: "Surrogate key of the invoice in this warehouse, built from the organisation and the source document number, joining invoices to their rows and payments."
+
+  InvoicePeriodEnd:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: fortnox_api__v2_invoices.InvoicePeriodEnd direct
+    # evidence: paired with InvoicePeriodStart on concept fact_invoice_rows
+    # evidence: cast_types: date
+    role: timestamp
+    unit: date
+    pii: none
+    definition: "Last day of the service period an invoice line covers, for lines billed for a period rather than a delivery."
+
+  InvoicePeriodStart:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: fortnox_api__v2_invoices.InvoicePeriodStart direct
+    # evidence: paired with InvoicePeriodEnd on concept fact_invoice_rows
+    # evidence: cast_types: date
+    role: timestamp
+    unit: date
+    pii: none
+    definition: "First day of the service period an invoice line covers, for lines billed for a period rather than a delivery."
+
+  Manufacturer:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: fortnox_api__articles.Manufacturer direct
+    # evidence: concept dim_articles with siblings SupplierName and SupplierNumber, which are the supplying party rather than the maker
+    # evidence: cast_types: string
+    role: dimension
+    unit: none
+    pii: none
+    definition: "Name of the party that manufactured the article, as recorded on the article record in the source ERP."
+
+  OurReference:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: visma_economic_api__employees.name renamed — the value is a person's name
+    # evidence: lineage: fortnox_bi_dim_customers_staging.OurReference direct
+    # evidence: cast_types: string
+    role: text
+    unit: none
+    pii: quasi
+    definition: "Name of the person at our own organisation responsible for the document; one ERP sources it straight from the employee record."
+
+  PriceBeforeDiscount:
+    reviewed: false
+    confidence: high
+    # evidence: lineage: favrit_api__orderline.unit_price derived — it is a per-unit price
+    # evidence: concept_siblings include PriceAfterDiscount and Discount on the same line grain
+    # evidence: cast_types: float64
+    role: measure
+    additivity: non_additive
+    unit: currency
+    pii: none
+    definition: "Unit price of the line before any discount is applied; the line total after discount is SalesValue."
+
+  StockGoods:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: visma_eaccounting_api__articles.IsStock renamed
+    # evidence: lineage: shopify_api__products.variant_requires_shipping derived
+    # evidence: cast_types: boolean
+    role: flag
+    unit: none
+    pii: none
+    definition: "Whether the article is stocked as physical inventory rather than being a service or a non-shipped item."
+
+  SupplierNumber:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: fortnox_api__suppliers.SupplierNumber direct — it keys the supplier record
+    # evidence: lineage: fortnox_api__articles.SupplierNumber direct — the same column on the article record
+    # evidence: concepts: dim_articles and dim_suppliers
+    role: identifier
+    unit: none
+    pii: none
+    definition: "The supplier's number in the source ERP: the supplier's own key on dim_suppliers, and the reference to the supplying party on dim_articles."
+
+  TermsOfDelivery:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: fortnox_bi_fact_invoices_staging.TermsOfDelivery direct
+    # evidence: concepts fact_invoices, fact_orders and fact_offers — it is a document-level term, not a line one
+    # evidence: cast_types: string
+    role: dimension
+    unit: none
+    pii: none
+    definition: "The delivery terms code carried on the document, stating who bears carriage and risk."
+
+  TermsOfPayment:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: fortnox_api__customers.TermsOfPayment and fortnox_api__suppliers.TermsOfPayment direct — the party default
+    # evidence: lineage: fortnox_bi_fact_invoices_staging.TermsOfPayment direct — the document value
+    # evidence: concepts span dim_customers, dim_suppliers and the document facts
+    role: dimension
+    unit: none
+    pii: none
+    definition: "The payment terms that apply — the default agreed with a customer or supplier, and the terms actually carried on a given invoice, offer or order."
+
+  ToDate:
+    reviewed: false
+    confidence: high
+    # evidence: lineage: visma_eaccounting_api__fiscalyears.EndDate renamed
+    # evidence: lineage: tripletex_api__annual_account.end derived
+    # evidence: paired with FromDate in concept dim_financial_years
+    role: timestamp
+    unit: date
+    pii: none
+    definition: "Last day of the financial year, taken from each ERP's own fiscal-year end field."
+
+  Unit:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: visma_economic_api__products.unit renamed — it comes off the product record
+    # evidence: concepts fact_invoice_rows and fact_supplier_invoice_rows, whose siblings include DeliveredQuantity
+    role: dimension
+    unit: none
+    pii: none
+    definition: "The unit of measure the line's quantity is expressed in, taken from the article's unit in the source ERP."
+
+  YourOrderNumber:
+    reviewed: false
+    confidence: medium
+    # evidence: lineage: shopify_bi_fact_orders_staging.OrderName renamed — the buyer-facing name
+    # evidence: lineage: fortnox_bi_fact_invoices_staging.YourOrderNumber direct
+    # evidence: cast_types: string
+    role: identifier
+    unit: none
+    pii: none
+    definition: "The customer's own reference for the order, as they supplied it — not a key issued by this warehouse."
+

@@ -577,6 +577,77 @@ Shaped after the annotation and taxonomy skills the request cited — poly-hiera
 rather than one tree, per-item confidence with an explicit abstain, evidence bound to every
 node, and refuse-to-overwrite-a-decision.
 
+### Generating the fields nobody wrote down
+
+Every generator here stops at the same wall, correctly: `raw_taxonomy.py` refuses to write a
+grain, `column_annotations.py` abstains on additivity and PII. That leaves real work undone
+— **183 of 272 conformed columns unannotated, and no `taxonomy.yml` at all**.
+`scripts/lm_propose.py` closes it with a language model without giving up rule 5:
+
+```bash
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --prepare --out batch.json
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --apply answers.json
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --review   # then --promote
+```
+
+Four decisions, and the module is mostly the last one:
+
+- **The script assembles the evidence; the model only decides.** Each item ships the cast
+  types, the raw source columns the value traces to, the sibling columns of its concept, and
+  the project's own descriptions. A model asked "what is `AmountPerUnit`?" recalls; one
+  handed `favrit_api__orderline.unit_price` classifies. Only the second is checkable.
+- **Output is a proposal, never an artifact.** `ontology/proposals/*.lm.yml`, every entry
+  `source: lm` with its confidence and cited evidence, `reviewed: false`. `--promote` moves
+  only what a human marked, holds anything below `--min-confidence`, and never touches a
+  column the hand-authored file already decides.
+- **No hidden API call.** The default backend is the agent running it — `--prepare` writes
+  the questions, `--apply` reads the answers — which is how graphify's own skill works here.
+  `--backend anthropic` exists for unattended runs and skips when the key or the package is
+  absent.
+- **Five refusals at `--apply`, each a way a generated field is wrong while reading well.**
+
+Measured on the first real batch: 24 items answered, **24 accepted, 0 dropped**; a
+deliberately fabricated batch of 4 was **rejected 4 for 4**. Two of those five refusals
+exist because the first version of the fabricated batch *passed*:
+
+| Refusal | The answer it caught |
+|---|---|
+| id not in the batch | a column name that exists in no artifact |
+| definition restates the name | `Unit` → "The unit." |
+| closed domain with no source | `TermsOfDelivery` → five invented Incoterm codes |
+| evidence names nothing in the item | "I know how ERP systems model this" |
+| answer contradicts its own casts | `Manufacturer` (string in every connector) → additive currency measure |
+
+The grounding check is the subtle one and was wrong twice. Matching the item as **text** let
+prose ground on the JSON *key* `source_model`; matching the item's own **name** let "the
+Incoterms standard defines these terms" ground on `terms`. It now matches values only, minus
+the item's own name, **as written** — `fortnox_api__articles` grounds, a loose `article` does
+not. It cannot catch a plausible misreading of real evidence; that is what review is for.
+
+Real output worth reading: `DiscountType` gained the project's **second** closed domain
+(`PERCENT | AMOUNT`, cited to the project's own description), which in turn made `Discount`
+**non-additive** — its unit is decided by another column, so summing it mixes percentages
+with amounts. And `ChargeHours`, which the deriver had proposed as *currency* from its name,
+is `duration`: the lineage says `seventime_api__timelogs.invoiceableTime`.
+
+### The source column contracts are over-attributed
+
+Found by trying to use them. `fortnox_api.accounts` declares `Amount`, `Date`, `Total` and
+`VAT` — voucher columns. `fortnox_bi_dim_accounts_staging.sql` reads three sources
+(`fortnox_api.accounts`, `fortnox_api.vouchers`, `public.bas_account_chart`) and the
+bootstrap attributed **every column that model referenced to every source it reads**.
+
+Measured: **53 of 135 models read more than one source table, feeding 79 distinct
+(source, table) pairs.** A model reading one source is unaffected, which is why this survived
+— 82 of them are correct.
+
+It matters in three places, in increasing order of damage: `check_source_columns` is too
+permissive (an over-declared column can never be the error it exists to catch); the taxonomy
+evidence is contaminated (`dim_accounts` offers `SalaryCode` as a natural-key candidate); and
+**anything generated from the conceptual model would put `VAT` on the account entity**. The
+fix is in `dbt_column_memory.py --emit-source-columns`: attribute a column to a source only
+where the resolver can bind it there, which the column-lineage pass already does per model.
+
 ### Where the annotations go — the ontology, then the serving tier
 
 An annotation nothing carries forward reaches neither BI nor an agent, which are the two
