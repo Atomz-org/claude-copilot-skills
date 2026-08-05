@@ -138,6 +138,11 @@ _ARCH_RULES = (
     ("src/", "core"),
     ("rust/", "core"),
     ("docs/", "docs"),
+    # The published pages are the documentation surface, not an unclassified
+    # extra: `public/decision-path.html` and `public/code-skills-architecture.html`
+    # are what docs/*.mdx embeds. Both landed in `other` before this line, so a PR
+    # touching only a diagram drew no layer at all.
+    ("public/", "docs"),
     ("*.md", "docs"),
 )
 
