@@ -1,0 +1,19 @@
+name: fortnox_bi_dim_supplier_invoice_files
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_supplier_invoice_files
+columns:
+- name: SupplierInvoiceId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null,relationships
+    dbt_test_status: verified
+cached: false
+properties:
+  description: Links to PDF documents associated with supplier invoices
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_supplier_invoice_files
+  dbt_resource_type: model

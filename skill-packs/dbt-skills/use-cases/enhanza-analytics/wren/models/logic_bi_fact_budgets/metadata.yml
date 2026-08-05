@@ -1,0 +1,74 @@
+name: logic_bi_fact_budgets
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_budgets
+columns:
+- name: Account
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: BAS account number, consists of four digits, e.g. 1234, and the name
+      of the account in the chart of accounts
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique Account identifier used as a primary key
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: Amount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Profit & Loss: Aggregation of Credit and Debit'
+- name: BudgetDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Month is represented by its last calendar day
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_cost_centers
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: FinancialYearId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_financial_years
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: not_null
+    dbt_test_status: unknown
+cached: false
+properties:
+  description: The conformed `fact_budgets`, one row per row of the union across its
+    suppliers (fortnox). Carries the 7 column(s) whose meaning is recorded; 0 conformed
+    column(s) are not annotated yet and none is withheld.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_budgets
+  dbt_resource_type: model

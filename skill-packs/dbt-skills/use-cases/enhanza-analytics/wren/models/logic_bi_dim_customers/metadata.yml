@@ -1,0 +1,124 @@
+name: logic_bi_dim_customers
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_customers
+columns:
+- name: Address
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Address1 field in Fortnox
+- name: Comments
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Comments to the salary transactions if any'
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_cost_centers
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: Country
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer and Supplier's address, country
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifyer of a customer in your workspace
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: DefaultDeliveryType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer's default invoice delivery type
+- name: DefaultTemplate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer's default invoice template
+- name: FirstInvoiceDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The earliest invoice date for the customer / supplier available in
+      your synced data
+- name: Name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Full customer/supplier name and number
+- name: OrganisationNumber
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Organisation ID of your company(s) used as a primary key
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: PriceListId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Customer's default price list ID, no relationship since it's a deprecated
+      dimension
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_projects
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: TemplateReference
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Address2 field in Fortnox
+- name: Website
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: WWW field in Fortnox
+- name: isActive
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Indicates whether the article is currently active
+cached: false
+properties:
+  description: The conformed `dim_customers`, one row per row of the union across
+    its suppliers (fortnox, seventime, shopify, tripletex, upsales, visma_eaccounting,
+    visma_economic). Carries the 15 column(s) whose meaning is recorded; 27 conformed
+    column(s) are not annotated yet and 2 direct-PII column(s) are withheld (rule
+    17).
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_customers
+  dbt_resource_type: model

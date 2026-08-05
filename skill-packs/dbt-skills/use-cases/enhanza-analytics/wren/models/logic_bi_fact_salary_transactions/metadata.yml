@@ -1,0 +1,93 @@
+name: logic_bi_fact_salary_transactions
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_salary_transactions
+columns:
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique Account identifier used as a primary key
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: AmountPerUnit
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Price per unit (day, hour etc.)'
+- name: Comments
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Comments to the salary transactions if any'
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_cost_centers
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: Date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Transaction date, i.e. 2024-03-25
+- name: EmployeeId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique employee identifier in your workspace
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: NumberOfUnits
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Number of days, hours etc. the employee is paid for'
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_projects
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: SalaryCode
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: 'Salary: Standard unique slary type identifier'
+    dbt_tests: not_null
+    dbt_test_status: unknown
+cached: false
+properties:
+  description: The conformed `fact_salary_transactions`, one row per row of the union
+    across its suppliers (fortnox). Carries the 10 column(s) whose meaning is recorded;
+    4 conformed column(s) are not annotated yet and none is withheld.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_salary_transactions
+  dbt_resource_type: model

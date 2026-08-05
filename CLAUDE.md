@@ -675,6 +675,60 @@ references only **41** are resolvable by elimination against qualified evidence 
 A precise thin contract is what ontology-first generation needs — an entity built from the
 broad one would carry `VAT` on `dim_accounts`.
 
+### The models the ontology declares, and an eval that runs them
+
+Every generator above derives an artifact *from* the dbt project. `scripts/ontology_to_dbt.py`
+runs the other way: it reads what the ontology says exists and writes the business-layer
+models nobody built. Measured: **58 concepts, 27 with an `erp_bi_*` union, 8 with a
+`logic_bi_*` model** — nineteen unions with no consumer-facing model, and nothing said so,
+because a model that does not exist produces no lineage, no test, and no error.
+
+```bash
+python3 scripts/ontology_to_dbt.py --use-case <slug> --dry-run   # the gap
+python3 scripts/ontology_to_dbt.py --use-case <slug> --write     # 19 models here
+python3 scripts/eval_dbt_models.py --use-case <slug>             # built on DuckDB
+```
+
+The generated model is a faithful projection, never invented logic: the conformed columns
+whose meaning is recorded, gated on the ontology's supplier list. Direct-PII columns are
+withheld (rule 17) and counted — 2 each from `dim_customers`, `fact_orders`, `fact_offers`.
+Tests come from the facets; **no `unique`**, because no grain is declared for these concepts
+and asserting a key nobody chose is what rule 5 forbids.
+
+`eval_dbt_models.py` is shaped after dlt-hub's `run-eval` skill, which scores a description
+against labelled cases and sorts results into named failure classes. Three of its properties
+are why it is worth copying:
+
+- **Cases are labelled from outside the run.** Every expectation — promised columns, declared
+  enums, PII class, supplier set — comes from `index.json` and `column-annotations.json`,
+  never from the relation being judged. An eval that reads its expectations off its subject
+  measures nothing.
+- **Failures are classified, not counted.** `contract-miss` on four models and
+  `attribution-gap` on one are two bugs with two owners.
+- **Unavailable is not failed.** run-eval rebuilds a stale workspace before judging it; the
+  analogue here is establishing a fixture that exists.
+
+The classification was wrong first, and instructively. The first full run scored **1 of 19**
+— and sixteen of those failures were in an *upstream staging* model the generated one merely
+depends on, most of them the sample seeds' one-scalar-string-per-column meeting SQL that
+unnests an array or indexes a JSON document. Blaming the generator for an absent CSV is how
+an eval stops being believed. After splitting `no-sample` and `upstream-unbuildable` out of
+`unbuildable`: **19 cases, 4 scored, 2 passed, 2 failed, 15 reported-not-scored.**
+
+Both surviving failures are real, and neither is visible to dbt, the alignment checker, or a
+human reading either:
+
+- **`label-mismatch`** — the ontology publishes `Visma eAccounting`; the union writes
+  `Visma e-Accounting`. An agent filtering by the published name gets **zero rows and no
+  error**. Exact agreement is the pass; the loose comparison exists only to tell this apart
+  from a supplier that contributed nothing.
+- **`ambiguous-sql`** — `Ambiguous reference to column name "Date" (use: "st.Date" or
+  "fy.Date")`. BigQuery resolves an unqualified column with several tables in scope, DuckDB
+  refuses. The *same* ambiguity that made a source contract claim columns nobody
+  established, arriving independently as a portability defect.
+
+Agent surface: skill `model-eval`.
+
 ### Where the annotations go — the ontology, then the serving tier
 
 An annotation nothing carries forward reaches neither BI nor an agent, which are the two
