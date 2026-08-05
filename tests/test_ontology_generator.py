@@ -210,9 +210,10 @@ def test_every_generated_class_carries_a_label_qualified_by_its_connector() -> N
     declare an `Account`, so ten classes labelled "Account" are not distinguishable by the
     one property whose job is to distinguish them.
 
-    This is the renderer half. The gate over the committed artifact —
-    `test_no_committed_class_is_unlabelled` — lives in the stack layer that regenerates
-    `ontology/**/*.ttl`, because that is the first layer on which it can be true.
+    This is the renderer half; `test_no_committed_class_is_unlabelled` below is the other,
+    over the committed `ontology/**/*.ttl`. Both are needed because a renderer that labels
+    correctly and an artifact nobody regenerated are simultaneously possible, and only the
+    second test can see it.
     """
     spec = og.ConnectorSpec(key="acme", name="Acme", kind="erp", status="implemented")
     spec.concepts = ["fact_invoice_rows"]
