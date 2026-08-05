@@ -22,48 +22,56 @@ quickbooks:connector a conn:ERPConnector ;
 
 quickbooks:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "QuickBooks Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy quickbooks:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 quickbooks:Supplier a owl:Class ;
     rdfs:subClassOf erp:Supplier ;
+    rdfs:label "QuickBooks Supplier"@en ;
     conn:conformsTo erp:Supplier ;
     conn:providedBy quickbooks:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 quickbooks:Account a owl:Class ;
     rdfs:subClassOf erp:Account ;
+    rdfs:label "QuickBooks Account"@en ;
     conn:conformsTo erp:Account ;
     conn:providedBy quickbooks:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 quickbooks:Article a owl:Class ;
     rdfs:subClassOf erp:Article ;
+    rdfs:label "QuickBooks Article"@en ;
     conn:conformsTo erp:Article ;
     conn:providedBy quickbooks:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 quickbooks:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "QuickBooks Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy quickbooks:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 quickbooks:Invoice a owl:Class ;
     rdfs:subClassOf erp:Invoice ;
+    rdfs:label "QuickBooks Invoice"@en ;
     conn:conformsTo erp:Invoice ;
     conn:providedBy quickbooks:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 quickbooks:InvoiceRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "QuickBooks Invoice Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy quickbooks:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 quickbooks:Voucher a owl:Class ;
     rdfs:subClassOf erp:Voucher ;
+    rdfs:label "QuickBooks Voucher"@en ;
     conn:conformsTo erp:Voucher ;
     conn:providedBy quickbooks:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .

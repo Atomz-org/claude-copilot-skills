@@ -22,36 +22,42 @@ salesforce:connector a conn:CRMConnector ;
 
 salesforce:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Salesforce Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy salesforce:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 salesforce:Employee a owl:Class ;
     rdfs:subClassOf erp:Employee ;
+    rdfs:label "Salesforce Employee"@en ;
     conn:conformsTo erp:Employee ;
     conn:providedBy salesforce:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 salesforce:Opportunitie a owl:Class ;
     rdfs:subClassOf crm:Opportunity ;
+    rdfs:label "Salesforce Opportunitie"@en ;
     conn:conformsTo crm:Opportunity ;
     conn:providedBy salesforce:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 salesforce:OpportunityRow a owl:Class ;
     rdfs:subClassOf crm:OpportunityLine ;
+    rdfs:label "Salesforce Opportunity Row"@en ;
     conn:conformsTo crm:OpportunityLine ;
     conn:providedBy salesforce:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 salesforce:Activitie a owl:Class ;
     rdfs:subClassOf crm:Activity ;
+    rdfs:label "Salesforce Activitie"@en ;
     conn:conformsTo crm:Activity ;
     conn:providedBy salesforce:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 salesforce:Appointment a owl:Class ;
     rdfs:subClassOf crm:Appointment ;
+    rdfs:label "Salesforce Appointment"@en ;
     conn:conformsTo crm:Appointment ;
     conn:providedBy salesforce:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
