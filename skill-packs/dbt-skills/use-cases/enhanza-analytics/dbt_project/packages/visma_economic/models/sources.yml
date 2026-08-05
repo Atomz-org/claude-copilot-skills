@@ -12,15 +12,8 @@ sources:
         # not an inventory of what the API returns. Removing one upstream is a breaking change.
         columns:
           - name: OrgId
-          - name: account
-          - name: amountInBaseCurrency
-          - name: date
-          - name: entryType
           - name: fromDate
-          - name: invoiceNumber
-          - name: text
           - name: toDate
-          - name: voucherNumber
           - name: year
       - name: accounts
       - name: customer_groups
@@ -37,13 +30,7 @@ sources:
         # not an inventory of what the API returns. Removing one upstream is a breaking change.
         columns:
           - name: OrgId
-          - name: account
-          - name: amountInBaseCurrency
           - name: date
-          - name: entryType
-          - name: invoiceNumber
-          - name: text
-          - name: voucherNumber
       - name: invoices_booked
         # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
         # from the staging SQL that reads them, so this is a statement of what we depend on and

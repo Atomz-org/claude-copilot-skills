@@ -77,6 +77,28 @@ the time where it counts. For each column bring the user the evidence, not a ver
 A column you cannot complete is left out. Absent means unannotated, which is honest;
 a filled-in guess means annotated, which is not.
 
+### 2b. Or let a model draft the backlog, under review
+
+```bash
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --prepare --limit 24 \
+    --out batch.json           # grounded questions: casts, lineage, siblings, definitions
+# answer them yourself from the evidence in the batch, or --backend anthropic
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --apply answers.json
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --review
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --promote
+```
+
+**Answer only from the evidence in the item.** The batch carries what this repository knows
+— cast types, the raw source columns the value traces to, the sibling columns of its
+concept, the project's own descriptions. A model asked *"what is `AmountPerUnit`?"* recalls;
+one handed its lineage classifies. Only the second is checkable, and `--apply` drops what it
+cannot check: an id nobody asked about, evidence naming nothing in the item, an answer
+contradicting its own casts, a definition that restates the column name, and an enum with no
+citable source.
+
+Output is a **proposal**, never the artifact. Read the evidence, set `reviewed: true`, then
+promote — that reading is the whole safeguard, and it is why `--promote` moves nothing else.
+
 ### 3. Derive and project
 
 ```bash

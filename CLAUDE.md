@@ -577,6 +577,104 @@ Shaped after the annotation and taxonomy skills the request cited — poly-hiera
 rather than one tree, per-item confidence with an explicit abstain, evidence bound to every
 node, and refuse-to-overwrite-a-decision.
 
+### Generating the fields nobody wrote down
+
+Every generator here stops at the same wall, correctly: `raw_taxonomy.py` refuses to write a
+grain, `column_annotations.py` abstains on additivity and PII. That leaves real work undone
+— **183 of 272 conformed columns unannotated, and no `taxonomy.yml` at all**.
+`scripts/lm_propose.py` closes it with a language model without giving up rule 5:
+
+```bash
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --prepare --out batch.json
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --apply answers.json
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --review   # then --promote
+```
+
+Four decisions, and the module is mostly the last one:
+
+- **The script assembles the evidence; the model only decides.** Each item ships the cast
+  types, the raw source columns the value traces to, the sibling columns of its concept, and
+  the project's own descriptions. A model asked "what is `AmountPerUnit`?" recalls; one
+  handed `favrit_api__orderline.unit_price` classifies. Only the second is checkable.
+- **Output is a proposal, never an artifact.** `ontology/proposals/*.lm.yml`, every entry
+  `source: lm` with its confidence and cited evidence, `reviewed: false`. `--promote` moves
+  only what a human marked, holds anything below `--min-confidence`, and never touches a
+  column the hand-authored file already decides.
+- **No hidden API call.** The default backend is the agent running it — `--prepare` writes
+  the questions, `--apply` reads the answers — which is how graphify's own skill works here.
+  `--backend anthropic` exists for unattended runs and skips when the key or the package is
+  absent.
+- **Five refusals at `--apply`, each a way a generated field is wrong while reading well.**
+
+Measured on the first real batch: 24 items answered, **24 accepted, 0 dropped**; a
+deliberately fabricated batch of 4 was **rejected 4 for 4**. Two of those five refusals
+exist because the first version of the fabricated batch *passed*:
+
+| Refusal | The answer it caught |
+|---|---|
+| id not in the batch | a column name that exists in no artifact |
+| definition restates the name | `Unit` → "The unit." |
+| closed domain with no source | `TermsOfDelivery` → five invented Incoterm codes |
+| evidence names nothing in the item | "I know how ERP systems model this" |
+| answer contradicts its own casts | `Manufacturer` (string in every connector) → additive currency measure |
+
+The grounding check is the subtle one and was wrong twice. Matching the item as **text** let
+prose ground on the JSON *key* `source_model`; matching the item's own **name** let "the
+Incoterms standard defines these terms" ground on `terms`. It now matches values only, minus
+the item's own name, **as written** — `fortnox_api__articles` grounds, a loose `article` does
+not. It cannot catch a plausible misreading of real evidence; that is what review is for.
+
+Real output worth reading: `DiscountType` gained the project's **second** closed domain
+(`PERCENT | AMOUNT`, cited to the project's own description), which in turn made `Discount`
+**non-additive** — its unit is decided by another column, so summing it mixes percentages
+with amounts. And `ChargeHours`, which the deriver had proposed as *currency* from its name,
+is `duration`: the lineage says `seventime_api__timelogs.invoiceableTime`.
+
+### Ambiguous bindings, and why a contract may not be built from one
+
+Found by trying to use the source contracts: `fortnox_api.accounts` declared `Amount`,
+`Date`, `Total` and `VAT` — voucher columns.
+
+The cause is one line of SQL, not a sloppy bootstrap. `select Amount from st, fy, e, a, ee`
+references a column **unqualified with five tables in scope**; the resolver resolves it
+against each, which its docstring states as a deliberate choice — *"reported against each,
+because guessing one is worse than saying so"*. For lineage that is right: every candidate
+is visible. For a contract it is fatal, because "accounts has an `Amount` column" is exactly
+the claim nobody established.
+
+So the resolver keeps its behaviour and now **says** it: `ColumnEdge.ambiguous` marks a
+binding that is one of N guesses. Two consumers read the same flag, and the symmetry is the
+point:
+
+- `--emit-source-columns` will not **write** a contract from an ambiguous binding.
+- `check_source_columns` will not **fail** one with it. Blaming `accounts` for a bare
+  `Amount` five tables could own is the same guess pointed the other way.
+
+A contract also answers a different question from lineage — "what do we read", not "what fed
+this output column" — so `qualified_source_reads()` collects every *qualified* reference
+anywhere in the statement, including join keys and filters a projection never mentions.
+Without it `accounts` came out with **one** column while its own SQL demonstrably reads
+three: `a.OrgId` and `a.Year` appear only in a JOIN.
+
+Measured on enhanza-analytics: **295 ambiguous bindings refused, 252 columns pruned across 7
+files**, dbt parse clean, alignment check unchanged at 0 errors / 9 accepted warnings.
+`--prune` deletes only from blocks carrying the generated banner — the same ownership marker
+as WrenAI's `source: dbt_metric` — never from a hand-authored one, and never adds.
+
+Two rules that were bugs first:
+
+- **A block that loses every column withdraws; it does not become `columns:` with nothing
+  under it.** dbt refuses to parse the project. Found by running the prune for real: one
+  `seventime` table lost all twelve and the whole parse failed.
+- **Normalise the edge width at construction, not at each unpack.** A cache written before
+  the flag existed, and a hand-built lineage in a test, both hold 4-tuples.
+
+The remaining thinness is honest rather than fixed: where a project never qualifies a
+reference, nothing in the SQL says which table owns the column. Measured, of 305 fanned-out
+references only **41** are resolvable by elimination against qualified evidence elsewhere.
+A precise thin contract is what ontology-first generation needs — an entity built from the
+broad one would carry `VAT` on `dim_accounts`.
+
 ### Where the annotations go — the ontology, then the serving tier
 
 An annotation nothing carries forward reaches neither BI nor an agent, which are the two

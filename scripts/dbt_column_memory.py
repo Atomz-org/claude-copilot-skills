@@ -297,11 +297,30 @@ def _rel(path: Path) -> str:
 class ModelLineage:
     model: str
     status: str  # parsed | macro | failed | no_parser
-    edges: List[Tuple[str, str, str, str]]  # (column, upstream_model, upstream_column, kind)
+    # (column, upstream_model, upstream_column, kind, ambiguous). The fifth element says the
+    # binding is one of N guesses over an unqualified name — see ColumnEdge.ambiguous.
+    edges: List[Tuple[str, str, str, str, bool]]
     error: str = ""
+    # (source_table, column) for every *qualified* reference anywhere in the statement.
+    # Lineage answers "where did this output column come from" and so walks projections; a
+    # contract answers "what do we read", and the two diverge at a column read in a JOIN and
+    # never projected. `a.OrgId` and `a.Year` are only ever join keys here.
+    reads: List[Tuple[str, str]] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        # Pad on the way in, so every construction path — a cache written before the flag
+        # existed, a hand-built lineage in a test, a caller passing the old 4-tuple — yields
+        # one shape. Normalising at the boundary beats a defensive unpack at each of the
+        # four sites that read `edges`.
+        self.edges = [
+            tuple(list(e)[:5] + [False] * (5 - len(e)))  # type: ignore[misc]
+            for e in self.edges
+        ]
 
     def as_record(self) -> Dict[str, Any]:
         out: Dict[str, Any] = {"status": self.status, "edges": [list(e) for e in self.edges]}
+        if self.reads:
+            out["reads"] = [list(r) for r in self.reads]
         if self.error:
             out["error"] = self.error
         return out
@@ -313,6 +332,7 @@ class ModelLineage:
             status=record.get("status", "failed"),
             edges=[tuple(e) for e in record.get("edges", [])],  # type: ignore[misc]
             error=record.get("error", ""),
+            reads=[tuple(r) for r in record.get("reads", [])],  # type: ignore[misc]
         )
 
 
@@ -404,7 +424,9 @@ def model_lineage(
     return ModelLineage(
         model.name,
         "parsed",
-        [(e.column, e.upstream_model, e.upstream_column, e.kind) for e in edges],
+        [(e.column, e.upstream_model, e.upstream_column, e.kind, e.ambiguous)
+         for e in edges],
+        reads=sorted(lineage_mod.qualified_source_reads(raw, dialect)),
     )
 
 
@@ -433,7 +455,7 @@ class ChainResolver:
         self.named: Dict[Tuple[str, str], List[Tuple[str, str, str]]] = {}
         self.stars: Dict[str, List[Tuple[str, str]]] = {}
         for name, lineage in lineages.items():
-            for column, up_model, up_column, kind in lineage.edges:
+            for column, up_model, up_column, kind, _ambiguous in lineage.edges:
                 if column == "*":
                     self.stars.setdefault(name, []).append((up_model, kind))
                 elif column != "(macro)" and up_model:
@@ -735,7 +757,7 @@ class ColumnSetResolver:
             if name not in columns:
                 columns.append(name)
 
-        for column, up_model, _up_column, _kind in lineage.edges:
+        for column, up_model, _up_column, _kind, _ambiguous in lineage.edges:
             if column == "*":
                 if up_model in self.model_names:
                     upstream = self._declared(up_model, seen, depth + 1)
@@ -927,8 +949,18 @@ def consumed_source_columns(
 
     model_names = set(store.lineages)
     out: Dict[str, Dict[str, Any]] = {}
+    ambiguous: Set[Tuple[str, str]] = set()
     for model_name, lineage in store.lineages.items():
-        for column, up_model, up_column, _kind in lineage.edges:
+        for column, up_model, up_column, _kind, is_ambiguous in lineage.edges:
+            # An unqualified reference with several tables in scope resolves against each,
+            # which is the right reading for lineage — every candidate is visible — and the
+            # wrong one for a contract. `select Amount from st, fy, e, a, ee` wrote `Amount`
+            # into all five `sources.yml` entries, four of which then claim a column nobody
+            # established. `check_source_columns` reads the same flag and declines to fail
+            # on one, so neither side uses evidence the other rejects.
+            if is_ambiguous:
+                ambiguous.add((up_model, up_column))
+                continue
             if up_model in model_names or not up_column or up_column in ("*", "(macro)"):
                 continue
             uid = by_joined.get(up_model)
@@ -949,9 +981,38 @@ def consumed_source_columns(
             )
             entry["columns"].add(up_column)
             entry["read_by"].add(model_name)
+    # Qualified reads that never reached a projection — join keys, filters, group-bys. The
+    # same standard of evidence as an unambiguous edge: the SQL names the table itself.
+    for model_name, lineage in store.lineages.items():
+        for up_model, up_column in getattr(lineage, "reads", []):
+            uid = by_joined.get(up_model)
+            if uid is None or up_model in model_names:
+                continue
+            node = man.sources[uid]
+            entry = out.setdefault(
+                uid,
+                {
+                    "source": node.get("source_name", ""),
+                    "table": node.get("name", ""),
+                    "path": node.get("original_file_path", ""),
+                    "package": node.get("package_name", ""),
+                    "columns": set(),
+                    "read_by": set(),
+                    "declared": sorted(node.get("columns") or {}),
+                },
+            )
+            entry["columns"].add(up_column)
+            entry["read_by"].add(model_name)
+
     for entry in out.values():
         entry["columns"] = sorted(entry["columns"])
         entry["read_by"] = sorted(entry["read_by"])
+        entry["ambiguous_columns"] = sorted(
+            col for src, col in ambiguous
+            if by_joined.get(src) is not None
+            and man.sources[by_joined[src]].get("source_name") == entry["source"]
+            and man.sources[by_joined[src]].get("name") == entry["table"]
+        )
     return out
 
 
@@ -1041,8 +1102,104 @@ def insert_source_columns(
     return "".join(out), written
 
 
+_BANNER_FIRST_LINE = COLUMNS_BANNER.splitlines()[0].strip()
+
+
+def prune_source_columns(
+    text: str, wanted: Dict[Tuple[str, str], List[str]]
+) -> Tuple[str, Dict[str, List[str]]]:
+    """Delete columns the corrected resolver can no longer justify.
+
+    Deletion only, and only inside a `columns:` block carrying the generated banner. That
+    banner is the same ownership marker as WrenAI's `source: dbt_metric`: it says a
+    generator wrote this block and a generator may rewrite it. A hand-authored contract has
+    no banner and is never touched — the rule that stops the emitter overwriting a decision
+    has to hold in this direction too, or "the generator owns what it wrote" quietly becomes
+    "the generator owns whatever it finds".
+
+    Nothing is ever added. A column that should be present and is not is a different defect,
+    and one `check_source_columns` reports; adding it here would hide the drift the contract
+    exists to expose.
+    """
+    lines = text.splitlines(keepends=True)
+    out: List[str] = []
+    removed: Dict[str, List[str]] = {}
+    index = 0
+    tables_indent: Optional[int] = None
+    current_source = ""
+
+    while index < len(lines):
+        line = lines[index]
+        out.append(line)
+        index += 1
+
+        stripped = line.rstrip("\n")
+        if re.match(r"^\s*tables:\s*$", stripped):
+            tables_indent = len(stripped) - len(stripped.lstrip())
+            continue
+
+        match = _RE_YAML_ENTRY.match(stripped)
+        if not match:
+            continue
+        indent, name = match.group(1), match.group(2)
+        if tables_indent is None or len(indent) <= tables_indent:
+            current_source = name
+            tables_indent = None
+            continue
+
+        keep = wanted.get((current_source, name))
+        if keep is None:
+            continue
+
+        body_start = index
+        while index < len(lines) and lines[index].startswith(indent + "  "):
+            index += 1
+        body = lines[body_start:index]
+        if not any(_BANNER_FIRST_LINE in ln for ln in body):
+            out.extend(body)
+            continue
+
+        allowed = set(keep)
+        kept_body: List[str] = []
+        dropped: List[str] = []
+        survivors = 0
+        in_columns = False
+        for entry in body:
+            entry_stripped = entry.rstrip("\n")
+            if re.match(r"^\s*columns:\s*$", entry_stripped):
+                in_columns = True
+                kept_body.append(entry)
+                continue
+            column = _RE_YAML_ENTRY.match(entry_stripped)
+            if in_columns and column:
+                if column.group(2) not in allowed:
+                    dropped.append(column.group(2))
+                    continue
+                survivors += 1
+            kept_body.append(entry)
+
+        if dropped and not survivors:
+            # Every column went. `columns:` with nothing under it is not a thinner contract,
+            # it is a broken one — dbt refuses to parse the project. Withdraw the block and
+            # its banner instead, returning the table to "declares no columns", a state the
+            # gate already handles by skipping rather than failing. Found by running the
+            # prune for real: one seventime table lost all twelve and the parse failed.
+            banner = set(COLUMNS_BANNER.splitlines())
+            kept_body = [
+                ln for ln in kept_body
+                if not re.match(r"^\s*columns:\s*$", ln.rstrip("\n"))
+                and ln.strip() not in banner
+            ]
+        out.extend(kept_body)
+        if dropped:
+            removed[name] = sorted(dropped)
+
+    return "".join(out), removed
+
+
 def emit_source_columns(
-    store: "ColumnStore", man: Manifest, project_root: Path, write: bool
+    store: "ColumnStore", man: Manifest, project_root: Path, write: bool,
+    prune: bool = False,
 ) -> Dict[str, Any]:
     """Bootstrap `columns:` into every `sources.yml` that declares a consumed table."""
     consumed = consumed_source_columns(store, man)
@@ -1050,17 +1207,26 @@ def emit_source_columns(
     project_name = man.project_name
 
     by_file: Dict[Path, Dict[Tuple[str, str], List[str]]] = {}
+    prunable: Dict[Path, Dict[Tuple[str, str], List[str]]] = {}
     skipped: List[str] = []
+    ambiguous_total = 0
     for entry in consumed.values():
-        if entry["declared"]:
-            skipped.append(f"{entry['source']}.{entry['table']}")
-            continue
+        ambiguous_total += len(entry.get("ambiguous_columns") or [])
         base = project_root if entry["package"] == project_name else roots.get(entry["package"])
         if base is None or not entry["path"]:
             continue
         path = base / entry["path"]
-        if path.is_file():
-            by_file.setdefault(path, {})[(entry["source"], entry["table"])] = entry["columns"]
+        if not path.is_file():
+            continue
+        key = (entry["source"], entry["table"])
+        if entry["declared"]:
+            skipped.append(f"{entry['source']}.{entry['table']}")
+            # A declared table is still prunable when a generator wrote the declaration:
+            # the only path by which an already-bootstrapped contract can lose a column the
+            # resolver has since stopped standing behind.
+            prunable.setdefault(path, {})[key] = entry["columns"]
+            continue
+        by_file.setdefault(path, {})[key] = entry["columns"]
 
     changed: List[Dict[str, Any]] = []
     for path, wanted in sorted(by_file.items()):
@@ -1079,12 +1245,31 @@ def emit_source_columns(
             }
         )
 
+    pruned: List[Dict[str, Any]] = []
+    if prune:
+        for path, wanted in sorted(prunable.items()):
+            original = path.read_text(encoding="utf-8")
+            updated, removed = prune_source_columns(original, wanted)
+            if not removed or updated == original:
+                continue
+            if write:
+                path.write_text(updated, encoding="utf-8")
+            pruned.append({
+                "file": _rel(path),
+                "tables": sorted(removed),
+                "columns_removed": sum(len(v) for v in removed.values()),
+                "removed": {k: v for k, v in sorted(removed.items())},
+            })
+
     return {
         "tables_consumed": len(consumed),
         "tables_already_declared": sorted(skipped),
         "files": changed,
         "tables_written": sum(len(c["tables"]) for c in changed),
         "columns_written": sum(c["columns"] for c in changed),
+        "ambiguous_bindings": ambiguous_total,
+        "pruned_files": pruned,
+        "columns_pruned": sum(p["columns_removed"] for p in pruned),
         "written": write,
     }
 
@@ -1346,6 +1531,14 @@ def remember(records: Sequence[Dict[str, Any]], url: str = AGENTMEMORY_URL,
     AgentMemory behaves exactly as it did before this existed.
     """
     base = url.rstrip("/")
+
+    # Security: Prevent SSRF by validating the URL against an allow-list.
+    from urllib.parse import urlparse
+    parsed_url = urlparse(base)
+    allowed_hosts = ("127.0.0.1", "localhost")
+    if parsed_url.hostname not in allowed_hosts:
+        return 0, f"URL hostname '{parsed_url.hostname}' not in allow-list. Refusing to connect."
+
     try:
         with urllib.request.urlopen(f"{base}/agentmemory/health", timeout=1.0) as response:
             if response.status != 200:
@@ -1534,6 +1727,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="bootstrap `columns:` into sources.yml from the staging SQL that reads them",
     )
     parser.add_argument(
+        "--prune", action="store_true",
+        help="with --emit-source-columns: also delete columns the resolver no longer stands "
+             "behind, from generator-written blocks only. Never adds, never touches a "
+             "hand-authored block",
+    )
+    parser.add_argument(
         "--graphify-fragment", metavar="PATH",
         help="write the contract/drift graph fragment here instead of merging",
     )
@@ -1625,7 +1824,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         path.write_text(content, encoding="utf-8")
 
     if args.emit_source_columns:
-        result = emit_source_columns(store, man, project_root, write=args.write)
+        result = emit_source_columns(store, man, project_root, write=args.write,
+                                     prune=args.prune)
         if args.format == "json":
             print(json.dumps({"use_case": args.use_case, **result}))
             return 0
