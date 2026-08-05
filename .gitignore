@@ -117,3 +117,8 @@ rust/toon/bin/
 # Local runtime state stores (machine-specific generated binaries)
 data/state_store.db/
 data/stream_store/
+# dlt pipeline output: rebuilt by `scripts/dlt_agent_costs.py --run` in seconds.
+# Same split as wren/target/ — the inputs are committed, the warehouse is not.
+*.duckdb.wal
+skill-packs/*/use-cases/*/warehouse.duckdb
+.dlt/
