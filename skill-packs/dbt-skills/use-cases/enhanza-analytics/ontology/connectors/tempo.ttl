@@ -21,6 +21,7 @@ tempo:connector a conn:ERPConnector ;
 
 tempo:TimeReportingRegistration a owl:Class ;
     rdfs:subClassOf erp:TimeReportingRegistration ;
+    rdfs:label "Tempo Time Reporting Registration"@en ;
     conn:conformsTo erp:TimeReportingRegistration ;
     conn:providedBy tempo:connector ;
     conn:dbtModel "tempo_erp_bi_fact_time_reporting_registrations" ;

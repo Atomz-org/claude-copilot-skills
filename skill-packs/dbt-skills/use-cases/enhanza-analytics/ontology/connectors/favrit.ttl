@@ -22,6 +22,7 @@ favrit:connector a conn:CommerceConnector ;
 
 favrit:Accounting a owl:Class ;
     rdfs:subClassOf erp:Classifier ;
+    rdfs:label "Favrit Accounting"@en ;
     conn:conformsTo erp:Classifier ;
     conn:providedBy favrit:connector ;
     conn:dbtModel "favrit_bi_dim_accounting" ;
@@ -29,6 +30,7 @@ favrit:Accounting a owl:Class ;
 
 favrit:Rating a owl:Class ;
     rdfs:subClassOf erp:Classifier ;
+    rdfs:label "Favrit Rating"@en ;
     conn:conformsTo erp:Classifier ;
     conn:providedBy favrit:connector ;
     conn:dbtModel "favrit_bi_dim_ratings" ;
@@ -36,6 +38,7 @@ favrit:Rating a owl:Class ;
 
 favrit:UserLocation a owl:Class ;
     rdfs:subClassOf erp:Organisation ;
+    rdfs:label "Favrit User Location"@en ;
     conn:conformsTo erp:Organisation ;
     conn:providedBy favrit:connector ;
     conn:dbtModel "favrit_bi_dim_user_locations" ;
@@ -43,6 +46,7 @@ favrit:UserLocation a owl:Class ;
 
 favrit:OrderRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Favrit Order Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy favrit:connector ;
     conn:dbtModel "favrit_erp_bi_fact_order_rows" ;
