@@ -49,7 +49,7 @@ pytest>=9.1.1
 # With this installed it runs in 34s; without it, serially, and nothing fails.
 # `_pytest_parallel.py` (named from pytest.ini's addopts) turns it on only when the
 # import succeeds, so this stays a genuine accelerator rather than a hard dependency.
-pytest-xdist>=3
+pytest-xdist>=3.8.0
 
 # Parses the generated Turtle in tests/test_ontology_generator.py to assert the
 # .ttl and index.json projections agree. Test-only: nothing in scripts/ imports it,
