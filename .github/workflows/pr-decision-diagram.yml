@@ -141,7 +141,7 @@ jobs:
       # Node is set up rather than assumed so the runner resolves `npx`; when the
       # scan is unavailable anyway the wrapper exits 3, the gate records a skip,
       # and the subgraph is simply not drawn.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
