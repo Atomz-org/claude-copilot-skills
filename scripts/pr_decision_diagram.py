@@ -10,7 +10,7 @@ Used by .github/workflows/pr-decision-diagram.yml. The document contains:
 - a colour legend for that flowchart, naming only the classes it drew;
 - a per-file table of touched symbols;
 - the architecture layers this PR moves, drawn on the layer stack from
-  `docs/code-skills-architecture.html`;
+  `public/code-skills-architecture.html`;
 - the merge-gate results (branch naming, Conventional Commits, activation
   drift, portability, TOON build, tests) as a table with a verdict;
 - a sticky-comment marker so the workflow updates one comment per PR.
@@ -89,7 +89,7 @@ _ENTRY_KINDS = ("skill", "command", "agent")
 # ids are matched against the page's `data-layer` attributes by
 # tests/test_architecture_diagram.py, so the comment and the page cannot drift
 # into naming the same structure differently.
-ARCH_DOC = "docs/code-skills-architecture.html"
+ARCH_DOC = "public/code-skills-architecture.html"
 _ARCH_LAYERS = (
     ("harness", "Harness"),
     ("core", "Derivation core"),

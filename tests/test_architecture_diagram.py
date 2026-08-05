@@ -1,4 +1,4 @@
-"""Tests for docs/code-skills-architecture.html.
+"""Tests for public/code-skills-architecture.html.
 
 A hand-authored architecture page rots in three ways, and only one of them is
 visible to a reader:
@@ -45,7 +45,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 import pr_decision_diagram as pdd  # noqa: E402
 import _miniyaml as miniyaml  # noqa: E402
 
-PAGE = REPO / "docs/code-skills-architecture.html"
+PAGE = REPO / "public/code-skills-architecture.html"
 ENHANZA = REPO / "skill-packs/dbt-skills/use-cases/enhanza-analytics"
 
 pytestmark = pytest.mark.skipif(not PAGE.is_file(), reason="architecture page not on this branch")
@@ -283,3 +283,4 @@ def test_the_page_and_the_pr_diagram_name_the_same_layers() -> None:
 
 def test_the_pr_diagram_links_to_a_page_that_exists() -> None:
     assert (REPO / pdd.ARCH_DOC).is_file()
+

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The code-skills system architecture: the three-lane data flow from raw sources to a served semantic layer, the ten derivation stages and what each one refuses to do, and the five layers underneath.">
 <title>code-skills — System Architecture</title>
 <style>
 /* ---------------------------------------------------------------------------
@@ -346,7 +347,7 @@ footer {
         <li><strong>0</strong> drift findings, <strong>0</strong> alignment errors, 9 accepted warnings</li>
         <li><strong>359 of 359</strong> models checksum-match their files</li>
         <li><strong>0</strong> parse failures across 359 models (225 parsed, 134 macro-only)</li>
-        <li><strong>1,638</strong> tests, 34s wall clock across cores</li>
+        <li><strong>1,640</strong> tests, 34s wall clock across cores</li>
       </ul>
     </div>
   </div>
@@ -833,7 +834,7 @@ footer {
     </div>
   </div>
 
-  <h3 data-layer="verification">Layer 5 · Verification — 1,638 tests, 10 workflows</h3>
+  <h3 data-layer="verification">Layer 5 · Verification — 1,640 tests, 10 workflows</h3>
   <div class="grid g2">
     <div class="panel gate">
       <h4>What the suite pins</h4>
@@ -1002,7 +1003,7 @@ footer {
 <pre><b>./scripts/activate_skill_stack.sh</b> dbt-skills wren-skills   <span style="color:var(--ink-3)"># pack → agent-loaded paths</span>
 <b>./skill-packs/dbt-skills/use-cases/&lt;slug&gt;/artifacts/refresh.sh</b>  <span style="color:var(--ink-3)"># manifest + fragment + checks</span>
 <b>python3 scripts/use_case_sync.py</b> --use-case &lt;slug&gt; --graphify-update
-<b>python -m pytest -q</b>                                     <span style="color:var(--ink-3)"># 1,638 tests, ~34s</span></pre>
+<b>python -m pytest -q</b>                                     <span style="color:var(--ink-3)"># 1,640 tests, ~34s</span></pre>
 
   <h3>Delivery discipline</h3>
   <div class="grid g3">

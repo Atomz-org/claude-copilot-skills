@@ -844,7 +844,7 @@ warnings. Details in the pack's `.claude/skills/harness-mapping/references/findi
 
 ## The architecture page, and why a PR reads it back
 
-[docs/code-skills-architecture.html](docs/code-skills-architecture.html) is the
+[public/code-skills-architecture.html](public/code-skills-architecture.html) is the
 hand-authored view of the whole system: the three-lane data flow, the ten derivation
 stages with what each one refuses to do, five layers, and the deployment surface. It is
 self-contained — no CDN, no webfont — because it is also published under a CSP that
