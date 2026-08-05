@@ -387,6 +387,15 @@ def build_fragment(
     # `auto_config()` sets the alias and enable flag for most of the rest, so a graph
     # without them is missing the thing that generates a third of the SQL. Package macros
     # (dbt_utils, dbt core) are excluded: they are vendored and not part of this repo.
+    # One node per macro *file*, not per macro. The id has to stay file-derived so
+    # build_merge upgrades graphify's existing node instead of minting a stub beside it
+    # — but a .sql file may define several macros, and emitting one record per macro
+    # produced several records sharing one id. Whichever landed last won, arbitrarily:
+    # macros/erp/erp_union.sql defines erp_union, erp_sources_for and
+    # erp_concept_from_model_name, so `erp_union` — the macro that stacks every
+    # connector's adapter — could be labelled `erp_sources_for` in the graph, and every
+    # `calls` edge into any of the three pointed at whichever record had won.
+    by_macro_file: Dict[str, Dict[str, Any]] = {}
     for uid, node in man.macros.items():
         # First-party macros only — the root project and its local packages. dbt_utils and
         # dbt-internal macros are vendored, not part of this repo.
@@ -398,20 +407,40 @@ def build_fragment(
         source_file = file_path_of(node)
         gid = node_id(source_file)
         seen[uid] = gid
+        entry = by_macro_file.setdefault(
+            gid, {"source_file": source_file, "macros": {}}
+        )
+        entry["macros"][node.get("name", uid)] = {
+            "uid": uid,
+            "description": (node.get("description") or "").strip() or None,
+        }
+
+    for gid, entry in by_macro_file.items():
+        names = sorted(entry["macros"])
+        # A single-macro file keeps the macro's own name and metadata, which is what it
+        # meant before and what nearly every file here is. A multi-macro file is labelled
+        # by its stem, because naming it after one of its macros is the ambiguity above.
+        single = entry["macros"][names[0]] if len(names) == 1 else None
         nodes.append(
             {
                 "id": gid,
-                "label": node.get("name", uid),
+                "label": names[0] if single else Path(entry["source_file"]).stem,
                 "file_type": "code",
-                "source_file": source_file,
+                "source_file": entry["source_file"],
                 "source_location": None,
                 "source_url": None,
                 "captured_at": None,
                 "author": None,
                 "contributor": None,
                 "dbt_resource_type": "macro",
-                "dbt_unique_id": uid,
-                "dbt_description": (node.get("description") or "").strip() or None,
+                "dbt_unique_id": single["uid"] if single else None,
+                "dbt_description": single["description"] if single else None,
+                # Both always present, so a consumer never has to infer from the label
+                # whether it is looking at one macro or a file holding several — and so
+                # the first-party check stays expressible when `dbt_unique_id` cannot be
+                # (one uid cannot stand for three macros, but the list can).
+                "dbt_macros": names,
+                "dbt_unique_ids": sorted(m["uid"] for m in entry["macros"].values()),
             }
         )
 
@@ -520,6 +549,28 @@ def build_fragment(
         for connector, members in sorted(by_connector.items())
         if len(members) >= 3
     ]
+
+    # The committed fragment is compared byte-for-byte against a fresh emission
+    # (test_the_committed_fragment_is_what_refresh_sh_produces), so its order has to be a
+    # property of the content rather than of whatever order dbt happened to parse in.
+    # It was not: `hyperedges` sorted, `nodes` and `edges` did not, and the arrays came
+    # out in manifest iteration order. The emitter is deterministic for one manifest —
+    # two consecutive runs are byte-identical — but two machines parse in different
+    # orders, so the test failed on every developer's laptop while passing in CI. A test
+    # that is red locally and green in CI is worse than one that is simply red: it gets
+    # ignored, and it takes the real failures with it.
+    #
+    # Sorting on the canonical serialization rather than on an id, because neither a node
+    # id nor an (source, target, relation) triple is unique here. Ties under a partial key
+    # keep input order — which is the non-determinism this removes.
+    def _canonical(record: Dict[str, Any]) -> str:
+        return json.dumps(record, sort_keys=True, ensure_ascii=False)
+
+    nodes.sort(key=_canonical)
+    # dbt records a macro dependency once per call site, so the same (source, target)
+    # arrives more than once — 9 byte-identical duplicates on this project. They carry no
+    # information a single edge does not.
+    edges = [json.loads(e) for e in sorted({_canonical(e) for e in edges})]
 
     return {
         "nodes": nodes,

@@ -221,10 +221,19 @@ def test_only_project_macros_are_emitted() -> None:
     # where fortnox_start_year_filter lives after the split. Vendored macro packages
     # (dbt_utils, dbt core) must still be absent.
     first_party = ("macro.enhanza_erp_bi.", "macro.enhanza_")
+    # Read through `dbt_unique_ids` rather than `dbt_unique_id`: a file defining several
+    # macros has no single uid, and the invariant being checked here — nothing vendored
+    # gets emitted — is a property of every macro in the file, not of one of them.
     for node in macros:
         assert "dbt_packages" not in node["source_file"]
-        assert node["dbt_unique_id"].startswith(first_party), node["dbt_unique_id"]
-    assert any(n["dbt_unique_id"].startswith("macro.enhanza_erp_bi.") for n in macros)
+        assert node["dbt_unique_ids"], f"{node['label']} lists no macro uids"
+        for uid in node["dbt_unique_ids"]:
+            assert uid.startswith(first_party), uid
+    assert any(
+        uid.startswith("macro.enhanza_erp_bi.")
+        for n in macros
+        for uid in n["dbt_unique_ids"]
+    )
 
 
 @needs_manifest
@@ -360,3 +369,59 @@ def test_missing_manifest_fails_with_an_actionable_message(tmp_path: Path) -> No
     result = _run(["--manifest", str(tmp_path / "nope.json")])
     assert result.returncode != 0
     assert "dbt parse" in result.stderr
+
+
+# --- reproducibility of the committed artifact -------------------------------------------
+
+@needs_manifest
+def test_a_node_id_identifies_exactly_one_node() -> None:
+    """A macro file may define several macros, and the node id is derived from the FILE
+    because it has to reproduce graphify's own formula byte for byte — that is what makes
+    `build_merge` upgrade the existing node instead of minting a stub beside it.
+
+    Emitting one record per macro therefore produced several records sharing one id, and
+    whichever landed last won. `macros/erp/erp_union.sql` defines `erp_union`,
+    `erp_sources_for` and `erp_concept_from_model_name`, so the macro that stacks every
+    connector's adapter could be labelled `erp_sources_for`, and every `calls` edge into
+    any of the three resolved to whichever record had won. Measured before this: 727
+    nodes under 722 ids.
+    """
+    fragment = _fragment()
+    ids = [n["id"] for n in fragment["nodes"]]
+    duplicated = sorted({i for i in ids if ids.count(i) > 1})
+    assert not duplicated, f"{len(duplicated)} node id(s) carry more than one record: {duplicated[:3]}"
+
+
+@needs_manifest
+def test_a_multi_macro_file_names_every_macro_it_holds() -> None:
+    """The id cannot distinguish them, so the record has to. Without this the collision
+    fix would read as a silent loss: three macros become one node and nothing says so."""
+    fragment = _fragment()
+    macros = [n for n in fragment["nodes"] if n.get("dbt_resource_type") == "macro"]
+    assert macros, "no macro nodes emitted"
+    assert all(n.get("dbt_macros") for n in macros), "every macro node lists its macros"
+    multi = [n for n in macros if len(n["dbt_macros"]) > 1]
+    for node in multi:
+        assert node["dbt_macros"] == sorted(node["dbt_macros"])
+        # Labelled by the file, not by an arbitrary one of its macros. That the stem
+        # sometimes coincides with a macro name (erp_union.sql defines erp_union) is the
+        # file being named after its principal macro, not the ambiguity being fixed.
+        assert node["label"] == Path(node["source_file"]).stem
+        assert node["dbt_unique_id"] is None, "one uid cannot stand for several macros"
+        assert len(node["dbt_unique_ids"]) == len(node["dbt_macros"])
+
+
+@needs_manifest
+def test_the_emission_order_is_a_property_of_the_content() -> None:
+    """The committed fragment is compared byte-for-byte against a fresh emission, so its
+    order must not depend on the order dbt happened to parse in. It did: `hyperedges` was
+    sorted and `nodes`/`edges` were not, so the artifact reproduced on the machine that
+    wrote it and nowhere else — the test was red on every laptop and green in CI, which
+    is the failure mode that gets a gate ignored rather than fixed.
+    """
+    fragment = _fragment()
+    for key in ("nodes", "edges"):
+        canonical = [json.dumps(r, sort_keys=True, ensure_ascii=False) for r in fragment[key]]
+        assert canonical == sorted(canonical), f"{key} are not in canonical order"
+    edges = [json.dumps(e, sort_keys=True, ensure_ascii=False) for e in fragment["edges"]]
+    assert len(edges) == len(set(edges)), "identical edges are emitted more than once"
