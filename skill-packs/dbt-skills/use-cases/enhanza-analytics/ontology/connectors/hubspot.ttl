@@ -22,30 +22,35 @@ hubspot:connector a conn:CRMConnector ;
 
 hubspot:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "HubSpot Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy hubspot:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 hubspot:Opportunitie a owl:Class ;
     rdfs:subClassOf crm:Opportunity ;
+    rdfs:label "HubSpot Opportunitie"@en ;
     conn:conformsTo crm:Opportunity ;
     conn:providedBy hubspot:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 hubspot:OpportunityRow a owl:Class ;
     rdfs:subClassOf crm:OpportunityLine ;
+    rdfs:label "HubSpot Opportunity Row"@en ;
     conn:conformsTo crm:OpportunityLine ;
     conn:providedBy hubspot:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 hubspot:Activitie a owl:Class ;
     rdfs:subClassOf crm:Activity ;
+    rdfs:label "HubSpot Activitie"@en ;
     conn:conformsTo crm:Activity ;
     conn:providedBy hubspot:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 hubspot:Appointment a owl:Class ;
     rdfs:subClassOf crm:Appointment ;
+    rdfs:label "HubSpot Appointment"@en ;
     conn:conformsTo crm:Appointment ;
     conn:providedBy hubspot:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .

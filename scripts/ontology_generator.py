@@ -474,6 +474,16 @@ def _local(concept: str) -> str:
     return name[:-1] if name.endswith("s") and not name.endswith("ss") else name
 
 
+def _words(local: str) -> str:
+    """`InvoiceRow` -> `Invoice Row`; the class name spelled the way core/*.ttl spells it.
+
+    A rendering of the identifier, not a lookup of the core class's label. Reading
+    `core/*.ttl` would need an RDF parser, and rdflib is optional here — so the generator
+    would acquire a dependency to restate a fact it already holds.
+    """
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", local)
+
+
 def _esc(text: str) -> str:
     return text.replace("\\", "\\\\").replace('"', '\\"')
 
@@ -530,9 +540,14 @@ def render_connector(spec: ConnectorSpec, cfg: Optional[OntologyConfig] = None) 
         if not core:
             unclassified.append(concept)
             continue
-        cls = f"{spec.key}:{_local(concept)}"
+        local = _local(concept)
+        cls = f"{spec.key}:{local}"
         lines.append(f"{cls} a owl:Class ;")
         lines.append(f"    rdfs:subClassOf {core} ;")
+        # Qualified by the connector, because these classes collide by design: ten
+        # connectors each declare an `Account`, and ten classes labelled "Account" tell a
+        # reader — or a BI picker — less than no label at all.
+        lines.append(f'    rdfs:label "{_esc(spec.name)} {_words(local)}"@en ;')
         lines.append(f"    conn:conformsTo {core} ;")
         lines.append(f"    conn:providedBy {spec.key}:connector ;")
         model = spec.models.get(concept)

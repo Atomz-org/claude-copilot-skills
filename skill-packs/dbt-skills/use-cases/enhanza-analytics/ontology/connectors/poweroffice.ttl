@@ -23,42 +23,49 @@ poweroffice:connector a conn:ERPConnector ;
 
 poweroffice:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "PowerOffice Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy poweroffice:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 poweroffice:Supplier a owl:Class ;
     rdfs:subClassOf erp:Supplier ;
+    rdfs:label "PowerOffice Supplier"@en ;
     conn:conformsTo erp:Supplier ;
     conn:providedBy poweroffice:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 poweroffice:Account a owl:Class ;
     rdfs:subClassOf erp:Account ;
+    rdfs:label "PowerOffice Account"@en ;
     conn:conformsTo erp:Account ;
     conn:providedBy poweroffice:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 poweroffice:Project a owl:Class ;
     rdfs:subClassOf erp:Project ;
+    rdfs:label "PowerOffice Project"@en ;
     conn:conformsTo erp:Project ;
     conn:providedBy poweroffice:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 poweroffice:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "PowerOffice Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy poweroffice:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 poweroffice:Invoice a owl:Class ;
     rdfs:subClassOf erp:Invoice ;
+    rdfs:label "PowerOffice Invoice"@en ;
     conn:conformsTo erp:Invoice ;
     conn:providedBy poweroffice:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 poweroffice:Voucher a owl:Class ;
     rdfs:subClassOf erp:Voucher ;
+    rdfs:label "PowerOffice Voucher"@en ;
     conn:conformsTo erp:Voucher ;
     conn:providedBy poweroffice:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .

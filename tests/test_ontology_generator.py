@@ -195,6 +195,45 @@ def test_local_class_name_is_singular_and_camel() -> None:
     assert og._local("dim_company") == "Company"
 
 
+def test_words_spells_a_camel_local_the_way_the_core_spells_it() -> None:
+    assert og._words("InvoiceRow") == "Invoice Row"
+    assert og._words("SupplierInvoiceAccrual") == "Supplier Invoice Accrual"
+    assert og._words("Account") == "Account"
+
+
+@needs_ontology
+def test_every_generated_class_carries_a_label_qualified_by_its_connector() -> None:
+    """Found by running an external OWL linter over the committed tree: 169 of 223 classes
+    had no `rdfs:label`, all of them generated. The core vocabulary labels every class.
+
+    Qualified by the connector because the collision is the design: ten connectors each
+    declare an `Account`, so ten classes labelled "Account" are not distinguishable by the
+    one property whose job is to distinguish them.
+    """
+    spec = og.ConnectorSpec(key="acme", name="Acme", kind="erp", status="implemented")
+    spec.concepts = ["fact_invoice_rows"]
+    turtle = og.render_connector(spec)
+    assert 'acme:InvoiceRow a owl:Class ;' in turtle
+    assert 'rdfs:label "Acme Invoice Row"@en ;' in turtle
+
+
+@needs_ontology
+@needs_rdflib
+def test_no_committed_class_is_unlabelled() -> None:
+    """The gate for the above, over the artifact rather than the renderer."""
+    from rdflib import Graph, RDF, RDFS
+    from rdflib.namespace import OWL
+
+    graph = Graph()
+    for path in sorted(ONTOLOGY.rglob("*.ttl")):
+        graph.parse(path, format="turtle")
+    unlabelled = [
+        str(c) for c in graph.subjects(RDF.type, OWL.Class)
+        if not list(graph.objects(c, RDFS.label))
+    ]
+    assert not unlabelled, f"{len(unlabelled)} classes carry no rdfs:label: {unlabelled[:5]}"
+
+
 # ---------------------------------------------------------------------------------------
 # Per-use-case configuration
 # ---------------------------------------------------------------------------------------
