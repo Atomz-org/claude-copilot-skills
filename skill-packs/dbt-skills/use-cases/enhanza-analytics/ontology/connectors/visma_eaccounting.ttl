@@ -23,6 +23,7 @@ visma_eaccounting:connector a conn:ERPConnector ;
 
 visma_eaccounting:Account a owl:Class ;
     rdfs:subClassOf erp:Account ;
+    rdfs:label "Visma eAccounting Account"@en ;
     conn:conformsTo erp:Account ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_dim_accounts" ;
@@ -31,6 +32,7 @@ visma_eaccounting:Account a owl:Class ;
 
 visma_eaccounting:Article a owl:Class ;
     rdfs:subClassOf erp:Article ;
+    rdfs:label "Visma eAccounting Article"@en ;
     conn:conformsTo erp:Article ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_dim_articles" ;
@@ -54,6 +56,7 @@ visma_eaccounting:Article-resourceNumber-Number a conn:Mapping ;
 
 visma_eaccounting:Company a owl:Class ;
     rdfs:subClassOf erp:Organisation ;
+    rdfs:label "Visma eAccounting Company"@en ;
     conn:conformsTo erp:Organisation ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_dim_company" ;
@@ -72,6 +75,7 @@ visma_eaccounting:Company-partyName-Name a conn:Mapping ;
 
 visma_eaccounting:CostCenter a owl:Class ;
     rdfs:subClassOf erp:CostCenter ;
+    rdfs:label "Visma eAccounting Cost Center"@en ;
     conn:conformsTo erp:CostCenter ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_dim_cost_centers" ;
@@ -80,6 +84,7 @@ visma_eaccounting:CostCenter a owl:Class ;
 
 visma_eaccounting:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Visma eAccounting Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_dim_customers" ;
@@ -88,6 +93,7 @@ visma_eaccounting:Customer a owl:Class ;
 
 visma_eaccounting:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "Visma eAccounting Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_dim_financial_years" ;
@@ -101,6 +107,7 @@ visma_eaccounting:FinancialYear-orgId-OrgId a conn:Mapping ;
 
 visma_eaccounting:Project a owl:Class ;
     rdfs:subClassOf erp:Project ;
+    rdfs:label "Visma eAccounting Project"@en ;
     conn:conformsTo erp:Project ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_dim_projects" ;
@@ -109,6 +116,7 @@ visma_eaccounting:Project a owl:Class ;
 
 visma_eaccounting:InvoiceRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Visma eAccounting Invoice Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_fact_invoice_rows" ;
@@ -127,6 +135,7 @@ visma_eaccounting:InvoiceRow-orgId-OrgId a conn:Mapping ;
 
 visma_eaccounting:Invoice a owl:Class ;
     rdfs:subClassOf erp:Invoice ;
+    rdfs:label "Visma eAccounting Invoice"@en ;
     conn:conformsTo erp:Invoice ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_fact_invoices" ;
@@ -135,6 +144,7 @@ visma_eaccounting:Invoice a owl:Class ;
 
 visma_eaccounting:Voucher a owl:Class ;
     rdfs:subClassOf erp:Voucher ;
+    rdfs:label "Visma eAccounting Voucher"@en ;
     conn:conformsTo erp:Voucher ;
     conn:providedBy visma_eaccounting:connector ;
     conn:dbtModel "visma_eaccounting_erp_bi_fact_vouchers" ;

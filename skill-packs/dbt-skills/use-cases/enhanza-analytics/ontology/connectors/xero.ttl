@@ -22,48 +22,56 @@ xero:connector a conn:ERPConnector ;
 
 xero:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Xero Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy xero:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 xero:Supplier a owl:Class ;
     rdfs:subClassOf erp:Supplier ;
+    rdfs:label "Xero Supplier"@en ;
     conn:conformsTo erp:Supplier ;
     conn:providedBy xero:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 xero:Account a owl:Class ;
     rdfs:subClassOf erp:Account ;
+    rdfs:label "Xero Account"@en ;
     conn:conformsTo erp:Account ;
     conn:providedBy xero:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 xero:Article a owl:Class ;
     rdfs:subClassOf erp:Article ;
+    rdfs:label "Xero Article"@en ;
     conn:conformsTo erp:Article ;
     conn:providedBy xero:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 xero:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "Xero Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy xero:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 xero:Invoice a owl:Class ;
     rdfs:subClassOf erp:Invoice ;
+    rdfs:label "Xero Invoice"@en ;
     conn:conformsTo erp:Invoice ;
     conn:providedBy xero:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 xero:InvoiceRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Xero Invoice Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy xero:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 xero:Voucher a owl:Class ;
     rdfs:subClassOf erp:Voucher ;
+    rdfs:label "Xero Voucher"@en ;
     conn:conformsTo erp:Voucher ;
     conn:providedBy xero:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
