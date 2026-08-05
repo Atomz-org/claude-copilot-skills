@@ -209,6 +209,10 @@ def test_every_generated_class_carries_a_label_qualified_by_its_connector() -> N
     Qualified by the connector because the collision is the design: ten connectors each
     declare an `Account`, so ten classes labelled "Account" are not distinguishable by the
     one property whose job is to distinguish them.
+
+    This is the renderer half. The gate over the committed artifact —
+    `test_no_committed_class_is_unlabelled` — lives in the stack layer that regenerates
+    `ontology/**/*.ttl`, because that is the first layer on which it can be true.
     """
     spec = og.ConnectorSpec(key="acme", name="Acme", kind="erp", status="implemented")
     spec.concepts = ["fact_invoice_rows"]
@@ -777,6 +781,14 @@ def test_fragment_concepts_agree_with_the_committed_index() -> None:
 def test_fragment_cli_never_rewrites_the_ontology(tmp_path: Path) -> None:
     """--graphify-fragment is a read of the generator, not a run of it: the ontology
     stage owns the files, this mode owns the graph."""
+@needs_manifest
+def test_fragment_cli_never_rewrites_the_ontology(tmp_path: Path) -> None:
+    """--graphify-fragment is a read of the generator, not a run of it: the ontology
+    stage owns the files, this mode owns the graph.
+
+    Needs the manifest for the same reason the mode itself does — an implemented
+    connector's topology without one asserts `implemented_by` with no `implements`
+    edges, so the generator exits 2 rather than emit it."""
     watched = sorted(ONTOLOGY.rglob("*.ttl")) + [ONTOLOGY / "index.json"]
     before = {p: p.read_bytes() for p in watched}
     out = tmp_path / "frag.json"
