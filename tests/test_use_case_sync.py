@@ -374,3 +374,87 @@ def test_every_use_case_reports_every_stage() -> None:
     for result in _payload(proc)["use_cases"]:
         names = {s["stage"] for s in result["stages"]}
         assert {"spec", "ontology", "index"} <= names, (result["use_case"], names)
+
+
+# ---------------------------------------------------------------------------------------
+# The graph stage's topology merge
+# ---------------------------------------------------------------------------------------
+#
+# stage_graph shells out to scripts under REPO, so a monkeypatched REPO makes it run stub
+# emitters from a throwaway tree — the same seam every other stage test uses, reaching the
+# real subprocess plumbing (arg passing, exit-code gating, output scraping) rather than a
+# mocked-out version of it.
+
+_DBT_STUB = (
+    "import json\n"
+    "print(json.dumps({'models': 3, 'edges': 5, 'coverage_pct': 100}))\n"
+    "print('merged: 10 nodes, 12 edges')\n"
+)
+_ONTO_STUB_OK = (
+    "print('merged: 11 nodes, 13 edges')\n"
+    "print('fragment: 7 nodes, 9 edges -> /somewhere/.graphify_ontology_topology.json')\n"
+)
+_ONTO_STUB_FAIL = (
+    "import sys\n"
+    "print('  registry has connector qbo with no row in connectors.yml', file=sys.stderr)\n"
+    "sys.exit(1)\n"
+)
+_ONTO_STUB_SENTINEL = (
+    "from pathlib import Path\n"
+    "Path(__file__).with_name('topology-ran.txt').write_text('x', encoding='utf-8')\n"
+    "print('fragment: 1 nodes, 0 edges -> /x.json')\n"
+)
+
+
+def _graph_stage_tree(tmp_path: Path, onto_stub: str) -> Path:
+    (tmp_path / "graphify-out").mkdir(parents=True)
+    (tmp_path / "graphify-out/graph.json").write_text("{}", encoding="utf-8")
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "dbt_manifest_to_graphify.py").write_text(_DBT_STUB, encoding="utf-8")
+    (scripts / "ontology_generator.py").write_text(onto_stub, encoding="utf-8")
+    use_case = tmp_path / "skill-packs/dbt-skills/use-cases/uc"
+    (use_case / "ontology").mkdir(parents=True)
+    (use_case / "ontology/connectors.yml").write_text("connectors: []\n", encoding="utf-8")
+    manifest = use_case / "dbt_project/target/manifest.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text("{}", encoding="utf-8")
+    return use_case
+
+
+def test_the_graph_stage_reports_the_topology_merge(monkeypatch, tmp_path: Path) -> None:
+    use_case = _graph_stage_tree(tmp_path, _ONTO_STUB_OK)
+    monkeypatch.setattr(sync, "REPO", tmp_path)
+    stage = sync.stage_graph(
+        use_case, use_case / "dbt_project/target/manifest.json", check=False
+    )
+    assert stage.status == sync.OK, stage.detail
+    assert "topology: 7 nodes, 9 edges" in stage.detail
+    assert ".graphify_ontology_topology.json" not in stage.detail, (
+        "the fragment path is trimmed from the report"
+    )
+
+
+def test_a_failing_topology_merge_fails_the_graph_stage(monkeypatch, tmp_path: Path) -> None:
+    """The refusal contract: a nonzero topology merge is a FAIL on this stage, with the
+    subprocess's last line named — never a green stage over a half-merged graph."""
+    use_case = _graph_stage_tree(tmp_path, _ONTO_STUB_FAIL)
+    monkeypatch.setattr(sync, "REPO", tmp_path)
+    stage = sync.stage_graph(
+        use_case, use_case / "dbt_project/target/manifest.json", check=False
+    )
+    assert stage.status == sync.FAIL
+    assert stage.detail.startswith("ontology topology:")
+    assert "connectors.yml" in stage.detail
+
+
+def test_a_dry_run_never_reaches_the_topology_merge(monkeypatch, tmp_path: Path) -> None:
+    """--check must write nothing, and the topology merge has no dry form — so under
+    check the stage stops at the dbt emitter's dry-run verdict."""
+    use_case = _graph_stage_tree(tmp_path, _ONTO_STUB_SENTINEL)
+    monkeypatch.setattr(sync, "REPO", tmp_path)
+    stage = sync.stage_graph(
+        use_case, use_case / "dbt_project/target/manifest.json", check=True
+    )
+    assert stage.status == sync.OK, stage.detail
+    assert not (tmp_path / "scripts/topology-ran.txt").exists()

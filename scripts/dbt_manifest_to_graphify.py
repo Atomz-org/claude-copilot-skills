@@ -109,6 +109,39 @@ def _rel(path: Path) -> str:
         return path.as_posix()
 
 
+def package_prefixes(man: Manifest, project_root: Path) -> Dict[str, str]:
+    """package_name -> path prefix inside the project.
+
+    `original_file_path` is relative to the node's *package* root, so a model in
+    packages/fortnox would otherwise claim `<project>/models/...` — a path that does not
+    exist — and its graph node id would collide with a root model of the same relative
+    path. First-party packages are the ones with a dbt_project.yml under packages/;
+    dbt_packages/ (installed symlinks) is deliberately not scanned, or every package file
+    would appear twice.
+
+    Module-level because `scripts/ontology_generator.py` resolves adapter-model paths
+    through this same map when it emits the topology fragment — a restated copy there is
+    how the two fragments would drift to different node ids for one model.
+    """
+    prefixes: Dict[str, str] = {man.project_name: ""}
+    for pkg_yml in sorted(project_root.glob("packages/*/dbt_project.yml")):
+        match = re.search(
+            r"^name:\s*['\"]?([A-Za-z0-9_]+)", pkg_yml.read_text(encoding="utf-8"), re.MULTILINE
+        )
+        if match:
+            prefixes[match.group(1)] = f"packages/{pkg_yml.parent.name}"
+    return prefixes
+
+
+def model_source_file(
+    node: Dict[str, Any], man: Manifest, project_rel: str, prefixes: Dict[str, str]
+) -> str:
+    """The repo-relative path a manifest node's file actually has on disk."""
+    prefix = prefixes.get(node.get("package_name") or man.project_name, "")
+    base = f"{project_rel}/{prefix}".rstrip("/")
+    return f"{base}/{node.get('original_file_path', '')}".rstrip("/")
+
+
 def project_root_of(manifest_path: Path) -> Path:
     """The dbt project directory a manifest belongs to; absence is fatal here.
 
@@ -291,24 +324,10 @@ def build_fragment(
     seen: Dict[str, str] = {}  # unique_id -> graphify node id
     by_connector: Dict[str, List[str]] = {}
 
-    # package_name -> path prefix inside the project. `original_file_path` is relative to
-    # the node's *package* root, so a model in packages/fortnox would otherwise claim
-    # `<project>/models/...` — a path that does not exist — and its graph node id would
-    # collide with a root model of the same relative path. First-party packages are the
-    # ones with a dbt_project.yml under packages/; dbt_packages/ (installed symlinks) is
-    # deliberately not scanned, or every package file would appear twice.
-    pkg_prefix: Dict[str, str] = {man.project_name: ""}
-    for pkg_yml in sorted(project_root.glob("packages/*/dbt_project.yml")):
-        match = re.search(
-            r"^name:\s*['\"]?([A-Za-z0-9_]+)", pkg_yml.read_text(encoding="utf-8"), re.MULTILINE
-        )
-        if match:
-            pkg_prefix[match.group(1)] = f"packages/{pkg_yml.parent.name}"
+    pkg_prefix = package_prefixes(man, project_root)
 
     def file_path_of(node: Dict[str, Any]) -> str:
-        prefix = pkg_prefix.get(node.get("package_name") or man.project_name, "")
-        base = f"{project_rel}/{prefix}".rstrip("/")
-        return f"{base}/{node.get('original_file_path', '')}".rstrip("/")
+        return model_source_file(node, man, project_rel, pkg_prefix)
 
     # ---- models, snapshots, seeds, exposures, metrics ---------------------------------
     for uid, node in man.all_nodes().items():
