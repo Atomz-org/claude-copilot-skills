@@ -106,7 +106,7 @@ Why a projection exists at all: the eventual consumer is a server answering one 
 call, and every competency question above is a lookup in a list of like-shaped records.
 Answering them from Turtle means shipping an RDF parser and a query engine to do what a dict
 does directly — and `rdflib` is optional in this repository, so a server built on it would
-fail to start wherever the parser is absent. Four uniform record lists also serialise
+fail to start wherever the parser is absent. Five uniform record lists also serialise
 straight to TOON, which is what carries them into a model's context.
 
 It is deliberately **not** JSON-LD. A `@context` covering these keys honestly would have to

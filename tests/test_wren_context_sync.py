@@ -468,6 +468,78 @@ def test_empty_artifacts_produce_no_enrichment_file() -> None:
     assert wcs.contracts_markdown({"contracts": []}, "toy") is None
     assert wcs.drift_markdown({"drift": []}, "toy") is None
     assert wcs.metrics_markdown(Manifest({}, "m"), "toy") is None
+    assert wcs.semantics_markdown({"columns": []}, "toy") is None
+    assert wcs.pii_markdown({"columns": []}, "toy") is None
+
+
+ANNOTATIONS = {
+    "provenance": {"unannotated": 7},
+    "columns": [
+        {"column": "SalesValue", "role": "measure", "additivity": "additive",
+         "unit": "currency", "pii": "none", "definition": "Line total after discounts.",
+         "domain": None, "concepts": ["fct_invoices"], "connectors": ["fortnox"],
+         "carried_by_count": 1},
+        {"column": "Price", "role": "measure", "additivity": "non_additive",
+         "unit": "currency", "pii": "none", "definition": "Price from the price list.",
+         "domain": None, "concepts": ["dim_articles"], "connectors": ["fortnox"],
+         "carried_by_count": 1},
+        {"column": "QuantityInStock", "role": "measure", "additivity": "semi_additive",
+         "unit": "quantity", "pii": "none", "definition": "Current amount in stock.",
+         "domain": None, "concepts": ["dim_articles"], "connectors": ["fortnox"],
+         "carried_by_count": 1},
+        {"column": "Email", "role": "text", "additivity": None, "unit": None,
+         "pii": "direct", "definition": "Customer email.", "domain": None,
+         "concepts": ["dim_customers"], "connectors": ["fortnox", "shopify"],
+         "carried_by_count": 2},
+        {"column": "FinancialStatus", "role": "dimension", "additivity": None,
+         "unit": None, "pii": "none", "definition": "Payment state.",
+         "domain": {"closed": True, "values": ["paid", "pending"],
+                    "source": "Shopify Admin API"},
+         "concepts": ["fct_orders"], "connectors": ["shopify"], "carried_by_count": 1},
+    ],
+}
+
+
+def test_the_aggregation_contract_leads_with_what_must_not_be_summed() -> None:
+    """The prohibitions are the part an agent cannot infer. `Price` and `QuantityInStock`
+    both look summable from the name, and both produce a plausible wrong number."""
+    md = wcs.semantics_markdown(ANNOTATIONS, "toy")
+    assert md is not None
+    never, across_time = md.index("## Never SUM these"), md.index("## Never SUM these across time")
+    assert never < across_time < md.index("## Additive measures")
+    assert md.index("**Price**") < across_time, "non-additive belongs to the first list"
+    assert across_time < md.index("**QuantityInStock**") < md.index("## Additive measures")
+    assert "`SalesValue`" in md.split("## Additive measures")[1]
+
+
+def test_the_aggregation_contract_states_what_it_does_not_cover() -> None:
+    """183 of this project's columns are unannotated. A file that lists 89 and says nothing
+    about the rest reads as complete, and an agent then assumes defaults for the others."""
+    md = wcs.semantics_markdown(ANNOTATIONS, "toy")
+    assert "7 further conformed column(s) are not annotated" in md
+    assert "unknown rather than assuming defaults" in md
+
+
+def test_a_closed_domain_reaches_wren_with_its_source() -> None:
+    md = wcs.semantics_markdown(ANNOTATIONS, "toy")
+    assert "`paid`" in md and "`pending`" in md
+    assert "Shopify Admin API" in md, "an enum without its source is one somebody invented"
+
+
+def test_pii_is_grouped_by_class_because_the_remedies_differ() -> None:
+    md = wcs.pii_markdown(ANNOTATIONS, "toy")
+    assert md is not None and "## Direct identifiers" in md
+    assert "**Email**" in md and "fortnox, shopify" in md
+    assert "hash or drop it" in md
+    assert "## Quasi identifiers" not in md, "no quasi columns here — no empty section"
+
+
+def test_column_contracts_points_at_the_meaning_it_does_not_carry() -> None:
+    """Two files, one job each: which columns exist, and what they mean."""
+    md = wcs.contracts_markdown(
+        {"contracts": [{"concept": "dim_articles", "conformed": ["Price"], "adapters": {}}]},
+        "toy")
+    assert "column-semantics.md" in md and "pii.md" in md
 
 
 def test_enrichment_files_carry_the_generated_header() -> None:

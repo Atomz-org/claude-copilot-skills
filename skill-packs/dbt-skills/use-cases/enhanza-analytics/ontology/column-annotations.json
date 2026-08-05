@@ -1,0 +1,1984 @@
+{
+  "use_case": "enhanza-analytics",
+  "generated_by": "scripts/column_annotations.py",
+  "normative_source": "ontology/annotations.yml; the conformed columns come from ontology/column-memory.json",
+  "facets": {
+    "role": [
+      "identifier",
+      "measure",
+      "dimension",
+      "timestamp",
+      "flag",
+      "text"
+    ],
+    "additivity": [
+      "additive",
+      "semi_additive",
+      "non_additive"
+    ],
+    "pii": [
+      "none",
+      "direct",
+      "quasi",
+      "indirect"
+    ],
+    "unit": [
+      "currency",
+      "count",
+      "quantity",
+      "percent",
+      "duration",
+      "date",
+      "none"
+    ]
+  },
+  "provenance": {
+    "conformed_columns": 272,
+    "annotated": 89,
+    "unannotated": 183,
+    "by_role": {
+      "dimension": 20,
+      "flag": 4,
+      "identifier": 30,
+      "measure": 17,
+      "text": 8,
+      "timestamp": 10
+    },
+    "pii_columns": 5,
+    "closed_domains": 0
+  },
+  "columns": [
+    {
+      "column": "Account",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "BAS account number, consists of four digits, e.g. 1234, and the name of the account in the chart of accounts",
+      "domain": null,
+      "concepts": [
+        "fact_budgets",
+        "fact_supplier_invoice_rows",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox",
+        "visma_economic"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "AccountClass",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "BAS account class defined by first account digit",
+      "domain": null,
+      "concepts": [
+        "dim_accounts",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox",
+        "visma_economic"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "AccountClassId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "First account digit, e.g., 1xxx",
+      "domain": null,
+      "concepts": [
+        "dim_accounts"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "AccountId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Unique Account identifier used as a primary key",
+      "domain": null,
+      "concepts": [
+        "dim_accounts",
+        "fact_budgets",
+        "fact_order_rows",
+        "fact_salary_transactions",
+        "fact_supplier_invoice_rows",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify",
+        "visma_economic"
+      ],
+      "carried_by_count": 4
+    },
+    {
+      "column": "AccountName",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "The name of the account in the chart of accounts",
+      "domain": null,
+      "concepts": [
+        "dim_accounts"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "AccountNumber",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "BAS account number, consists of four digits, e.g. 1234",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_rows"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 4
+    },
+    {
+      "column": "Active",
+      "role": "flag",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Whether the article in Fortnox is marked as active or inactive",
+      "domain": null,
+      "concepts": [
+        "dim_articles"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "shopify",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "AdditionalPhone",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "direct",
+      "definition": "Phone2 field in Fortnox",
+      "domain": null,
+      "concepts": [
+        "dim_customers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "Address",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "quasi",
+      "definition": "Address1 field in Fortnox",
+      "domain": null,
+      "concepts": [
+        "dim_customers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "Amount",
+      "role": "measure",
+      "additivity": "additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Profit & Loss: Aggregation of Credit and Debit",
+      "domain": null,
+      "concepts": [
+        "fact_budgets",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "AmountPerUnit",
+      "role": "measure",
+      "additivity": "non_additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Salary: Price per unit (day, hour etc.)",
+      "domain": null,
+      "concepts": [
+        "fact_salary_transactions"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "ArticleId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Unique Article identifier used as a primary key",
+      "domain": null,
+      "concepts": [
+        "dim_articles",
+        "fact_incoming_goods",
+        "fact_order_rows",
+        "fact_purchase_orders",
+        "fact_stockbalance",
+        "fact_stocktakings",
+        "fact_supplier_invoice_rows"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "seventime",
+        "shopify",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 7
+    },
+    {
+      "column": "ArticleName",
+      "role": "text",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Description of the article (including its number)",
+      "domain": null,
+      "concepts": [
+        "dim_articles"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "shopify",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "ArticleNumber",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "The article number indicated on the line where applicable",
+      "domain": null,
+      "concepts": [
+        "dim_articles",
+        "fact_incoming_goods",
+        "fact_invoice_rows",
+        "fact_order_rows",
+        "fact_purchase_orders",
+        "fact_supplier_invoice_rows"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "seventime",
+        "shopify",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 7
+    },
+    {
+      "column": "Balance",
+      "role": "measure",
+      "additivity": "semi_additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Calculated field from difference between Credit and Debit",
+      "domain": null,
+      "concepts": [
+        "fact_invoices",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox",
+        "visma_economic"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "BalanceBroughtForward",
+      "role": "measure",
+      "additivity": "semi_additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Balance sheet at the beginning of the financial year",
+      "domain": null,
+      "concepts": [
+        "dim_accounts"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "BalanceCarriedForward",
+      "role": "measure",
+      "additivity": "semi_additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Final current balance for the financial year",
+      "domain": null,
+      "concepts": [
+        "dim_accounts"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "BudgetDate",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "Month is represented by its last calendar day",
+      "domain": null,
+      "concepts": [
+        "fact_budgets"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "CauseCode",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Absence/attendance: standard abbreviation of absence/attendance reason",
+      "domain": null,
+      "concepts": [
+        "fact_absence_transactions",
+        "fact_attendance_transactions"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "CauseCodeName",
+      "role": "text",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Absence/attendance: detailed explanation of absence/attendance reason",
+      "domain": null,
+      "concepts": [
+        "fact_absence_transactions",
+        "fact_attendance_transactions"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "Comments",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Salary: Comments to the salary transactions if any",
+      "domain": null,
+      "concepts": [
+        "dim_customers",
+        "dim_projects",
+        "fact_invoices",
+        "fact_offers",
+        "fact_orders",
+        "fact_salary_transactions"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify",
+        "tripletex",
+        "xledger"
+      ],
+      "carried_by_count": 4
+    },
+    {
+      "column": "ContributionValue",
+      "role": "measure",
+      "additivity": "additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Sold value minus estimated price of the item. The item row value is used",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_rows",
+        "fact_invoices",
+        "fact_offers",
+        "fact_order_rows",
+        "fact_orders"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "seventime",
+        "shopify",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "CostCenterId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Foreign key to dim_cost_centers",
+      "domain": null,
+      "concepts": [
+        "dim_accounts",
+        "dim_cost_centers",
+        "dim_customers",
+        "dim_suppliers",
+        "fact_absence_transactions",
+        "fact_attendance_transactions",
+        "fact_budgets",
+        "fact_employee_wages",
+        "fact_incoming_goods",
+        "fact_invoices",
+        "fact_offers",
+        "fact_order_rows",
+        "fact_purchase_orders",
+        "fact_salary_transactions",
+        "fact_stocktakings",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify",
+        "visma_economic"
+      ],
+      "carried_by_count": 4
+    },
+    {
+      "column": "Country",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Customer and Supplier's address, country",
+      "domain": null,
+      "concepts": [
+        "dim_customers",
+        "dim_suppliers",
+        "fact_invoices",
+        "fact_offers",
+        "fact_orders"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "Currency",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Original transaction currency used in Fortnox",
+      "domain": null,
+      "concepts": [
+        "dim_suppliers",
+        "fact_invoice_payments",
+        "fact_invoices",
+        "fact_offers",
+        "fact_order_rows",
+        "fact_orders",
+        "fact_purchase_orders",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "CurrencyRate",
+      "role": "measure",
+      "additivity": "non_additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Exchange rate from Fortnox, used to convert all values to SEK",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_payments",
+        "fact_invoices",
+        "fact_offers",
+        "fact_orders",
+        "fact_supplier_invoice_rows"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "CustomerId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Unique identifyer of a customer in your workspace",
+      "domain": null,
+      "concepts": [
+        "dim_customers",
+        "fact_invoice_payments",
+        "fact_invoices",
+        "fact_offers",
+        "fact_order_rows",
+        "fact_orders",
+        "fact_purchase_orders",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify",
+        "visma_economic"
+      ],
+      "carried_by_count": 4
+    },
+    {
+      "column": "Date",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "Transaction date, i.e. 2024-03-25",
+      "domain": null,
+      "concepts": [
+        "fact_absence_transactions",
+        "fact_attendance_transactions",
+        "fact_salary_transactions",
+        "fact_stockbalance",
+        "fact_stocktakings"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "DefaultDeliveryType",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Customer's default invoice delivery type",
+      "domain": null,
+      "concepts": [
+        "dim_customers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "DefaultTemplate",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Customer's default invoice template",
+      "domain": null,
+      "concepts": [
+        "dim_customers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "Description",
+      "role": "text",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Text description of the asset type",
+      "domain": null,
+      "concepts": [
+        "dim_cost_centers",
+        "dim_projects",
+        "fact_order_rows",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify",
+        "tripletex",
+        "visma_economic",
+        "xledger"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "DocumentType",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Based on document the file is linked to",
+      "domain": null,
+      "concepts": [
+        "fact_time_reporting_registrations"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "tempo"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "DueDate",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "Date on which the document is due",
+      "domain": null,
+      "concepts": [
+        "fact_invoices",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "Email",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "direct",
+      "definition": "Customer email. Nullable — Shopify permits phone-only customers.",
+      "domain": null,
+      "concepts": [
+        "dim_customers",
+        "dim_suppliers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "EmployeeId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Unique employee identifier in your workspace",
+      "domain": null,
+      "concepts": [
+        "fact_absence_transactions",
+        "fact_attendance_transactions",
+        "fact_employee_wages",
+        "fact_salary_transactions"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "FileName",
+      "role": "text",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Name of the file in the system",
+      "domain": null,
+      "concepts": [
+        "dim_supplier_invoice_files"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "FinalPayDate",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "Final payment deadline for the document",
+      "domain": null,
+      "concepts": [
+        "fact_invoices",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "FinancialYearId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Foreign key to dim_financial_years",
+      "domain": null,
+      "concepts": [
+        "dim_accounts",
+        "dim_financial_years",
+        "fact_budgets",
+        "fact_invoices",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "tripletex",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic",
+        "xledger"
+      ],
+      "carried_by_count": 7
+    },
+    {
+      "column": "FirstInvoiceDate",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "The earliest invoice date for the customer / supplier available in your synced data",
+      "domain": null,
+      "concepts": [
+        "dim_customers",
+        "dim_suppliers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "InvoiceDate",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "Date the document is issued",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_rows",
+        "fact_invoices",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 4
+    },
+    {
+      "column": "InvoiceNo",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Document number",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_payments",
+        "fact_invoice_rows",
+        "fact_invoices"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 4
+    },
+    {
+      "column": "InvoiceReference",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "0 if no invoice is created for this order yet",
+      "domain": null,
+      "concepts": [
+        "fact_offers",
+        "fact_order_rows",
+        "fact_orders"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "InvoiceType",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "'Sales' for Customer invoices, 'Supplier' for Supplier invoices",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_rows"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 4
+    },
+    {
+      "column": "IsDue",
+      "role": "flag",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "TRUE if invoice balance is not 0 and due date has already passed",
+      "domain": null,
+      "concepts": [
+        "fact_invoices"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "Labels",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels",
+      "domain": null,
+      "concepts": [
+        "fact_invoices",
+        "fact_offers",
+        "fact_orders"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "MainAccount",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "BAS main account defined by first two account digits",
+      "domain": null,
+      "concepts": [
+        "dim_accounts"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "MainAccountId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "First two digits, e.g., 12xx",
+      "domain": null,
+      "concepts": [
+        "dim_accounts"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "Name",
+      "role": "text",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Full customer/supplier name and number",
+      "domain": null,
+      "concepts": [
+        "dim_customers",
+        "dim_stockpoints",
+        "dim_suppliers",
+        "fact_stocktakings"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "Net",
+      "role": "measure",
+      "additivity": "additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Sales value of delivered items excluding VAT",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_payments",
+        "fact_invoices",
+        "fact_offers",
+        "fact_orders"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "Note",
+      "role": "text",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Short note made on article",
+      "domain": null,
+      "concepts": [
+        "dim_cost_centers"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "Number",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "BAS account number, consists of four digits, e.g., 1234",
+      "domain": null,
+      "concepts": [
+        "dim_accounts",
+        "fact_invoice_payments"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "NumberOfUnits",
+      "role": "measure",
+      "additivity": "additive",
+      "unit": "quantity",
+      "pii": "none",
+      "definition": "Salary: Number of days, hours etc. the employee is paid for",
+      "domain": null,
+      "concepts": [
+        "fact_salary_transactions"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "OrderDate",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "Order creation date, from `created_at`.",
+      "domain": null,
+      "concepts": [
+        "fact_order_rows",
+        "fact_orders"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "OrderId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Shopify order id. Primary key.",
+      "domain": null,
+      "concepts": [
+        "fact_order_rows",
+        "fact_orders"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "OrderReference",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "0 if no order is created for this offer yet",
+      "domain": null,
+      "concepts": [
+        "fact_invoices",
+        "fact_offers"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "OrderedQuantity",
+      "role": "measure",
+      "additivity": "additive",
+      "unit": "quantity",
+      "pii": "none",
+      "definition": "Line quantity ordered.",
+      "domain": null,
+      "concepts": [
+        "fact_order_rows"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "OrderedValue",
+      "role": "measure",
+      "additivity": "additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Potential NET value in SEK, discounts applied of the total ordered quantity",
+      "domain": null,
+      "concepts": [
+        "fact_order_rows"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "OrgId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Unique identifier of your organisation that can be found in the Enhanza app",
+      "domain": null,
+      "concepts": [
+        "dim_company",
+        "dim_financial_years",
+        "dim_supplier_invoice_files",
+        "fact_absence_transactions",
+        "fact_attendance_transactions",
+        "fact_budgets",
+        "fact_employee_wages",
+        "fact_incoming_goods",
+        "fact_invoice_payments",
+        "fact_invoice_rows",
+        "fact_invoices",
+        "fact_offers",
+        "fact_order_rows",
+        "fact_orders",
+        "fact_purchase_orders",
+        "fact_salary_transactions",
+        "fact_stockbalance",
+        "fact_stocktakings",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "seventime",
+        "shopify",
+        "tripletex",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic",
+        "xledger"
+      ],
+      "carried_by_count": 9
+    },
+    {
+      "column": "OrgName",
+      "role": "text",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Your company(s) in Fortnox",
+      "domain": null,
+      "concepts": [
+        "dim_company"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "tripletex",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "OrganisationNumber",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Organisation ID of your company(s) used as a primary key",
+      "domain": null,
+      "concepts": [
+        "dim_customers",
+        "dim_suppliers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "Price",
+      "role": "measure",
+      "additivity": "non_additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Price from Price list",
+      "domain": null,
+      "concepts": [
+        "fact_supplier_invoice_rows"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "PriceAfterDiscount",
+      "role": "measure",
+      "additivity": "non_additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "NET price in SEK after all discounts applied",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_rows",
+        "fact_order_rows"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "seventime",
+        "shopify",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "PriceListId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Customer's default price list ID, no relationship since it's a deprecated dimension",
+      "domain": null,
+      "concepts": [
+        "dim_customers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "ProjectId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Foreign key to dim_projects",
+      "domain": null,
+      "concepts": [
+        "dim_accounts",
+        "dim_customers",
+        "dim_projects",
+        "dim_suppliers",
+        "fact_absence_transactions",
+        "fact_attendance_transactions",
+        "fact_employee_wages",
+        "fact_incoming_goods",
+        "fact_invoices",
+        "fact_offers",
+        "fact_order_rows",
+        "fact_purchase_orders",
+        "fact_salary_transactions",
+        "fact_stocktakings",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify",
+        "tripletex",
+        "visma_economic",
+        "xledger"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "PurchasePrice",
+      "role": "measure",
+      "additivity": "non_additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "Estimated price of the item. The value of the item line is used",
+      "domain": null,
+      "concepts": [
+        "dim_articles"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "shopify",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "Quantity",
+      "role": "measure",
+      "additivity": "additive",
+      "unit": "quantity",
+      "pii": "none",
+      "definition": "The number of items invoiced/ordered",
+      "domain": null,
+      "concepts": [
+        "fact_supplier_invoice_rows"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "QuantityInStock",
+      "role": "measure",
+      "additivity": "semi_additive",
+      "unit": "quantity",
+      "pii": "none",
+      "definition": "Current amount in stock from fortnox_bi.fact_stockbalance",
+      "domain": null,
+      "concepts": [
+        "dim_articles"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "shopify",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "RecipientEmail",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "direct",
+      "definition": "Additional email details, EmailAddressTo",
+      "domain": null,
+      "concepts": [
+        "fact_invoices",
+        "fact_offers",
+        "fact_orders"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "RecipientPhone",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "direct",
+      "definition": "Phone1 field in Fortnox",
+      "domain": null,
+      "concepts": [
+        "fact_invoices",
+        "fact_offers",
+        "fact_orders"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "ReferenceNumber",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Associated transaction document number",
+      "domain": null,
+      "concepts": [
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox",
+        "visma_economic"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "ReferenceType",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Type of associated transaction, e.g. Invoice payment, Supplier invoice etc.",
+      "domain": null,
+      "concepts": [
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox",
+        "visma_economic"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "SalaryCode",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Salary: Standard unique slary type identifier",
+      "domain": null,
+      "concepts": [
+        "fact_salary_transactions"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "SalesValue",
+      "role": "measure",
+      "additivity": "additive",
+      "unit": "currency",
+      "pii": "none",
+      "definition": "The total value of the selected document type line in SEK after discounts",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_rows",
+        "fact_order_rows"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "seventime",
+        "shopify",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "StartTime",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "Date and time the work/absence started",
+      "domain": null,
+      "concepts": [
+        "fact_time_reporting_registrations"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "tempo"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "StockPointId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Unique warehouse (stock point) identifyier for youe workspace",
+      "domain": null,
+      "concepts": [
+        "dim_stockpoints",
+        "fact_orders",
+        "fact_stockbalance",
+        "fact_stocktakings"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "SubAccount",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "BAS sub-account defined by first three account digits",
+      "domain": null,
+      "concepts": [
+        "dim_accounts"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "SubAccountId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "First three digits, e.g., 123x",
+      "domain": null,
+      "concepts": [
+        "dim_accounts"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "SupplierId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Unique Supplier identifier used as a primary key",
+      "domain": null,
+      "concepts": [
+        "dim_suppliers",
+        "fact_incoming_goods",
+        "fact_purchase_orders",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox",
+        "visma_economic"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "SupplierInvoiceNo",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "GivenNumber field in Fortnox",
+      "domain": null,
+      "concepts": [
+        "dim_supplier_invoice_files",
+        "fact_supplier_invoice_rows",
+        "fact_supplier_invoices"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "SupplierName",
+      "role": "text",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Supplier name (and number)",
+      "domain": null,
+      "concepts": [
+        "dim_articles"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "shopify",
+        "upsales",
+        "visma_eaccounting",
+        "visma_economic"
+      ],
+      "carried_by_count": 6
+    },
+    {
+      "column": "TemplateReference",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Address2 field in Fortnox",
+      "domain": null,
+      "concepts": [
+        "dim_customers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "TransactionDate",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "Transaction Date",
+      "domain": null,
+      "concepts": [
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox",
+        "visma_economic"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "UserId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Unique identifier of ERP user who registered the transaction",
+      "domain": null,
+      "concepts": [
+        "fact_time_reporting_registrations"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "tempo"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "UserNo",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "UserId available in Fortnox UI only",
+      "domain": null,
+      "concepts": [
+        "fact_time_reporting_registrations"
+      ],
+      "connectors": [
+        "fortnox",
+        "seventime",
+        "tempo"
+      ],
+      "carried_by_count": 3
+    },
+    {
+      "column": "VoucherSeriesId",
+      "role": "identifier",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Unique voucher series identifyer based on financial year",
+      "domain": null,
+      "concepts": [
+        "fact_invoice_payments",
+        "fact_vouchers"
+      ],
+      "connectors": [
+        "fortnox",
+        "visma_economic"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "WageChangeDate",
+      "role": "timestamp",
+      "additivity": null,
+      "unit": "date",
+      "pii": "none",
+      "definition": "Date on which this payment amount came into force",
+      "domain": null,
+      "concepts": [
+        "fact_employee_wages"
+      ],
+      "connectors": [
+        "fortnox"
+      ],
+      "carried_by_count": 1
+    },
+    {
+      "column": "Website",
+      "role": "dimension",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "WWW field in Fortnox",
+      "domain": null,
+      "concepts": [
+        "dim_customers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "isActive",
+      "role": "flag",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "Indicates whether the article is currently active",
+      "domain": null,
+      "concepts": [
+        "dim_customers",
+        "dim_stockpoints",
+        "dim_suppliers"
+      ],
+      "connectors": [
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 2
+    },
+    {
+      "column": "isVATIncluded",
+      "role": "flag",
+      "additivity": null,
+      "unit": null,
+      "pii": "none",
+      "definition": "TRUE is VAT is originally included in article price. Already used in calculations",
+      "domain": null,
+      "concepts": [
+        "fact_order_rows"
+      ],
+      "connectors": [
+        "favrit",
+        "fortnox",
+        "shopify"
+      ],
+      "carried_by_count": 3
+    }
+  ],
+  "unannotated": [
+    "AccountIdVoucher",
+    "Address1",
+    "Address2",
+    "AdministrationFee",
+    "AvailableStock",
+    "ChargeHours",
+    "City",
+    "Code",
+    "ContactPerson",
+    "ContractReference",
+    "ContributionPercent",
+    "CopyRemarks",
+    "CostCenterIdERP",
+    "CountryCode",
+    "CreditInvoiceReference",
+    "CustomerNumber",
+    "DefaultVATType",
+    "DeliveredQuantity",
+    "DeliveryAddress",
+    "DeliveryAddress1",
+    "DeliveryAddress2",
+    "DeliveryCity",
+    "DeliveryCountry",
+    "DeliveryCountryCode",
+    "DeliveryDate",
+    "DeliveryFax",
+    "DeliveryName",
+    "DeliveryPhone",
+    "DeliveryPhone1",
+    "DeliveryPhone2",
+    "DeliveryState",
+    "DeliveryZipCode",
+    "DescriptionRows",
+    "DisablePaymentFile",
+    "Discount",
+    "DiscountType",
+    "DocumentId",
+    "DueStatus",
+    "EmailInvoice",
+    "EndDate",
+    "ExpenseDetails",
+    "ExpenseId",
+    "ExpireDate",
+    "Extent",
+    "ExternalInvoiceReference1",
+    "ExternalInvoiceReference2",
+    "Fax",
+    "FileURL",
+    "FinancialYear",
+    "Freight",
+    "FromDate",
+    "FyCounter",
+    "Gross",
+    "HourlyPayAtDate",
+    "Hours",
+    "HouseWork",
+    "Id",
+    "IdString",
+    "InStock",
+    "InvoiceDiscount",
+    "InvoiceId",
+    "InvoiceNumber",
+    "InvoiceOCR",
+    "InvoicePeriodEnd",
+    "InvoicePeriodStart",
+    "InvoiceRemark",
+    "IsActive",
+    "IsUsingStockPoints",
+    "IsVoided",
+    "IssueCategory1",
+    "ItemId",
+    "LabelId",
+    "LastInvoiceDate",
+    "LastRemindDate",
+    "Manufacturer",
+    "ModeOfPayment",
+    "ModeOfPaymentAccountId",
+    "MonthlySalaryAtDate",
+    "NetOriginalCurrency",
+    "NotCompleted",
+    "OfferDate",
+    "OfferId",
+    "OfferNo",
+    "OfferReference",
+    "OrderNo",
+    "OrderNum",
+    "OrderType",
+    "OurReference",
+    "OutboundDate",
+    "PaymentDate",
+    "Phone",
+    "PreDefinedAccount",
+    "PriceBeforeDiscount",
+    "PriceList",
+    "ProjectIdERP",
+    "ProjectLeader",
+    "ProjectNumber",
+    "RegistrationCodeId",
+    "RegistrationCodeName",
+    "RegistrationCodeType",
+    "Remarks",
+    "Reminders",
+    "ResponsiblePerson",
+    "RoundOff",
+    "Sent",
+    "Source",
+    "Startdate",
+    "Status",
+    "StockGoods",
+    "StockPointCode",
+    "StockTakenQuantity",
+    "StockTakingId",
+    "StopTime",
+    "SupplierInvoiceId",
+    "SupplierNumber",
+    "TaxReduction",
+    "TermsOfDelivery",
+    "TermsOfPayment",
+    "ToDate",
+    "Total",
+    "TotalQuantityInStock",
+    "TotalToPay",
+    "TotalVAT",
+    "TransactionInformation",
+    "Type",
+    "Unit",
+    "UnitCost",
+    "UnitPrice",
+    "UserName",
+    "VAT",
+    "VATCode",
+    "VATNumber",
+    "Vat",
+    "VisitingAddress",
+    "VisitingCity",
+    "VisitingCountry",
+    "VoucherId",
+    "VoucherNumber",
+    "VoucherSeries",
+    "WayOfDelivery",
+    "WorkedDate",
+    "WorkedHours",
+    "YourOrderNumber",
+    "YourReference",
+    "ZipCode",
+    "backOrderQuantity",
+    "batch",
+    "completed",
+    "currencyRate",
+    "date",
+    "deliveryDate",
+    "directCost",
+    "hasCopyRemarks",
+    "id",
+    "invoicedQuantity",
+    "isBooked",
+    "isCredit",
+    "isHolidayEntitling",
+    "isManuallyCompleted",
+    "isStockItem",
+    "isUsingCompanyAddress",
+    "isWarehouseReady",
+    "itemUnit",
+    "messageToSupplier",
+    "nonInvoiceable",
+    "note",
+    "orderDate",
+    "orderRowValue",
+    "orderRowValueSek",
+    "orderedQuantity",
+    "ourReference",
+    "price",
+    "purchaseOrderId",
+    "purchaseOrderState",
+    "purchaseType",
+    "receivedQuantity",
+    "released",
+    "remainingOrderedQuantity",
+    "responseState",
+    "stockPointId",
+    "takenQuantity",
+    "voided",
+    "yourReference"
+  ]
+}
