@@ -481,3 +481,29 @@ def test_a_gap_is_a_concept_this_domain_asked_for(tmp_path, monkeypatch) -> None
         "the shared vocabulary is reported as a capped sample, never dumped"
     )
     assert "dim_customers" not in unused["sample"], "a mapped concept is not unused"
+
+
+def test_a_column_on_most_tables_is_a_partition_key_not_an_entity_key() -> None:
+    """`OrgId` is on 81 of this project's 112 declaring tables and the next-most-common is
+    on 20, so it is the tenant discriminator. Adding qualified join-key reads to the source
+    contracts put it on enough customer tables to outrank `CustomerNumber`, which is the
+    wrong answer for "what identifies a customer" — the same reason a bare `Id` is excluded.
+    It stays a candidate, because it is genuinely part of the grain; it ranks last."""
+    project = ENHANZA / "dbt_project"
+    if not (project / "models/sources.yml").exists():
+        pytest.skip("needs the committed raw layer")
+    tables, _ = rt.read_raw_layer(project)
+    vocabulary = dict(rt.og.CONCEPT_CLASS)
+    keys = rt.propose(tables, vocabulary, {})["natural_key_candidates"]
+
+    assert keys["dim_customers"][0]["column"] == "CustomerNumber"
+    org = next((k for k in keys["dim_customers"] if k["column"] == "OrgId"), None)
+    assert org is not None, "demoted, never deleted — it is part of the grain"
+    assert keys["dim_customers"].index(org) > 0
+    assert "partition key" in org["evidence"]
+
+
+def test_prevalence_needs_a_corpus_before_it_means_anything() -> None:
+    """On two tables a column is on 100% of them. The rule fired on a fixture and demoted
+    the very key it exists to promote."""
+    assert rt.MIN_TABLES_FOR_PARTITION >= 10

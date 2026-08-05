@@ -94,8 +94,18 @@ class ColumnEdge:
     upstream_model: str
     upstream_column: str
     kind: str  # direct | renamed | derived | passthrough | union | macro | unresolved
+    # True when the reference was unqualified with several tables in scope, so this edge is
+    # one of N guesses rather than a fact. SQL guarantees exactly one of them is right and
+    # names no way to tell which without the upstream schemas. Lineage keeps them all, which
+    # is the honest reading; anything asserting a *contract* has to drop them, because
+    # "accounts has an Amount column" is exactly the claim that was never established.
+    ambiguous: bool = False
 
-    def as_record(self) -> Dict[str, str]:
+    def as_record(self) -> Dict[str, Any]:
+        # Every key on every record, including the ones where it is false. Omitting it when
+        # false reads as tidier and makes the record list ragged, which breaks TOON's
+        # declare-the-header-once encoding — and this emitter is one of the two the pipeline
+        # actually routes through it. Pinned by `test_lineage_records_are_uniform_for_toon`.
         return asdict(self)
 
 
@@ -317,7 +327,7 @@ def _resolve(
     select: Any,
     ctes: Dict[str, Any],
     depth: int = 0,
-) -> List[Tuple[str, str]]:
+) -> List[Tuple[str, str, bool]]:
     """Follow one column reference back to (base table, column) pairs.
 
     A reference into a CTE is followed into that CTE's projection list and resolved again,
@@ -330,21 +340,27 @@ def _resolve(
     aliases, tables = _sources_of(select)
     target = aliases.get(qualifier, qualifier) if qualifier else None
     candidates = [target] if target else tables
+    # One candidate is a resolution; several is a fan-out over an unqualified name.
+    guessed = target is None and len(candidates) > 1
 
-    out: List[Tuple[str, str]] = []
+    out: List[Tuple[str, str, bool]] = []
     for table in candidates:
         if table in ctes:
             inner = ctes[table]
             for inner_select in _selects_of(inner) or [inner]:
-                out.extend(_resolve_projection(column, inner_select, ctes, depth + 1))
+                out.extend(
+                    (model, col, ambiguous or guessed)
+                    for model, col, ambiguous in _resolve_projection(
+                        column, inner_select, ctes, depth + 1)
+                )
         elif table:
-            out.append((table, column))
+            out.append((table, column, guessed))
     return out
 
 
 def _resolve_projection(
     name: str, select: Any, ctes: Dict[str, Any], depth: int
-) -> List[Tuple[str, str]]:
+) -> List[Tuple[str, str, bool]]:
     """Find `name` in a select's projections and resolve what fed it."""
     for projection in select.expressions:
         if projection.alias_or_name != name:
@@ -358,8 +374,8 @@ def _resolve_projection(
 
 def _columns_behind(
     projection: Any, select: Any, ctes: Dict[str, Any], depth: int
-) -> List[Tuple[str, str]]:
-    out: List[Tuple[str, str]] = []
+) -> List[Tuple[str, str, bool]]:
+    out: List[Tuple[str, str, bool]] = []
     rows = _row_aliases(select)
     for col in projection.find_all(exp.Column):
         if col.name == MACRO_MARKER:
@@ -373,6 +389,40 @@ def _columns_behind(
             # is honest; attributing it to the base table is not.
             continue
         out.extend(_resolve(col.name, col.table or None, select, ctes, depth))
+    return out
+
+
+def qualified_source_reads(raw_code: str, dialect: str) -> Set[Tuple[str, str]]:
+    """Every **qualified** reference to a base-table column, anywhere in the statement.
+
+    Column lineage answers "where did this output column come from", so it walks
+    projections. A source *contract* answers a different question — "what does this project
+    read from that table" — and the two diverge exactly where a column is read without being
+    projected. `a.OrgId` and `a.Year` appear only in a JOIN condition of
+    `fortnox_bi_fact_salary_transactions_staging`, so lineage never sees them, and a contract
+    built from lineage alone declared `accounts` as having one column when its own SQL
+    demonstrably reads six.
+
+    Qualified only, and that is the whole discipline: `st.Amount` names its table, a bare
+    `Amount` with five tables in scope names nothing. Nothing here guesses, so everything it
+    returns can be written into a contract and used to fail one.
+    """
+    if sqlglot is None:
+        return set()
+    tree, _error = parse_model_sql(raw_code, dialect)
+    if tree is None:
+        return set()
+    ctes = _cte_map(tree)
+    out: Set[Tuple[str, str]] = set()
+    for select in tree.find_all(exp.Select):
+        aliases, _tables = _sources_of(select)
+        for col in select.find_all(exp.Column):
+            if not col.table or col.name == MACRO_MARKER:
+                continue
+            target = aliases.get(col.table, col.table)
+            if not target or target in ctes:
+                continue
+            out.add((target, col.name))
     return out
 
 
@@ -507,7 +557,7 @@ def lineage_from_sql(model_name: str, raw_code: str, dialect: str) -> Tuple[List
             # through untouched, which is the opposite of true. `cast` counts — it is an
             # exp.Func subclass, and a cast is a transform.
             transformed = bool(list(projection.find_all(exp.Func))) or len(behind) > 1
-            for upstream_model, upstream_column in behind:
+            for upstream_model, upstream_column, ambiguous in behind:
                 if is_union:
                     kind = "union"
                 elif transformed:
@@ -517,7 +567,8 @@ def lineage_from_sql(model_name: str, raw_code: str, dialect: str) -> Tuple[List
                 else:
                     kind = "renamed"
                 edges.append(
-                    ColumnEdge(model_name, alias, upstream_model, upstream_column, kind)
+                    ColumnEdge(model_name, alias, upstream_model, upstream_column, kind,
+                               ambiguous)
                 )
     return _dedupe(edges), None
 

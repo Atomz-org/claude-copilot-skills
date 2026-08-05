@@ -1093,7 +1093,6 @@ seeds:
         Extent: varchar
         HolidayEntitling: varchar
         Hours: varchar
-        is: varchar
   - name: public__country_codes
     config:
       enabled: "{{ target.name == 'demo' }}"

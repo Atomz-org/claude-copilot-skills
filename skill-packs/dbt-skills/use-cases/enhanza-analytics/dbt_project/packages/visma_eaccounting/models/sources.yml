@@ -37,7 +37,6 @@ sources:
           - name: CurrencyRate
           - name: Id
           - name: InvoiceDate
-          - name: InvoiceNumber
           - name: OrgId
           - name: OurReference
       - name: customers

@@ -4,11 +4,6 @@ table_reference:
   schema: fortnox_api_canonical
   table: salary_transactions
 columns:
-- name: Amount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: Date
   type: TEXT
   is_calculated: false
@@ -25,21 +20,6 @@ columns:
   not_null: false
   properties: {}
 - name: OrgId
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: SalaryCode
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Total
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VAT
   type: TEXT
   is_calculated: false
   not_null: false

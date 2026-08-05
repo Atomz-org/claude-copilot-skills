@@ -630,23 +630,50 @@ Real output worth reading: `DiscountType` gained the project's **second** closed
 with amounts. And `ChargeHours`, which the deriver had proposed as *currency* from its name,
 is `duration`: the lineage says `seventime_api__timelogs.invoiceableTime`.
 
-### The source column contracts are over-attributed
+### Ambiguous bindings, and why a contract may not be built from one
 
-Found by trying to use them. `fortnox_api.accounts` declares `Amount`, `Date`, `Total` and
-`VAT` — voucher columns. `fortnox_bi_dim_accounts_staging.sql` reads three sources
-(`fortnox_api.accounts`, `fortnox_api.vouchers`, `public.bas_account_chart`) and the
-bootstrap attributed **every column that model referenced to every source it reads**.
+Found by trying to use the source contracts: `fortnox_api.accounts` declared `Amount`,
+`Date`, `Total` and `VAT` — voucher columns.
 
-Measured: **53 of 135 models read more than one source table, feeding 79 distinct
-(source, table) pairs.** A model reading one source is unaffected, which is why this survived
-— 82 of them are correct.
+The cause is one line of SQL, not a sloppy bootstrap. `select Amount from st, fy, e, a, ee`
+references a column **unqualified with five tables in scope**; the resolver resolves it
+against each, which its docstring states as a deliberate choice — *"reported against each,
+because guessing one is worse than saying so"*. For lineage that is right: every candidate
+is visible. For a contract it is fatal, because "accounts has an `Amount` column" is exactly
+the claim nobody established.
 
-It matters in three places, in increasing order of damage: `check_source_columns` is too
-permissive (an over-declared column can never be the error it exists to catch); the taxonomy
-evidence is contaminated (`dim_accounts` offers `SalaryCode` as a natural-key candidate); and
-**anything generated from the conceptual model would put `VAT` on the account entity**. The
-fix is in `dbt_column_memory.py --emit-source-columns`: attribute a column to a source only
-where the resolver can bind it there, which the column-lineage pass already does per model.
+So the resolver keeps its behaviour and now **says** it: `ColumnEdge.ambiguous` marks a
+binding that is one of N guesses. Two consumers read the same flag, and the symmetry is the
+point:
+
+- `--emit-source-columns` will not **write** a contract from an ambiguous binding.
+- `check_source_columns` will not **fail** one with it. Blaming `accounts` for a bare
+  `Amount` five tables could own is the same guess pointed the other way.
+
+A contract also answers a different question from lineage — "what do we read", not "what fed
+this output column" — so `qualified_source_reads()` collects every *qualified* reference
+anywhere in the statement, including join keys and filters a projection never mentions.
+Without it `accounts` came out with **one** column while its own SQL demonstrably reads
+three: `a.OrgId` and `a.Year` appear only in a JOIN.
+
+Measured on enhanza-analytics: **295 ambiguous bindings refused, 252 columns pruned across 7
+files**, dbt parse clean, alignment check unchanged at 0 errors / 9 accepted warnings.
+`--prune` deletes only from blocks carrying the generated banner — the same ownership marker
+as WrenAI's `source: dbt_metric` — never from a hand-authored one, and never adds.
+
+Two rules that were bugs first:
+
+- **A block that loses every column withdraws; it does not become `columns:` with nothing
+  under it.** dbt refuses to parse the project. Found by running the prune for real: one
+  `seventime` table lost all twelve and the whole parse failed.
+- **Normalise the edge width at construction, not at each unpack.** A cache written before
+  the flag existed, and a hand-built lineage in a test, both hold 4-tuples.
+
+The remaining thinness is honest rather than fixed: where a project never qualifies a
+reference, nothing in the SQL says which table owns the column. Measured, of 305 fanned-out
+references only **41** are resolvable by elimination against qualified evidence elsewhere.
+A precise thin contract is what ontology-first generation needs — an entity built from the
+broad one would carry `VAT` on `dim_accounts`.
 
 ### Where the annotations go — the ontology, then the serving tier
 
