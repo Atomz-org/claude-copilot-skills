@@ -17,11 +17,9 @@ visible to a reader:
    will a human skimming for content. Both SVGs are parsed as XML and every
    label is measured against the box it sits in.
 
-3. **It drifts from the harness that cites it.** `pr_decision_diagram.py`
-   classifies a PR's changed files onto this page's layer stack, so the two
-   have to agree on what the layers *are*. Every `data-layer` in the page must
-   be a layer the classifier knows, and every layer the classifier knows must
-   either be drawn in the page or be declared as a deliberate extra.
+3. **The docs site stops serving it.** `public/` is the static-asset root, so
+   an iframe `src` and a file path that disagree render an empty frame and no
+   error.
 
 The page is also published as a Claude artifact, which serves it under a strict
 CSP: an external font, stylesheet, or image would fail to load there while
@@ -42,7 +40,6 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
 
-import pr_decision_diagram as pdd  # noqa: E402
 import _miniyaml as miniyaml  # noqa: E402
 
 PAGE = REPO / "public/code-skills-architecture.html"
@@ -262,27 +259,6 @@ def test_colour_is_never_the_only_encoding() -> None:
         boxes = sum(1 for r in root.iter("rect") if "box" in (r.get("class") or ""))
         labels = sum(1 for t in root.iter("text") if (t.get("class") or "") == "t-title")
         assert labels >= boxes, f"{boxes} boxes but only {labels} titled"
-
-
-# --- agreement with the harness that cites it -----------------------------------------
-
-def test_the_page_and_the_pr_diagram_name_the_same_layers() -> None:
-    """`pr_decision_diagram.py` projects a PR's changed files onto this stack. If
-    the two disagree, the PR comment describes a structure the page does not
-    document, and nobody notices because both render fine."""
-    drawn = set(re.findall(r'data-layer="([^"]+)"', page_text()))
-    classifier = {lid for lid, _label in pdd._ARCH_LAYERS} | {"other"}
-
-    assert drawn, "the page marks no layer sections"
-    assert drawn <= classifier, f"page draws layers the classifier cannot produce: {drawn - classifier}"
-    undrawn = classifier - drawn
-    assert undrawn == set(pdd._ARCH_EXTRA_LAYERS), (
-        f"classifier layers the page never draws: {undrawn - set(pdd._ARCH_EXTRA_LAYERS)}"
-    )
-
-
-def test_the_pr_diagram_links_to_a_page_that_exists() -> None:
-    assert (REPO / pdd.ARCH_DOC).is_file()
 
 
 # --- how the documentation site serves it ---------------------------------------------

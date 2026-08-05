@@ -842,7 +842,7 @@ Accepted, do not re-report: the `senior-analytics-engineer` alias collision,
 `/review` shadowed by the Claude Code built-in, and agent `tools`-as-string
 warnings. Details in the pack's `.claude/skills/harness-mapping/references/findings.md`.
 
-## The architecture page, and why a PR reads it back
+## The architecture page
 
 [public/code-skills-architecture.html](public/code-skills-architecture.html) is the
 hand-authored view of the whole system: the three-lane data flow, the ten derivation
@@ -850,7 +850,7 @@ stages with what each one refuses to do, five layers, and the deployment surface
 self-contained — no CDN, no webfont — because it is also published under a CSP that
 blocks every external host.
 
-A hand-authored page rots, so two mechanisms hold it:
+A hand-authored page rots, so one mechanism holds it:
 
 - **Numbers are pinned or declared as snapshots, never left ambiguous.** Every figure
   derived from a *committed* artifact carries `data-metric` and is checked against that
@@ -860,21 +860,18 @@ A hand-authored page rots, so two mechanisms hold it:
   committed at all. Figures that need a rebuild — test count, graph size — are **not**
   pinned: a gate that goes red because somebody added a test is a gate that gets switched
   off, so the footer names the command that re-derives each instead.
-- **The PR comment projects it.** `scripts/pr_decision_diagram.py` classifies a PR's
-  changed paths onto the page's own layer stack and draws the layers that moved, untouched
-  ones quiet. No new workflow step and no new input — it reads `changed.txt`, which the
-  workflow already collects. The two agree by test: every `data-layer` in the page must be
-  a layer the classifier produces, and every classifier layer must be drawn in the page or
-  declared as a deliberate extra.
 
-The classification rules are ordered by **specificity, not by layer**, because a use-case's
-dbt project and ontology live under `skill-packs/` — layer order files the whole warehouse
-as harness. Same trap in the other direction: `/rules/` reads as a harness segment, and
-`wren/knowledge/rules/general.md` is a generated serving artifact.
+The PR comment used to project this layer stack — `scripts/pr_decision_diagram.py`
+classified each changed path onto it and drew the layers that moved. **That section is
+removed**, by the rule the renderer already applies to itself: it once deleted a fixed
+gate-chain diagram for being identical on every PR, and the layer stack was the same
+defect one step weaker — only the highlighting varied, and most PRs lit the same two
+layers, so it restated the Files-changed tab. It also cost a classification rule per
+naming convention here, which is upkeep for a section nobody read.
 
-The section is a projection rather than a copy of the diagram on purpose. This renderer
-already deleted one fixed diagram — an earlier version drew the same gate chain on every
-PR, identical by construction — so what varies per PR is what gets drawn.
+What the comment still draws is the part a reviewer *cannot* read off the file list: the
+impact subgraph of the PR's own diff. The page's `data-layer` attributes stay as section
+markers; nothing consumes them, so nothing can drift from them.
 
 ## Agent and command topology
 
