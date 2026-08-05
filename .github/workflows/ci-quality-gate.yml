@@ -34,7 +34,7 @@ jobs:
       # (npx -y @skill-map/cli@<PINNED_VERSION>); the scan itself is
       # deterministic and offline -- see the runner's docstring.
       - name: Set up Node for skill-map
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
 
