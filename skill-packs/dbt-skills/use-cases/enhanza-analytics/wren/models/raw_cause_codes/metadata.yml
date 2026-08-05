@@ -4,37 +4,7 @@ table_reference:
   schema: public
   table: cause_codes
 columns:
-- name: CauseCode
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Date
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: Description
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Extent
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: HolidayEntitling
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Hours
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: is
   type: TEXT
   is_calculated: false
   not_null: false

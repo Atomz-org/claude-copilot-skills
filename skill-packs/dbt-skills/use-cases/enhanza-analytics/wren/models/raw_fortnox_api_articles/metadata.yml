@@ -4,11 +4,6 @@ table_reference:
   schema: fortnox_api_canonical
   table: articles
 columns:
-- name: Active
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: ArticleNumber
   type: TEXT
   is_calculated: false
@@ -19,157 +14,12 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: BundleArticle
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: CommodityCode
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: ConstructionAccount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: DefaultStockLocation
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: DefaultStockPoint
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Depth
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Description
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: DirectCost
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: DisposableQuantity
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: EAN
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: EUAccount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: EUVATAccount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: ExportAccount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: FreightCost
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Height
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Manufacturer
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: ManufacturerArticleNumber
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Note
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: OrgId
   type: TEXT
   is_calculated: false
   not_null: false
   properties: {}
-- name: OtherCost
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: PurchaseAccount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: PurchasePrice
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: SalesAccount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: SalesPrice
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: StockAccount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: StockChangeAccount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: StockGoods
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: StockPlace
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: StockValue
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: StockWarning
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: SupplierName
   type: TEXT
   is_calculated: false
   not_null: false
@@ -180,31 +30,6 @@ columns:
   not_null: false
   properties: {}
 - name: Type
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Unit
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VAT
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: WebshopArticle
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Weight
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Width
   type: TEXT
   is_calculated: false
   not_null: false

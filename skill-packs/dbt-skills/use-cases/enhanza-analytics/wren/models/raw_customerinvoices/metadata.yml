@@ -19,11 +19,6 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: InvoiceNumber
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: OrgId
   type: TEXT
   is_calculated: false
