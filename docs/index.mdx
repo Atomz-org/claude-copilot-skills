@@ -205,7 +205,7 @@ The page is committed at `public/code-skills-architecture.html` and serves at `/
 
 Every figure on that page taken from a committed artifact is checked against that artifact by `tests/test_architecture_diagram.py`, so the picture cannot quietly stop being true. Figures that need a rebuild — the test count, the size of the code graph — are deliberately left unpinned and the page names the command that re-derives each: a gate that goes red because somebody added a test is a gate that gets switched off.
 
-The same layer stack is projected onto every pull request. `scripts/pr_decision_diagram.py` classifies a PR's changed paths onto it and draws the layers that moved, so the sticky PR comment answers "which part of the system does this touch" before a reviewer opens a single file.
+The sticky PR comment `scripts/pr_decision_diagram.py` posts is a different view and no longer a projection of this stack: it draws the *impact subgraph* of the PR's own diff — the code-graph nodes it touches plus one hop either side — because that is the part a reviewer cannot read off the file list.
 
 ## Repository layout
 
