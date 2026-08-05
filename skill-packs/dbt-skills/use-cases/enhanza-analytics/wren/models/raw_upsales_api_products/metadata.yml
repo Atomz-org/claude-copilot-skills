@@ -1,0 +1,36 @@
+name: raw_upsales_api_products
+table_reference:
+  catalog: enhanza_sample
+  schema: upsales_api_canonical
+  table: products
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: active
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: purchaseCost
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_upsales.upsales_api.products
+  dbt_resource_type: source

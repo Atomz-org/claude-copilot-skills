@@ -1,0 +1,51 @@
+name: raw_visma_eaccounting_api_articles
+table_reference:
+  catalog: enhanza_sample
+  schema: visma_eaccounting_api_canonical
+  table: articles
+columns:
+- name: Id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: IsActive
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: IsStock
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Number
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: PurchasePrice
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: StockBalanceAvailable
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_visma_eaccounting.visma_eaccounting_api.articles
+  dbt_resource_type: source

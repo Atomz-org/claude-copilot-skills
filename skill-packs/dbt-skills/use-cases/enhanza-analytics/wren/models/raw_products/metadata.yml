@@ -1,0 +1,56 @@
+name: raw_products
+table_reference:
+  catalog: enhanza_sample
+  schema: shopify_api_canonical
+  table: products
+columns:
+- name: created_at
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: product_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: status
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: updated_at
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: variant_grams
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: variant_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: variant_inventory_quantity
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: variant_price
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: variant_requires_shipping
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_shopify.shopify_api.products
+  dbt_resource_type: source

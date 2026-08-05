@@ -73,6 +73,61 @@ future incident with a name already on it.
 "Not a dbt problem" is common and worth saying plainly. A DAG full of unused marts costs
 build time, review time, and trust on every single run.
 
+**Stop here on any verdict other than Build.** Everything below scaffolds derived artifacts
+for a use-case that is going to exist; a "not a dbt problem" verdict that still leaves an
+ontology directory behind is worse than no verdict, because the next person finds the
+directory and assumes the answer was yes.
+
+## 6. Scaffold the derived artifacts
+
+Only after the spec is written — the scaffolder refuses without it, which is
+[rule 1](../rules/analytics-engineering-rules.md) enforced by a script rather than by memory.
+
+```bash
+python3 scripts/use_case_sync.py --init <slug>
+```
+
+Three files, none of which assert anything about the domain yet:
+
+| File | What it is |
+|---|---|
+| `ontology/ontology.yml` | the use-case's IRI namespace, and its own concept classes |
+| `ontology/connectors.yml` | the connector catalogue — empty, and the extension point |
+| `ontology/reference/README.md` | the values sample data will be allowed to use |
+
+`connectors.yml` starts empty on purpose. A row here is a claim that a source system exists,
+and the generator will not make that claim for you ([rule 5](../rules/analytics-engineering-rules.md)).
+Connectors arrive through `/new-connector`.
+
+## 7. Sync everything derived, and say what could not run
+
+```bash
+python3 scripts/use_case_sync.py --use-case <slug> --graphify-update
+```
+
+One pass over every derived artifact, in dependency order:
+
+| Stage | Produces | Needs |
+|---|---|---|
+| `ontology` | `ontology/connectors/*.ttl`, `topology/*.ttl` | `connectors.yml` |
+| `index` | `ontology/index.json` — the machine-facing projection | same pass as the Turtle |
+| `seeds` | `dbt_project/seeds/sample/*.csv` | a manifest, `sqlglot`, reference data |
+| `graphify` | the code graph, rebuilt | `--graphify-update` |
+| `graph` | the dbt lineage merged into `graphify-out/graph.json` | a manifest |
+| `alignment` | the verdict on convention drift | a dbt project |
+
+A fresh use-case has no manifest, so most of these report `skip` with the reason — that is
+the correct output, not a failure. **Report which stages ran and which skipped.** A summary
+that says "synced" when four of six stages skipped is the kind of statement that gets
+believed once and never again.
+
+**Never run `graphify update` after this command.** graphify has no SQL parser, so its AST
+pass extracts nothing from a `.sql` file and drops the node rather than keeping it isolated —
+a rebuild after the merge deletes all 359 dbt models and their 1288 edges, and leaves a graph
+that still looks populated because the source nodes survive. That is why the rebuild is a
+stage inside the driver, sequenced ahead of the merge, and why `--graphify-update` exists
+instead of a second command.
+
 ---
 
 ## Rules that bind here
@@ -88,4 +143,6 @@ Write the file, then summarize in chat:
 - the decision sentence and the verdict;
 - the grain and its primary key;
 - what is `[NEEDS INPUT]` and who can answer it;
-- the recommended next command (`/dbt-model <concept>`), or why there is no next step.
+- which sync stages ran, and which skipped and why;
+- the recommended next command (`/new-connector` for the first source, then
+  `/dbt-model <concept>`), or why there is no next step.

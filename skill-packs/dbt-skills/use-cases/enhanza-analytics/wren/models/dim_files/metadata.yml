@@ -1,0 +1,50 @@
+name: dim_files
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_files
+columns:
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: DocumentId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DocumentNo
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Supplier/customer invoice document or voucher number
+- name: DocumentType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Based on document the file is linked to
+- name: FileName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of the file in the system
+- name: FileURL
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Access the file in Enhanza app via the link
+    dbt_tests: unique
+    dbt_test_status: verified
+cached: false
+properties:
+  description: List of file URLs associated with supplier invoices, customer invoices
+    and vouchers
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_files
+  dbt_resource_type: model

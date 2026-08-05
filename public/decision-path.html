@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="How a prompt becomes an action in code-skills: the checkpoints, the code graph, and the dbt lineage.">
+<style>*{margin:0}html{color-scheme:light dark}</style>
+</head>
+<body>
+<title>The Decision Path — how this repo answers a prompt</title>
+
+<style>
+:root {
+  color-scheme: light;
+  --plane:      #f5f6f8;
+  --surface:    #fdfdfe;
+  --sunken:     #eef1f5;
+  --ink:        #0e1116;
+  --ink-2:      #4a5361;
+  --ink-3:      #858d99;
+  --rule:       #dde2e9;
+  --rule-soft:  #e8ecf1;
+  --accent:     #2a78d6;
+  --accent-ink: #1c5cab;
+
+  --hop0:  #2a78d6;
+  --hop1:  #eb6834;
+  --hop2:  #1baf7a;
+  --other: #858d99;
+
+  --blocked: #d03b3b;
+  --allowed: #0ca30c;
+  --edited:  #b07800;
+
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, "Bitstream Charter", Georgia, serif;
+
+  --s1: .375rem; --s2: .75rem; --s3: 1.25rem; --s4: 2rem; --s5: 3.25rem; --s6: 5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --plane:     #0b0e12;
+    --surface:   #12161c;
+    --sunken:    #171c24;
+    --ink:       #eef2f7;
+    --ink-2:     #a3adba;
+    --ink-3:     #6d7885;
+    --rule:      #222a35;
+    --rule-soft: #1b222b;
+    --accent:    #3987e5;
+    --accent-ink:#7fb2f0;
+    --hop0:  #3987e5;
+    --hop1:  #d95926;
+    --hop2:  #199e70;
+    --other: #6d7885;
+    --blocked: #e66767;
+    --allowed: #0ca30c;
+    --edited:  #fab219;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plane:     #0b0e12;
+  --surface:   #12161c;
+  --sunken:    #171c24;
+  --ink:       #eef2f7;
+  --ink-2:     #a3adba;
+  --ink-3:     #6d7885;
+  --rule:      #222a35;
+  --rule-soft: #1b222b;
+  --accent:    #3987e5;
+  --accent-ink:#7fb2f0;
+  --hop0:  #3987e5;
+  --hop1:  #d95926;
+  --hop2:  #199e70;
+  --other: #6d7885;
+  --blocked: #e66767;
+  --allowed: #0ca30c;
+  --edited:  #fab219;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --plane: #f5f6f8; --surface: #fdfdfe; --sunken: #eef1f5;
+  --ink: #0e1116; --ink-2: #4a5361; --ink-3: #858d99;
+  --rule: #dde2e9; --rule-soft: #e8ecf1;
+  --accent: #2a78d6; --accent-ink: #1c5cab;
+  --hop0: #2a78d6; --hop1: #eb6834; --hop2: #1baf7a; --other: #858d99;
+  --blocked: #d03b3b; --allowed: #0ca30c; --edited: #b07800;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+
+.page {
+  background: var(--plane);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.62;
+  padding: var(--s5) var(--s3) var(--s6);
+  overflow-x: hidden;
+}
+.wrap { max-width: 60rem; margin: 0 auto; }
+
+/* ---- machine voice ---- */
+.m, code, .stat-v, .tick, .btn, table, .cap-k { font-family: var(--mono); }
+.eyebrow {
+  font-family: var(--mono);
+  font-size: .6875rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 var(--s2);
+}
+h1 {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 5.2vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  margin: 0 0 var(--s3);
+  text-wrap: balance;
+}
+h2 {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: clamp(1.15rem, 2.6vw, 1.5rem);
+  letter-spacing: -.01em;
+  line-height: 1.2;
+  margin: 0 0 var(--s2);
+  text-wrap: balance;
+}
+h3 {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: .8125rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin: 0 0 var(--s2);
+}
+p { margin: 0 0 var(--s3); max-width: 42em; }
+.lede { font-size: 1.22rem; line-height: 1.55; color: var(--ink-2); max-width: 34em; }
+.lede strong { color: var(--ink); font-weight: 600; }
+code {
+  font-size: .875em;
+  background: var(--sunken);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: .08em .34em;
+  overflow-wrap: anywhere;
+}
+
+/* ---- the spine ---- */
+.spine { position: relative; padding-left: 0; }
+@media (min-width: 900px) {
+  .spine { padding-left: 7rem; }
+  .spine::before {
+    content: ""; position: absolute; left: 4.6rem; top: .4rem; bottom: 0;
+    width: 1px; background: var(--rule);
+  }
+}
+section.stage { position: relative; padding: var(--s5) 0 0; }
+.tick {
+  font-size: .6875rem; letter-spacing: .12em; color: var(--ink-3);
+  display: block; margin-bottom: var(--s1);
+}
+@media (min-width: 900px) {
+  .tick {
+    position: absolute; left: -7rem; top: calc(var(--s5) + .36rem);
+    width: 4rem; text-align: right; margin: 0;
+  }
+  section.stage::after {
+    content: ""; position: absolute; left: -2.68rem; top: calc(var(--s5) + .68rem);
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--plane); border: 1px solid var(--ink-3);
+  }
+  section.stage.key::after { background: var(--accent); border-color: var(--accent); }
+}
+
+/* ---- panels ---- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  margin: var(--s3) 0;
+}
+.panel-hd {
+  display: flex; flex-wrap: wrap; gap: var(--s2); align-items: baseline;
+  justify-content: space-between;
+  padding: var(--s2) var(--s3);
+  border-bottom: 1px solid var(--rule-soft);
+}
+.panel-bd { padding: var(--s3); }
+.panel-ft {
+  padding: var(--s2) var(--s3);
+  border-top: 1px solid var(--rule-soft);
+  font-size: .8125rem; color: var(--ink-3); line-height: 1.5;
+}
+
+/* ---- stat row ---- */
+.stats {
+  display: grid; gap: 1px; background: var(--rule);
+  border: 1px solid var(--rule); border-radius: 4px;
+  grid-template-columns: repeat(2, 1fr); margin: var(--s4) 0 0;
+}
+@media (min-width: 700px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+.stat { background: var(--surface); padding: var(--s3) var(--s3) calc(var(--s3) - .25rem); }
+.stat-v {
+  font-size: clamp(1.5rem, 4vw, 2.1rem); font-weight: 600;
+  letter-spacing: -.03em; line-height: 1; display: block;
+}
+.stat-k {
+  font-family: var(--mono); font-size: .6875rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-3); margin-top: .5rem; display: block;
+}
+.stat-n { font-size: .8125rem; color: var(--ink-2); margin-top: .35rem; display: block; }
+
+/* ---- simulator ---- */
+.btnrow { display: flex; flex-wrap: wrap; gap: var(--s1); }
+.btn {
+  font-size: .8125rem; line-height: 1.3;
+  background: var(--surface); color: var(--ink-2);
+  border: 1px solid var(--rule); border-radius: 3px;
+  padding: .5rem .7rem; cursor: pointer; text-align: left;
+  transition: border-color .15s, color .15s;
+}
+.btn:hover { border-color: var(--ink-3); color: var(--ink); }
+.btn[aria-pressed="true"] {
+  border-color: var(--accent); color: var(--ink);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.btn:focus-visible, .lnk:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+.gates { display: flex; flex-direction: column; gap: 0; }
+.gate {
+  display: grid; grid-template-columns: 1.6rem 1fr; gap: var(--s2);
+  padding: var(--s2) 0; border-top: 1px dashed var(--rule-soft);
+  opacity: .34; transition: opacity .3s;
+}
+.gate:first-child { border-top: 0; }
+.gate.lit { opacity: 1; }
+.dot {
+  width: 11px; height: 11px; border-radius: 50%; margin-top: .45rem;
+  background: var(--rule); border: 1px solid var(--rule);
+  transition: background .2s, border-color .2s, box-shadow .2s;
+}
+.gate.lit .dot { background: var(--ink-3); border-color: var(--ink-3); }
+.gate.lit.pass  .dot { background: var(--allowed); border-color: var(--allowed); }
+.gate.lit.edit  .dot { background: var(--edited); border-color: var(--edited); }
+.gate.lit.stop  .dot { background: var(--blocked); border-color: var(--blocked);
+                        box-shadow: 0 0 0 4px color-mix(in srgb, var(--blocked) 22%, transparent); }
+.gate.lit.skip  .dot { background: var(--surface); border-color: var(--ink-3); }
+.gate.lit.none  .dot { background: var(--surface); border-color: var(--ink-3); }
+.gate-hd {
+  font-family: var(--mono); font-size: .8125rem; font-weight: 600;
+  display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline;
+}
+.verdict {
+  font-size: .625rem; letter-spacing: .1em; text-transform: uppercase;
+  border: 1px solid currentColor; border-radius: 2px; padding: .05rem .3rem;
+  font-weight: 600;
+}
+.v-pass { color: var(--allowed); } .v-edit { color: var(--edited); }
+.v-stop { color: var(--blocked); } .v-skip { color: var(--ink-3); }
+.gate-src { font-family: var(--mono); font-size: .75rem; color: var(--ink-3); overflow-wrap: anywhere; }
+.gate-say { font-size: .95rem; color: var(--ink-2); margin-top: .3rem; max-width: 46em; }
+.gate-say b { color: var(--ink); font-weight: 600; }
+
+.shellbox {
+  background: var(--sunken); border: 1px solid var(--rule-soft); border-radius: 3px;
+  font-family: var(--mono); font-size: .78rem; line-height: 1.6;
+  padding: var(--s2) var(--s3); margin: var(--s2) 0 0;
+  overflow-x: auto; white-space: pre;
+}
+.shellbox .pfx { color: var(--ink-3); }
+.shellbox .add { color: var(--edited); }
+.shellbox .kill { color: var(--blocked); text-decoration: line-through; }
+
+/* ---- canvas figures ---- */
+.figwrap { position: relative; }
+canvas { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.tip {
+  position: absolute; pointer-events: none; z-index: 5;
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 3px; padding: .45rem .6rem; font-size: .78rem;
+  font-family: var(--mono); line-height: 1.45; max-width: 17rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,.13); opacity: 0; transition: opacity .1s;
+}
+.tip.on { opacity: 1; }
+.tip .t-t { font-weight: 600; display: block; }
+.tip .t-s { color: var(--ink-3); display: block; overflow-wrap: anywhere; }
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3);
+  font-family: var(--mono); font-size: .75rem; color: var(--ink-2);
+}
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.sw { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+
+.detail {
+  border-top: 1px solid var(--rule-soft); margin-top: var(--s3); padding-top: var(--s3);
+  min-height: 5.5rem;
+}
+.detail-t { font-family: var(--mono); font-weight: 600; font-size: .95rem; overflow-wrap: anywhere; }
+.detail-m { font-family: var(--mono); font-size: .75rem; color: var(--ink-3); margin: .2rem 0 .6rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chip {
+  font-family: var(--mono); font-size: .72rem; color: var(--ink-2);
+  border: 1px solid var(--rule); border-radius: 2px; padding: .15rem .4rem;
+  background: var(--sunken); overflow-wrap: anywhere;
+}
+
+/* ---- lineage ---- */
+.dagaxis {
+  display: flex; font-family: var(--mono); font-size: .6875rem;
+  color: var(--ink-3); letter-spacing: .04em; margin-top: .4rem;
+}
+.dagaxis span { flex: 1 1 0; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dagaxis span:first-child, .dagaxis span:last-child { color: var(--ink-2); }
+
+.bars { display: flex; flex-direction: column; gap: .45rem; }
+.bar { display: grid; grid-template-columns: 9.5rem 1fr 3rem; gap: .75rem; align-items: center; }
+.bar-n { font-family: var(--mono); font-size: .78rem; color: var(--ink-2); text-align: right;
+         overflow: hidden; text-overflow: ellipsis; }
+.bar-t { height: 12px; background: var(--accent); border-radius: 0 2px 2px 0; min-width: 2px; }
+.bar-v { font-family: var(--mono); font-size: .78rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .bar { grid-template-columns: 7rem 1fr 2.4rem; gap: .5rem; } }
+
+/* ---- slider ---- */
+.slider-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); }
+input[type=range] { flex: 1 1 14rem; accent-color: var(--accent); min-width: 11rem; }
+.readout { font-family: var(--mono); font-size: .8125rem; color: var(--ink-2); }
+.readout b { color: var(--ink); font-size: 1.1rem; }
+
+/* ---- tables ---- */
+.tablewrap { overflow-x: auto; margin-top: var(--s2); }
+table { border-collapse: collapse; font-size: .78rem; width: 100%; min-width: 27rem; }
+th, td { text-align: left; padding: .3rem .7rem .3rem 0; border-bottom: 1px solid var(--rule-soft); }
+th { color: var(--ink-3); font-weight: 600; text-transform: uppercase; font-size: .6875rem; letter-spacing: .08em; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 1.2rem; }
+.lnk {
+  font-family: var(--mono); font-size: .75rem; color: var(--accent-ink);
+  background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline;
+  text-underline-offset: 3px;
+}
+[hidden] { display: none !important; }
+
+/* ---- two-up ---- */
+.twoup { display: grid; gap: var(--s3); grid-template-columns: 1fr; }
+@media (min-width: 820px) { .twoup { grid-template-columns: 1fr 1fr; } }
+.cmp { border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); overflow: hidden; }
+.cmp-hd {
+  padding: var(--s2) var(--s3); border-bottom: 1px solid var(--rule-soft);
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2);
+  font-family: var(--mono); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3);
+}
+.cmp-hd b { color: var(--ink); font-size: 1rem; letter-spacing: -.01em; text-transform: none; font-variant-numeric: tabular-nums; }
+.cmp pre {
+  margin: 0; padding: var(--s3); font-family: var(--mono); font-size: .7rem;
+  line-height: 1.55; overflow-x: auto; color: var(--ink-2); max-height: 21rem;
+}
+.cmp pre .hi { color: var(--ink); }
+
+.note {
+  border-left: 2px solid var(--accent); padding: .1rem 0 .1rem var(--s3);
+  color: var(--ink-2); font-size: .95rem; margin: var(--s3) 0; max-width: 42em;
+}
+.rules { list-style: none; margin: 0; padding: 0; }
+.rules li {
+  display: grid; grid-template-columns: minmax(0,15rem) 1fr; gap: var(--s2) var(--s3);
+  padding: .55rem 0; border-top: 1px solid var(--rule-soft);
+}
+.rules li:first-child { border-top: 0; }
+.rules code { background: none; border: 0; padding: 0; color: var(--blocked); font-size: .8125rem; }
+.rules span { font-size: .92rem; color: var(--ink-2); }
+@media (max-width: 620px) { .rules li { grid-template-columns: 1fr; gap: .15rem; } }
+
+footer {
+  margin-top: var(--s6); padding-top: var(--s3); border-top: 1px solid var(--rule);
+  font-family: var(--mono); font-size: .75rem; color: var(--ink-3); line-height: 1.7;
+}
+footer code { background: none; border: 0; padding: 0; color: var(--ink-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="page">
+<div class="wrap">
+
+  <p class="eyebrow">code-skills · graph built at commit 4a8ffd7</p>
+  <h1>The Decision Path</h1>
+  <p class="lede">When you type a prompt into this repository, most of what happens next is <strong>not the AI deciding</strong>. It is a short chain of small programs that read the AI's intended command, and pass it, edit it, or stop it — before the command ever runs. This page shows that chain, the map the AI consults instead of reading your files, and the 359-table data lineage underneath it all.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-v">3,460</span><span class="stat-k">nodes</span>
+      <span class="stat-n">Files, functions, ideas — and <b data-metric="dbt_models">396</b> data tables</span>
+    </div>
+    <div class="stat">
+      <span class="stat-v">6,030</span><span class="stat-k">edges</span>
+      <span class="stat-n">"calls", "contains", "references"</span>
+    </div>
+    <div class="stat">
+      <span class="stat-v">248</span><span class="stat-k">clusters</span>
+      <span class="stat-n">Neighbourhoods found automatically</span>
+    </div>
+    <div class="stat">
+      <span class="stat-v">92%</span><span class="stat-k">extracted</span>
+      <span class="stat-n">5,536 edges read from the code, not guessed</span>
+    </div>
+  </div>
+
+  <div class="spine">
+
+  <!-- 1 -->
+  <section class="stage key">
+    <span class="tick">01 PROMPT</span>
+    <h2>Press Enter, and four checkpoints wake up</h2>
+    <p>Think of it like posting a letter. You write it, but before it reaches the desk it passes a mail room: one clerk staples a standing note to the front, another refuses anything addressed to a forbidden street, a third quietly rewrites the envelope so the reply comes back smaller.</p>
+    <p>Pick a request below and watch it travel. Every checkpoint is a real file in this repository, and every verdict is decided by plain text matching — <em>no model involved</em>.</p>
+
+    <div class="panel">
+      <div class="panel-hd">
+        <h3 style="margin:0">Choose a request</h3>
+        <button class="lnk" id="replay" type="button">Replay ▸</button>
+      </div>
+      <div class="panel-bd">
+        <div class="btnrow" id="scen" role="group" aria-label="Example requests"></div>
+        <div class="shellbox" id="cmdline" aria-live="polite"></div>
+        <div class="gates" id="gates" style="margin-top:1.25rem"></div>
+      </div>
+      <div class="panel-ft" id="verdict"></div>
+    </div>
+
+    <div class="note">The punchline for a non-programmer: the safety of this system does not rest on the AI choosing well. It rests on six string patterns in a 38-line shell script that runs <em>before</em> the AI's command reaches the computer.</div>
+  </section>
+
+  <!-- 2 -->
+  <section class="stage key">
+    <span class="tick">02 MAP</span>
+    <h2>The whole codebase, as neighbourhoods</h2>
+    <p>Reading a repository file by file is like learning a city by walking every street. Instead this repository keeps a map: each of the 3,460 things in the code is a dot, each relationship a line, and dots that talk to each other constantly get grouped into a neighbourhood.</p>
+    <p>Below are the 36 largest of the 248 neighbourhoods. Circle size is how many things live there; a line means the two neighbourhoods reference each other. Hover or tap a circle to see what is inside it.</p>
+
+    <div class="panel">
+      <div class="panel-hd">
+        <div class="legend">
+          <span><i class="sw" style="background:var(--hop0)"></i>code</span>
+          <span><i class="sw" style="background:var(--hop1)"></i>rationale</span>
+          <span><i class="sw" style="background:var(--hop2)"></i>concept</span>
+          <span><i class="sw" style="background:var(--other)"></i>document</span>
+        </div>
+        <button class="lnk" id="tblToggle" type="button" aria-expanded="false">Show as table</button>
+      </div>
+      <div class="panel-bd">
+        <div class="figwrap">
+          <canvas id="mapCanvas" role="img" aria-label="Map of the 36 largest code neighbourhoods, sized by how many items they contain."></canvas>
+          <div class="tip" id="mapTip" role="status"></div>
+        </div>
+        <div class="detail" id="mapDetail"></div>
+        <div class="tablewrap" id="mapTable" hidden></div>
+      </div>
+      <div class="panel-ft">Neighbourhoods are found by a clustering algorithm, not assigned by a person — which is why some are named after the file that dominates them. 94 nodes still sit alone. The 582 data tables are absent here entirely: they come from dbt’s build manifest rather than the code scanner, so they carry lineage but no neighbourhood — they are what the next section is about.</div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="stage key">
+    <span class="tick">03 LINEAGE</span>
+    <h2>One business number, and everything holding it up</h2>
+    <p>The map in the previous section is made of code. This one is made of <em>data</em>. This repository builds <b data-metric="dbt_models">396</b> tables that feed finance and sales reporting for thirteen different accounting and commerce systems, and every one of those tables is computed from other tables, which are computed from other tables, and so on back to the raw exports.</p>
+    <p>Pick a finished figure below. The diagram shows every single thing it stands on — read left to right, from the raw tables the source systems dump out, to the number someone actually looks at.</p>
+
+    <div class="panel">
+      <div class="panel-hd">
+        <div class="btnrow" id="traceBtns" role="group" aria-label="Choose a finished table"></div>
+        <button class="lnk" id="dagToggle" type="button" aria-expanded="false">Show as table</button>
+      </div>
+      <div class="panel-bd">
+        <div class="legend" style="margin-bottom:.9rem">
+          <span><i class="sw" style="background:var(--hop1)"></i>raw table from a source system</span>
+          <span><i class="sw" style="background:var(--hop0)"></i>a table this project computes</span>
+          <span><i class="sw" style="background:var(--hop2);border-radius:2px"></i>the finished figure</span>
+        </div>
+        <div class="figwrap">
+          <canvas id="dagCanvas" role="img" aria-label="Lineage diagram: every table feeding the selected figure, arranged left to right by how many steps of computation separate it from the raw data."></canvas>
+          <div class="tip" id="dagTip" role="status"></div>
+        </div>
+        <div class="dagaxis" id="dagAxis"></div>
+        <div class="detail" id="dagDetail"></div>
+        <div class="tablewrap" id="dagTable" hidden></div>
+      </div>
+      <div class="panel-ft" id="dagFoot"></div>
+    </div>
+
+    <div class="note">Nothing here was inferred. dbt already knows this graph because it had to compile it — the arrows are copied out of its build manifest, so every one of them is a fact, not a guess.</div>
+
+    <h3 style="margin-top:2rem">The thirteen source systems</h3>
+    <p style="font-size:.95rem">Each connector brings its own raw tables and its own adapter layer. They are wildly uneven — one system accounts for nearly half the project.</p>
+    <div class="panel"><div class="panel-bd"><div id="connBars"></div></div></div>
+
+    <div class="note" id="regression">
+      <b>This section reads a different source — and that turned out to matter.</b> The two diagrams above read the repository’s code graph. This one reads dbt’s own build manifest, and building this page is what exposed why that distinction is not cosmetic: the code graph held only <b>104 of the 688</b> table-to-table links and was missing 216 tables outright. That is a failure mode this repository’s own manual names — rebuilding the code graph after merging dbt lineage deletes it, because there is no SQL parser to re-extract it from. Re-running the merge restored all <b>688 of 688</b>, and the isolated-node count fell from 353 to 94. The diagram still draws from the manifest, which is the copy that cannot silently lose an arrow.
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="stage key">
+    <span class="tick">04 LOOKUP</span>
+    <h2>What the AI actually gets to see</h2>
+    <p>When the AI asks a question, the map is not handed over whole. Three steps happen. <b>First</b>, the question's words are matched to starting dots. <b>Second</b>, the search walks outward exactly two steps — friends, and friends of friends, then stops. <b>Third</b>, and this is the part everyone underestimates: the result is <em>cut to fit a budget</em>, keeping the best-connected dots and throwing the rest away.</p>
+    <p>The real question below reaches <b>176</b> dots. Drag the budget to see how many survive to be read. The numbers on the readout are the actual output of the command, not an illustration.</p>
+
+    <div class="panel">
+      <div class="panel-hd">
+        <div class="legend">
+          <span><i class="sw" style="background:var(--hop0)"></i>match (step 0)</span>
+          <span><i class="sw" style="background:var(--hop1)"></i>neighbour (step 1)</span>
+          <span><i class="sw" style="background:var(--hop2)"></i>neighbour's neighbour (step 2)</span>
+        </div>
+        <button class="lnk" id="hopToggle" type="button" aria-expanded="false">Show as table</button>
+      </div>
+      <div class="panel-bd">
+        <p style="font-family:var(--mono);font-size:.78rem;color:var(--ink-2);margin:0 0 1rem;overflow-wrap:anywhere">
+          graphify query "how does the TOON serializer connect to the graphify hook"
+        </p>
+        <div class="slider-row">
+          <input type="range" id="budget" min="0" max="5" step="1" value="1"
+                 aria-label="Token budget" aria-describedby="readout">
+          <span class="readout" id="readout"></span>
+        </div>
+        <div class="figwrap" style="margin-top:1.25rem">
+          <canvas id="hopCanvas" role="img" aria-label="Search result graph: matched nodes and their neighbours within two steps, dimmed when cut by the token budget."></canvas>
+          <div class="tip" id="hopTip" role="status"></div>
+        </div>
+        <div class="detail" id="hopDetail"></div>
+        <div class="tablewrap" id="hopTable" hidden></div>
+      </div>
+      <div class="panel-ft">The drawing holds the 65 best-connected of the 176 dots this search reaches — enough to see the shape without a hairball. The survivor count and character count in the readout are measured from the real command; solid dots are the ones that would fit inside that budget.</div>
+    </div>
+
+    <div class="note">This is why a vague question gets a vague answer. At a 400-token budget the search finds 176 relevant things and shows 11 of them. The fix is not a bigger model — it is a narrower question.</div>
+  </section>
+
+  <!-- 5 -->
+  <section class="stage">
+    <span class="tick">05 SQUEEZE</span>
+    <h2>Same answer, fewer words</h2>
+    <p>The AI is charged by the word, so the answer is re-typed on the way back. The left side repeats <code>src=</code>, <code>loc=</code> and <code>community=</code> on every single line. The right side says those column names once at the top and then just lists rows — like a spreadsheet instead of a stack of forms.</p>
+
+    <div class="twoup">
+      <div class="cmp">
+        <div class="cmp-hd"><span>as the tool prints it</span><b>1,701 chars</b></div>
+        <pre id="rawPre"></pre>
+      </div>
+      <div class="cmp">
+        <div class="cmp-hd"><span>after the rewrite (TOON)</span><b>1,375 chars</b></div>
+        <pre id="toonPre"></pre>
+      </div>
+    </div>
+    <p style="margin-top:1.25rem">That is <b>19% smaller</b> for this query. The saving grows with the number of rows, because the repeated part is what gets deleted: on a 28-finding report elsewhere in this repo the same rewrite cuts 7,447 characters to 2,624 — <b>65% smaller</b>. On a four-line output it makes things <em>bigger</em>, which is why the rewrite is switched on per command rather than globally.</p>
+  </section>
+
+  <!-- 6 -->
+  <section class="stage">
+    <span class="tick">06 STOP</span>
+    <h2>Six patterns that end the conversation</h2>
+    <p>The guardrail does not evaluate intent, read context, or ask the model anything. It matches the start of the command against six patterns and exits with an error code. Everything else is allowed through untouched.</p>
+    <div class="panel"><div class="panel-bd">
+      <ul class="rules">
+        <li><code>git push …</code><span>Nothing leaves this machine without a human doing it.</span></li>
+        <li><code>git reset --hard …</code><span>Throws away uncommitted work with no undo.</span></li>
+        <li><code>git clean -f</code><span>Deletes untracked files outright — nothing to recover from.</span></li>
+        <li><code>git branch -D …</code><span>Force-deletes a branch even when its work is unmerged.</span></li>
+        <li><code>git checkout .</code><span>Silently reverts every edited file in the folder.</span></li>
+        <li><code>git restore .</code><span>The newer spelling of the same loss.</span></li>
+      </ul>
+    </div></div>
+  </section>
+
+  <!-- 7 -->
+  <section class="stage">
+    <span class="tick">07 VERDICT</span>
+    <h2>Where the decisions actually live</h2>
+    <p>Three different kinds of decision run in the space between your prompt and an answer, and only one of them is the AI's.</p>
+    <div class="panel"><div class="panel-bd">
+      <ul class="rules">
+        <li><code style="color:var(--allowed)">rules</code><span><b>Fixed and inspectable.</b> The guardrail and the rewriter are text matching in two small scripts. They behave the same on every run, and you can read them in a minute.</span></li>
+        <li><code style="color:var(--accent-ink)">structure</code><span><b>Computed from the code.</b> Which dots are neighbours, and which survive the budget, comes out of the map — rebuilt from the source, so it cannot drift for long.</span></li>
+        <li><code style="color:var(--hop1)">judgement</code><span><b>The model's part.</b> Choosing what to ask, how to phrase it, and what to do with the answer. Real, but far smaller than it looks — and it is fenced in by the other two.</span></li>
+      </ul>
+    </div></div>
+  </section>
+
+  </div><!-- /spine -->
+
+  <footer>
+    Every figure on this page is measured, not illustrative.<br>
+    graph · <code>graphify-out/graph.json</code> — snapshot: 3,460 nodes, 6,030 edges, 248 communities, 5,536 edges extracted rather than inferred. Not pinned, because it needs a rebuild; re-derive with <code>graphify update .</code> and read the counts off <code>graphify-out/GRAPH_REPORT.md</code>.<br>
+    checkpoints · <code>.claude/settings.json</code> → <code>.claude/hooks/block-dangerous-git.sh</code>, <code>scripts/hooks/toon_graphify_pipe.py</code>, <code>scripts/hooks/toon_prompt_context.sh</code>, <code>graphify hook-guard</code><br>
+    dbt lineage · <code>skill-packs/dbt-skills/use-cases/enhanza-analytics/artifacts/graphify-fragment.json</code> — <b data-metric="dbt_models">396</b> models, <b data-metric="source_tables">208</b> sources, <b data-metric="lineage_edges">726</b> table-to-table links, read out of dbt's own build manifest<br>
+    budget curve · <code>graphify query "…" --budget N</code> for N = 200, 400, 800, 1500, 3000, 6000<br>
+    sizes · <code>wc -c</code> on the same query with and without <code>| rust/toon/bin/graph_to_toon</code>
+  </footer>
+
+</div>
+</div>
+
+<script id="ddata" type="application/json">{"stats":{"models":396,"sources":208,"seeds":121,"macros":26,"edgesAll":1383,"lineage":726,"inGraph":104,"maxDepth":7,"terminal":146},"layers":[{"d":0,"n":156},{"d":1,"n":158},{"d":2,"n":100},{"d":3,"n":57},{"d":4,"n":26},{"d":5,"n":1},{"d":6,"n":7},{"d":7,"n":7}],"connectors":[{"name":"fortnox","n":170},{"name":"erp","n":32},{"name":"tripletex","n":27},{"name":"logic","n":36},{"name":"hubspot","n":18},{"name":"shopify","n":12},{"name":"upsales","n":10},{"name":"visma_eaccounting","n":10},{"name":"visma_economic","n":10},{"name":"favrit","n":9},{"name":"seventime","n":8},{"name":"xledger","n":4},{"name":"tempo","n":2}],"traces":[{"root":128,"nodes":[{"id":0,"label":"seventime_api.companyinformation","d":0,"t":"source","up":0,"dn":1},{"id":1,"label":"fortnox_bi_dim_accounts_staging","d":1,"t":"model","up":3,"dn":7},{"id":2,"label":"tripletex_api.currency","d":0,"t":"source","up":0,"dn":2},{"id":3,"label":"tripletex_api.balance_sheet","d":0,"t":"source","up":0,"dn":2},{"id":4,"label":"upsales_erp_bi_fact_orders","d":1,"t":"model","up":1,"dn":1},{"id":5,"label":"fortnox_erp_bi_fact_invoice_rows","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_invoice_rows.sql","up":1,"dn":1},{"id":6,"label":"logic_bi_dim_articles","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_articles.sql","up":2,"dn":3},{"id":7,"label":"visma_economic_api.self","d":0,"t":"source","up":0,"dn":1},{"id":8,"label":"erp_bi_dim_accounts","d":3,"t":"model","f":"models/erp/erp_bi_dim_accounts.sql","up":5,"dn":5},{"id":9,"label":"categories_x_mapping","d":5,"t":"model","f":"models/app/categories_x_mapping.sql","up":4,"dn":12},{"id":10,"label":"xledger_api.recent_transactions","d":0,"t":"source","up":0,"dn":1},{"id":11,"label":"visma_eaccounting_erp_bi_dim_customers","d":1,"t":"model","up":3,"dn":1},{"id":12,"label":"erp_bi_fact_order_rows","d":3,"t":"model","f":"models/erp/erp_bi_fact_order_rows.sql","up":4,"dn":1},{"id":13,"label":"visma_eaccounting_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":14,"label":"seventime_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":15,"label":"seventime_api.quotes","d":0,"t":"source","up":0,"dn":1},{"id":16,"label":"seventime_erp_bi_dim_financial_years","d":1,"t":"model","up":1,"dn":1},{"id":17,"label":"visma_eaccounting_api.fiscalyears","d":0,"t":"source","up":0,"dn":5},{"id":18,"label":"tripletex_api.invoice","d":0,"t":"source","up":0,"dn":2},{"id":19,"label":"visma_economic_api.accounting_years","d":0,"t":"source","up":0,"dn":4},{"id":20,"label":"fortnox_erp_bi_dim_accounts","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_accounts.sql","up":1,"dn":1},{"id":21,"label":"tripletex_erp_bi_dim_company","d":1,"t":"model","up":2,"dn":1},{"id":22,"label":"favrit_erp_bi_fact_order_rows","d":2,"t":"model","f":"packages/favrit/models/staging/favrit_erp_bi_fact_order_rows.sql","up":1,"dn":2},{"id":23,"label":"visma_economic_api.employees","d":0,"t":"source","up":0,"dn":4},{"id":24,"label":"visma_eaccounting_erp_bi_dim_accounts","d":1,"t":"model","up":5,"dn":1},{"id":25,"label":"fortnox_api.v2_orders","d":0,"t":"source","up":0,"dn":2},{"id":26,"label":"visma_economic_api.invoices_booked","d":0,"t":"source","up":0,"dn":3},{"id":27,"label":"fortnox_erp_bi_dim_customers","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_customers.sql","up":1,"dn":1},{"id":28,"label":"fortnox_erp_bi_fact_invoices","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_invoices.sql","up":1,"dn":1},{"id":29,"label":"shopify_erp_bi_fact_order_rows","d":2,"t":"model","f":"packages/shopify/models/staging/shopify_erp_bi_fact_order_rows.sql","up":1,"dn":1},{"id":30,"label":"visma_eaccounting_api.vouchers","d":0,"t":"source","up":0,"dn":2},{"id":31,"label":"logic_bi_dim_projects","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_projects.sql","up":2,"dn":4},{"id":32,"label":"xledger_api.object_values","d":0,"t":"source","up":0,"dn":2},{"id":33,"label":"fortnox_bi_fact_invoice_rows_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_fact_invoice_rows_staging.sql","up":2,"dn":4},{"id":34,"label":"logic_bi_dim_customers_suppliers","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_customers_suppliers.sql","up":3,"dn":3},{"id":35,"label":"shopify_erp_bi_dim_articles","d":2,"t":"model","f":"packages/shopify/models/staging/shopify_erp_bi_dim_articles.sql","up":1,"dn":1},{"id":36,"label":"upsales_erp_bi_dim_financial_years","d":1,"t":"model","up":1,"dn":2},{"id":37,"label":"visma_eaccounting_api.companysettings","d":0,"t":"source","up":0,"dn":1},{"id":38,"label":"upsales_erp_bi_dim_customers","d":1,"t":"model","up":3,"dn":1},{"id":39,"label":"seventime_api.invoices","d":0,"t":"source","up":0,"dn":4},{"id":40,"label":"fortnox_erp_bi_dim_projects","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_projects.sql","up":1,"dn":1},{"id":41,"label":"visma_eaccounting_api.articles","d":0,"t":"source","up":0,"dn":1},{"id":42,"label":"fortnox_erp_bi_dim_cost_centers","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_cost_centers.sql","up":1,"dn":1},{"id":43,"label":"fortnox_api.projects","d":0,"t":"source","up":0,"dn":1},{"id":44,"label":"fortnox_bi_dim_customers_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_dim_customers_staging.sql","up":2,"dn":13},{"id":45,"label":"visma_economic_api.orders_sent","d":0,"t":"source","up":0,"dn":1},{"id":46,"label":"erp_bi_fact_invoices","d":4,"t":"model","f":"models/erp/erp_bi_fact_invoices.sql","up":5,"dn":3},{"id":47,"label":"upsales_api.opportunities","d":0,"t":"source","up":0,"dn":3},{"id":48,"label":"fortnox_api.suppliers","d":0,"t":"source","up":0,"dn":1},{"id":49,"label":"logic_bi_dim_financial_years","d":4,"t":"model","f":"models/logic_bi/logic_bi_dim_financial_years.sql","up":1,"dn":3},{"id":50,"label":"seventime_erp_bi_fact_invoice_rows","d":1,"t":"model","up":1,"dn":1},{"id":51,"label":"erp_bi_dim_cost_centers","d":3,"t":"model","f":"models/erp/erp_bi_dim_cost_centers.sql","up":4,"dn":1},{"id":52,"label":"seventime_api.expenseitems","d":0,"t":"source","up":0,"dn":1},{"id":53,"label":"erp_bi_dim_financial_years","d":3,"t":"model","f":"models/erp/erp_bi_dim_financial_years.sql","up":7,"dn":4},{"id":54,"label":"fortnox_api.vouchers","d":0,"t":"source","up":0,"dn":3},{"id":55,"label":"tripletex_api.customer","d":0,"t":"source","up":0,"dn":2},{"id":56,"label":"upsales_api.products","d":0,"t":"source","up":0,"dn":1},{"id":57,"label":"fortnox_bi_fact_orders_staging","d":1,"t":"model","up":2,"dn":3},{"id":58,"label":"fortnox_base_v2_invoices","d":1,"t":"model","up":1,"dn":5},{"id":59,"label":"fortnox_api.accounts","d":0,"t":"source","up":0,"dn":2},{"id":60,"label":"public.country_codes","d":0,"t":"source","up":0,"dn":5},{"id":61,"label":"xledger_api.transactions","d":0,"t":"source","up":0,"dn":1},{"id":62,"label":"logic_bi_dim_accounts","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_accounts.sql","up":3,"dn":3},{"id":63,"label":"visma_economic_erp_bi_dim_accounts","d":1,"t":"model","up":2,"dn":1},{"id":64,"label":"fortnox_api.cost_centers","d":0,"t":"source","up":0,"dn":1},{"id":65,"label":"visma_eaccounting_api.projects","d":0,"t":"source","up":0,"dn":1},{"id":66,"label":"xledger_erp_bi_dim_accounts","d":1,"t":"model","up":2,"dn":1},{"id":67,"label":"shopify_erp_bi_fact_orders","d":2,"t":"model","f":"packages/shopify/models/staging/shopify_erp_bi_fact_orders.sql","up":1,"dn":1},{"id":68,"label":"visma_eaccounting_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":69,"label":"upsales_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":70,"label":"erp_bi_dim_suppliers","d":4,"t":"model","f":"models/erp/erp_bi_dim_suppliers.sql","up":3,"dn":3},{"id":71,"label":"fortnox_bi_dim_company_staging","d":1,"t":"model","up":1,"dn":19},{"id":72,"label":"shopify_bi_fact_orders_staging","d":1,"t":"model","up":1,"dn":2},{"id":73,"label":"visma_eaccounting_api.costcenters","d":0,"t":"source","up":0,"dn":1},{"id":74,"label":"visma_eaccounting_api.openingbalances","d":0,"t":"source","up":0,"dn":1},{"id":75,"label":"seventime_erp_bi_dim_articles","d":1,"t":"model","up":1,"dn":1},{"id":76,"label":"public.bas_account_chart","d":0,"t":"source","up":0,"dn":7},{"id":77,"label":"shopify_api.order_lines","d":0,"t":"source","up":0,"dn":1},{"id":78,"label":"tripletex_api.municipality","d":0,"t":"source","up":0,"dn":2},{"id":79,"label":"public.calendar","d":0,"t":"source","up":0,"dn":2},{"id":80,"label":"visma_eaccounting_erp_bi_dim_articles","d":1,"t":"model","up":1,"dn":1},{"id":81,"label":"shopify_bi_dim_articles_staging","d":1,"t":"model","up":1,"dn":2},{"id":82,"label":"xledger_erp_bi_dim_projects","d":1,"t":"model","up":1,"dn":1},{"id":83,"label":"erp_bi_dim_company","d":3,"t":"model","f":"models/erp/erp_bi_dim_company.sql","up":6,"dn":2},{"id":84,"label":"visma_economic_erp_bi_dim_suppliers","d":1,"t":"model","up":2,"dn":1},{"id":85,"label":"visma_eaccounting_erp_bi_dim_cost_centers","d":1,"t":"model","up":1,"dn":1},{"id":86,"label":"shopify_api.products","d":0,"t":"source","up":0,"dn":1},{"id":87,"label":"fortnox_bi_dim_suppliers_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_dim_suppliers_staging.sql","up":4,"dn":8},{"id":88,"label":"visma_economic_erp_bi_fact_orders","d":1,"t":"model","up":4,"dn":1},{"id":89,"label":"seventime_erp_bi_dim_customers","d":1,"t":"model","up":3,"dn":1},{"id":90,"label":"tripletex_api.address","d":0,"t":"source","up":0,"dn":4},{"id":91,"label":"erp_bi_dim_articles","d":3,"t":"model","f":"models/erp/erp_bi_dim_articles.sql","up":6,"dn":3},{"id":92,"label":"upsales_erp_bi_dim_articles","d":1,"t":"model","up":1,"dn":1},{"id":93,"label":"shopify_erp_bi_dim_customers","d":2,"t":"model","f":"packages/shopify/models/staging/shopify_erp_bi_dim_customers.sql","up":1,"dn":1},{"id":94,"label":"visma_economic_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":95,"label":"shopify_bi_dim_customers_staging","d":1,"t":"model","up":1,"dn":2},{"id":96,"label":"upsales_bi_fact_opportunity_rows_staging","d":1,"t":"model","up":1,"dn":1},{"id":97,"label":"visma_economic_api.orders_drafts","d":0,"t":"source","up":0,"dn":1},{"id":98,"label":"fortnox_bi_fact_order_rows_staging","d":1,"t":"model","up":3,"dn":4},{"id":99,"label":"fortnox_api.stockbalance","d":0,"t":"source","up":0,"dn":2},{"id":100,"label":"visma_economic_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":101,"label":"visma_eaccounting_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":102,"label":"upsales_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":103,"label":"seventime_erp_bi_fact_offers","d":1,"t":"model","up":1,"dn":1},{"id":104,"label":"tripletex_erp_bi_dim_suppliers","d":1,"t":"model","up":4,"dn":1},{"id":105,"label":"fortnox_erp_bi_dim_articles","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_articles.sql","up":1,"dn":1},{"id":106,"label":"tripletex_erp_bi_dim_accounts","d":1,"t":"model","up":4,"dn":1},{"id":107,"label":"xledger_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":108,"label":"logic_bi_dim_cost_centers","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_cost_centers.sql","up":2,"dn":3},{"id":109,"label":"visma_eaccounting_erp_bi_dim_financial_years","d":1,"t":"model","up":1,"dn":1},{"id":110,"label":"visma_economic_erp_bi_dim_articles","d":1,"t":"model","up":1,"dn":1},{"id":111,"label":"fortnox_api.v2_offers","d":0,"t":"source","up":0,"dn":2},{"id":112,"label":"fortnox_api.v2_invoices","d":0,"t":"source","up":0,"dn":1},{"id":113,"label":"erp_bi_dim_customers","d":4,"t":"model","f":"models/erp/erp_bi_dim_customers.sql","up":7,"dn":2},{"id":114,"label":"upsales_erp_bi_fact_order_rows","d":1,"t":"model","up":1,"dn":1},{"id":115,"label":"upsales_api.self","d":0,"t":"source","up":0,"dn":1},{"id":116,"label":"fortnox_bi_fact_invoices_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_fact_invoices_staging.sql","up":2,"dn":5},{"id":117,"label":"erp_bi_fact_offers","d":3,"t":"model","f":"models/erp/erp_bi_fact_offers.sql","up":2,"dn":1},{"id":118,"label":"xledger_erp_bi_dim_cost_centers","d":1,"t":"model","up":1,"dn":1},{"id":119,"label":"shopify_bi_fact_order_rows_staging","d":1,"t":"model","up":2,"dn":2},{"id":120,"label":"visma_economic_api.invoices_sent","d":0,"t":"source","up":0,"dn":1},{"id":121,"label":"favrit_api.orderline","d":0,"t":"source","up":0,"dn":1},{"id":122,"label":"app.dimension_categories","d":0,"t":"source","up":0,"dn":1},{"id":123,"label":"visma_eaccounting_api.customerinvoices","d":0,"t":"source","up":0,"dn":3},{"id":124,"label":"erp_bi_fact_invoice_rows","d":4,"t":"model","f":"models/erp/erp_bi_fact_invoice_rows.sql","up":4,"dn":2},{"id":125,"label":"fortnox_api.company_settings","d":0,"t":"source","up":0,"dn":1},{"id":126,"label":"visma_eaccounting_erp_bi_fact_invoice_rows","d":1,"t":"model","up":2,"dn":1},{"id":127,"label":"visma_economic_api.suppliers","d":0,"t":"source","up":0,"dn":1},{"id":128,"label":"logic_bi_fact_sales","d":7,"t":"model","f":"models/logic_bi/logic_bi_fact_sales.sql","up":17,"dn":0},{"id":129,"label":"dimension_mapping_dbt","d":4,"t":"model","f":"models/app/dimension_mapping_dbt.sql","up":2,"dn":1},{"id":130,"label":"tripletex_erp_bi_dim_projects","d":1,"t":"model","up":1,"dn":1},{"id":131,"label":"seventime_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":132,"label":"tripletex_api.department","d":0,"t":"source","up":0,"dn":2},{"id":133,"label":"visma_economic_erp_bi_fact_invoice_rows","d":1,"t":"model","up":4,"dn":1},{"id":134,"label":"fortnox_erp_bi_dim_company","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_company.sql","up":1,"dn":1},{"id":135,"label":"tripletex_api.account","d":0,"t":"source","up":0,"dn":6},{"id":136,"label":"visma_economic_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":137,"label":"fortnox_erp_bi_fact_offers","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_offers.sql","up":1,"dn":1},{"id":138,"label":"fortnox_api.articles","d":0,"t":"source","up":0,"dn":4},{"id":139,"label":"favrit_bi_fact_order_rows_staging","d":1,"t":"model","up":1,"dn":1},{"id":140,"label":"tripletex_erp_bi_dim_customers","d":1,"t":"model","up":3,"dn":1},{"id":141,"label":"tripletex_erp_bi_dim_financial_years","d":1,"t":"model","up":2,"dn":1},{"id":142,"label":"visma_economic_erp_bi_fact_invoices","d":1,"t":"model","up":4,"dn":1},{"id":143,"label":"visma_economic_erp_bi_dim_financial_years","d":1,"t":"model","up":1,"dn":1},{"id":144,"label":"fortnox_erp_bi_fact_orders","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_orders.sql","up":1,"dn":1},{"id":145,"label":"fortnox_api.labels","d":0,"t":"source","up":0,"dn":4},{"id":146,"label":"fortnox_bi_dim_articles_staging","d":1,"t":"model","up":2,"dn":13},{"id":147,"label":"global_ds_chart_of_accounts.full_mapping","d":0,"t":"source","up":0,"dn":2},{"id":148,"label":"tripletex_api.division","d":0,"t":"source","up":0,"dn":2},{"id":149,"label":"tripletex_api.project","d":0,"t":"source","up":0,"dn":2},{"id":150,"label":"fortnox_bi_dim_projects_staging","d":1,"t":"model","up":1,"dn":14},{"id":151,"label":"app.dimension_mapping","d":0,"t":"source","up":0,"dn":1},{"id":152,"label":"tripletex_erp_bi_fact_invoices","d":1,"t":"model","up":1,"dn":1},{"id":153,"label":"fortnox_bi_dim_cost_centers_staging","d":1,"t":"model","up":1,"dn":14},{"id":154,"label":"visma_economic_api.customer_groups","d":0,"t":"source","up":0,"dn":1},{"id":155,"label":"fortnox_erp_bi_dim_suppliers","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_suppliers.sql","up":1,"dn":1},{"id":156,"label":"visma_eaccounting_erp_bi_fact_invoices","d":1,"t":"model","up":2,"dn":1},{"id":157,"label":"tripletex_api.supplier","d":0,"t":"source","up":0,"dn":2},{"id":158,"label":"visma_economic_erp_bi_dim_customers","d":1,"t":"model","up":4,"dn":1},{"id":159,"label":"fortnox_bi_fact_offers_staging","d":1,"t":"model","up":2,"dn":4},{"id":160,"label":"tripletex_api.annual_account","d":0,"t":"source","up":0,"dn":6},{"id":161,"label":"fortnox_api.financial_years","d":0,"t":"source","up":0,"dn":7},{"id":162,"label":"shopify_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":163,"label":"tripletex_api.employee","d":0,"t":"source","up":0,"dn":2},{"id":164,"label":"visma_economic_api.products","d":0,"t":"source","up":0,"dn":2},{"id":165,"label":"visma_economic_api.orders_archived","d":0,"t":"source","up":0,"dn":1},{"id":166,"label":"seventime_erp_bi_fact_invoices","d":1,"t":"model","up":1,"dn":1},{"id":167,"label":"upsales_api.orders","d":0,"t":"source","up":0,"dn":3},{"id":168,"label":"xledger_erp_bi_dim_financial_years","d":1,"t":"model","up":2,"dn":1},{"id":169,"label":"erp_bi_dim_projects","d":3,"t":"model","f":"models/erp/erp_bi_dim_projects.sql","up":4,"dn":1},{"id":170,"label":"fortnox_erp_bi_dim_financial_years","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_financial_years.sql","up":1,"dn":1},{"id":171,"label":"tripletex_erp_bi_dim_cost_centers","d":1,"t":"model","up":1,"dn":1},{"id":172,"label":"logic_bi_dim_organisations","d":4,"t":"model","f":"models/logic_bi/logic_bi_dim_organisations.sql","up":1,"dn":7},{"id":173,"label":"fortnox_erp_bi_fact_order_rows","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_order_rows.sql","up":1,"dn":1},{"id":174,"label":"fortnox_bi_dim_financial_years_staging","d":1,"t":"model","up":1,"dn":7},{"id":175,"label":"shopify_api.orders","d":0,"t":"source","up":0,"dn":2},{"id":176,"label":"visma_eaccounting_erp_bi_dim_projects","d":1,"t":"model","up":1,"dn":1},{"id":177,"label":"fortnox_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":178,"label":"erp_bi_fact_orders","d":3,"t":"model","f":"models/erp/erp_bi_fact_orders.sql","up":4,"dn":1}],"links":[{"s":8,"t":129},{"s":147,"t":129},{"s":129,"t":9},{"s":83,"t":9},{"s":122,"t":9},{"s":151,"t":9},{"s":83,"t":172},{"s":9,"t":108},{"s":51,"t":108},{"s":9,"t":31},{"s":169,"t":31},{"s":53,"t":49},{"s":9,"t":6},{"s":91,"t":6},{"s":9,"t":34},{"s":113,"t":34},{"s":70,"t":34},{"s":9,"t":128},{"s":91,"t":128},{"s":53,"t":128},{"s":124,"t":128},{"s":46,"t":128},{"s":117,"t":128},{"s":12,"t":128},{"s":178,"t":128},{"s":62,"t":128},{"s":6,"t":128},{"s":108,"t":128},{"s":34,"t":128},{"s":49,"t":128},{"s":172,"t":128},{"s":31,"t":128},{"s":96,"t":128},{"s":36,"t":128},{"s":9,"t":62},{"s":8,"t":62},{"s":53,"t":62},{"s":42,"t":51},{"s":171,"t":51},{"s":85,"t":51},{"s":118,"t":51},{"s":40,"t":169},{"s":130,"t":169},{"s":176,"t":169},{"s":82,"t":169},{"s":27,"t":113},{"s":89,"t":113},{"s":93,"t":113},{"s":140,"t":113},{"s":38,"t":113},{"s":11,"t":113},{"s":158,"t":113},{"s":28,"t":46},{"s":166,"t":46},{"s":152,"t":46},{"s":156,"t":46},{"s":142,"t":46},{"s":155,"t":70},{"s":104,"t":70},{"s":84,"t":70},{"s":20,"t":8},{"s":106,"t":8},{"s":24,"t":8},{"s":63,"t":8},{"s":66,"t":8},{"s":137,"t":117},{"s":103,"t":117},{"s":144,"t":178},{"s":67,"t":178},{"s":4,"t":178},{"s":88,"t":178},{"s":105,"t":91},{"s":75,"t":91},{"s":35,"t":91},{"s":92,"t":91},{"s":80,"t":91},{"s":110,"t":91},{"s":5,"t":124},{"s":50,"t":124},{"s":126,"t":124},{"s":133,"t":124},{"s":134,"t":83},{"s":131,"t":83},{"s":21,"t":83},{"s":102,"t":83},{"s":13,"t":83},{"s":136,"t":83},{"s":22,"t":12},{"s":173,"t":12},{"s":29,"t":12},{"s":114,"t":12},{"s":170,"t":53},{"s":16,"t":53},{"s":141,"t":53},{"s":36,"t":53},{"s":109,"t":53},{"s":143,"t":53},{"s":168,"t":53},{"s":60,"t":84},{"s":127,"t":84},{"s":19,"t":143},{"s":19,"t":142},{"s":23,"t":142},{"s":26,"t":142},{"s":120,"t":142},{"s":154,"t":158},{"s":100,"t":158},{"s":23,"t":158},{"s":26,"t":158},{"s":76,"t":63},{"s":94,"t":63},{"s":7,"t":136},{"s":164,"t":110},{"s":23,"t":88},{"s":165,"t":88},{"s":97,"t":88},{"s":45,"t":88},{"s":19,"t":133},{"s":23,"t":133},{"s":26,"t":133},{"s":164,"t":133},{"s":76,"t":24},{"s":68,"t":24},{"s":17,"t":24},{"s":74,"t":24},{"s":30,"t":24},{"s":60,"t":11},{"s":123,"t":11},{"s":101,"t":11},{"s":17,"t":109},{"s":123,"t":156},{"s":17,"t":156},{"s":123,"t":126},{"s":17,"t":126},{"s":41,"t":80},{"s":37,"t":13},{"s":73,"t":85},{"s":65,"t":176},{"s":161,"t":174},{"s":174,"t":170},{"s":33,"t":5},{"s":58,"t":87},{"s":60,"t":87},{"s":138,"t":87},{"s":48,"t":87},{"s":44,"t":27},{"s":116,"t":28},{"s":146,"t":105},{"s":64,"t":153},{"s":58,"t":33},{"s":161,"t":33},{"s":87,"t":155},{"s":138,"t":146},{"s":99,"t":146},{"s":1,"t":20},{"s":153,"t":42},{"s":58,"t":44},{"s":177,"t":44},{"s":58,"t":116},{"s":145,"t":116},{"s":98,"t":173},{"s":76,"t":1},{"s":59,"t":1},{"s":54,"t":1},{"s":145,"t":159},{"s":111,"t":159},{"s":125,"t":71},{"s":145,"t":57},{"s":25,"t":57},{"s":138,"t":98},{"s":161,"t":98},{"s":25,"t":98},{"s":71,"t":134},{"s":43,"t":150},{"s":150,"t":40},{"s":112,"t":58},{"s":159,"t":137},{"s":57,"t":144},{"s":162,"t":95},{"s":72,"t":67},{"s":119,"t":29},{"s":175,"t":72},{"s":86,"t":81},{"s":77,"t":119},{"s":175,"t":119},{"s":95,"t":93},{"s":81,"t":35},{"s":167,"t":4},{"s":47,"t":96},{"s":115,"t":102},{"s":60,"t":38},{"s":69,"t":38},{"s":167,"t":38},{"s":56,"t":92},{"s":47,"t":36},{"s":167,"t":114},{"s":39,"t":50},{"s":39,"t":166},{"s":60,"t":89},{"s":14,"t":89},{"s":39,"t":89},{"s":39,"t":16},{"s":52,"t":75},{"s":15,"t":103},{"s":0,"t":131},{"s":32,"t":118},{"s":76,"t":66},{"s":107,"t":66},{"s":32,"t":82},{"s":10,"t":168},{"s":61,"t":168},{"s":121,"t":139},{"s":139,"t":22},{"s":90,"t":140},{"s":55,"t":140},{"s":163,"t":140},{"s":149,"t":130},{"s":79,"t":141},{"s":160,"t":141},{"s":18,"t":152},{"s":135,"t":104},{"s":90,"t":104},{"s":2,"t":104},{"s":157,"t":104},{"s":76,"t":106},{"s":135,"t":106},{"s":160,"t":106},{"s":3,"t":106},{"s":132,"t":171},{"s":148,"t":21},{"s":78,"t":21}],"label":"logic_bi_fact_sales","perDepth":[[0,75],[1,59],[2,18],[3,13],[4,7],[5,1],[6,5],[7,1]]},{"root":137,"nodes":[{"id":0,"label":"seventime_api.companyinformation","d":0,"t":"source","up":0,"dn":1},{"id":1,"label":"fortnox_bi_dim_accounts_staging","d":1,"t":"model","up":3,"dn":7},{"id":2,"label":"tripletex_api.currency","d":0,"t":"source","up":0,"dn":2},{"id":3,"label":"tripletex_api.balance_sheet","d":0,"t":"source","up":0,"dn":2},{"id":4,"label":"visma_economic_api.self","d":0,"t":"source","up":0,"dn":1},{"id":5,"label":"erp_bi_dim_accounts","d":3,"t":"model","f":"models/erp/erp_bi_dim_accounts.sql","up":5,"dn":5},{"id":6,"label":"fortnox_bi_fact_budgets_staging","d":1,"t":"model","up":1,"dn":3},{"id":7,"label":"categories_x_mapping","d":5,"t":"model","f":"models/app/categories_x_mapping.sql","up":4,"dn":12},{"id":8,"label":"visma_eaccounting_erp_bi_dim_customers","d":1,"t":"model","up":3,"dn":1},{"id":9,"label":"xledger_api.recent_transactions","d":0,"t":"source","up":0,"dn":1},{"id":10,"label":"visma_eaccounting_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":11,"label":"seventime_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":12,"label":"fortnox_api.budgets","d":0,"t":"source","up":0,"dn":1},{"id":13,"label":"seventime_erp_bi_dim_financial_years","d":1,"t":"model","up":1,"dn":1},{"id":14,"label":"visma_eaccounting_api.fiscalyears","d":0,"t":"source","up":0,"dn":5},{"id":15,"label":"tripletex_api.invoice","d":0,"t":"source","up":0,"dn":2},{"id":16,"label":"fortnox_bi_fact_supplier_invoice_rows_staging","d":1,"t":"model","up":2,"dn":4},{"id":17,"label":"fortnox_erp_bi_dim_accounts","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_accounts.sql","up":1,"dn":1},{"id":18,"label":"visma_economic_api.accounting_years","d":0,"t":"source","up":0,"dn":4},{"id":19,"label":"tripletex_erp_bi_dim_company","d":1,"t":"model","up":2,"dn":1},{"id":20,"label":"visma_eaccounting_erp_bi_dim_accounts","d":1,"t":"model","up":5,"dn":1},{"id":21,"label":"visma_economic_api.employees","d":0,"t":"source","up":0,"dn":4},{"id":22,"label":"fortnox_erp_bi_dim_customers","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_customers.sql","up":1,"dn":1},{"id":23,"label":"visma_economic_api.invoices_booked","d":0,"t":"source","up":0,"dn":3},{"id":24,"label":"fortnox_erp_bi_fact_invoices","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_invoices.sql","up":1,"dn":1},{"id":25,"label":"visma_eaccounting_api.vouchers","d":0,"t":"source","up":0,"dn":2},{"id":26,"label":"logic_bi_dim_projects","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_projects.sql","up":2,"dn":4},{"id":27,"label":"xledger_api.object_values","d":0,"t":"source","up":0,"dn":2},{"id":28,"label":"tripletex_api.ledger_voucher","d":0,"t":"source","up":0,"dn":2},{"id":29,"label":"upsales_erp_bi_dim_financial_years","d":1,"t":"model","up":1,"dn":2},{"id":30,"label":"visma_eaccounting_api.companysettings","d":0,"t":"source","up":0,"dn":1},{"id":31,"label":"upsales_erp_bi_dim_customers","d":1,"t":"model","up":3,"dn":1},{"id":32,"label":"erp_bi_fact_vouchers","d":4,"t":"model","f":"models/erp/erp_bi_fact_vouchers.sql","up":4,"dn":3},{"id":33,"label":"seventime_api.invoices","d":0,"t":"source","up":0,"dn":4},{"id":34,"label":"fortnox_erp_bi_dim_projects","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_projects.sql","up":1,"dn":1},{"id":35,"label":"fortnox_api.projects","d":0,"t":"source","up":0,"dn":1},{"id":36,"label":"erp_bi_fact_budgets","d":3,"t":"model","f":"models/erp/erp_bi_fact_budgets.sql","up":1,"dn":1},{"id":37,"label":"fortnox_bi_dim_customers_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_dim_customers_staging.sql","up":2,"dn":13},{"id":38,"label":"erp_bi_fact_invoices","d":4,"t":"model","f":"models/erp/erp_bi_fact_invoices.sql","up":5,"dn":3},{"id":39,"label":"upsales_api.opportunities","d":0,"t":"source","up":0,"dn":3},{"id":40,"label":"fortnox_api.suppliers","d":0,"t":"source","up":0,"dn":1},{"id":41,"label":"logic_bi_dim_financial_years","d":4,"t":"model","f":"models/logic_bi/logic_bi_dim_financial_years.sql","up":1,"dn":3},{"id":42,"label":"erp_bi_dim_financial_years","d":3,"t":"model","f":"models/erp/erp_bi_dim_financial_years.sql","up":7,"dn":4},{"id":43,"label":"fortnox_api.vouchers","d":0,"t":"source","up":0,"dn":3},{"id":44,"label":"tripletex_api.customer","d":0,"t":"source","up":0,"dn":2},{"id":45,"label":"fortnox_erp_bi_fact_vouchers","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_vouchers.sql","up":1,"dn":1},{"id":46,"label":"visma_economic_api.journals","d":0,"t":"source","up":0,"dn":1},{"id":47,"label":"fortnox_erp_bi_fact_supplier_invoice_rows","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_supplier_invoice_rows.sql","up":1,"dn":1},{"id":48,"label":"fortnox_base_v2_invoices","d":1,"t":"model","up":1,"dn":5},{"id":49,"label":"fortnox_api.accounts","d":0,"t":"source","up":0,"dn":2},{"id":50,"label":"public.country_codes","d":0,"t":"source","up":0,"dn":5},{"id":51,"label":"visma_economic_erp_bi_dim_accounts","d":1,"t":"model","up":2,"dn":1},{"id":52,"label":"logic_bi_dim_accounts","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_accounts.sql","up":3,"dn":3},{"id":53,"label":"xledger_api.transactions","d":0,"t":"source","up":0,"dn":1},{"id":54,"label":"visma_eaccounting_api.projects","d":0,"t":"source","up":0,"dn":1},{"id":55,"label":"xledger_erp_bi_dim_accounts","d":1,"t":"model","up":2,"dn":1},{"id":56,"label":"visma_eaccounting_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":57,"label":"upsales_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":58,"label":"visma_economic_erp_bi_fact_vouchers","d":1,"t":"model","up":3,"dn":1},{"id":59,"label":"erp_bi_dim_suppliers","d":4,"t":"model","f":"models/erp/erp_bi_dim_suppliers.sql","up":3,"dn":3},{"id":60,"label":"fortnox_bi_dim_company_staging","d":1,"t":"model","up":1,"dn":19},{"id":61,"label":"visma_eaccounting_api.openingbalances","d":0,"t":"source","up":0,"dn":1},{"id":62,"label":"public.bas_account_chart","d":0,"t":"source","up":0,"dn":7},{"id":63,"label":"tripletex_api.municipality","d":0,"t":"source","up":0,"dn":2},{"id":64,"label":"public.calendar","d":0,"t":"source","up":0,"dn":2},{"id":65,"label":"xledger_erp_bi_dim_projects","d":1,"t":"model","up":1,"dn":1},{"id":66,"label":"erp_bi_dim_company","d":3,"t":"model","f":"models/erp/erp_bi_dim_company.sql","up":6,"dn":2},{"id":67,"label":"visma_economic_erp_bi_dim_suppliers","d":1,"t":"model","up":2,"dn":1},{"id":68,"label":"fortnox_bi_dim_suppliers_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_dim_suppliers_staging.sql","up":4,"dn":8},{"id":69,"label":"seventime_erp_bi_dim_customers","d":1,"t":"model","up":3,"dn":1},{"id":70,"label":"tripletex_api.address","d":0,"t":"source","up":0,"dn":4},{"id":71,"label":"shopify_erp_bi_dim_customers","d":2,"t":"model","f":"packages/shopify/models/staging/shopify_erp_bi_dim_customers.sql","up":1,"dn":1},{"id":72,"label":"visma_economic_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":73,"label":"shopify_bi_dim_customers_staging","d":1,"t":"model","up":1,"dn":2},{"id":74,"label":"visma_economic_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":75,"label":"visma_eaccounting_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":76,"label":"upsales_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":77,"label":"tripletex_erp_bi_fact_vouchers","d":1,"t":"model","up":5,"dn":1},{"id":78,"label":"tripletex_api.voucher_type","d":0,"t":"source","up":0,"dn":2},{"id":79,"label":"tripletex_erp_bi_dim_suppliers","d":1,"t":"model","up":4,"dn":1},{"id":80,"label":"tripletex_erp_bi_dim_accounts","d":1,"t":"model","up":4,"dn":1},{"id":81,"label":"fortnox_erp_bi_fact_budgets","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_budgets.sql","up":1,"dn":1},{"id":82,"label":"xledger_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":83,"label":"visma_eaccounting_erp_bi_dim_financial_years","d":1,"t":"model","up":1,"dn":1},{"id":84,"label":"fortnox_api.v2_invoices","d":0,"t":"source","up":0,"dn":1},{"id":85,"label":"erp_bi_dim_customers","d":4,"t":"model","f":"models/erp/erp_bi_dim_customers.sql","up":7,"dn":2},{"id":86,"label":"fortnox_api.supplier_invoices","d":0,"t":"source","up":0,"dn":5},{"id":87,"label":"upsales_api.self","d":0,"t":"source","up":0,"dn":1},{"id":88,"label":"fortnox_bi_fact_invoices_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_fact_invoices_staging.sql","up":2,"dn":5},{"id":89,"label":"visma_economic_api.invoices_sent","d":0,"t":"source","up":0,"dn":1},{"id":90,"label":"visma_economic_api.entries","d":0,"t":"source","up":0,"dn":1},{"id":91,"label":"app.dimension_categories","d":0,"t":"source","up":0,"dn":1},{"id":92,"label":"visma_eaccounting_api.customerinvoices","d":0,"t":"source","up":0,"dn":3},{"id":93,"label":"fortnox_api.company_settings","d":0,"t":"source","up":0,"dn":1},{"id":94,"label":"visma_economic_api.suppliers","d":0,"t":"source","up":0,"dn":1},{"id":95,"label":"dimension_mapping_dbt","d":4,"t":"model","f":"models/app/dimension_mapping_dbt.sql","up":2,"dn":1},{"id":96,"label":"fortnox_api.invoice_payments","d":0,"t":"source","up":0,"dn":1},{"id":97,"label":"erp_bi_fact_supplier_invoice_rows","d":3,"t":"model","f":"models/erp/erp_bi_fact_supplier_invoice_rows.sql","up":1,"dn":1},{"id":98,"label":"tripletex_erp_bi_dim_projects","d":1,"t":"model","up":1,"dn":1},{"id":99,"label":"seventime_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":100,"label":"fortnox_erp_bi_dim_company","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_company.sql","up":1,"dn":1},{"id":101,"label":"tripletex_api.account","d":0,"t":"source","up":0,"dn":6},{"id":102,"label":"fortnox_bi_fact_vouchers_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_fact_vouchers_staging.sql","up":3,"dn":5},{"id":103,"label":"visma_economic_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":104,"label":"fortnox_api.articles","d":0,"t":"source","up":0,"dn":4},{"id":105,"label":"tripletex_erp_bi_dim_customers","d":1,"t":"model","up":3,"dn":1},{"id":106,"label":"tripletex_erp_bi_dim_financial_years","d":1,"t":"model","up":2,"dn":1},{"id":107,"label":"visma_eaccounting_erp_bi_fact_vouchers","d":1,"t":"model","up":2,"dn":1},{"id":108,"label":"visma_economic_erp_bi_fact_invoices","d":1,"t":"model","up":4,"dn":1},{"id":109,"label":"visma_economic_erp_bi_dim_financial_years","d":1,"t":"model","up":1,"dn":1},{"id":110,"label":"fortnox_api.labels","d":0,"t":"source","up":0,"dn":4},{"id":111,"label":"global_ds_chart_of_accounts.full_mapping","d":0,"t":"source","up":0,"dn":2},{"id":112,"label":"tripletex_api.division","d":0,"t":"source","up":0,"dn":2},{"id":113,"label":"tripletex_api.project","d":0,"t":"source","up":0,"dn":2},{"id":114,"label":"fortnox_bi_dim_projects_staging","d":1,"t":"model","up":1,"dn":14},{"id":115,"label":"app.dimension_mapping","d":0,"t":"source","up":0,"dn":1},{"id":116,"label":"tripletex_erp_bi_fact_invoices","d":1,"t":"model","up":1,"dn":1},{"id":117,"label":"visma_economic_api.customer_groups","d":0,"t":"source","up":0,"dn":1},{"id":118,"label":"fortnox_erp_bi_dim_suppliers","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_suppliers.sql","up":1,"dn":1},{"id":119,"label":"visma_eaccounting_erp_bi_fact_invoices","d":1,"t":"model","up":2,"dn":1},{"id":120,"label":"tripletex_api.supplier","d":0,"t":"source","up":0,"dn":2},{"id":121,"label":"fortnox_bi_fact_invoice_payments_staging","d":1,"t":"model","up":1,"dn":3},{"id":122,"label":"visma_economic_erp_bi_dim_customers","d":1,"t":"model","up":4,"dn":1},{"id":123,"label":"tripletex_api.annual_account","d":0,"t":"source","up":0,"dn":6},{"id":124,"label":"fortnox_api.financial_years","d":0,"t":"source","up":0,"dn":7},{"id":125,"label":"shopify_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":126,"label":"tripletex_api.employee","d":0,"t":"source","up":0,"dn":2},{"id":127,"label":"tripletex_api.ledger_posting","d":0,"t":"source","up":0,"dn":2},{"id":128,"label":"seventime_erp_bi_fact_invoices","d":1,"t":"model","up":1,"dn":1},{"id":129,"label":"upsales_api.orders","d":0,"t":"source","up":0,"dn":3},{"id":130,"label":"xledger_erp_bi_dim_financial_years","d":1,"t":"model","up":2,"dn":1},{"id":131,"label":"erp_bi_dim_projects","d":3,"t":"model","f":"models/erp/erp_bi_dim_projects.sql","up":4,"dn":1},{"id":132,"label":"fortnox_erp_bi_dim_financial_years","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_financial_years.sql","up":1,"dn":1},{"id":133,"label":"logic_bi_dim_organisations","d":4,"t":"model","f":"models/logic_bi/logic_bi_dim_organisations.sql","up":1,"dn":7},{"id":134,"label":"fortnox_bi_dim_financial_years_staging","d":1,"t":"model","up":1,"dn":7},{"id":135,"label":"visma_eaccounting_erp_bi_dim_projects","d":1,"t":"model","up":1,"dn":1},{"id":136,"label":"fortnox_api.customers","d":0,"t":"source","up":0,"dn":1},{"id":137,"label":"logic_bi_fact_profit_loss","d":7,"t":"model","f":"models/logic_bi/logic_bi_fact_profit_loss.sql","up":13,"dn":0}],"links":[{"s":5,"t":95},{"s":111,"t":95},{"s":95,"t":7},{"s":66,"t":7},{"s":91,"t":7},{"s":115,"t":7},{"s":66,"t":133},{"s":7,"t":26},{"s":131,"t":26},{"s":42,"t":41},{"s":7,"t":137},{"s":5,"t":137},{"s":85,"t":137},{"s":59,"t":137},{"s":36,"t":137},{"s":38,"t":137},{"s":97,"t":137},{"s":32,"t":137},{"s":52,"t":137},{"s":41,"t":137},{"s":133,"t":137},{"s":26,"t":137},{"s":121,"t":137},{"s":7,"t":52},{"s":5,"t":52},{"s":42,"t":52},{"s":47,"t":97},{"s":34,"t":131},{"s":98,"t":131},{"s":135,"t":131},{"s":65,"t":131},{"s":22,"t":85},{"s":69,"t":85},{"s":71,"t":85},{"s":105,"t":85},{"s":31,"t":85},{"s":8,"t":85},{"s":122,"t":85},{"s":24,"t":38},{"s":128,"t":38},{"s":116,"t":38},{"s":119,"t":38},{"s":108,"t":38},{"s":118,"t":59},{"s":79,"t":59},{"s":67,"t":59},{"s":17,"t":5},{"s":80,"t":5},{"s":20,"t":5},{"s":51,"t":5},{"s":55,"t":5},{"s":81,"t":36},{"s":100,"t":66},{"s":99,"t":66},{"s":19,"t":66},{"s":76,"t":66},{"s":10,"t":66},{"s":103,"t":66},{"s":45,"t":32},{"s":77,"t":32},{"s":107,"t":32},{"s":58,"t":32},{"s":132,"t":42},{"s":13,"t":42},{"s":106,"t":42},{"s":29,"t":42},{"s":83,"t":42},{"s":109,"t":42},{"s":130,"t":42},{"s":50,"t":67},{"s":94,"t":67},{"s":18,"t":109},{"s":18,"t":108},{"s":21,"t":108},{"s":23,"t":108},{"s":89,"t":108},{"s":117,"t":122},{"s":74,"t":122},{"s":21,"t":122},{"s":23,"t":122},{"s":62,"t":51},{"s":72,"t":51},{"s":4,"t":103},{"s":18,"t":58},{"s":90,"t":58},{"s":46,"t":58},{"s":62,"t":20},{"s":56,"t":20},{"s":14,"t":20},{"s":61,"t":20},{"s":25,"t":20},{"s":50,"t":8},{"s":92,"t":8},{"s":75,"t":8},{"s":14,"t":83},{"s":92,"t":119},{"s":14,"t":119},{"s":14,"t":107},{"s":25,"t":107},{"s":30,"t":10},{"s":54,"t":135},{"s":12,"t":6},{"s":124,"t":134},{"s":124,"t":16},{"s":86,"t":16},{"s":134,"t":132},{"s":48,"t":68},{"s":50,"t":68},{"s":104,"t":68},{"s":40,"t":68},{"s":37,"t":22},{"s":88,"t":24},{"s":68,"t":118},{"s":6,"t":81},{"s":96,"t":121},{"s":1,"t":17},{"s":16,"t":47},{"s":48,"t":37},{"s":136,"t":37},{"s":48,"t":88},{"s":110,"t":88},{"s":62,"t":1},{"s":49,"t":1},{"s":43,"t":1},{"s":93,"t":60},{"s":60,"t":100},{"s":35,"t":114},{"s":114,"t":34},{"s":48,"t":102},{"s":86,"t":102},{"s":43,"t":102},{"s":84,"t":48},{"s":102,"t":45},{"s":125,"t":73},{"s":73,"t":71},{"s":87,"t":76},{"s":50,"t":31},{"s":57,"t":31},{"s":129,"t":31},{"s":39,"t":29},{"s":33,"t":128},{"s":50,"t":69},{"s":11,"t":69},{"s":33,"t":69},{"s":33,"t":13},{"s":0,"t":99},{"s":62,"t":55},{"s":82,"t":55},{"s":27,"t":65},{"s":9,"t":130},{"s":53,"t":130},{"s":70,"t":105},{"s":44,"t":105},{"s":126,"t":105},{"s":113,"t":98},{"s":64,"t":106},{"s":123,"t":106},{"s":15,"t":116},{"s":101,"t":79},{"s":70,"t":79},{"s":2,"t":79},{"s":120,"t":79},{"s":62,"t":80},{"s":101,"t":80},{"s":123,"t":80},{"s":3,"t":80},{"s":101,"t":77},{"s":123,"t":77},{"s":127,"t":77},{"s":28,"t":77},{"s":78,"t":77},{"s":112,"t":19},{"s":63,"t":19}],"label":"logic_bi_fact_profit_loss","perDepth":[[0,65],[1,41],[2,11],[3,10],[4,7],[5,1],[6,2],[7,1]]},{"root":90,"nodes":[{"id":0,"label":"seventime_api.companyinformation","d":0,"t":"source","up":0,"dn":1},{"id":1,"label":"fortnox_bi_dim_accounts_staging","d":1,"t":"model","up":3,"dn":7},{"id":2,"label":"erp_bi_fact_attendance_transactions","d":3,"t":"model","f":"models/erp/erp_bi_fact_attendance_transactions.sql","up":1,"dn":1},{"id":3,"label":"tripletex_api.balance_sheet","d":0,"t":"source","up":0,"dn":2},{"id":4,"label":"visma_economic_api.self","d":0,"t":"source","up":0,"dn":1},{"id":5,"label":"erp_bi_dim_accounts","d":3,"t":"model","f":"models/erp/erp_bi_dim_accounts.sql","up":5,"dn":5},{"id":6,"label":"categories_x_mapping","d":5,"t":"model","f":"models/app/categories_x_mapping.sql","up":4,"dn":12},{"id":7,"label":"visma_eaccounting_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":8,"label":"fortnox_bi_dim_employees_staging","d":1,"t":"model","up":1,"dn":2},{"id":9,"label":"visma_eaccounting_api.fiscalyears","d":0,"t":"source","up":0,"dn":5},{"id":10,"label":"fortnox_erp_bi_dim_accounts","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_accounts.sql","up":1,"dn":1},{"id":11,"label":"visma_economic_api.accounting_years","d":0,"t":"source","up":0,"dn":4},{"id":12,"label":"logic_bi_dim_employees","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_employees.sql","up":2,"dn":1},{"id":13,"label":"tripletex_erp_bi_dim_company","d":1,"t":"model","up":2,"dn":1},{"id":14,"label":"visma_eaccounting_erp_bi_dim_accounts","d":1,"t":"model","up":5,"dn":1},{"id":15,"label":"fortnox_bi_fact_salary_transactions_staging","d":1,"t":"model","up":5,"dn":2},{"id":16,"label":"visma_eaccounting_api.vouchers","d":0,"t":"source","up":0,"dn":2},{"id":17,"label":"logic_bi_dim_projects","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_projects.sql","up":2,"dn":4},{"id":18,"label":"xledger_api.object_values","d":0,"t":"source","up":0,"dn":2},{"id":19,"label":"erp_bi_fact_salary_transactions","d":3,"t":"model","f":"models/erp/erp_bi_fact_salary_transactions.sql","up":1,"dn":1},{"id":20,"label":"tripletex_api.ledger_voucher","d":0,"t":"source","up":0,"dn":2},{"id":21,"label":"erp_bi_fact_absence_transactions","d":3,"t":"model","f":"models/erp/erp_bi_fact_absence_transactions.sql","up":1,"dn":1},{"id":22,"label":"visma_eaccounting_api.companysettings","d":0,"t":"source","up":0,"dn":1},{"id":23,"label":"erp_bi_fact_vouchers","d":4,"t":"model","f":"models/erp/erp_bi_fact_vouchers.sql","up":4,"dn":3},{"id":24,"label":"fortnox_erp_bi_fact_attendance_transactions","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_attendance_transactions.sql","up":1,"dn":1},{"id":25,"label":"fortnox_erp_bi_dim_projects","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_projects.sql","up":1,"dn":1},{"id":26,"label":"fortnox_erp_bi_dim_cost_centers","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_cost_centers.sql","up":1,"dn":1},{"id":27,"label":"fortnox_api.projects","d":0,"t":"source","up":0,"dn":1},{"id":28,"label":"erp_bi_dim_cost_centers","d":3,"t":"model","f":"models/erp/erp_bi_dim_cost_centers.sql","up":4,"dn":1},{"id":29,"label":"fortnox_erp_bi_dim_employees","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_employees.sql","up":1,"dn":1},{"id":30,"label":"fortnox_api.vouchers","d":0,"t":"source","up":0,"dn":3},{"id":31,"label":"fortnox_erp_bi_fact_vouchers","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_vouchers.sql","up":1,"dn":1},{"id":32,"label":"visma_economic_api.journals","d":0,"t":"source","up":0,"dn":1},{"id":33,"label":"fortnox_base_v2_invoices","d":1,"t":"model","up":1,"dn":5},{"id":34,"label":"fortnox_api.accounts","d":0,"t":"source","up":0,"dn":2},{"id":35,"label":"visma_economic_erp_bi_dim_accounts","d":1,"t":"model","up":2,"dn":1},{"id":36,"label":"fortnox_api.cost_centers","d":0,"t":"source","up":0,"dn":1},{"id":37,"label":"visma_eaccounting_api.projects","d":0,"t":"source","up":0,"dn":1},{"id":38,"label":"xledger_erp_bi_dim_accounts","d":1,"t":"model","up":2,"dn":1},{"id":39,"label":"visma_eaccounting_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":40,"label":"visma_economic_erp_bi_fact_vouchers","d":1,"t":"model","up":3,"dn":1},{"id":41,"label":"fortnox_bi_dim_company_staging","d":1,"t":"model","up":1,"dn":19},{"id":42,"label":"public.cause_codes","d":0,"t":"source","up":0,"dn":3},{"id":43,"label":"visma_eaccounting_api.openingbalances","d":0,"t":"source","up":0,"dn":1},{"id":44,"label":"visma_eaccounting_api.costcenters","d":0,"t":"source","up":0,"dn":1},{"id":45,"label":"public.bas_account_chart","d":0,"t":"source","up":0,"dn":7},{"id":46,"label":"tripletex_api.municipality","d":0,"t":"source","up":0,"dn":2},{"id":47,"label":"xledger_erp_bi_dim_projects","d":1,"t":"model","up":1,"dn":1},{"id":48,"label":"erp_bi_dim_company","d":3,"t":"model","f":"models/erp/erp_bi_dim_company.sql","up":6,"dn":2},{"id":49,"label":"visma_eaccounting_erp_bi_dim_cost_centers","d":1,"t":"model","up":1,"dn":1},{"id":50,"label":"visma_economic_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":51,"label":"upsales_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":52,"label":"tripletex_erp_bi_fact_vouchers","d":1,"t":"model","up":5,"dn":1},{"id":53,"label":"tripletex_api.voucher_type","d":0,"t":"source","up":0,"dn":2},{"id":54,"label":"tripletex_erp_bi_dim_accounts","d":1,"t":"model","up":4,"dn":1},{"id":55,"label":"xledger_api.accounts","d":0,"t":"source","up":0,"dn":1},{"id":56,"label":"logic_bi_dim_cost_centers","d":6,"t":"model","f":"models/logic_bi/logic_bi_dim_cost_centers.sql","up":2,"dn":3},{"id":57,"label":"fortnox_api.v2_invoices","d":0,"t":"source","up":0,"dn":1},{"id":58,"label":"upsales_api.self","d":0,"t":"source","up":0,"dn":1},{"id":59,"label":"fortnox_bi_fact_absence_transactions_staging","d":1,"t":"model","up":3,"dn":2},{"id":60,"label":"fortnox_api.supplier_invoices","d":0,"t":"source","up":0,"dn":5},{"id":61,"label":"xledger_erp_bi_dim_cost_centers","d":1,"t":"model","up":1,"dn":1},{"id":62,"label":"visma_economic_api.entries","d":0,"t":"source","up":0,"dn":1},{"id":63,"label":"app.dimension_categories","d":0,"t":"source","up":0,"dn":1},{"id":64,"label":"fortnox_api.absence_transactions","d":0,"t":"source","up":0,"dn":1},{"id":65,"label":"fortnox_api.company_settings","d":0,"t":"source","up":0,"dn":1},{"id":66,"label":"fortnox_api.employees","d":0,"t":"source","up":0,"dn":6},{"id":67,"label":"dimension_mapping_dbt","d":4,"t":"model","f":"models/app/dimension_mapping_dbt.sql","up":2,"dn":1},{"id":68,"label":"tripletex_erp_bi_dim_projects","d":1,"t":"model","up":1,"dn":1},{"id":69,"label":"seventime_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":70,"label":"tripletex_api.department","d":0,"t":"source","up":0,"dn":2},{"id":71,"label":"fortnox_erp_bi_dim_company","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_dim_company.sql","up":1,"dn":1},{"id":72,"label":"tripletex_api.account","d":0,"t":"source","up":0,"dn":6},{"id":73,"label":"visma_economic_erp_bi_dim_company","d":1,"t":"model","up":1,"dn":1},{"id":74,"label":"fortnox_bi_fact_vouchers_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_fact_vouchers_staging.sql","up":3,"dn":5},{"id":75,"label":"visma_eaccounting_erp_bi_fact_vouchers","d":1,"t":"model","up":2,"dn":1},{"id":76,"label":"global_ds_chart_of_accounts.full_mapping","d":0,"t":"source","up":0,"dn":2},{"id":77,"label":"tripletex_api.division","d":0,"t":"source","up":0,"dn":2},{"id":78,"label":"tripletex_api.project","d":0,"t":"source","up":0,"dn":2},{"id":79,"label":"fortnox_bi_dim_projects_staging","d":1,"t":"model","up":1,"dn":14},{"id":80,"label":"app.dimension_mapping","d":0,"t":"source","up":0,"dn":1},{"id":81,"label":"fortnox_bi_dim_cost_centers_staging","d":1,"t":"model","up":1,"dn":14},{"id":82,"label":"fortnox_erp_bi_fact_absence_transactions","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_absence_transactions.sql","up":1,"dn":1},{"id":83,"label":"tripletex_api.annual_account","d":0,"t":"source","up":0,"dn":6},{"id":84,"label":"fortnox_api.attendance_transactions","d":0,"t":"source","up":0,"dn":1},{"id":85,"label":"fortnox_api.expenses","d":0,"t":"source","up":0,"dn":2},{"id":86,"label":"fortnox_api.financial_years","d":0,"t":"source","up":0,"dn":7},{"id":87,"label":"tripletex_api.ledger_posting","d":0,"t":"source","up":0,"dn":2},{"id":88,"label":"fortnox_bi_fact_attendance_transactions_staging","d":1,"t":"model","up":3,"dn":2},{"id":89,"label":"fortnox_api.salary_transactions","d":0,"t":"source","up":0,"dn":1},{"id":90,"label":"logic_bi_fact_salaries","d":7,"t":"model","f":"models/logic_bi/logic_bi_fact_salaries.sql","up":10,"dn":0},{"id":91,"label":"erp_bi_dim_projects","d":3,"t":"model","f":"models/erp/erp_bi_dim_projects.sql","up":4,"dn":1},{"id":92,"label":"tripletex_erp_bi_dim_cost_centers","d":1,"t":"model","up":1,"dn":1},{"id":93,"label":"logic_bi_dim_organisations","d":4,"t":"model","f":"models/logic_bi/logic_bi_dim_organisations.sql","up":1,"dn":7},{"id":94,"label":"erp_bi_dim_employees","d":3,"t":"model","f":"models/erp/erp_bi_dim_employees.sql","up":1,"dn":2},{"id":95,"label":"fortnox_erp_bi_fact_salary_transactions","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_erp_bi_fact_salary_transactions.sql","up":1,"dn":1},{"id":96,"label":"visma_eaccounting_erp_bi_dim_projects","d":1,"t":"model","up":1,"dn":1}],"links":[{"s":5,"t":67},{"s":76,"t":67},{"s":67,"t":6},{"s":48,"t":6},{"s":63,"t":6},{"s":80,"t":6},{"s":48,"t":93},{"s":6,"t":12},{"s":94,"t":12},{"s":6,"t":56},{"s":28,"t":56},{"s":6,"t":17},{"s":91,"t":17},{"s":6,"t":90},{"s":5,"t":90},{"s":21,"t":90},{"s":2,"t":90},{"s":19,"t":90},{"s":23,"t":90},{"s":56,"t":90},{"s":12,"t":90},{"s":93,"t":90},{"s":17,"t":90},{"s":82,"t":21},{"s":95,"t":19},{"s":26,"t":28},{"s":92,"t":28},{"s":49,"t":28},{"s":61,"t":28},{"s":25,"t":91},{"s":68,"t":91},{"s":96,"t":91},{"s":47,"t":91},{"s":10,"t":5},{"s":54,"t":5},{"s":14,"t":5},{"s":35,"t":5},{"s":38,"t":5},{"s":71,"t":48},{"s":69,"t":48},{"s":13,"t":48},{"s":51,"t":48},{"s":7,"t":48},{"s":73,"t":48},{"s":24,"t":2},{"s":29,"t":94},{"s":31,"t":23},{"s":52,"t":23},{"s":75,"t":23},{"s":40,"t":23},{"s":45,"t":35},{"s":50,"t":35},{"s":4,"t":73},{"s":11,"t":40},{"s":62,"t":40},{"s":32,"t":40},{"s":45,"t":14},{"s":39,"t":14},{"s":9,"t":14},{"s":43,"t":14},{"s":16,"t":14},{"s":9,"t":75},{"s":16,"t":75},{"s":22,"t":7},{"s":44,"t":49},{"s":37,"t":96},{"s":88,"t":24},{"s":59,"t":82},{"s":34,"t":15},{"s":66,"t":15},{"s":85,"t":15},{"s":86,"t":15},{"s":89,"t":15},{"s":36,"t":81},{"s":1,"t":10},{"s":81,"t":26},{"s":42,"t":88},{"s":84,"t":88},{"s":66,"t":88},{"s":66,"t":8},{"s":45,"t":1},{"s":34,"t":1},{"s":30,"t":1},{"s":65,"t":41},{"s":41,"t":71},{"s":27,"t":79},{"s":79,"t":25},{"s":42,"t":59},{"s":64,"t":59},{"s":66,"t":59},{"s":15,"t":95},{"s":33,"t":74},{"s":60,"t":74},{"s":30,"t":74},{"s":57,"t":33},{"s":8,"t":29},{"s":74,"t":31},{"s":58,"t":51},{"s":0,"t":69},{"s":18,"t":61},{"s":45,"t":38},{"s":55,"t":38},{"s":18,"t":47},{"s":78,"t":68},{"s":45,"t":54},{"s":72,"t":54},{"s":83,"t":54},{"s":3,"t":54},{"s":70,"t":92},{"s":72,"t":52},{"s":83,"t":52},{"s":87,"t":52},{"s":20,"t":52},{"s":53,"t":52},{"s":77,"t":13},{"s":46,"t":13}],"label":"logic_bi_fact_salaries","perDepth":[[0,44],[1,27],[2,9],[3,9],[4,3],[5,1],[6,3],[7,1]]},{"root":1,"nodes":[{"id":0,"label":"fortnox_api.vouchers","d":0,"t":"source","up":0,"dn":3},{"id":1,"label":"fortnox_reports_balance_sheet","d":4,"t":"model","f":"packages/fortnox/models/fortnox_reports/fortnox_reports_balance_sheet.sql","up":1,"dn":0},{"id":2,"label":"fortnox_bi_dim_accounts_staging","d":1,"t":"model","up":3,"dn":7},{"id":3,"label":"fortnox_bi_dim_company_staging","d":1,"t":"model","up":1,"dn":19},{"id":4,"label":"fortnox_bi_fact_vouchers_staging","d":2,"t":"model","f":"packages/fortnox/models/staging/fortnox_bi_fact_vouchers_staging.sql","up":3,"dn":5},{"id":5,"label":"fortnox_api.company_settings","d":0,"t":"source","up":0,"dn":1},{"id":6,"label":"fortnox_bi_dim_financial_years_staging","d":1,"t":"model","up":1,"dn":7},{"id":7,"label":"fortnox_api.v2_invoices","d":0,"t":"source","up":0,"dn":1},{"id":8,"label":"fortnox_reports_balance_sheet_staging","d":3,"t":"model","f":"packages/fortnox/models/staging/fortnox_reports_balance_sheet_staging.sql","up":4,"dn":1},{"id":9,"label":"fortnox_api.supplier_invoices","d":0,"t":"source","up":0,"dn":5},{"id":10,"label":"public.bas_account_chart","d":0,"t":"source","up":0,"dn":7},{"id":11,"label":"fortnox_api.financial_years","d":0,"t":"source","up":0,"dn":7},{"id":12,"label":"fortnox_base_v2_invoices","d":1,"t":"model","up":1,"dn":5},{"id":13,"label":"fortnox_api.accounts","d":0,"t":"source","up":0,"dn":2}],"links":[{"s":11,"t":6},{"s":2,"t":8},{"s":3,"t":8},{"s":6,"t":8},{"s":4,"t":8},{"s":10,"t":2},{"s":13,"t":2},{"s":0,"t":2},{"s":5,"t":3},{"s":12,"t":4},{"s":9,"t":4},{"s":0,"t":4},{"s":7,"t":12},{"s":8,"t":1}],"label":"fortnox_reports_balance_sheet","perDepth":[[0,7],[1,4],[2,1],[3,1],[4,1]]}]}</script>
+<script id="gdata" type="application/json">{"stats":{"nodes":3460,"links":6030,"hyper":51,"communities":248,"commit":"4a8ffd7","fileType":{"code":2088,"rationale":761,"concept":344,"document":267},"confidence":{"EXTRACTED":5536,"INFERRED":488,"AMBIGUOUS":6},"isolated":94,"noCommunity":582},"communities":[{"id":0,"name":"String","size":77,"kind":"code","top":["String","Json","graph_to_toon.rs","Result"]},{"id":17,"name":"connector_alignment_check.py","size":73,"kind":"code","top":["connector_alignment_check.py","Conventions","run()","Finding"]},{"id":11,"name":"test_ontology_generator.py","size":65,"kind":"code","top":["test_ontology_generator.py","needs_ontology","needs_manifest","test_every_turtle_file_parses()"]},{"id":18,"name":"test_use_case_sync.py","size":62,"kind":"code","top":["test_use_case_sync.py","sync()","use_case_sync.py","Path"]},{"id":1,"name":"/dbt-model Command","size":52,"kind":"document","top":["/dbt-model Command","Analytics Engineering Rules (47 non-negotiables)","analytics/dbt-audit Command: Project Health Sweep","Analytics Engineering Rules (Binding dbt Core Rules)"]},{"id":2,"name":"pr_decision_diagram.py","size":51,"kind":"code","top":["pr_decision_diagram.py","render_mermaid()","pr_impact_graph.py","build_impact()"]},{"id":3,"name":"Enhanza bus matrix","size":42,"kind":"concept","top":["Enhanza Analytics use case","Enhanza bus matrix","Enhanza deployment runbook","global_configs('all_available_sources') connector registry"]},{"id":4,"name":"_miniyaml.py","size":37,"kind":"code","top":["_miniyaml.py","MiniYamlError","test_miniyaml.py","_parse_mapping()"]},{"id":23,"name":"test_dbt_manifest_to_graphify.py","size":37,"kind":"code","top":["test_dbt_manifest_to_graphify.py","_fragment()","needs_manifest","Path"]},{"id":5,"name":"Order Revenue Mart Use-Case Spec","size":36,"kind":"code","top":["Order Revenue Mart Use-Case Spec","int_orders_with_line_totals","revenue Metric","orders Semantic Model"]},{"id":24,"name":"dbt_column_lineage.py","size":35,"kind":"code","top":["dbt_column_lineage.py","Any","lineage_from_sql()","build_lineage()"]},{"id":27,"name":"test_dbt_column_lineage.py","size":35,"kind":"code","top":["test_dbt_column_lineage.py","needs_sqlglot","_run()","test_lineage_records_are_uniform_for_toon()"]},{"id":54,"name":"layer_of","size":34,"kind":"code","top":["layer_of()","Colors","_manifest.py","dbt_project_auditor.py"]},{"id":28,"name":"ontology_generator.py","size":32,"kind":"code","top":["ontology_generator.py","OntologyConfig","generate()","enrich_from_project()"]},{"id":8,"name":"test_pr_decision_diagram.py","size":30,"kind":"code","top":["test_pr_decision_diagram.py","test_deletion_only_hunk_still_selects_a_symbol()","test_workflow_builds_the_graph_and_feeds_the_diff_to_the_renderer()","test_graph_output_directory_is_gitignored()"]},{"id":9,"name":"test_toon_serializer.py","size":30,"kind":"code","top":["test_toon_serializer.py","decode()","run()","encode()"]},{"id":144,"name":"header","size":29,"kind":"code","top":["header()","table()","section()","model_dependency_analyzer.py"]},{"id":78,"name":"Connector Onboarding Skill","size":29,"kind":"rationale","top":["Connector Onboarding Skill","Connector Definition of Done","PR Reviewability Prep Skill","/dbt-build Command"]},{"id":73,"name":"test_agentmemory_bridge.py","size":28,"kind":"code","top":["test_agentmemory_bridge.py","run_sync()","url_for()","_Store"]},{"id":10,"name":"test_manifest_json_loader.py","size":28,"kind":"code","top":["test_manifest_json_loader.py","test_malformed_artifact_exits_with_the_path()","stdlib_only()","test_both_parsers_agree_on_the_same_bytes()"]},{"id":13,"name":"Manifest","size":27,"kind":"code","top":["Manifest","Any",".find_model()",".tests_by_model()"]},{"id":82,"name":"code-skills README","size":27,"kind":"document","top":["code-skills README","Connector Onboarding (skill)","analytics-request-framing Skill","Shared GitHub Skills Index"]},{"id":45,"name":"logic_bi_dim_organisations","size":27,"kind":"code","top":["logic_bi_dim_organisations","logic_bi_fact_sales","logic_bi_fact_time_reporting","Order Revenue data model canvas"]},{"id":61,"name":"Testing and Documentation","size":27,"kind":"rationale","top":["Testing and Documentation","dbt target/ artifacts","Connector Verification and Shipping","Connector Convention Detection"]},{"id":143,"name":"Use-Case Spec Template","size":27,"kind":"rationale","top":["Use-Case Spec Template","dbt PR Review Checklist","/dbt-model Command","/data-model Command"]},{"id":40,"name":"dbt_manifest_to_graphify.py","size":25,"kind":"code","top":["dbt_manifest_to_graphify.py","build_fragment()","Path","main()"]},{"id":57,"name":"Data Modeling (skill)","size":25,"kind":"concept","top":["Data Modeling (skill)","/dbt-semantic command","Semantic Layer and MetricFlow Skill","Conformed dimension"]},{"id":34,"name":".load","size":24,"kind":"code","top":[".load()","load_json()","unit_test_generator.py","schema_yml_generator.py"]},{"id":52,"name":"needs_enhanza","size":24,"kind":"code","top":["needs_enhanza","_run()","test_check_flag_gates_on_error_findings()","test_enhanza_has_no_unaccepted_error_drift()"]},{"id":69,"name":"test_skill_map_pack.py","size":24,"kind":"code","top":["test_skill_map_pack.py","test_skillmapignore_excludes_graphify_output()","test_workflow_scans_before_the_drift_gate_runs()","test_gate_budget_ignores_broken_references()"]},{"id":128,"name":"Running dbt Commands (skill)","size":24,"kind":"concept","top":["Running dbt Commands (skill)","Node selection syntax","State, Deferral, and CI/CD reference","dbt Mesh Governance (skill)"]},{"id":33,"name":"_graph_file","size":23,"kind":"code","top":["_graph_file()","_diff()","test_different_diffs_produce_different_diagrams()","test_intra_file_containment_is_not_an_impact_edge()"]},{"id":7,"name":"dbt-skill Canonical Entrypoint Skill","size":23,"kind":"document","top":["dbt-skill Canonical Entrypoint Skill","Artifact-driven Analyzer Toolkit (eleven scripts reading target/*.json)","Senior Analytics Engineer Orchestrator Agent","Data Modeler Agent"]},{"id":81,"name":"Data Modeling Paradigms Reference","size":23,"kind":"concept","top":["Data Modeling Paradigms Reference","Data Modeling Skill","Conceptual, logical, physical levels","Kimball bus matrix"]},{"id":15,"name":"Deployment Runbook Template","size":23,"kind":"concept","top":["Deployment Runbook Template","run_results.json Artifact","Incident Investigation Template","Full CI Pipeline"]},{"id":12,"name":"/dbt-test command","size":23,"kind":"rationale","top":["/dbt-test command","The four kinds of dbt test","Testing Catalog reference","Adding dbt Unit Tests (Core) skill"]}],"communityLinks":[{"s":54,"t":144,"w":24},{"s":8,"t":33,"w":16},{"s":13,"t":54,"w":11},{"s":13,"t":144,"w":11},{"s":34,"t":54,"w":8},{"s":13,"t":34,"w":8},{"s":34,"t":144,"w":8},{"s":57,"t":82,"w":6},{"s":13,"t":40,"w":5},{"s":61,"t":128,"w":5},{"s":13,"t":24,"w":4},{"s":13,"t":28,"w":4},{"s":61,"t":143,"w":4},{"s":13,"t":17,"w":3},{"s":82,"t":128,"w":3},{"s":57,"t":81,"w":3},{"s":13,"t":18,"w":2},{"s":2,"t":8,"w":2},{"s":24,"t":34,"w":1},{"s":34,"t":40,"w":1},{"s":28,"t":34,"w":1},{"s":18,"t":34,"w":1},{"s":11,"t":34,"w":1},{"s":4,"t":28,"w":1},{"s":17,"t":18,"w":1},{"s":24,"t":27,"w":1},{"s":23,"t":40,"w":1},{"s":11,"t":28,"w":1},{"s":2,"t":69,"w":1},{"s":1,"t":82,"w":1},{"s":1,"t":78,"w":1},{"s":3,"t":82,"w":1},{"s":7,"t":61,"w":1},{"s":7,"t":143,"w":1},{"s":61,"t":82,"w":1},{"s":128,"t":143,"w":1},{"s":78,"t":81,"w":1},{"s":57,"t":78,"w":1}],"example":{"nodes":[{"id":"rust_toon_graph_to_toon","label":"graph_to_toon.rs","file":"rust/toon/graph_to_toon.rs","loc":"L1","lvl":0,"type":"code","deg":34,"comm":"String"},{"id":"scripts_connector_alignment_check","label":"connector_alignment_check.py","file":"scripts/connector_alignment_check.py","loc":"L1","lvl":0,"type":"code","deg":32,"comm":"connector_alignment_check.py"},{"id":"tests_test_toon_pipeline_hooks","label":"test_toon_pipeline_hooks.py","file":"tests/test_toon_pipeline_hooks.py","loc":"L1","lvl":0,"type":"code","deg":16,"comm":"test_toon_pipeline_hooks.py"},{"id":"src_ai_core_toon_serializer","label":"toon-serializer.ts","file":"src/ai-core/toon-serializer.ts","loc":"L1","lvl":0,"type":"code","deg":11,"comm":"toon-serializer.ts"},{"id":"src_ai_core_graph_manager","label":"graph-manager.ts","file":"src/ai-core/graph-manager.ts","loc":"L1","lvl":0,"type":"code","deg":10,"comm":"toon-serializer.ts"},{"id":"scripts_manifest_manifest","label":"Manifest","file":"scripts/_manifest.py","loc":"L78","lvl":1,"type":"code","deg":84,"comm":"Manifest"},{"id":"tests_test_connector_alignment_check","label":"test_connector_alignment_check.py","file":"tests/test_connector_alignment_check.py","loc":"L1","lvl":1,"type":"code","deg":46,"comm":"test_connector_alignment_check.py"},{"id":"rust_toon_graph_to_toon_json","label":"Json","file":"rust/toon/graph_to_toon.rs","loc":"L108","lvl":1,"type":"code","deg":35,"comm":"String"},{"id":"scripts_new_connector_conventions","label":"Conventions","file":"scripts/new_connector.py","loc":"L58","lvl":1,"type":"code","deg":27,"comm":"connector_alignment_check.py"},{"id":"scripts_connector_alignment_check_run","label":"run()","file":"scripts/connector_alignment_check.py","loc":"L756","lvl":1,"type":"code","deg":21,"comm":"connector_alignment_check.py"},{"id":"rust_toon_graph_to_toon_decoder","label":"Decoder","file":"rust/toon/graph_to_toon.rs","loc":"L762","lvl":1,"type":"code","deg":16,"comm":"String"},{"id":"scripts_connector_alignment_check_finding","label":"Finding","file":"scripts/connector_alignment_check.py","loc":"L87","lvl":1,"type":"code","deg":15,"comm":"connector_alignment_check.py"},{"id":"rust_toon_graph_to_toon_encoder","label":"Encoder","file":"rust/toon/graph_to_toon.rs","loc":"L488","lvl":1,"type":"code","deg":12,"comm":"String"},{"id":"rust_toon_graph_to_toon_main","label":"main()","file":"rust/toon/graph_to_toon.rs","loc":"L1606","lvl":1,"type":"code","deg":11,"comm":"String"},{"id":"rust_toon_graph_to_toon_unquote","label":"unquote()","file":"rust/toon/graph_to_toon.rs","loc":"L1286","lvl":1,"type":"code","deg":11,"comm":"String"},{"id":"rust_toon_graph_to_toon_jsonparser","label":"JsonParser","file":"rust/toon/graph_to_toon.rs","loc":"L139","lvl":1,"type":"code","deg":11,"comm":"String"},{"id":"rust_toon_graph_to_toon_load_graph_subset","label":"load_graph_subset()","file":"rust/toon/graph_to_toon.rs","loc":"L1489","lvl":1,"type":"code","deg":10,"comm":"String"},{"id":"scripts_connector_alignment_check_main","label":"main()","file":"scripts/connector_alignment_check.py","loc":"L816","lvl":1,"type":"code","deg":10,"comm":"connector_alignment_check.py"},{"id":"rust_toon_graph_to_toon_tabular_fields","label":"tabular_fields()","file":"rust/toon/graph_to_toon.rs","loc":"L686","lvl":1,"type":"code","deg":9,"comm":"String"},{"id":"rust_toon_graph_to_toon_encode_toon","label":"encode_toon()","file":"rust/toon/graph_to_toon.rs","loc":"L735","lvl":1,"type":"code","deg":9,"comm":"String"},{"id":"rust_toon_graph_to_toon_parse_dec_fields","label":"parse_dec_fields()","file":"rust/toon/graph_to_toon.rs","loc":"L1169","lvl":1,"type":"code","deg":9,"comm":"String"},{"id":"scripts_connector_alignment_check_check_naming","label":"check_naming()","file":"scripts/connector_alignment_check.py","loc":"L460","lvl":1,"type":"code","deg":9,"comm":"connector_alignment_check.py"},{"id":"scripts_new_connector_detect","label":"detect()","file":"scripts/new_connector.py","loc":"L150","lvl":1,"type":"code","deg":9,"comm":"connector_alignment_check.py"},{"id":"scripts_connector_alignment_check_check_schema_yml","label":"check_schema_yml()","file":"scripts/connector_alignment_check.py","loc":"L574","lvl":1,"type":"code","deg":9,"comm":"connector_alignment_check.py"},{"id":"rust_toon_graph_to_toon_split_cells","label":"split_cells()","file":"rust/toon/graph_to_toon.rs","loc":"L1257","lvl":1,"type":"code","deg":8,"comm":"String"},{"id":"scripts_connector_alignment_check_check_undeclared_schema","label":"check_undeclared_schema()","file":"scripts/connector_alignment_check.py","loc":"L186","lvl":1,"type":"code","deg":8,"comm":"connector_alignment_check.py"},{"id":"rust_toon_graph_to_toon_decfield","label":"DecField","file":"rust/toon/graph_to_toon.rs","loc":"L1164","lvl":1,"type":"code","deg":7,"comm":"String"},{"id":"rust_toon_graph_to_toon_decode_toon","label":"decode_toon()","file":"rust/toon/graph_to_toon.rs","loc":"L1365","lvl":1,"type":"code","deg":7,"comm":"String"},{"id":"rust_toon_graph_to_toon_span_braces","label":"span_braces()","file":"rust/toon/graph_to_toon.rs","loc":"L1229","lvl":1,"type":"code","deg":7,"comm":"String"},{"id":"scripts_connector_alignment_check_package_dir","label":"_package_dir()","file":"scripts/connector_alignment_check.py","loc":"L321","lvl":1,"type":"code","deg":7,"comm":"connector_alignment_check.py"},{"id":"scripts_connector_alignment_check_rel","label":"_rel()","file":"scripts/connector_alignment_check.py","loc":"L703","lvl":1,"type":"code","deg":7,"comm":"connector_alignment_check.py"},{"id":"scripts_new_connector_find_use_case","label":"find_use_case()","file":"scripts/new_connector.py","loc":"L129","lvl":1,"type":"code","deg":7,"comm":"connector_alignment_check.py"},{"id":"scripts_connector_alignment_check_check_test_syntax","label":"check_test_syntax()","file":"scripts/connector_alignment_check.py","loc":"L538","lvl":1,"type":"code","deg":7,"comm":"connector_alignment_check.py"},{"id":"scripts_connector_alignment_check_check_alias_collisions","label":"check_alias_collisions()","file":"scripts/connector_alignment_check.py","loc":"L140","lvl":1,"type":"code","deg":7,"comm":"connector_alignment_check.py"},{"id":"scripts_connector_alignment_check_check_adapter_column_drift","label":"check_adapter_column_drift()","file":"scripts/connector_alignment_check.py","loc":"L229","lvl":1,"type":"code","deg":7,"comm":"connector_alignment_check.py"},{"id":"scripts_connector_alignment_check_check_dependency_discipline","label":"check_dependency_discipline()","file":"scripts/connector_alignment_check.py","loc":"L426","lvl":1,"type":"code","deg":7,"comm":"connector_alignment_check.py"},{"id":"src_ai_core_toon_serializer_encodetoon","label":"encodeToon()","file":"src/ai-core/toon-serializer.ts","loc":"L85","lvl":1,"type":"code","deg":7,"comm":"toon-serializer.ts"},{"id":"src_ai_core_dbt_integration","label":"dbt-integration.ts","file":"src/ai-core/dbt-integration.ts","loc":"L1","lvl":1,"type":"code","deg":7,"comm":"dbt-integration.ts"},{"id":"rust_toon_graph_to_toon_rebuild_dec","label":"rebuild_dec()","file":"rust/toon/graph_to_toon.rs","loc":"L1215","lvl":1,"type":"code","deg":6,"comm":"String"},{"id":"string","label":"String","file":"","loc":"","lvl":2,"type":"code","deg":44,"comm":"String"},{"id":"result","label":"Result","file":"","loc":"","lvl":2,"type":"code","deg":32,"comm":"String"},{"id":"rust_toon_graph_to_toon_decoder_new","label":".new()","file":"rust/toon/graph_to_toon.rs","loc":"L771","lvl":2,"type":"code","deg":25,"comm":"String"},{"id":"scripts_dbt_column_lineage","label":"dbt_column_lineage.py","file":"scripts/dbt_column_lineage.py","loc":"L1","lvl":2,"type":"code","deg":23,"comm":"dbt_column_lineage.py"},{"id":"scripts_use_case_sync_sync","label":"sync()","file":"scripts/use_case_sync.py","loc":"L396","lvl":2,"type":"code","deg":22,"comm":"test_use_case_sync.py"},{"id":"scripts_manifest_manifest_load","label":".load()","file":"scripts/_manifest.py","loc":"L102","lvl":2,"type":"code","deg":21,"comm":".load"},{"id":"scripts_ontology_generator","label":"ontology_generator.py","file":"scripts/ontology_generator.py","loc":"L1","lvl":2,"type":"code","deg":20,"comm":"ontology_generator.py"},{"id":"scripts_erd_generator","label":"erd_generator.py","file":"scripts/erd_generator.py","loc":"L1","lvl":2,"type":"code","deg":19,"comm":"erd_generator.py"},{"id":"rust_toon_graph_to_toon_encoder_array","label":".array()","file":"rust/toon/graph_to_toon.rs","loc":"L592","lvl":2,"type":"code","deg":17,"comm":"String"},{"id":"scripts_semantic_layer_validator","label":"semantic_layer_validator.py","file":"scripts/semantic_layer_validator.py","loc":"L1","lvl":2,"type":"code","deg":17,"comm":"semantic_layer_validator.py"},{"id":"scripts_dimensional_model_validator","label":"dimensional_model_validator.py","file":"scripts/dimensional_model_validator.py","loc":"L1","lvl":2,"type":"code","deg":17,"comm":"dimensional_model_validator.py"},{"id":"scripts_manifest","label":"_manifest.py","file":"scripts/_manifest.py","loc":"L1","lvl":2,"type":"code","deg":17,"comm":"layer_of"},{"id":"rust_toon_graph_to_toon_json_get","label":".get()","file":"rust/toon/graph_to_toon.rs","loc":"L122","lvl":2,"type":"code","deg":16,"comm":"String"},{"id":"vec","label":"Vec","file":"","loc":"","lvl":2,"type":"code","deg":16,"comm":"String"},{"id":"rust_toon_graph_to_toon_decoder_parse","label":".parse()","file":"rust/toon/graph_to_toon.rs","loc":"L805","lvl":2,"type":"code","deg":16,"comm":"String"},{"id":"scripts_model_dependency_analyzer","label":"model_dependency_analyzer.py","file":"scripts/model_dependency_analyzer.py","loc":"L1","lvl":2,"type":"code","deg":15,"comm":"header"},{"id":"scripts_dbt_manifest_to_graphify","label":"dbt_manifest_to_graphify.py","file":"scripts/dbt_manifest_to_graphify.py","loc":"L1","lvl":2,"type":"code","deg":15,"comm":"dbt_manifest_to_graphify.py"},{"id":"scripts_use_case_sync","label":"use_case_sync.py","file":"scripts/use_case_sync.py","loc":"L1","lvl":2,"type":"code","deg":15,"comm":"test_use_case_sync.py"},{"id":"rust_toon_graph_to_toon_decoder_scalar","label":".scalar()","file":"rust/toon/graph_to_toon.rs","loc":"L1131","lvl":2,"type":"code","deg":14,"comm":"String"},{"id":"scripts_dbt_project_auditor","label":"dbt_project_auditor.py","file":"scripts/dbt_project_auditor.py","loc":"L1","lvl":2,"type":"code","deg":14,"comm":"layer_of"},{"id":"scripts_ontology_generator_ontologyconfig","label":"OntologyConfig","file":"scripts/ontology_generator.py","loc":"L188","lvl":2,"type":"code","deg":14,"comm":"ontology_generator.py"},{"id":"rust_toon_graph_to_toon_decoder_array_body","label":".array_body()","file":"rust/toon/graph_to_toon.rs","loc":"L1003","lvl":2,"type":"code","deg":13,"comm":"String"},{"id":"rust_toon_graph_to_toon_decoder_split_key","label":".split_key()","file":"rust/toon/graph_to_toon.rs","loc":"L918","lvl":2,"type":"code","deg":13,"comm":"String"},{"id":"rust_toon_graph_to_toon_jsonparser_value","label":".value()","file":"rust/toon/graph_to_toon.rs","loc":"L160","lvl":2,"type":"code","deg":13,"comm":"String"},{"id":"scripts_dbt_seed_generator","label":"dbt_seed_generator.py","file":"scripts/dbt_seed_generator.py","loc":"L1","lvl":2,"type":"code","deg":13,"comm":"dbt_seed_generator.py"},{"id":"rust_toon_graph_to_toon_decoder_rows","label":".rows()","file":"rust/toon/graph_to_toon.rs","loc":"L1029","lvl":2,"type":"code","deg":12,"comm":"String"}],"links":[{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_decfield","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_decode_toon","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_decoder","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_encode_toon","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_encoder","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_json","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_jsonparser","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_load_graph_subset","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_main","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_parse_dec_fields","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_rebuild_dec","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_span_braces","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_split_cells","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_tabular_fields","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon","t":"rust_toon_graph_to_toon_unquote","r":"contains","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decode_toon","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_array_body","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_parse","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_rows","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_scalar","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encode_toon","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encoder_array","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_json","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_json","t":"vec","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_json_get","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_jsonparser_value","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_load_graph_subset","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_rebuild_dec","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_tabular_fields","t":"rust_toon_graph_to_toon_json","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decfield","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decode_toon","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_array_body","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_new","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_parse","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_rows","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_scalar","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_split_key","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encode_toon","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encoder_array","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_jsonparser_value","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_load_graph_subset","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_parse_dec_fields","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_span_braces","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_split_cells","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_unquote","t":"string","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decfield","t":"vec","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder","t":"vec","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encoder_array","t":"vec","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_jsonparser","t":"vec","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_parse_dec_fields","t":"vec","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_span_braces","t":"vec","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_split_cells","t":"vec","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_tabular_fields","t":"vec","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_split_key","t":"rust_toon_graph_to_toon_json_get","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_jsonparser_value","t":"rust_toon_graph_to_toon_json_get","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_load_graph_subset","t":"rust_toon_graph_to_toon_json_get","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_tabular_fields","t":"rust_toon_graph_to_toon_json_get","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_unquote","t":"rust_toon_graph_to_toon_json_get","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_jsonparser","t":"rust_toon_graph_to_toon_jsonparser_value","r":"method","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decode_toon","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_array_body","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_new","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_parse","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_rows","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_scalar","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_split_key","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encode_toon","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encoder_array","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_jsonparser_value","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_load_graph_subset","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_parse_dec_fields","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_span_braces","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_split_cells","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_unquote","t":"result","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_jsonparser_value","t":"rust_toon_graph_to_toon_encoder_array","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encoder","t":"rust_toon_graph_to_toon_encoder_array","r":"method","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encode_toon","t":"rust_toon_graph_to_toon_encoder_array","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encoder_array","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encoder_array","t":"rust_toon_graph_to_toon_decoder_scalar","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encoder_array","t":"rust_toon_graph_to_toon_tabular_fields","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_tabular_fields","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encode_toon","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_encode_toon","t":"rust_toon_graph_to_toon_decoder_scalar","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_main","t":"rust_toon_graph_to_toon_encode_toon","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder","t":"rust_toon_graph_to_toon_decoder_array_body","r":"method","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder","t":"rust_toon_graph_to_toon_decoder_parse","r":"method","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder","t":"rust_toon_graph_to_toon_decoder_rows","r":"method","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder","t":"rust_toon_graph_to_toon_decoder_scalar","r":"method","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder","t":"rust_toon_graph_to_toon_decoder_split_key","r":"method","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_new","t":"rust_toon_graph_to_toon_decoder","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decode_toon","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_array_body","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_parse","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_rows","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_split_key","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_load_graph_subset","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_main","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_parse_dec_fields","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_rebuild_dec","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_split_cells","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_unquote","t":"rust_toon_graph_to_toon_decoder_new","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decode_toon","t":"rust_toon_graph_to_toon_decoder_parse","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_parse","t":"rust_toon_graph_to_toon_decoder_array_body","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_parse","t":"rust_toon_graph_to_toon_decoder_scalar","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_parse","t":"rust_toon_graph_to_toon_decoder_split_key","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_load_graph_subset","t":"rust_toon_graph_to_toon_decoder_parse","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_main","t":"rust_toon_graph_to_toon_decoder_parse","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_split_key","t":"rust_toon_graph_to_toon_span_braces","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_split_key","t":"rust_toon_graph_to_toon_unquote","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_array_body","t":"rust_toon_graph_to_toon_decoder_rows","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_array_body","t":"rust_toon_graph_to_toon_decoder_scalar","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_array_body","t":"rust_toon_graph_to_toon_parse_dec_fields","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_array_body","t":"rust_toon_graph_to_toon_split_cells","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_rows","t":"rust_toon_graph_to_toon_decfield","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_rows","t":"rust_toon_graph_to_toon_decoder_scalar","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_rows","t":"rust_toon_graph_to_toon_rebuild_dec","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_rows","t":"rust_toon_graph_to_toon_split_cells","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_decoder_scalar","t":"rust_toon_graph_to_toon_unquote","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_parse_dec_fields","t":"rust_toon_graph_to_toon_decfield","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_rebuild_dec","t":"rust_toon_graph_to_toon_decfield","r":"references","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_parse_dec_fields","t":"rust_toon_graph_to_toon_span_braces","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_parse_dec_fields","t":"rust_toon_graph_to_toon_unquote","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_span_braces","t":"rust_toon_graph_to_toon_unquote","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_split_cells","t":"rust_toon_graph_to_toon_unquote","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_main","t":"rust_toon_graph_to_toon_decode_toon","r":"calls","c":"EXTRACTED"},{"s":"rust_toon_graph_to_toon_main","t":"rust_toon_graph_to_toon_load_graph_subset","r":"calls","c":"EXTRACTED"},{"s":"scripts_manifest","t":"scripts_manifest_manifest","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_manifest_manifest","r":"imports","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_adapter_column_drift","t":"scripts_manifest_manifest","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_finding","t":"scripts_manifest_manifest","r":"uses","c":"INFERRED"},{"s":"scripts_dbt_column_lineage","t":"scripts_manifest_manifest","r":"imports_from","c":"EXTRACTED"},{"s":"scripts_dbt_manifest_to_graphify","t":"scripts_manifest_manifest","r":"imports_from","c":"EXTRACTED"},{"s":"scripts_dbt_project_auditor","t":"scripts_manifest_manifest","r":"imports_from","c":"EXTRACTED"},{"s":"scripts_dbt_seed_generator","t":"scripts_manifest_manifest","r":"imports_from","c":"EXTRACTED"},{"s":"scripts_dimensional_model_validator","t":"scripts_manifest_manifest","r":"imports_from","c":"EXTRACTED"},{"s":"scripts_erd_generator","t":"scripts_manifest_manifest","r":"imports_from","c":"EXTRACTED"},{"s":"scripts_manifest_manifest","t":"scripts_manifest_manifest_load","r":"method","c":"EXTRACTED"},{"s":"scripts_model_dependency_analyzer","t":"scripts_manifest_manifest","r":"imports_from","c":"EXTRACTED"},{"s":"scripts_ontology_generator","t":"scripts_manifest_manifest","r":"imports_from","c":"EXTRACTED"},{"s":"scripts_ontology_generator_ontologyconfig","t":"scripts_manifest_manifest","r":"uses","c":"INFERRED"},{"s":"scripts_semantic_layer_validator","t":"scripts_manifest_manifest","r":"imports","c":"EXTRACTED"},{"s":"scripts_use_case_sync","t":"scripts_manifest_manifest","r":"imports","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_check_adapter_column_drift","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_check_alias_collisions","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_check_dependency_discipline","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_check_naming","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_check_schema_yml","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_check_test_syntax","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_check_undeclared_schema","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_finding","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_main","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_package_dir","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_rel","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_connector_alignment_check_run","r":"contains","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_new_connector_conventions","r":"imports","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_new_connector_detect","r":"imports","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check","t":"scripts_new_connector_find_use_case","r":"imports","c":"EXTRACTED"},{"s":"tests_test_connector_alignment_check","t":"scripts_connector_alignment_check","r":"imports","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_adapter_column_drift","t":"scripts_connector_alignment_check_finding","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_alias_collisions","t":"scripts_connector_alignment_check_finding","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_dependency_discipline","t":"scripts_connector_alignment_check_finding","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_naming","t":"scripts_connector_alignment_check_finding","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_schema_yml","t":"scripts_connector_alignment_check_finding","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_test_syntax","t":"scripts_connector_alignment_check_finding","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_undeclared_schema","t":"scripts_connector_alignment_check_finding","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_finding","t":"scripts_new_connector_conventions","r":"uses","c":"INFERRED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_connector_alignment_check_finding","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_connector_alignment_check_check_alias_collisions","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_undeclared_schema","t":"scripts_new_connector_conventions","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_connector_alignment_check_check_undeclared_schema","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_connector_alignment_check_check_adapter_column_drift","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_package_dir","t":"scripts_new_connector_conventions","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_dependency_discipline","t":"scripts_connector_alignment_check_rel","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_dependency_discipline","t":"scripts_new_connector_conventions","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_connector_alignment_check_check_dependency_discipline","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_naming","t":"scripts_connector_alignment_check_rel","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_naming","t":"scripts_new_connector_conventions","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_connector_alignment_check_check_naming","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_test_syntax","t":"scripts_connector_alignment_check_rel","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_test_syntax","t":"scripts_new_connector_conventions","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_connector_alignment_check_check_test_syntax","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_schema_yml","t":"scripts_connector_alignment_check_rel","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_check_schema_yml","t":"scripts_new_connector_conventions","r":"references","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_connector_alignment_check_check_schema_yml","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_connector_alignment_check_rel","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_main","t":"scripts_connector_alignment_check_run","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_new_connector_detect","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_run","t":"scripts_new_connector_find_use_case","r":"calls","c":"EXTRACTED"},{"s":"scripts_use_case_sync_sync","t":"scripts_connector_alignment_check_run","r":"calls","c":"INFERRED"},{"s":"scripts_connector_alignment_check_main","t":"scripts_new_connector_detect","r":"calls","c":"EXTRACTED"},{"s":"scripts_connector_alignment_check_main","t":"scripts_new_connector_find_use_case","r":"calls","c":"EXTRACTED"},{"s":"tests_test_connector_alignment_check","t":"scripts_dbt_column_lineage","r":"imports","c":"EXTRACTED"},{"s":"scripts_new_connector_detect","t":"scripts_new_connector_conventions","r":"references","c":"EXTRACTED"},{"s":"scripts_ontology_generator","t":"scripts_ontology_generator_ontologyconfig","r":"contains","c":"EXTRACTED"},{"s":"scripts_use_case_sync","t":"scripts_use_case_sync_sync","r":"contains","c":"EXTRACTED"},{"s":"src_ai_core_dbt_integration","t":"src_ai_core_graph_manager","r":"imports_from","c":"EXTRACTED"},{"s":"src_ai_core_graph_manager","t":"src_ai_core_toon_serializer","r":"imports_from","c":"EXTRACTED"},{"s":"src_ai_core_graph_manager","t":"src_ai_core_toon_serializer_encodetoon","r":"imports","c":"EXTRACTED"},{"s":"src_ai_core_toon_serializer","t":"src_ai_core_toon_serializer_encodetoon","r":"contains","c":"EXTRACTED"}],"seeds":["rust_toon_graph_to_toon","scripts_connector_alignment_check","src_ai_core_graph_manager","src_ai_core_toon_serializer","tests_test_toon_pipeline_hooks"],"totalFound":176}}</script>
+<script>
+(function () {
+  "use strict";
+  const D = JSON.parse(document.getElementById("gdata").textContent);
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  /* ============================ 01 · SIMULATOR ============================ */
+
+  const GATE = {
+    prompt: {
+      name: "UserPromptSubmit",
+      src: "scripts/hooks/toon_prompt_context.sh"
+    },
+    guard: {
+      name: "block-dangerous-git",
+      src: ".claude/hooks/block-dangerous-git.sh"
+    },
+    toon: {
+      name: "toon_graphify_pipe",
+      src: "scripts/hooks/toon_graphify_pipe.py"
+    },
+    first: {
+      name: "graphify hook-guard",
+      src: "PreToolUse on Bash | Grep | Read | Glob"
+    },
+    shell: { name: "the command runs", src: "your machine" },
+    back: { name: "answer returns", src: "into the model's context" },
+    route: { name: "slash-command routing",
+             src: ".claude/commands/analytics/new-connector.md \u2192 connector-onboarding skill" },
+    lsproj: { name: "read the project", src: "$ ls skill-packs/*/use-cases/" },
+    scaffold: { name: "scaffold", src: "$ python3 scripts/new_connector.py favrit --use-case enhanza-analytics --dry-run" },
+    align: { name: "convention check", src: "$ python3 scripts/connector_alignment_check.py --use-case enhanza-analytics --check" },
+    branch: { name: "branch", src: "$ git switch -c feat/ENH-1-favrit-connector" },
+    pushcmd: { name: "publish", src: "$ git push -u origin HEAD" }
+  };
+
+  const SCEN = [
+    {
+      id: "ask",
+      label: "“Where does the TOON serializer get used?”",
+      cmd: 'graphify query "how does the TOON serializer connect to the graphify hook"',
+      shown: '<span class="pfx">$</span> graphify query "how does the TOON serializer…" <span class="add">| rust/toon/bin/graph_to_toon --passthrough</span>',
+      verdict: "Rewritten in flight. The AI asked for one command; a different, cheaper one ran. It is never told.",
+      steps: [
+        ["prompt", "pass", "A standing note is stapled to your message", "One sentence gets added to every prompt, reminding the model that the compression pipeline exists. It costs a few tokens each time, which is why it is one sentence and not a page."],
+        ["guard", "pass", "Not a git command — waved through", "The guardrail only knows six git patterns. This starts with <b>graphify</b>, so it exits immediately and says nothing."],
+        ["toon", "edit", "The command is edited before it runs", "Three conditions all hold: it is a bare <b>graphify query</b>, the compressor exists on disk, and there are no pipes or redirects to break. So <b>| graph_to_toon</b> is appended."],
+        ["first", "pass", "A reminder to use the map, not the files", "Injected on every search or file read: <i>you must query the graph before grepping raw files</i>."],
+        ["shell", "pass", "176 dots found · 11 returned", "The search walked two steps out from six matched dots, then cut the result to the 400-token budget."],
+        ["back", "pass", "1,375 characters land in context", "Against 1,701 raw — 19% less to pay for, with the same content."]
+      ]
+    },
+    {
+      id: "push",
+      label: "“Push my branch when you're done.”",
+      cmd: "git push origin main",
+      shown: '<span class="pfx">$</span> <span class="kill">git push origin main</span>   <span class="pfx">← never reached the shell</span>',
+      verdict: "Stopped at the second checkpoint. Exit code 2 — the command was never handed to the computer.",
+      steps: [
+        ["prompt", "pass", "A standing note is stapled to your message", "Same as every prompt; this step does not inspect what you asked for."],
+        ["guard", "stop", "BLOCKED — matched <b>^git push</b>", "The command's opening words are compared to six forbidden patterns. This one matches the first. The script writes <b>BLOCKED</b> to the error channel and exits with code 2, which the harness treats as a refusal."],
+        ["toon", "skip", "Never ran", "Checkpoints run in order and the chain has already stopped."],
+        ["first", "skip", "Never ran", ""],
+        ["shell", "skip", "Nothing executed", "No network call, no branch moved, no remote touched."],
+        ["back", "skip", "The model is told it was refused", "It sees the refusal text and has to choose a different approach — it cannot retry its way past a checkpoint."]
+      ]
+    },
+    {
+      id: "count",
+      label: "“How many analysis scripts are there?”",
+      cmd: "ls scripts/*.py | wc -l",
+      shown: '<span class="pfx">$</span> ls scripts/*.py | wc -l   <span class="pfx">← unchanged</span>',
+      verdict: "Passed through untouched. The rewriter deliberately refuses to edit a command that already has a pipe in it.",
+      steps: [
+        ["prompt", "pass", "A standing note is stapled to your message", "Unconditional, as always."],
+        ["guard", "pass", "Not a git command — waved through", "Six patterns, none of them match <b>ls</b>."],
+        ["toon", "skip", "Declined to touch it", "The command contains a pipe character. Rewriting a command that already redirects its own output risks changing what it means — so the rule is: if it contains any of <b>| ; &amp; &lt; &gt;</b>, leave it completely alone."],
+        ["first", "pass", "A reminder to use the map, not the files", "Fires on any shell or search command, whatever it turns out to be."],
+        ["shell", "pass", "The command runs exactly as written", "What the AI asked for is what executed — which is the point of the previous step's restraint."],
+        ["back", "pass", "A number comes back", "No compression: this output is one line, and squeezing it would make it longer."]
+      ]
+    },
+    {
+      id: "connector",
+      label: "/new-connector favrit",
+      cmd: "/new-connector favrit --use-case enhanza-analytics",
+      shown: '<span class="pfx">\u203a</span> /new-connector favrit --use-case enhanza-analytics\n' +
+        '<span class="pfx">  \u2192 one prompt, six shell commands, each re-checked from scratch</span>\n' +
+        '<span class="pfx">$</span> python3 scripts/connector_alignment_check.py \u2026 --check' +
+        '<span class="add"> --format json | graph_to_toon --passthrough</span>',
+      verdict: "One prompt, six commands, three different verdicts \u2014 and the last one refused. Nothing a session does earns it a trusted state; every command is judged on its own.",
+      steps: [
+        ["prompt", "pass", "A standing note is stapled to your message", "Unconditional, as always \u2014 it does not read what you asked for."],
+        ["route", "none", "The slash command loads a skill", "This step touches no checkpoint at all. <b>/new-connector</b> is a markdown file that tells the model how to work and which skill to load; nothing is executed, so there is nothing to inspect. The checkpoints only wake up once the model reaches for the shell."],
+        ["lsproj", "pass", "Look before writing \u2014 waved through", "The skill's first instruction is to read the project's existing conventions rather than impose any. Ordinary command, no git, no rewrite \u2014 but the graph-first reminder still fires on it."],
+        ["scaffold", "pass", "Scaffolded, and it left things alone", "Real output: conventions inferred from the busiest existing connector \u2014 staging <b>favrit_bi_&lt;model&gt;_staging</b>, adapter <b>favrit_erp_bi_&lt;concept&gt;</b>. It would create 2 files and reports 3 it will not touch, because it never overwrites. It also refuses to edit <b>sources.yml</b>, the registry, or <b>dbt_project.yml</b> \u2014 those get printed to paste by hand, so a reviewer sees the connector's contract as a human diff."],
+        ["align", "edit", "Rewritten \u2014 this one is on the compression list", "The only repository script the rewriter touches. Its findings are a uniform list, so TOON deletes the repeated message template and shared path prefix: measured elsewhere at 7,447 characters down to 2,624. Note the <b>set -o pipefail</b> the rewriter prepends \u2014 without it a failing <b>--check</b> would report the compressor's exit code instead and a red gate would go silently green."],
+        ["branch", "pass", "A new branch \u2014 allowed", "<b>git switch</b> is not one of the six forbidden patterns, and the skill requires a branch because committing to main is refused elsewhere in the rules."],
+        ["pushcmd", "stop", "BLOCKED \u2014 matched <b>^git push</b>", "The command file itself says <i>push only when asked</i>, but that is a sentence in a document and the model could ignore it. This is the same six-pattern match as before, and it does not care that six commands already succeeded."]
+      ]
+    }
+  ];
+
+  const VMAP = {
+    pass: ["PASS", "v-pass"], edit: ["REWRITE", "v-edit"],
+    stop: ["BLOCK", "v-stop"], skip: ["SKIPPED", "v-skip"],
+    none: ["NO GATE", "v-skip"]
+  };
+
+  const elScen = document.getElementById("scen");
+  const elGates = document.getElementById("gates");
+  const elCmd = document.getElementById("cmdline");
+  const elVerdict = document.getElementById("verdict");
+  let timers = [], active = SCEN[0];
+
+  SCEN.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "btn"; b.type = "button"; b.textContent = s.label;
+    b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+    b.addEventListener("click", () => run(s));
+    elScen.appendChild(b);
+  });
+
+  function run(s) {
+    active = s;
+    timers.forEach(clearTimeout); timers = [];
+    [...elScen.children].forEach((b, i) => b.setAttribute("aria-pressed", String(SCEN[i] === s)));
+    elCmd.innerHTML = s.shown;
+    elVerdict.textContent = s.verdict;
+
+    elGates.innerHTML = "";
+    s.steps.forEach(([key, state, head, say]) => {
+      const g = document.createElement("div");
+      g.className = "gate " + state;
+      const [vt, vc] = VMAP[state];
+      g.innerHTML =
+        '<div class="dot"></div><div>' +
+          '<div class="gate-hd"><span>' + head + '</span>' +
+          '<span class="verdict ' + vc + '">' + vt + "</span></div>" +
+          '<div class="gate-src">' + GATE[key].src + "</div>" +
+          (say ? '<div class="gate-say">' + say + "</div>" : "") +
+        "</div>";
+      elGates.appendChild(g);
+    });
+
+    const kids = [...elGates.children];
+    if (reduce) { kids.forEach((k) => k.classList.add("lit")); return; }
+    kids.forEach((k, i) => timers.push(setTimeout(() => k.classList.add("lit"), 130 + i * 320)));
+  }
+  document.getElementById("replay").addEventListener("click", () => run(active));
+  run(SCEN[0]);
+
+  /* ======================= shared canvas plumbing ======================= */
+
+  function seeded(s) { return function () { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; }; }
+
+  function fit(cv, h) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = cv.parentElement.clientWidth;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    cv.style.height = h + "px";
+    const g = cv.getContext("2d");
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { g: g, w: w, h: h };
+  }
+
+  // deterministic force-directed layout, settled up front
+  function layout(nodes, links, w, h, iters, k) {
+    const rnd = seeded(20260802);
+    nodes.forEach((n, i) => {
+      const a = (i / nodes.length) * Math.PI * 2;
+      n.x = w / 2 + Math.cos(a) * (w / 4) * (0.55 + rnd() * 0.6);
+      n.y = h / 2 + Math.sin(a) * (h / 4) * (0.55 + rnd() * 0.6);
+      n.vx = 0; n.vy = 0;
+    });
+    const idx = new Map(nodes.map((n, i) => [n.id, i]));
+    const E = links.map((l) => [idx.get(l.s), idx.get(l.t), l.w || 1])
+                   .filter((e) => e[0] != null && e[1] != null);
+    for (let it = 0; it < iters; it++) {
+      const t = 1 - it / iters;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          let dx = a.x - b.x, dy = a.y - b.y;
+          let d2 = dx * dx + dy * dy || 0.01;
+          const rep = (k * k) / d2 * 0.9;
+          const d = Math.sqrt(d2);
+          a.vx += (dx / d) * rep; a.vy += (dy / d) * rep;
+          b.vx -= (dx / d) * rep; b.vy -= (dy / d) * rep;
+        }
+      }
+      E.forEach(([i, j, w2]) => {
+        const a = nodes[i], b = nodes[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+        const att = (d * d) / k * 0.0016 * Math.min(w2, 6);
+        a.vx += (dx / d) * att; a.vy += (dy / d) * att;
+        b.vx -= (dx / d) * att; b.vy -= (dy / d) * att;
+      });
+      nodes.forEach((n) => {
+        n.vx += (w / 2 - n.x) * 0.006; n.vy += (h / 2 - n.y) * 0.006;
+        n.x += Math.max(-14, Math.min(14, n.vx * t));
+        n.y += Math.max(-14, Math.min(14, n.vy * t));
+        n.vx *= 0.55; n.vy *= 0.55;
+      });
+    }
+    // pack into frame
+    const pad = 30;
+    const xs = nodes.map((n) => n.x), ys = nodes.map((n) => n.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    let sx = (w - pad * 2) / Math.max(x1 - x0, 1), sy = (h - pad * 2) / Math.max(y1 - y0, 1);
+    // fill the frame in both directions, but never distort more than 1.5:1
+    const lo = Math.min(sx, sy);
+    sx = Math.min(sx, lo * 1.5); sy = Math.min(sy, lo * 1.5);
+    nodes.forEach((n) => {
+      n.x = pad + (n.x - x0) * sx + (w - pad * 2 - (x1 - x0) * sx) / 2;
+      n.y = pad + (n.y - y0) * sy + (h - pad * 2 - (y1 - y0) * sy) / 2;
+    });
+    // hard collision pass, at final scale — circles must never overlap
+    for (let pass = 0; pass < 90; pass++) {
+      let moved = false;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const min = (a.r || 6) + (b.r || 6) + 8;
+          let dx = b.x - a.x, dy = b.y - a.y;
+          let d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 0.01) { dx = 0.7; dy = 0.4; d = 0.81; }
+          if (d < min) {
+            const push = (min - d) / 2;
+            a.x -= (dx / d) * push; a.y -= (dy / d) * push;
+            b.x += (dx / d) * push; b.y += (dy / d) * push;
+            moved = true;
+          }
+        }
+      }
+      nodes.forEach((n) => {
+        const r = (n.r || 6) + 2;
+        n.x = Math.max(r, Math.min(w - r, n.x));
+        n.y = Math.max(r, Math.min(h - r - 14, n.y));
+      });
+      if (!moved) break;
+    }
+  }
+
+  function tipAt(tip, wrap, px, py, html) {
+    tip.innerHTML = html; tip.classList.add("on");
+    const r = wrap.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+    tip.style.left = Math.max(4, Math.min(px + 14, r.width - tw - 4)) + "px";
+    tip.style.top = Math.max(4, py - th - 12) + "px";
+  }
+
+  function pointer(cv, onMove, onLeave) {
+    function loc(ev) {
+      const r = cv.getBoundingClientRect();
+      const p = ev.touches ? ev.touches[0] : ev;
+      return [p.clientX - r.left, p.clientY - r.top];
+    }
+    cv.addEventListener("mousemove", (e) => onMove(...loc(e)));
+    cv.addEventListener("mouseleave", onLeave);
+    cv.addEventListener("touchstart", (e) => { onMove(...loc(e)); }, { passive: true });
+    cv.addEventListener("touchmove", (e) => { onMove(...loc(e)); }, { passive: true });
+  }
+
+  /* ============================ 02 · THE MAP ============================ */
+
+  const KIND = { code: "--hop0", rationale: "--hop1", concept: "--hop2", document: "--other" };
+  const mapCv = document.getElementById("mapCanvas");
+  const mapTip = document.getElementById("mapTip");
+  const mapDet = document.getElementById("mapDetail");
+  const mapWrap = mapCv.parentElement;
+  let M = { nodes: [], links: [], w: 0, h: 0, hot: -1, sel: 0 };
+
+  function buildMap() {
+    const h = window.innerWidth < 700 ? 380 : 470;
+    const { w } = fit(mapCv, h);
+    M.w = w; M.h = h;
+    M.nodes = D.communities.map((c) => Object.assign({}, c, { r: 5 + Math.sqrt(c.size) * 2.5 }));
+    M.links = D.communityLinks.slice();
+    layout(M.nodes, M.links.map((l) => ({ s: l.s, t: l.t, w: l.w })), w, h, 330, Math.sqrt((w * h) / M.nodes.length) * 0.72);
+    drawMap();
+  }
+
+  function drawMap() {
+    const { g } = fit(mapCv, M.h);
+    const idx = new Map(M.nodes.map((n, i) => [n.id, i]));
+    g.clearRect(0, 0, M.w, M.h);
+    g.lineCap = "round";
+    M.links.forEach((l) => {
+      const a = M.nodes[idx.get(l.s)], b = M.nodes[idx.get(l.t)];
+      if (!a || !b) return;
+      const on = M.hot >= 0 && (M.nodes[M.hot] === a || M.nodes[M.hot] === b);
+      g.strokeStyle = on ? css("--accent") : css("--ink-3");
+      g.globalAlpha = on ? 0.95 : 0.45;
+      g.lineWidth = on ? 2 : Math.min(2.2, 0.6 + l.w * 0.14);
+      g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+    });
+    g.globalAlpha = 1;
+    M.nodes.forEach((n, i) => {
+      const hot = i === M.hot || i === M.sel;
+      g.beginPath(); g.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      g.fillStyle = css(KIND[n.kind] || "--other");
+      g.globalAlpha = hot ? 1 : 0.82; g.fill();
+      g.globalAlpha = 1;
+      g.lineWidth = 2; g.strokeStyle = css("--surface"); g.stroke();
+      if (hot) { g.lineWidth = 2; g.strokeStyle = css("--ink"); g.beginPath(); g.arc(n.x, n.y, n.r + 3.5, 0, Math.PI * 2); g.stroke(); }
+    });
+    // direct labels on the biggest — identity never by colour alone
+    g.font = '600 11px ' + css("--mono");
+    g.textAlign = "center"; g.textBaseline = "middle";
+    const placed = [];
+    M.nodes.slice(0, 9).forEach((n) => {
+      const t = n.name.length > 19 ? n.name.slice(0, 18) + "…" : n.name;
+      const bw = g.measureText(t).width + 8;
+      const bx = Math.max(bw / 2 + 2, Math.min(M.w - bw / 2 - 2, n.x));
+      const by = Math.min(M.h - 8, n.y + n.r + 11);
+      const box = [bx - bw / 2, by - 8, bx + bw / 2, by + 8];
+      const clash = placed.some((p) => !(box[2] < p[0] || box[0] > p[2] || box[3] < p[1] || box[1] > p[3])) ||
+        M.nodes.some((o) => o !== n && Math.abs(o.x - bx) < bw / 2 + o.r - 4 && Math.abs(o.y - by) < o.r + 5);
+      if (clash) return;
+      placed.push(box);
+      g.lineWidth = 3.5; g.strokeStyle = css("--surface"); g.strokeText(t, bx, by);
+      g.fillStyle = css("--ink-2"); g.fillText(t, bx, by);
+    });
+  }
+
+  function hitMap(x, y) {
+    for (let i = M.nodes.length - 1; i >= 0; i--) {
+      const n = M.nodes[i];
+      if ((x - n.x) ** 2 + (y - n.y) ** 2 <= (n.r + 5) ** 2) return i;
+    }
+    return -1;
+  }
+
+  function showComm(i) {
+    const c = M.nodes[i];
+    mapDet.innerHTML =
+      '<div class="detail-t">' + esc(c.name) + "</div>" +
+      '<div class="detail-m">' + c.size + " items · mostly " + c.kind +
+      " · cluster #" + c.id + "</div>" +
+      '<div class="chips">' + c.top.map((t) => '<span class="chip">' + esc(t) + "</span>").join("") + "</div>";
+  }
+
+  pointer(mapCv, (x, y) => {
+    const i = hitMap(x, y);
+    if (i !== M.hot) {
+      M.hot = i; drawMap();
+      if (i < 0) mapTip.classList.remove("on");
+    }
+    if (i >= 0) {
+      const n = M.nodes[i];
+      tipAt(mapTip, mapWrap, x, y,
+        '<span class="t-t">' + esc(n.name) + '</span><span class="t-s">' + n.size + " items · " + n.kind + "</span>");
+      M.sel = i; showComm(i);
+    }
+  }, () => { M.hot = -1; mapTip.classList.remove("on"); drawMap(); });
+
+  mapCv.addEventListener("click", (e) => {
+    const r = mapCv.getBoundingClientRect();
+    const i = hitMap(e.clientX - r.left, e.clientY - r.top);
+    if (i >= 0) { M.sel = i; showComm(i); drawMap(); }
+  });
+
+  const mapTbl = document.getElementById("mapTable");
+  document.getElementById("tblToggle").addEventListener("click", function () {
+    const on = mapTbl.hidden;
+    mapTbl.hidden = !on; this.setAttribute("aria-expanded", String(on));
+    this.textContent = on ? "Hide table" : "Show as table";
+    if (on && !mapTbl.innerHTML) {
+      mapTbl.innerHTML = "<table><thead><tr><th>Neighbourhood</th><th class='num'>Items</th><th>Mostly</th><th>Largest members</th></tr></thead><tbody>" +
+        D.communities.map((c) =>
+          "<tr><td>" + esc(c.name) + "</td><td class='num'>" + c.size + "</td><td>" + c.kind +
+          "</td><td>" + esc(c.top.join(", ")) + "</td></tr>").join("") +
+        "</tbody></table>";
+    }
+  });
+
+  /* =========================== 03 · THE LINEAGE ========================== */
+
+  const DD = JSON.parse(document.getElementById("ddata").textContent);
+  const dagCv = document.getElementById("dagCanvas");
+  const dagTip = document.getElementById("dagTip");
+  const dagDet = document.getElementById("dagDetail");
+  const dagWrap = dagCv.parentElement;
+  let T = { trace: null, w: 0, h: 0, hot: -1, lit: null, colW: 0 };
+
+  DD.traces.forEach((tr, i) => {
+    const b = document.createElement("button");
+    b.className = "btn"; b.type = "button";
+    b.textContent = tr.label.replace(/_/g, " ");
+    b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+    b.addEventListener("click", () => pickTrace(i));
+    document.getElementById("traceBtns").appendChild(b);
+  });
+
+  function pickTrace(i) {
+    [...document.getElementById("traceBtns").children]
+      .forEach((b, j) => b.setAttribute("aria-pressed", String(i === j)));
+    T.trace = DD.traces[i]; T.hot = -1; T.lit = null;
+    document.getElementById("dagTable").innerHTML = "";
+    layoutDag(); resetDagDetail();
+  }
+
+  function layoutDag() {
+    const tr = T.trace;
+    const maxCol = Math.max(...tr.perDepth.map((p) => p[1]));
+    const h = Math.max(300, Math.min(920, maxCol * 12 + 44));
+    const { w } = fit(dagCv, h);
+    T.w = w; T.h = h;
+    const depths = tr.perDepth.map((p) => p[0]);
+    const nCol = depths.length;
+    const padX = 16;
+    T.colW = (w - padX * 2) / nCol;
+    // adjacency inside this trace
+    T.up = {}; T.dn = {};
+    tr.nodes.forEach((n) => { T.up[n.id] = []; T.dn[n.id] = []; });
+    tr.links.forEach((l) => { T.up[l.t].push(l.s); T.dn[l.s].push(l.t); });
+    const byCol = new Map(depths.map((d) => [d, []]));
+    tr.nodes.slice().sort((a, b) => (b.dn - a.dn) || (b.up - a.up) || a.label.localeCompare(b.label))
+      .forEach((n) => byCol.get(n.d).push(n));
+    byCol.forEach((list, d) => {
+      const ci = depths.indexOf(d);
+      const x = padX + T.colW * ci + T.colW / 2;
+      const span = h - 34;
+      list.forEach((n, k) => {
+        n.x = x;
+        n.y = 20 + (list.length === 1 ? span / 2 : (span * (k + 0.5)) / list.length);
+        n.col = ci; n.slot = k; n.colN = list.length;
+      });
+    });
+    const ax = document.getElementById("dagAxis");
+    ax.innerHTML = depths.map((d, i) =>
+      "<span>" + (d === 0 ? "raw tables" : i === depths.length - 1 ? "the figure" : "step " + d) + "</span>").join("");
+    document.getElementById("dagFoot").innerHTML =
+      "<b>" + esc(tr.label) + "</b> stands on " + (tr.nodes.length - 1) + " other tables through " +
+      tr.links.length + " computed links, " + Math.max(...tr.nodes.map((n) => n.d)) +
+      " steps deep, starting from " + tr.perDepth[0][1] + " raw tables. Hover any block to light up its path.";
+    drawDag();
+  }
+
+  function dagPath(id) {
+    const seen = new Set([id]);
+    const walk = (start, map) => {
+      const q = [start];
+      while (q.length) {
+        const u = q.pop();
+        (map[u] || []).forEach((v) => { if (!seen.has(v)) { seen.add(v); q.push(v); } });
+      }
+    };
+    walk(id, T.up); walk(id, T.dn);
+    return seen;
+  }
+
+  function drawDag() {
+    const tr = T.trace;
+    const { g } = fit(dagCv, T.h);
+    const byId = new Map(tr.nodes.map((n) => [n.id, n]));
+    const lit = T.lit;
+    g.clearRect(0, 0, T.w, T.h);
+    const NW = Math.max(5, Math.min(13, T.colW * 0.34));
+    tr.links.forEach((l) => {
+      const a = byId.get(l.s), b = byId.get(l.t);
+      if (!a || !b) return;
+      const on = lit && lit.has(l.s) && lit.has(l.t);
+      g.strokeStyle = on ? css("--accent") : css("--ink-3");
+      g.globalAlpha = on ? 0.95 : lit ? 0.05 : 0.17;
+      g.lineWidth = on ? 1.5 : 0.8;
+      const x1 = a.x + NW / 2, x2 = b.x - NW / 2, mx = (x1 + x2) / 2;
+      g.beginPath(); g.moveTo(x1, a.y);
+      g.bezierCurveTo(mx, a.y, mx, b.y, x2, b.y); g.stroke();
+    });
+    g.globalAlpha = 1;
+    tr.nodes.forEach((n) => {
+      const isRoot = n.id === tr.root;
+      const on = !lit || lit.has(n.id);
+      const hh = isRoot ? 11 : 7, ww = isRoot ? NW + 5 : NW;
+      g.globalAlpha = on ? 1 : 0.22;
+      g.fillStyle = css(isRoot ? "--hop2" : n.t === "source" || n.t === "seed" ? "--hop1" : "--hop0");
+      roundRect(g, n.x - ww / 2, n.y - hh / 2, ww, hh, 2); g.fill();
+      if (isRoot) { g.globalAlpha = 1; g.strokeStyle = css("--ink"); g.lineWidth = 1.4; g.stroke(); }
+    });
+    g.globalAlpha = 1;
+    // Labels only where they can be read: the figure itself, the block under the
+    // cursor, and a traced path short enough not to collide with itself.
+    g.font = '600 9.5px ' + css("--mono");
+    g.textBaseline = "middle";
+    const hotId = T.hot >= 0 && tr.nodes[T.hot] ? tr.nodes[T.hot].id : null;
+    const showPath = lit && lit.size <= 26;
+    const room = Math.max(46, T.colW - NW - 12);
+    // priority: the figure, then the block under the cursor, then the rest of the path
+    const cands = tr.nodes.filter((n) =>
+      n.id === tr.root || n.id === hotId || (showPath && lit.has(n.id)));
+    cands.sort((a, b) => (a.id === tr.root ? -2 : a.id === hotId ? -1 : 0) -
+                         (b.id === tr.root ? -2 : b.id === hotId ? -1 : 0));
+    const taken = [];
+    cands.forEach((n) => {
+      const isRoot = n.id === tr.root;
+      let t = n.label;
+      const cap = isRoot ? room * 2.4 : room;
+      while (t.length > 4 && g.measureText(t).width > cap) t = t.slice(0, -2);
+      if (t !== n.label) t = t.slice(0, -1) + "…";
+      const wide = g.measureText(t).width;
+      let lx = n.x + NW / 2 + 5, align = "left";
+      if (lx + wide > T.w - 2) { lx = n.x - NW / 2 - 5; align = "right"; }
+      const x0 = align === "left" ? lx : lx - wide;
+      const box = [x0 - 2, n.y - 6, x0 + wide + 2, n.y + 6];
+      if (taken.some((p) => !(box[2] < p[0] || box[0] > p[2] || box[3] < p[1] || box[1] > p[3]))) return;
+      taken.push(box);
+      g.textAlign = align;
+      g.globalAlpha = 1;
+      g.lineWidth = 3.5; g.strokeStyle = css("--surface"); g.strokeText(t, lx, n.y);
+      g.fillStyle = css(isRoot || n.id === hotId ? "--ink" : "--ink-2"); g.fillText(t, lx, n.y);
+    });
+    g.globalAlpha = 1;
+  }
+
+  function roundRect(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+    g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+    g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y); g.closePath();
+  }
+
+  function resetDagDetail() {
+    const tr = T.trace;
+    dagDet.innerHTML = '<div class="detail-t">' + esc(tr.label.replace(/_/g, " ")) + "</div>" +
+      '<div class="detail-m">' + tr.nodes.length + " tables · " + tr.links.length +
+      " links · " + tr.perDepth[0][1] + " raw source tables at the far left</div>" +
+      "<p style='margin:0;font-size:.95rem;color:var(--ink-2);max-width:44em'>Every block to the left of the figure is something that has to be correct, on time, and unchanged in shape for that number to be right. This is what \"one dashboard broke\" usually means.</p>";
+  }
+
+  function hitDag(x, y) {
+    const tr = T.trace;
+    const NW = Math.max(5, Math.min(13, T.colW * 0.34));
+    let best = -1, bd = 1e9;
+    tr.nodes.forEach((n, i) => {
+      const dx = Math.abs(x - n.x), dy = Math.abs(y - n.y);
+      if (dx <= NW / 2 + 4 && dy <= 7) { const d = dx + dy; if (d < bd) { bd = d; best = i; } }
+    });
+    return best;
+  }
+
+  pointer(dagCv, (x, y) => {
+    const i = hitDag(x, y);
+    if (i !== T.hot) {
+      T.hot = i;
+      T.lit = i < 0 ? null : dagPath(T.trace.nodes[i].id);
+      drawDag();
+      if (i < 0) { dagTip.classList.remove("on"); resetDagDetail(); }
+    }
+    if (i >= 0) {
+      const n = T.trace.nodes[i];
+      const what = n.t === "source" ? "raw table from a source system"
+        : n.t === "seed" ? "reference list kept in the repo" : "computed by this project";
+      tipAt(dagTip, dagWrap, x, y,
+        '<span class="t-t">' + esc(n.label) + '</span><span class="t-s">' + what + "</span>" +
+        '<span class="t-s">' + n.up + " in · " + n.dn + " out</span>");
+      dagDet.innerHTML = '<div class="detail-t">' + esc(n.label) + "</div>" +
+        '<div class="detail-m">' + esc(n.f || what) + "</div>" +
+        '<div class="chips"><span class="chip">' + what + '</span><span class="chip">step ' + n.d +
+        '</span><span class="chip">' + n.up + " feeds in</span><span class=\"chip\">" +
+        n.dn + " built from it</span><span class=\"chip\">" + (T.lit.size - 1) +
+        " tables on this path</span></div>";
+    }
+  }, () => { T.hot = -1; T.lit = null; dagTip.classList.remove("on"); drawDag(); resetDagDetail(); });
+
+  const dagTbl = document.getElementById("dagTable");
+  document.getElementById("dagToggle").addEventListener("click", function () {
+    const on = dagTbl.hidden;
+    dagTbl.hidden = !on; this.setAttribute("aria-expanded", String(on));
+    this.textContent = on ? "Hide table" : "Show as table";
+    if (on && !dagTbl.innerHTML) {
+      dagTbl.innerHTML = "<table><thead><tr><th>Table</th><th>Kind</th><th class='num'>Step</th><th class='num'>Feeds in</th><th class='num'>Built from it</th></tr></thead><tbody>" +
+        T.trace.nodes.slice().sort((a, b) => a.d - b.d || b.dn - a.dn).map((n) =>
+          "<tr><td>" + esc(n.label) + "</td><td>" + (n.t || "model") + "</td><td class='num'>" +
+          n.d + "</td><td class='num'>" + n.up + "</td><td class='num'>" + n.dn + "</td></tr>").join("") +
+        "</tbody></table>";
+    }
+  });
+
+  // connector inventory — one measure, so a plain bar list with direct values
+  (function () {
+    const max = Math.max(...DD.connectors.map((c) => c.n));
+    document.getElementById("connBars").innerHTML =
+      '<div class="bars">' + DD.connectors.map((c) =>
+        '<div class="bar"><span class="bar-n">' + esc(c.name) + '</span>' +
+        '<span class="bar-t" style="width:' + ((c.n / max) * 100).toFixed(1) + '%"></span>' +
+        '<span class="bar-v">' + c.n + "</span></div>").join("") + "</div>";
+  })();
+
+  /* =========================== 04 · THE LOOKUP =========================== */
+
+  // measured: graphify query "…" --budget N
+  const CURVE = [
+    { b: 200, shown: 6, chars: 1196 },
+    { b: 400, shown: 11, chars: 1701 },
+    { b: 800, shown: 22, chars: 2946 },
+    { b: 1500, shown: 41, chars: 4984 },
+    { b: 3000, shown: 80, chars: 9505 },
+    { b: 6000, shown: 153, chars: 18467 }
+  ];
+  const TOTAL = D.example.totalFound || 176;
+  const HOP = ["--hop0", "--hop1", "--hop2"];
+  const hopCv = document.getElementById("hopCanvas");
+  const hopTip = document.getElementById("hopTip");
+  const hopDet = document.getElementById("hopDetail");
+  const hopWrap = hopCv.parentElement;
+  let H = { nodes: [], links: [], w: 0, h: 0, hot: -1, keep: 0 };
+
+  function buildHop() {
+    const h = window.innerWidth < 700 ? 400 : 500;
+    const { w } = fit(hopCv, h);
+    H.w = w; H.h = h;
+    const ranked = D.example.nodes.slice().sort((a, b) => a.lvl - b.lvl || b.deg - a.deg);
+    ranked.forEach((n, i) => { n.rank = i; n.r = n.lvl === 0 ? 9 : n.lvl === 1 ? 6 : 4.5; });
+    H.nodes = ranked;
+    H.links = D.example.links.slice();
+    layout(H.nodes, H.links, w, h, 300, Math.sqrt((w * h) / H.nodes.length) * 0.66);
+    setBudget(+document.getElementById("budget").value);
+  }
+
+  function drawHop() {
+    const { g } = fit(hopCv, H.h);
+    const idx = new Map(H.nodes.map((n, i) => [n.id, i]));
+    g.clearRect(0, 0, H.w, H.h);
+    const kept = (n) => n.rank < H.keep;
+    H.links.forEach((l) => {
+      const a = H.nodes[idx.get(l.s)], b = H.nodes[idx.get(l.t)];
+      if (!a || !b) return;
+      const live = kept(a) && kept(b);
+      const on = H.hot >= 0 && (H.nodes[H.hot] === a || H.nodes[H.hot] === b);
+      g.strokeStyle = on ? css("--accent") : css("--ink-3");
+      g.globalAlpha = on ? 0.95 : live ? 0.55 : 0.18;
+      g.lineWidth = on ? 1.8 : 1;
+      g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+    });
+    g.globalAlpha = 1;
+    H.nodes.forEach((n, i) => {
+      const live = kept(n), hot = i === H.hot;
+      // secondary encoding: step 0 largest, step 2 smallest
+      const r = (n.lvl === 0 ? 9 : n.lvl === 1 ? 6 : 4.5) + (hot ? 2 : 0);
+      g.beginPath(); g.arc(n.x, n.y, r, 0, Math.PI * 2);
+      if (live) {
+        g.fillStyle = css(HOP[n.lvl]); g.globalAlpha = 1; g.fill();
+        g.lineWidth = 2; g.strokeStyle = css("--surface"); g.stroke();
+      } else {
+        g.fillStyle = css("--surface"); g.globalAlpha = 1; g.fill();
+        g.globalAlpha = 0.5; g.strokeStyle = css(HOP[n.lvl]); g.lineWidth = 1.6; g.stroke();
+      }
+      g.globalAlpha = 1;
+      if (hot) { g.strokeStyle = css("--ink"); g.lineWidth = 2; g.beginPath(); g.arc(n.x, n.y, r + 3.5, 0, Math.PI * 2); g.stroke(); }
+    });
+    g.font = '600 10.5px ' + css("--mono");
+    g.textAlign = "center"; g.textBaseline = "middle";
+    H.nodes.filter((n) => n.lvl === 0).forEach((n) => {
+      const t = n.label.length > 22 ? n.label.slice(0, 21) + "…" : n.label;
+      const half = g.measureText(t).width / 2 + 4;
+      const lx = Math.max(half, Math.min(H.w - half, n.x));
+      const ly = Math.min(H.h - 6, n.y + 18);
+      g.lineWidth = 3.5; g.strokeStyle = css("--surface"); g.strokeText(t, lx, ly);
+      g.fillStyle = css("--ink-2"); g.fillText(t, lx, ly);
+    });
+  }
+
+  function setBudget(i) {
+    const c = CURVE[i];
+    H.keep = Math.min(H.nodes.length, c.shown);
+    document.getElementById("readout").innerHTML =
+      "budget " + c.b.toLocaleString() + " tokens → <b>" + c.shown + "</b> of " + TOTAL +
+      " dots kept · " + c.chars.toLocaleString() + " chars";
+    drawHop();
+    if (hopDet.dataset.pinned !== "1") {
+      const cut = TOTAL - c.shown;
+      hopDet.innerHTML = '<div class="detail-t">' + cut + " of " + TOTAL + " relevant things were thrown away</div>" +
+        '<div class="detail-m">solid = read by the model · hollow = cut before it ever arrived</div>' +
+        "<p style='margin:0;font-size:.95rem;color:var(--ink-2);max-width:44em'>The search keeps the best-connected dots first. Something genuinely important but poorly connected — a one-off script, a lone config file — is exactly what falls off this list.</p>";
+    }
+  }
+
+  document.getElementById("budget").addEventListener("input", (e) => setBudget(+e.target.value));
+
+  function hitHop(x, y) {
+    for (let i = H.nodes.length - 1; i >= 0; i--) {
+      const n = H.nodes[i], r = (n.lvl === 0 ? 9 : n.lvl === 1 ? 6 : 4.5) + 5;
+      if ((x - n.x) ** 2 + (y - n.y) ** 2 <= r * r) return i;
+    }
+    return -1;
+  }
+
+  pointer(hopCv, (x, y) => {
+    const i = hitHop(x, y);
+    if (i !== H.hot) { H.hot = i; drawHop(); if (i < 0) hopTip.classList.remove("on"); }
+    if (i >= 0) {
+      const n = H.nodes[i];
+      const step = n.lvl === 0 ? "matched the question" : n.lvl === 1 ? "one step away" : "two steps away";
+      tipAt(hopTip, hopWrap, x, y,
+        '<span class="t-t">' + esc(n.label) + '</span><span class="t-s">' + esc(n.file || "") +
+        (n.loc ? " " + n.loc : "") + "</span><span class='t-s'>" + step + " · " + n.deg + " connections</span>");
+      hopDet.dataset.pinned = "1";
+      hopDet.innerHTML = '<div class="detail-t">' + esc(n.label) + "</div>" +
+        '<div class="detail-m">' + esc(n.file || "") + (n.loc ? " · " + n.loc : "") + "</div>" +
+        '<div class="chips"><span class="chip">' + step + '</span><span class="chip">' +
+        n.deg + ' connections</span><span class="chip">' +
+        (n.rank < H.keep ? "kept" : "cut by the budget") + '</span><span class="chip">neighbourhood: ' +
+        esc(n.comm || "—") + "</span></div>";
+    }
+  }, () => {
+    H.hot = -1; hopTip.classList.remove("on"); drawHop();
+    hopDet.dataset.pinned = "0"; setBudget(+document.getElementById("budget").value);
+  });
+
+  const hopTbl = document.getElementById("hopTable");
+  document.getElementById("hopToggle").addEventListener("click", function () {
+    const on = hopTbl.hidden;
+    hopTbl.hidden = !on; this.setAttribute("aria-expanded", String(on));
+    this.textContent = on ? "Hide table" : "Show as table";
+    if (on && !hopTbl.innerHTML) {
+      hopTbl.innerHTML = "<table><thead><tr><th>Thing</th><th>Where</th><th class='num'>Step</th><th class='num'>Connections</th></tr></thead><tbody>" +
+        H.nodes.map((n) =>
+          "<tr><td>" + esc(n.label) + "</td><td>" + esc(n.file || "") + (n.loc ? " " + n.loc : "") +
+          "</td><td class='num'>" + n.lvl + "</td><td class='num'>" + n.deg + "</td></tr>").join("") +
+        "</tbody></table>";
+    }
+  });
+
+  /* ============================ 04 · SQUEEZE ============================ */
+
+  const RAW =
+"Traversal: BFS depth=2 | Start: ['toon-serializer.ts', 'serializer_command()',\n" +
+"'ToonValue', 'connector_alignment_check.py', 'graphify_python()',\n" +
+"'test_toon_pipeline_hooks.py'] | 176 nodes found\n\n" +
+"[!] TRUNCATED: showing 11 of 176 nodes (~400-token budget).\n\n" +
+"NODE toon-serializer.ts [src=src/ai-core/toon-serializer.ts loc=L1 community=toon-serializer.ts]\n" +
+"NODE serializer_command() [src=.copilot/hooks/toon_graphify_pipe.py loc=L40 community=rewrite]\n" +
+"NODE ToonValue [src=src/ai-core/toon-serializer.ts loc=L13 community=toon-serializer.ts]\n" +
+"NODE connector_alignment_check.py [src=scripts/connector_alignment_check.py loc=L1 community=connector_alignment_check.py]\n" +
+"NODE graphify_python() [src=scripts/dbt_manifest_to_graphify.py loc=L564 community=dbt_manifest_to_graphify.py]\n" +
+"NODE test_toon_pipeline_hooks.py [src=tests/test_toon_pipeline_hooks.py loc=L1 community=test_toon_pipeline_hooks.py]\n" +
+"NODE Manifest [src=scripts/_manifest.py loc=L78 community=Manifest]\n" +
+"NODE test_connector_alignment_check.py [src=tests/test_connector_alignment_check.py loc=L1 community=test_connector_alignment_check.py]\n" +
+"NODE Conventions [src=scripts/new_connector.py loc=L58 community=connector_alignment_check.py]\n" +
+"NODE run() [src=scripts/connector_alignment_check.py loc=L756 community=connector_alignment_check.py]\n" +
+"NODE Finding [src=scripts/connector_alignment_check.py loc=L87 community=connector_alignment_check.py]\n" +
+"... (truncated — 165 more nodes cut by ~400-token budget.)";
+
+  const TOON =
+"meta:\n" +
+'  traversal: "BFS depth=2 | Start: [\'toon-serializer.ts\', ...] | 176 nodes found"\n' +
+'  warning: "TRUNCATED: showing 11 of 176 nodes (~400-token budget)."\n' +
+"nodes[11]{name,src,loc,community}:\n" +
+"  toon-serializer.ts,src/ai-core/toon-serializer.ts,L1,toon-serializer.ts\n" +
+"  serializer_command(),.copilot/hooks/toon_graphify_pipe.py,L40,rewrite\n" +
+"  ToonValue,src/ai-core/toon-serializer.ts,L13,toon-serializer.ts\n" +
+"  connector_alignment_check.py,scripts/connector_alignment_check.py,L1,connector_alignment_check.py\n" +
+"  graphify_python(),scripts/dbt_manifest_to_graphify.py,L564,dbt_manifest_to_graphify.py\n" +
+"  test_toon_pipeline_hooks.py,tests/test_toon_pipeline_hooks.py,L1,test_toon_pipeline_hooks.py\n" +
+"  Manifest,scripts/_manifest.py,L78,Manifest\n" +
+"  test_connector_alignment_check.py,tests/test_connector_alignment_check.py,L1,test_connector_alignment_check.py\n" +
+"  Conventions,scripts/new_connector.py,L58,connector_alignment_check.py\n" +
+"  run(),scripts/connector_alignment_check.py,L756,connector_alignment_check.py\n" +
+"  Finding,scripts/connector_alignment_check.py,L87,connector_alignment_check.py\n" +
+"edges: []";
+
+  document.getElementById("rawPre").innerHTML =
+    esc(RAW).replace(/(src=|loc=|community=)/g, '<span class="hi">$1</span>');
+  document.getElementById("toonPre").innerHTML =
+    esc(TOON).replace(/(nodes\[11\]\{name,src,loc,community\}:)/, '<span class="hi">$1</span>');
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+
+  /* ============================== lifecycle ============================== */
+
+  buildMap();
+  // open on a neighbourhood a newcomer can read, not the Rust `String` cluster
+  M.sel = Math.max(0, M.nodes.findIndex((n) => /\s/.test(n.name)));
+  showComm(M.sel); drawMap();
+  pickTrace(0);
+  buildHop();
+
+  let rt;
+  window.addEventListener("resize", () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => { buildMap(); layoutDag(); buildHop(); }, 180);
+  });
+  const redraw = () => { drawMap(); drawDag(); drawHop(); };
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  (mq.addEventListener ? mq.addEventListener.bind(mq, "change") : mq.addListener.bind(mq))(redraw);
+  new MutationObserver(redraw)
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+
+</body>
+</html>

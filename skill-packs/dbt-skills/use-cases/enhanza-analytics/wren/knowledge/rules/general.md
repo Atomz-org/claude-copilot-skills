@@ -1,0 +1,395 @@
+# Imported from dbt
+
+- dbt project: `enhanza_erp_bi`
+- dbt profile/target: `enhanza_sample.dev`
+- imported models: 103
+- imported sources: 100
+- imported relationships: 101
+
+Structural metadata comes from `manifest.json` and `catalog.json`. The sections below summarize dbt test-derived constraints and warnings.
+
+## Verified Constraints
+
+- dim_assets_types.AssetType: NOT NULL
+- dim_assets_types.AssetTypeId: NOT NULL, UNIQUE (primary key)
+- dim_bundle_articles.BundleArticleId: NOT NULL
+- dim_customers_suppliers.TargetId: UNIQUE
+- dim_expenses.ExpenseId: NOT NULL, UNIQUE (primary key)
+- dim_files.FileURL: UNIQUE
+- dim_labels.LableId: NOT NULL, UNIQUE (primary key)
+- dim_organisations.OrgId: UNIQUE
+- dim_organisations.OrganisationNumber: NOT NULL
+- dim_pricelists.PriceListId: NOT NULL, UNIQUE (primary key)
+- dim_stockpoints.StockPointId: NOT NULL, UNIQUE (primary key)
+- dim_voucher_series.VoucherSeriesId: NOT NULL, UNIQUE (primary key)
+- fact_asset_rows.AssetId: NOT NULL
+- fact_assets.AssetId: NOT NULL, UNIQUE (primary key)
+- fact_balance.OrgId: NOT NULL
+- fact_contract_rows.ContractId: NOT NULL
+- fact_contracts.ContractId: NOT NULL
+- fact_employee_schedules.ScheduleId: NOT NULL
+- fact_invoice_accruals.InvoiceId: NOT NULL
+- fact_production_orders.ProductionOrderId: NOT NULL
+- fact_profit_loss.OrgId: NOT NULL
+- fact_salaries.OrgId: NOT NULL
+- fact_sales.OrgId: NOT NULL
+- fact_supplier_invoice_accruals.SupplierInvoiceId: NOT NULL
+- fact_time_reporting.OrgId: NOT NULL
+- fact_warehouses.OrgId: NOT NULL
+- fortnox_bi_dim_accounts.AccountId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_dim_articles.ArticleId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_dim_company.OrgId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_dim_cost_centers.CostCenterId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_dim_customers.CustomerId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_dim_employees.EmployeeId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_dim_financial_years.FinancialYearId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_dim_projects.ProjectId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_dim_supplier_invoice_files.SupplierInvoiceId: NOT NULL
+- fortnox_bi_dim_suppliers.SupplierId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_fact_invoices.InvoiceId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_fact_order_rows.OrderNum: NOT NULL
+- fortnox_bi_fact_orders.OrderNo: NOT NULL
+- fortnox_bi_fact_purchase_orders.purchaseOrderId: NOT NULL
+- fortnox_bi_fact_stocktakings.StockTakingId: NOT NULL, UNIQUE (primary key)
+- fortnox_bi_fact_supplier_invoices.SupplierInvoiceId: NOT NULL, UNIQUE (primary key)
+- logic_bi_dim_accounts.AccountId: UNIQUE
+- logic_bi_dim_articles.ArticleId: UNIQUE
+- logic_bi_dim_cost_centers.CostCenterId: UNIQUE
+- logic_bi_dim_employees.EmployeeId: UNIQUE
+- logic_bi_dim_financial_years.FinancialYearId: UNIQUE
+- logic_bi_dim_projects.ProjectId: UNIQUE
+- logic_bi_dim_suppliers.SupplierId: UNIQUE
+- logic_bi_fact_invoices.OrgId: NOT NULL
+- shopify_bi_dim_articles.ArticleId: NOT NULL, UNIQUE (primary key)
+- shopify_bi_dim_articles_staging.ArticleId: NOT NULL, UNIQUE (primary key)
+- shopify_bi_dim_customers.CustomerId: NOT NULL, UNIQUE (primary key)
+- shopify_bi_dim_customers_staging.CustomerId: NOT NULL, UNIQUE (primary key)
+- shopify_bi_fact_order_rows.OrderId: NOT NULL
+- shopify_bi_fact_order_rows.OrderRowId: NOT NULL, UNIQUE (primary key)
+- shopify_bi_fact_order_rows_staging.OrderId: NOT NULL
+- shopify_bi_fact_order_rows_staging.OrderRowId: NOT NULL, UNIQUE (primary key)
+- shopify_bi_fact_order_rows_staging.OrderedQuantity: NOT NULL
+- shopify_bi_fact_orders.OrderId: NOT NULL, UNIQUE (primary key)
+- shopify_bi_fact_orders_staging.FinancialStatus: accepted values = pending, authorized, partially_paid, paid, partially_refunded, refunded, voided
+- shopify_bi_fact_orders_staging.OrderDate: NOT NULL
+- shopify_bi_fact_orders_staging.OrderId: NOT NULL, UNIQUE (primary key)
+- dim_assets_types.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- dim_bundle_articles.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- dim_prices.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- dim_supplier_items.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- dim_supplier_items.SupplierId -> fortnox_bi_dim_suppliers.SupplierId (MANY_TO_ONE join verified)
+- fact_asset_rows.FinancialYearId -> fortnox_bi_dim_financial_years.FinancialYearId (MANY_TO_ONE join verified)
+- fact_asset_rows.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_assets.AssetTypeId -> dim_assets_types.AssetTypeId (MANY_TO_ONE join verified)
+- fact_assets.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_contract_rows.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fact_contract_rows.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fact_contract_rows.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_contracts.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fact_contracts.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_employee_schedules.EmployeeId -> fortnox_bi_dim_employees.EmployeeId (MANY_TO_ONE join verified)
+- fact_employee_schedules.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_employee_wages.EmployeeId -> fortnox_bi_dim_employees.EmployeeId (MANY_TO_ONE join verified)
+- fact_employee_wages.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_incominggoods.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fact_incominggoods.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_incominggoods.SupplierId -> fortnox_bi_dim_suppliers.SupplierId (MANY_TO_ONE join verified)
+- fact_incominggoods.purchaseOrderId -> fortnox_bi_fact_purchase_orders.purchaseOrderId (MANY_TO_ONE join verified)
+- fact_incominggoods.stockPointId -> dim_stockpoints.StockPointId (MANY_TO_ONE join verified)
+- fact_invoice_accruals.InvoiceId -> fortnox_bi_fact_invoices.InvoiceId (MANY_TO_ONE join verified)
+- fact_invoice_accruals.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_invoice_payments.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fact_invoice_payments.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_locked_period.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_offer_rows.AccountId -> fortnox_bi_dim_accounts.AccountId (MANY_TO_ONE join verified)
+- fact_offer_rows.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fact_offer_rows.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fact_offer_rows.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_production_orders.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fact_production_orders.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fact_production_orders.StockPointId -> dim_stockpoints.stockPointId (MANY_TO_ONE join verified)
+- fact_supplier_invoice_accruals.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_dim_accounts.FinancialYearId -> fortnox_bi_dim_financial_years.FinancialYearId (MANY_TO_ONE join verified)
+- fortnox_bi_dim_articles.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_dim_financial_years.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_dim_supplier_invoice_files.SupplierInvoiceId -> fortnox_bi_fact_supplier_invoices.SupplierInvoiceId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_absence_transactions.EmployeeId -> fortnox_bi_dim_employees.EmployeeId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_absence_transactions.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_attendance_transactions.EmployeeId -> fortnox_bi_dim_employees.EmployeeId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_attendance_transactions.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_budgets.AccountId -> fortnox_bi_dim_accounts.AccountId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_budgets.FinancialYearId -> fortnox_bi_dim_financial_years.FinancialYearId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_budgets.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_invoice_rows.AccountId -> fortnox_bi_dim_accounts.AccountId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_invoice_rows.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_invoice_rows.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_invoice_rows.FinancialYearId -> fortnox_bi_dim_financial_years.FinancialYearId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_invoice_rows.InvoiceId -> fortnox_bi_fact_invoices.InvoiceId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_invoice_rows.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_invoices.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_invoices.FinancialYearId -> fortnox_bi_dim_financial_years.FinancialYearId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_invoices.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_offers.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_offers.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_order_rows.AccountId -> fortnox_bi_dim_accounts.AccountId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_order_rows.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_order_rows.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_order_rows.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_orders.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_orders.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_orders.StockPointId -> dim_stockpoints.StockPointId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_purchase_orders.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_purchase_orders.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_purchase_orders.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_purchase_orders.SupplierId -> fortnox_bi_dim_suppliers.SupplierId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_purchase_orders.stockPointId -> dim_stockpoints.stockPointId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_rolling_sum.FinancialYearId -> fortnox_bi_dim_financial_years.FinancialYearId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_rolling_sum.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_salary_transactions.AccountId -> fortnox_bi_dim_accounts.AccountId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_salary_transactions.EmployeeId -> fortnox_bi_dim_employees.EmployeeId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_salary_transactions.ExpenseId -> dim_expenses.ExpenseId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_salary_transactions.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_stockbalance.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_stockbalance.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_stockbalance.stockPointId -> dim_stockpoints.stockPointId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_stocktakings.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_stocktakings.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_stocktakings.StockPointId -> dim_stockpoints.StockPointId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_supplier_invoice_rows.AccountId -> fortnox_bi_dim_accounts.AccountId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_supplier_invoice_rows.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_supplier_invoice_rows.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_supplier_invoice_rows.SupplierId -> fortnox_bi_dim_suppliers.SupplierId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_supplier_invoices.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_supplier_invoices.SupplierId -> fortnox_bi_dim_suppliers.SupplierId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_vouchers.AccountId -> fortnox_bi_dim_accounts.AccountId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_vouchers.FinancialYearId -> fortnox_bi_dim_financial_years.FinancialYearId (MANY_TO_ONE join verified)
+- fortnox_bi_fact_vouchers.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- fortnox_bi_time_reporting_registrations.ArticleId -> fortnox_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- fortnox_bi_time_reporting_registrations.CustomerId -> fortnox_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- fortnox_bi_time_reporting_registrations.OrgId -> fortnox_bi_dim_company.OrgId (MANY_TO_ONE join verified)
+- shopify_bi_fact_order_rows.ArticleId -> shopify_bi_dim_articles.ArticleId (MANY_TO_ONE join verified)
+- shopify_bi_fact_order_rows.OrderId -> shopify_bi_fact_orders.OrderId (MANY_TO_ONE join verified)
+- shopify_bi_fact_order_rows_staging.ArticleId -> shopify_bi_dim_articles_staging.ArticleId (MANY_TO_ONE join verified)
+- shopify_bi_fact_order_rows_staging.CustomerId -> shopify_bi_dim_customers_staging.CustomerId (MANY_TO_ONE join verified)
+- shopify_bi_fact_order_rows_staging.OrderId -> shopify_bi_fact_orders_staging.OrderId (MANY_TO_ONE join verified)
+- shopify_bi_fact_orders.CustomerId -> shopify_bi_dim_customers.CustomerId (MANY_TO_ONE join verified)
+- shopify_bi_fact_orders_staging.CustomerId -> shopify_bi_dim_customers_staging.CustomerId (MANY_TO_ONE join verified)
+
+## Relationships
+
+- dim_assets_types -> fortnox_bi_dim_company (ONE_TO_ONE)
+- dim_bundle_articles -> fortnox_bi_dim_articles (ONE_TO_ONE)
+- dim_prices -> fortnox_bi_dim_articles (ONE_TO_ONE)
+- dim_supplier_items -> fortnox_bi_dim_articles (ONE_TO_ONE)
+- dim_supplier_items -> fortnox_bi_dim_suppliers (ONE_TO_ONE)
+- fact_asset_rows -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_asset_rows -> fortnox_bi_dim_financial_years (MANY_TO_ONE)
+- fact_assets -> dim_assets_types (MANY_TO_ONE)
+- fact_assets -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_contract_rows -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fact_contract_rows -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_contract_rows -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fact_contracts -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_contracts -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fact_employee_schedules -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_employee_schedules -> fortnox_bi_dim_employees (MANY_TO_ONE)
+- fact_employee_wages -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_employee_wages -> fortnox_bi_dim_employees (MANY_TO_ONE)
+- fact_incominggoods -> dim_stockpoints (MANY_TO_ONE)
+- fact_incominggoods -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fact_incominggoods -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_incominggoods -> fortnox_bi_dim_suppliers (MANY_TO_ONE)
+- fact_incominggoods -> fortnox_bi_fact_purchase_orders (MANY_TO_ONE)
+- fact_invoice_accruals -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_invoice_accruals -> fortnox_bi_fact_invoices (MANY_TO_ONE)
+- fact_invoice_payments -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_invoice_payments -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fact_locked_period -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_offer_rows -> fortnox_bi_dim_accounts (MANY_TO_ONE)
+- fact_offer_rows -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fact_offer_rows -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_offer_rows -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fact_production_orders -> dim_stockpoints (MANY_TO_ONE)
+- fact_production_orders -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fact_production_orders -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fact_supplier_invoice_accruals -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_dim_accounts -> fortnox_bi_dim_financial_years (MANY_TO_ONE)
+- fortnox_bi_dim_articles -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_dim_financial_years -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_dim_supplier_invoice_files -> fortnox_bi_fact_supplier_invoices (MANY_TO_ONE)
+- fortnox_bi_fact_absence_transactions -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_absence_transactions -> fortnox_bi_dim_employees (MANY_TO_ONE)
+- fortnox_bi_fact_attendance_transactions -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_attendance_transactions -> fortnox_bi_dim_employees (MANY_TO_ONE)
+- fortnox_bi_fact_budgets -> fortnox_bi_dim_accounts (MANY_TO_ONE)
+- fortnox_bi_fact_budgets -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_budgets -> fortnox_bi_dim_financial_years (MANY_TO_ONE)
+- fortnox_bi_fact_invoice_rows -> fortnox_bi_dim_accounts (MANY_TO_ONE)
+- fortnox_bi_fact_invoice_rows -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fortnox_bi_fact_invoice_rows -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_invoice_rows -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fortnox_bi_fact_invoice_rows -> fortnox_bi_dim_financial_years (MANY_TO_ONE)
+- fortnox_bi_fact_invoice_rows -> fortnox_bi_fact_invoices (MANY_TO_ONE)
+- fortnox_bi_fact_invoices -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_invoices -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fortnox_bi_fact_invoices -> fortnox_bi_dim_financial_years (MANY_TO_ONE)
+- fortnox_bi_fact_offers -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_offers -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fortnox_bi_fact_order_rows -> fortnox_bi_dim_accounts (MANY_TO_ONE)
+- fortnox_bi_fact_order_rows -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fortnox_bi_fact_order_rows -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_order_rows -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fortnox_bi_fact_orders -> dim_stockpoints (MANY_TO_ONE)
+- fortnox_bi_fact_orders -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_orders -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fortnox_bi_fact_purchase_orders -> dim_stockpoints (MANY_TO_ONE)
+- fortnox_bi_fact_purchase_orders -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fortnox_bi_fact_purchase_orders -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_purchase_orders -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- fortnox_bi_fact_purchase_orders -> fortnox_bi_dim_suppliers (MANY_TO_ONE)
+- fortnox_bi_fact_rolling_sum -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_rolling_sum -> fortnox_bi_dim_financial_years (MANY_TO_ONE)
+- fortnox_bi_fact_salary_transactions -> dim_expenses (MANY_TO_ONE)
+- fortnox_bi_fact_salary_transactions -> fortnox_bi_dim_accounts (MANY_TO_ONE)
+- fortnox_bi_fact_salary_transactions -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_salary_transactions -> fortnox_bi_dim_employees (MANY_TO_ONE)
+- fortnox_bi_fact_stockbalance -> dim_stockpoints (MANY_TO_ONE)
+- fortnox_bi_fact_stockbalance -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fortnox_bi_fact_stockbalance -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_stocktakings -> dim_stockpoints (MANY_TO_ONE)
+- fortnox_bi_fact_stocktakings -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fortnox_bi_fact_stocktakings -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_supplier_invoice_rows -> fortnox_bi_dim_accounts (MANY_TO_ONE)
+- fortnox_bi_fact_supplier_invoice_rows -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fortnox_bi_fact_supplier_invoice_rows -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_supplier_invoice_rows -> fortnox_bi_dim_suppliers (MANY_TO_ONE)
+- fortnox_bi_fact_supplier_invoices -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_supplier_invoices -> fortnox_bi_dim_suppliers (MANY_TO_ONE)
+- fortnox_bi_fact_vouchers -> fortnox_bi_dim_accounts (MANY_TO_ONE)
+- fortnox_bi_fact_vouchers -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_fact_vouchers -> fortnox_bi_dim_financial_years (MANY_TO_ONE)
+- fortnox_bi_time_reporting_registrations -> fortnox_bi_dim_articles (MANY_TO_ONE)
+- fortnox_bi_time_reporting_registrations -> fortnox_bi_dim_company (MANY_TO_ONE)
+- fortnox_bi_time_reporting_registrations -> fortnox_bi_dim_customers (MANY_TO_ONE)
+- shopify_bi_fact_order_rows_staging -> shopify_bi_dim_articles_staging (MANY_TO_ONE)
+- shopify_bi_fact_order_rows_staging -> shopify_bi_dim_customers_staging (MANY_TO_ONE)
+- shopify_bi_fact_order_rows_staging -> shopify_bi_fact_orders_staging (MANY_TO_ONE)
+- shopify_bi_fact_order_rows -> shopify_bi_dim_articles (MANY_TO_ONE)
+- shopify_bi_fact_order_rows -> shopify_bi_fact_orders (MANY_TO_ONE)
+- shopify_bi_fact_orders_staging -> shopify_bi_dim_customers_staging (MANY_TO_ONE)
+- shopify_bi_fact_orders -> shopify_bi_dim_customers (MANY_TO_ONE)
+
+## Data Quality Warnings
+
+- logic_bi_dim_company.OrgId: not_null unknown
+- logic_bi_dim_customers.CostCenterId: not_null unknown
+- logic_bi_dim_customers.CustomerId: not_null unknown
+- logic_bi_dim_customers.OrganisationNumber: not_null unknown
+- logic_bi_dim_customers.PriceListId: not_null unknown
+- logic_bi_dim_customers.ProjectId: not_null unknown
+- logic_bi_dim_supplier_invoice_files.OrgId: not_null unknown
+- logic_bi_dim_supplier_invoice_files.SupplierInvoiceNo: not_null unknown
+- logic_bi_fact_absence_transactions.CauseCode: not_null unknown
+- logic_bi_fact_absence_transactions.CostCenterId: not_null unknown
+- logic_bi_fact_absence_transactions.EmployeeId: not_null unknown
+- logic_bi_fact_absence_transactions.OrgId: not_null unknown
+- logic_bi_fact_absence_transactions.ProjectId: not_null unknown
+- logic_bi_fact_attendance_transactions.CauseCode: not_null unknown
+- logic_bi_fact_attendance_transactions.CostCenterId: not_null unknown
+- logic_bi_fact_attendance_transactions.EmployeeId: not_null unknown
+- logic_bi_fact_attendance_transactions.OrgId: not_null unknown
+- logic_bi_fact_attendance_transactions.ProjectId: not_null unknown
+- logic_bi_fact_budgets.Account: not_null unknown
+- logic_bi_fact_budgets.AccountId: not_null unknown
+- logic_bi_fact_budgets.CostCenterId: not_null unknown
+- logic_bi_fact_budgets.FinancialYearId: not_null unknown
+- logic_bi_fact_budgets.OrgId: not_null unknown
+- fact_incoming_goods.ArticleId: not_null unknown
+- fact_incoming_goods.ArticleNumber: not_null unknown
+- fact_incoming_goods.CostCenterId: not_null unknown
+- fact_incoming_goods.OrgId: not_null unknown
+- fact_incoming_goods.ProjectId: not_null unknown
+- fact_incoming_goods.SupplierId: not_null unknown
+- logic_bi_fact_invoice_rows.AccountNumber: not_null unknown
+- logic_bi_fact_invoice_rows.ArticleNumber: not_null unknown
+- logic_bi_fact_invoice_rows.InvoiceNo: not_null unknown
+- logic_bi_fact_invoice_rows.OrgId: not_null unknown
+- logic_bi_fact_offers.CostCenterId: not_null unknown
+- logic_bi_fact_offers.CustomerId: not_null unknown
+- logic_bi_fact_offers.OrgId: not_null unknown
+- logic_bi_fact_offers.ProjectId: not_null unknown
+- logic_bi_fact_order_rows.AccountId: not_null unknown
+- logic_bi_fact_order_rows.ArticleId: not_null unknown
+- logic_bi_fact_order_rows.ArticleNumber: not_null unknown
+- logic_bi_fact_order_rows.CostCenterId: not_null unknown
+- logic_bi_fact_order_rows.CustomerId: not_null unknown
+- logic_bi_fact_order_rows.OrderId: not_null unknown
+- logic_bi_fact_order_rows.OrgId: not_null unknown
+- logic_bi_fact_order_rows.ProjectId: not_null unknown
+- logic_bi_fact_orders.CustomerId: not_null unknown
+- logic_bi_fact_orders.OrderId: not_null unknown
+- logic_bi_fact_orders.OrgId: not_null unknown
+- logic_bi_fact_orders.StockPointId: not_null unknown
+- fact_purchase_orders.ArticleId: not_null unknown
+- fact_purchase_orders.ArticleNumber: not_null unknown
+- fact_purchase_orders.CostCenterId: not_null unknown
+- fact_purchase_orders.CustomerId: not_null unknown
+- fact_purchase_orders.OrgId: not_null unknown
+- fact_purchase_orders.ProjectId: not_null unknown
+- fact_purchase_orders.SupplierId: not_null unknown
+- logic_bi_fact_salary_transactions.AccountId: not_null unknown
+- logic_bi_fact_salary_transactions.CostCenterId: not_null unknown
+- logic_bi_fact_salary_transactions.EmployeeId: not_null unknown
+- logic_bi_fact_salary_transactions.OrgId: not_null unknown
+- logic_bi_fact_salary_transactions.ProjectId: not_null unknown
+- logic_bi_fact_salary_transactions.SalaryCode: not_null unknown
+- logic_bi_fact_stockbalance.ArticleId: not_null unknown
+- logic_bi_fact_stockbalance.OrgId: not_null unknown
+- logic_bi_fact_stockbalance.StockPointId: not_null unknown
+- logic_bi_fact_stocktakings.ArticleId: not_null unknown
+- logic_bi_fact_stocktakings.CostCenterId: not_null unknown
+- logic_bi_fact_stocktakings.OrgId: not_null unknown
+- logic_bi_fact_stocktakings.ProjectId: not_null unknown
+- logic_bi_fact_stocktakings.StockPointId: not_null unknown
+- logic_bi_fact_supplier_invoice_rows.Account: not_null unknown
+- logic_bi_fact_supplier_invoice_rows.AccountId: not_null unknown
+- logic_bi_fact_supplier_invoice_rows.ArticleId: not_null unknown
+- logic_bi_fact_supplier_invoice_rows.ArticleNumber: not_null unknown
+- logic_bi_fact_supplier_invoice_rows.CostCenterId: not_null unknown
+- logic_bi_fact_supplier_invoice_rows.OrgId: not_null unknown
+- logic_bi_fact_supplier_invoice_rows.ProjectId: not_null unknown
+- logic_bi_fact_supplier_invoice_rows.SupplierId: not_null unknown
+- logic_bi_fact_supplier_invoice_rows.SupplierInvoiceNo: not_null unknown
+- logic_bi_fact_supplier_invoices.CostCenterId: not_null unknown
+- logic_bi_fact_supplier_invoices.OrgId: not_null unknown
+- logic_bi_fact_supplier_invoices.ProjectId: not_null unknown
+- logic_bi_fact_supplier_invoices.SupplierId: not_null unknown
+- logic_bi_fact_supplier_invoices.SupplierInvoiceNo: not_null unknown
+- fact_time_reporting_registrations.UserId: not_null unknown
+- fact_time_reporting_registrations.UserNo: not_null unknown
+- logic_bi_fact_vouchers.Account: not_null unknown
+- logic_bi_fact_vouchers.AccountId: not_null unknown
+- logic_bi_fact_vouchers.CostCenterId: not_null unknown
+- logic_bi_fact_vouchers.CustomerId: not_null unknown
+- logic_bi_fact_vouchers.FinancialYearId: not_null unknown
+- logic_bi_fact_vouchers.OrgId: not_null unknown
+- logic_bi_fact_vouchers.ProjectId: not_null unknown
+- logic_bi_fact_vouchers.ReferenceNumber: not_null unknown
+- logic_bi_fact_vouchers.SupplierId: not_null unknown
+- logic_bi_fact_vouchers.VoucherSeriesId: not_null unknown
+- hubspot_bi_dim_company.[NEEDS INPUT] primary key: not_null unknown
+- dim_contacts.[NEEDS INPUT] primary key: not_null unknown
+- hubspot_bi_dim_customers.[NEEDS INPUT] primary key: not_null unknown
+- dim_deal_stages.[NEEDS INPUT] primary key: not_null unknown
+- dim_pipelines.[NEEDS INPUT] primary key: not_null unknown
+- fact_deals.[NEEDS INPUT] primary key: not_null unknown
+- fact_engagements.[NEEDS INPUT] primary key: not_null unknown
+- fact_tickets.[NEEDS INPUT] primary key: not_null unknown
+- hubspot_bi_dim_company.[NEEDS INPUT] primary key: unique unknown
+- dim_contacts.[NEEDS INPUT] primary key: unique unknown
+- hubspot_bi_dim_customers.[NEEDS INPUT] primary key: unique unknown
+- dim_deal_stages.[NEEDS INPUT] primary key: unique unknown
+- dim_pipelines.[NEEDS INPUT] primary key: unique unknown
+- fact_deals.[NEEDS INPUT] primary key: unique unknown
+- fact_engagements.[NEEDS INPUT] primary key: unique unknown
+- fact_tickets.[NEEDS INPUT] primary key: unique unknown

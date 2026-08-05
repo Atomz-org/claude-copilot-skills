@@ -1,0 +1,58 @@
+name: shopify_bi_fact_order_rows_staging
+table_reference:
+  catalog: enhanza_sample
+  schema: shopify_staging_demo
+  table: shopify_bi_fact_order_rows
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Shopify variant id. Nullable — a custom line item carries no variant.
+      The relationships test ignores nulls by design.
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Owning customer, carried from the order. Nullable for guest checkout.
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrderId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Parent order.
+    dbt_tests: not_null,relationships
+    dbt_test_status: verified
+- name: OrderRowId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Shopify line item id, cast to string. Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: OrderedQuantity
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Line quantity ordered.
+    dbt_tests: not_null
+    dbt_test_status: verified
+cached: false
+properties:
+  description: One row per line item on a non-cancelled Shopify order. Joins back
+    to shopify_api.orders for order-level context, the same way the Fortnox equivalent
+    joins articles and financial_years. PriceBeforeDiscount strips VAT when the order
+    is stored VAT-inclusive; Discount is a line-level amount, never a percentage.
+  dbt_layer: staging
+  dbt_unique_id: model.enhanza_shopify.shopify_bi_fact_order_rows_staging
+  dbt_resource_type: model
+primary_key: OrderRowId

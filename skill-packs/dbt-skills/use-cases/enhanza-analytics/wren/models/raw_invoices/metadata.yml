@@ -1,0 +1,36 @@
+name: raw_invoices
+table_reference:
+  catalog: enhanza_sample
+  schema: seventime_api_canonical
+  table: invoices
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: _id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: currencyRate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: invoiceDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: invoiceNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_seventime.seventime_api.invoices
+  dbt_resource_type: source

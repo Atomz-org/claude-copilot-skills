@@ -1,0 +1,13 @@
+address,city,country,created_at,email,id,is_active,name,phone,postal_code,updated_at
+address_value_1,Bergen,NO,2026-01-05,email_value_1,KEY-001,false,Bergen Bygg AS,phone_value_1,postal_code_value_1,2026-01-05
+address_value_2,Uppsala,SE,2026-01-12,email_value_2,KEY-002,true,Uppsala Livsmedel AB,phone_value_2,postal_code_value_2,2026-01-12
+address_value_3,Aarhus,DK,2026-01-19,email_value_3,KEY-003,true,Aarhus Elektronik ApS,phone_value_3,postal_code_value_3,2026-01-19
+address_value_4,Tampere,FI,2026-01-26,email_value_4,KEY-004,false,Tampere Kone Oy,phone_value_4,postal_code_value_4,2026-01-26
+address_value_5,Stavanger,NO,2026-02-02,email_value_5,KEY-005,true,Stavanger Marine AS,phone_value_5,postal_code_value_5,2026-02-02
+address_value_6,Malmo,SE,2026-02-09,email_value_6,KEY-006,true,Malmo Emballage AB,phone_value_6,postal_code_value_6,2026-02-09
+address_value_7,Trondheim,NO,2026-02-16,email_value_7,KEY-007,false,Trondheim Verktoy AS,phone_value_7,postal_code_value_7,2026-02-16
+address_value_8,Odense,DK,2026-02-23,email_value_8,KEY-008,true,Odense Papir ApS,phone_value_8,postal_code_value_8,2026-02-23
+address_value_9,Stockholm,SE,2026-03-02,email_value_9,KEY-009,true,Astrid Lindqvist,phone_value_9,postal_code_value_9,2026-03-02
+address_value_10,Oslo,NO,2026-03-09,email_value_10,KEY-010,false,Henrik Dahl,phone_value_10,postal_code_value_10,2026-03-09
+address_value_11,Copenhagen,DK,2026-03-16,email_value_11,KEY-011,true,Mette Sorensen,phone_value_11,postal_code_value_11,2026-03-16
+address_value_12,Helsinki,FI,2026-03-23,email_value_12,KEY-012,true,Jukka Virtanen,phone_value_12,postal_code_value_12,2026-03-23

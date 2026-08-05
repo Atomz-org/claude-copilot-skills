@@ -1,0 +1,77 @@
+name: fortnox_bi_dim_employees
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_employees
+columns:
+- name: Address
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Address1 field in Fortnox
+- name: CurrentHourlyPay
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Hourly payment valid at the last sync date
+- name: CurrentMonthlySalary
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Monthly salary valid at the last sync date
+- name: CurrentScheduleCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Schedule (code) valid at the last sync date, all schedules can be
+      found in fortnox_bi.fact_employee_schedules
+- name: EmployeeId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique employee identifier in your workspace
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: EmployeeName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Employee's full name
+- name: FiringDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date the employee is employed to
+- name: HiringDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Employment date
+- name: Phone
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Phone1 or Phone2 field in Fortnox depending on availability
+- name: ScheduleChangeDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date when current schedule came into force
+cached: false
+properties:
+  description: Detailed information on registered employees
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_employees
+  dbt_resource_type: model
+primary_key: EmployeeId

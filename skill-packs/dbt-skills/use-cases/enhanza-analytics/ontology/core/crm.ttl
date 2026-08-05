@@ -1,0 +1,127 @@
+@prefix crm:     <https://w3id.org/enhanza/crm#> .
+@prefix erp:     <https://w3id.org/enhanza/erp#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#    Ontology
+#################################################################
+
+crm: a owl:Ontology ;
+    dcterms:title "Enhanza CRM Core Ontology"@en ;
+    vann:preferredNamespacePrefix "crm" ;
+    vann:preferredNamespaceUri "https://w3id.org/enhanza/crm#" ;
+    owl:imports erp: ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    rdfs:comment """CRM concepts, as a module over the ERP core rather than a parallel
+vocabulary.
+
+A separate module, because a tenant can connect a CRM without an ERP or the reverse, and a
+single file that only makes sense with both connected would force every Shopify-only tenant
+to reason about vouchers. A module rather than a silo, because CRM and ERP disagree about
+almost nothing that matters: the company an opportunity is against and the company the
+invoice bills are the same erp:Party, and modelling them separately is how a pipeline
+figure stops reconciling with revenue.
+
+The join is therefore deliberate and narrow. crm:Opportunity is an erp:Document — it has a
+number, a date, a counterparty, and lines — and crm:wonAs points at the erp:Order it became.
+Nothing else is shared."""@en .
+
+#################################################################
+#    Classes
+#################################################################
+
+crm:Contact a owl:Class ;
+    rdfs:subClassOf erp:Party ;
+    rdfs:label "Contact"@en ;
+    rdfs:comment """A natural person at a customer or prospect. A subclass of erp:Party
+rather than a new root: the invoice recipient and the person on the opportunity are
+routinely the same individual, and two hierarchies would make that unprovable."""@en .
+
+crm:Lead a owl:Class ;
+    rdfs:subClassOf erp:Party ;
+    rdfs:label "Lead"@en ;
+    rdfs:comment """An unqualified prospect. Distinct from erp:Customer because it has no
+transactions yet; the moment it does it is a Customer, and the two are the same Party."""@en .
+
+crm:Opportunity a owl:Class ;
+    rdfs:subClassOf erp:Document ;
+    rdfs:label "Opportunity"@en ;
+    rdfs:comment """A potential sale with a value, a stage, and a close date. A Document
+because it has a header/line split exactly as an order does — `fact_opportunities` and
+`fact_opportunity_rows` in the warehouse — and every grain rule that applies to an invoice
+applies here."""@en .
+
+crm:OpportunityLine a owl:Class ;
+    rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Opportunity Line"@en .
+
+crm:Activity a owl:Class ;
+    rdfs:subClassOf erp:Event ;
+    rdfs:label "Activity"@en ;
+    rdfs:comment "A logged interaction: call, email, note, meeting."@en .
+
+crm:Appointment a owl:Class ;
+    rdfs:subClassOf crm:Activity ;
+    rdfs:label "Appointment"@en .
+
+crm:Campaign a owl:Class ;
+    rdfs:subClassOf erp:Classifier ;
+    rdfs:label "Campaign"@en ;
+    rdfs:comment "A Classifier, not an Event: activities and opportunities are filed under it exactly as they are under a cost center."@en .
+
+crm:Stage a owl:Class ;
+    rdfs:subClassOf erp:Classifier ;
+    rdfs:label "Stage"@en ;
+    rdfs:comment """A pipeline stage. A closed domain per tenant, so it carries an
+accepted_values test in every connector that supplies it."""@en .
+
+#################################################################
+#    Object properties
+#################################################################
+
+crm:againstParty a owl:ObjectProperty ;
+    rdfs:subPropertyOf erp:involvesParty ;
+    rdfs:label "against party"@en ;
+    rdfs:comment "The company an opportunity or activity concerns."@en .
+
+crm:ownedBy a owl:ObjectProperty ;
+    rdfs:subPropertyOf erp:performedBy ;
+    rdfs:label "owned by"@en ;
+    rdfs:comment "The employee accountable for an opportunity. A subproperty so 'everything this person touched' spans CRM and ERP in one query."@en .
+
+crm:atStage a owl:ObjectProperty ;
+    rdfs:subPropertyOf erp:classifiedBy ;
+    rdfs:range crm:Stage ;
+    rdfs:label "at stage"@en .
+
+crm:partOfCampaign a owl:ObjectProperty ;
+    rdfs:subPropertyOf erp:classifiedBy ;
+    rdfs:range crm:Campaign ;
+    rdfs:label "part of campaign"@en .
+
+crm:wonAs a owl:ObjectProperty ;
+    rdfs:domain crm:Opportunity ;
+    rdfs:range erp:Order ;
+    rdfs:label "won as"@en ;
+    rdfs:comment """The seam between the two modules, and the only place a pipeline number
+can be reconciled against a booked one. An Opportunity with no crm:wonAs and a closed-won
+stage is a defect worth testing for."""@en .
+
+crm:concernsOpportunity a owl:ObjectProperty ;
+    rdfs:domain crm:Activity ;
+    rdfs:range crm:Opportunity ;
+    rdfs:label "concerns opportunity"@en .
+
+#################################################################
+#    Datatype properties
+#################################################################
+
+crm:probability a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "probability"@en ;
+    rdfs:comment """Non-additive: never stored as a fact column to be summed. Weighted
+pipeline is a metric over amount and probability, defined once in the semantic layer."""@en .
+crm:expectedCloseDate a owl:DatatypeProperty ; rdfs:range xsd:date ; rdfs:label "expected close date"@en .
+crm:activityDate      a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:label "activity date"@en .

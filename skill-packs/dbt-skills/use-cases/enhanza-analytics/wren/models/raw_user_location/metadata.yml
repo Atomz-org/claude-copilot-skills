@@ -1,0 +1,21 @@
+name: raw_user_location
+table_reference:
+  catalog: enhanza_sample
+  schema: favrit_api_canonical
+  table: user_location
+columns:
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: is_active
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_favrit.favrit_api.user_location
+  dbt_resource_type: source

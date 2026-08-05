@@ -1,6 +1,6 @@
 ---
 name: github-foundation
-description: Shared repository operations foundation for all domain packs: git discipline, CI hygiene, review workflow, graph snapshots, and memory sync.
+description: "Shared repository operations foundation for all domain packs: git discipline, CI hygiene, review workflow, graph snapshots, and memory sync."
 ---
 
 # GitHub Foundation Skill

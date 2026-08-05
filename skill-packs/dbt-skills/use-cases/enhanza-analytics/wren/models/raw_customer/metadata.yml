@@ -1,0 +1,51 @@
+name: raw_customer
+table_reference:
+  catalog: enhanza_sample
+  schema: tripletex_api_canonical
+  table: customer
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: customerNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: department
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: invoicesDueIn
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isInactive
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: isPrivateIndividual
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: organizationNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tripletex.tripletex_api.customer
+  dbt_resource_type: source

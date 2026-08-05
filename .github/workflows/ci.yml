@@ -11,10 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          # Resolves the external/WrenAI pin on every run, so an unpushed or
+          # rewritten submodule SHA fails here instead of on the next fresh clone.
+          submodules: true
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -59,7 +63,7 @@ jobs:
       - name: Sync active stack from skill packs
         run: |
           chmod +x scripts/activate_skill_stack.sh
-          ./scripts/activate_skill_stack.sh dbt-skills
+          ./scripts/activate_skill_stack.sh dbt-skills wren-skills
 
       # .claude/, references/, and templates/ are generated from skill-packs/. If activation
       # changes a tracked file, someone edited a generated copy instead of its pack source
@@ -67,14 +71,14 @@ jobs:
       - name: Assert activation produces no drift
         run: |
           if ! git diff --exit-code --stat; then
-            echo "::error::Activation changed tracked files. Edit the pack source under skill-packs/, then re-run ./scripts/activate_skill_stack.sh dbt-skills and commit the result."
+            echo "::error::Activation changed tracked files. Edit the pack source under skill-packs/, then re-run ./scripts/activate_skill_stack.sh dbt-skills wren-skills and commit the result."
             exit 1
           fi
 
       - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest
+          python -m pip install pytest pytest-xdist sqlglot
 
       - name: Run Python tests
         run: |

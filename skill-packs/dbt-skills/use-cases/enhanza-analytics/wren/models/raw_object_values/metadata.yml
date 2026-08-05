@@ -1,0 +1,51 @@
+name: raw_object_values
+table_reference:
+  catalog: enhanza_sample
+  schema: xledger_api_canonical
+  table: object_values
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: code
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: dateFrom
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: dateTo
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: description
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: text1
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: text2
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_xledger.xledger_api.object_values
+  dbt_resource_type: source

@@ -1,0 +1,56 @@
+name: raw_suppliers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: suppliers
+columns:
+- name: Active
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Address2
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CountryCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: PreDefinedAccount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: TermsOfPayment
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.suppliers
+  dbt_resource_type: source

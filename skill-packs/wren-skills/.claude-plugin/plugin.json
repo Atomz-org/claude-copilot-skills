@@ -1,0 +1,19 @@
+{
+  "name": "wren-skills",
+  "version": "1.0.0",
+  "description": "WrenAI semantic-layer integration: governed SQL, cubes, and GenBI over this repository's dbt use-cases. Wraps the wrenai CLI (source pinned at external/WrenAI) rather than duplicating its guides.",
+  "sourceOfTruth": "skill-packs/wren-skills/.claude",
+  "components": {
+    "commands": "skill-packs/wren-skills/.claude/commands",
+    "skills": "skill-packs/wren-skills/.claude/skills",
+    "rules": "skill-packs/wren-skills/.claude/rules"
+  },
+  "harnessTargets": ["claude", "copilot", "cursor", "codex", "gemini"],
+  "canonicalEntrySkill": "wren-genbi",
+  "upstream": {
+    "repository": "https://github.com/PackMaaan/WrenAI",
+    "submodule": "external/WrenAI",
+    "runtime": "wrenai (PyPI), pinned in requirements.txt",
+    "license": "Apache-2.0"
+  }
+}

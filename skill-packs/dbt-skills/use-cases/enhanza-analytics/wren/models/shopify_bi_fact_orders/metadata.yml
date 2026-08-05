@@ -1,0 +1,31 @@
+name: shopify_bi_fact_orders
+table_reference:
+  catalog: enhanza_sample
+  schema: shopify_bi_demo
+  table: fact_orders
+columns:
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Owning customer. Nullable for guest checkout.
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrderId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Shopify order id. Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+cached: false
+properties:
+  description: One row per Shopify order, cancelled orders excluded, five-year window.
+    Amounts are in the shop's own currency.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_shopify.shopify_bi_fact_orders
+  dbt_resource_type: model
+primary_key: OrderId

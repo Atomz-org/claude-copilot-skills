@@ -100,14 +100,57 @@ see; generated config gets skimmed.
 
 ## 5. Write the models
 
+**Declare the raw columns first.** They are the one input in a connector that cannot be
+derived from anything else in the repository — every other column is a rename of them. Put
+the ones you consume in the source's `columns:` block:
+
+```yaml
+      - name: articles
+        columns:
+          - name: id
+          - name: name
+```
+
+A source contract states **what you depend on, not what the API returns**. Ten fields, not
+forty. Upstream may then add fields freely, and removing one you declared becomes a
+detectable breaking change rather than a warehouse error later.
+`connector_alignment_check.py` raises `undeclared-source-column` when staging reads outside
+it. For a connector already built, the list can be recovered instead of typed:
+`dbt_column_memory.py --use-case <slug> --emit-source-columns --write`.
+
 **Staging** quarantines the source — rename, cast, and coerce here and nowhere else
 ([rule 15](../../rules/analytics-engineering-rules.md)), every column enumerated
-([rule 25](../../rules/analytics-engineering-rules.md)).
+([rule 25](../../rules/analytics-engineering-rules.md)). Its job is to land the **contract's**
+column names, which is why the contract is read before this is written and not after.
 
 **Adapters** must match the other connectors' adapters for the same concept column for
-column and in the same order. Diff against an existing one. A missing column fails the
-`UNION ALL` at compile time and is loud; a column in the **wrong position** with a
-compatible type unions cleanly and silently transposes the data.
+column and in the same order. A missing column fails the `UNION ALL` at compile time and is
+loud; a column in the **wrong position** with a compatible type unions cleanly and silently
+transposes the data.
+
+Do not reconstruct that contract by diffing files. It is already derived, from the SQL
+rather than from documentation:
+
+```bash
+python3 scripts/dbt_column_memory.py --use-case <slug> --concept <dim_or_fact_name>
+```
+
+It answers three things at once, and the third is the one that saves the most time:
+
+| | |
+|---|---|
+| the column list, **in order** | what your adapter must declare |
+| `MISSING FROM <connector>` | a peer that already disagrees — do not copy it |
+| `<connector> <Column> <- <source_table>.<raw_column> [renamed]` | which raw API field each existing connector mapped, resolved through the whole chain |
+
+That last row is how you find out `dim_articles.ArticleName` comes from `Description` in
+Fortnox — a mapping no column name anywhere in the project reveals.
+
+Under the Graphify-first rule the same facts are in the code graph, so `graphify query
+"column contract <concept>"` finds them during orientation without running anything.
+
+Regenerating is automatic: a `PostToolUse` hook rebuilds the store when you edit a `.sql`
+under a `dbt_project/`, incrementally, re-parsing only what changed.
 
 **Union models need no edit** in a registry-driven project — that is what the registry is
 for. If a concept has no union model because no connector supplied it before, create one.

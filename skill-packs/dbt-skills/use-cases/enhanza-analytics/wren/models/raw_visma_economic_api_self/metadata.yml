@@ -1,0 +1,21 @@
+name: raw_visma_economic_api_self
+table_reference:
+  catalog: enhanza_sample
+  schema: visma_economic_api_canonical
+  table: self
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: company
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_visma_economic.visma_economic_api.self
+  dbt_resource_type: source

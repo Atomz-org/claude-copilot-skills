@@ -18,7 +18,7 @@ It is the dbt-specific companion to `enhanza-business-logic` and focuses on mode
 
 ## Working pattern
 
-1. Review `use-case-spec.md`, `source-conventions.md`, and `dbt-model-patterns.md`.
+1. Review `../../use-case-spec.md`, `../../source-conventions.md`, and `../../dbt-model-patterns.md`.
 2. Add new source definitions in `dbt_project/models/sources.yml`.
 3. Build staging models in `dbt_project/models/staging/<source>/`.
 4. Add reusable logic/BI models in `dbt_project/models/logic_bi/`.

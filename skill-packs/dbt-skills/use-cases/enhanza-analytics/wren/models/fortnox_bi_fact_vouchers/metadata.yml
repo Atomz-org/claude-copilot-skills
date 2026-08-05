@@ -1,0 +1,56 @@
+name: fortnox_bi_fact_vouchers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_vouchers
+columns:
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: Balance
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Calculated field from difference between Credit and Debit
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: FinancialYearId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VoucherSeriesId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique identifier of Voucher series, no reference since it's a deprecated
+      dimension
+cached: false
+properties:
+  description: Financial voucher information, all values in SEK, daily basis
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_vouchers
+  dbt_resource_type: model

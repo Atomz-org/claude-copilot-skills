@@ -8,57 +8,14 @@ sources:
     tables:
       - name: dimension_categories
       - name: dimension_mapping
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: CategoryId
+          - name: DimensionId
+          - name: OrgId
     
-  - name: fortnox_api
-    description: 'FORTNOX raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: fortnox_api_{{ var('uid') }}
-    tables:
-      - name: absence_causecodes
-      - name: absence_transactions
-      - name: accounts
-      - name: articles
-      - name: assets
-      - name: assets_types
-      - name: attendance_transactions
-      - name: budgets
-      - name: company_settings
-      - name: contracts
-      - name: cost_centers
-      - name: customers
-      - name: employees
-      - name: expenses
-      - name: financial_years
-      - name: incominggoods
-      - name: invoice_accruals
-      - name: invoice_payments
-      - name: invoices
-      - name: itemsuppliers
-      - name: labels
-      - name: lockedperiod
-      - name: offers
-      - name: orders
-      - name: pricelists
-      - name: prices
-      - name: production_orders
-      - name: projects
-      - name: purchaseorders
-      - name: salary_transactions
-      - name: stockbalance
-      - name: stockpoints
-      - name: stocktakings
-      - name: supplier_invoice_accruals
-      - name: supplier_invoice_file_connections
-      - name: supplier_invoices
-      - name: suppliers
-      - name: time_reporting_articles
-      - name: time_reporting_registrations
-      - name: v2_invoices
-      - name: v2_offers
-      - name: v2_orders
-      - name: voucher_series
-      - name: vouchers
-
   - name: fortnox_api_demo
     description: 'Fortnox DEMO raw data'
     database: "{{ target.project | default(target.database) }}"
@@ -67,18 +24,68 @@ sources:
       - name: absence_causecodes
       - name: absence_transactions
       - name: accounts
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Description
+          - name: Number
       - name: articles
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Active
+          - name: ArticleNumber
+          - name: Bulky
+          - name: DirectCost
+          - name: FreightCost
+          - name: Housework
+          - name: OtherCost
+          - name: PurchasePrice
+          - name: QuantityInStock
+          - name: ReservedQuantity
+          - name: SalesPrice
+          - name: StockGoods
+          - name: StockValue
+          - name: Type
+          - name: Unit
+          - name: VAT
       - name: assets
       - name: assets_types
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Id
+          - name: InUse
+          - name: OrgId
+          - name: Type
+          - name: Url
       - name: attendance_transactions
       - name: budgets
       - name: company_settings
       - name: contracts
       - name: cost_centers
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Code
       - name: customers
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: CustomerNumber
       - name: employees
       - name: expenses
       - name: financial_years
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Id
       - name: incominggoods
       - name: invoice_accruals
       - name: invoice_payments
@@ -92,6 +99,11 @@ sources:
       - name: prices
       - name: production_orders
       - name: projects
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: ProjectNumber
       - name: purchaseorders
       - name: salary_transactions
       - name: stockbalance
@@ -104,130 +116,43 @@ sources:
       - name: time_reporting_articles
       - name: time_reporting_registrations
       - name: v2_invoices
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: ContributionPercent
+          - name: ContributionValue
+          - name: DocumentNumber
+          - name: HouseWork
+          - name: Total
       - name: v2_offers
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: ContributionPercent
+          - name: ContributionValue
+          - name: DocumentNumber
+          - name: HouseWork
+          - name: Total
       - name: v2_orders
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: ContributionPercent
+          - name: ContributionValue
+          - name: DocumentNumber
+          - name: HouseWork
+          - name: Total
       - name: voucher_series
       - name: vouchers
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: ReferenceType
   
-  - name: global_ds_chart_of_accounts
-    description: 'Pre-defined categories for different charts of accounts'
-    database: "{{ target.project | default(target.database) }}"
-    schema: global_ds_chart_of_accounts
-    tables:
-      - name: account_grouping
-      - name: BAS_account_names
-      - name: full_mapping
-  
-  - name: global_ds_currencies_api
-    description: 'Currency exchange rates, RiksBank'
-    database: "{{ target.project | default(target.database) }}"
-    schema: global_ds_currencies_api
-    tables:
-      - name: rate_series
-      - name: rates
-
-  - name: global_ds_kolada
-    description: 'KOLADA economic and political KPIs for Sweden, raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: global_ds_kolada
-    tables:
-      - name: kpi
-      - name: kpi_data
-      - name: kpi_data_external
-      - name: kpi_data_new
-      - name: kpi_groups
-      - name: municipality
-      - name: municipality_groups
-
-  - name: global_ds_kolada_bi
-    description: 'KOLADA economic and political KPIs for Sweden'
-    database: "{{ target.project | default(target.database) }}"
-    schema: global_ds_kolada_bi
-    tables:
-      - name: kolada_kpis
-
-  - name: public
-    description: 'Access free sources'
-    database: "{{ target.project | default(target.database) }}"
-    schema: public
-    tables:
-      - name: bas_account_chart
-      - name: calendar
-      - name: cause_codes
-      - name: country_codes
-      - name: currency_exchange_rates
-
-  - name: seventime_api
-    description: 'Seventime raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: seventime_api_{{ var('uid') }}
-    tables:
-      - name: companyinformation
-      - name: customers
-      - name: expenseitems
-      - name: expenses
-      - name: invoices
-      - name: quotes
-      - name: timelogs
-      - name: workorders
-
-  - name: tempo_api
-    description: 'Tempo raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: tempo_api_{{ var('uid') }}
-    tables:
-      - name: worklogs
-
-  - name: tripletex_api
-    description: 'Tripletex raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: tripletex_api_{{ var('uid') }}
-    tables:
-      - name: account
-      - name: address
-      - name: annual_account
-      - name: balance_sheet
-      - name: currency
-      - name: customer
-      - name: department
-      - name: division
-      - name: employee
-      - name: employee_category
-      - name: employment
-      - name: employment_details
-      - name: inventory
-      - name: inventory_location
-      - name: invoice
-      - name: leave_of_absence
-      - name: leave_of_absence_type
-      - name: ledger
-      - name: ledger_posting
-      - name: ledger_voucher
-      - name: municipality
-      - name: order
-      - name: payment_type
-      - name: product
-      - name: project
-      - name: purchase_order
-      - name: resultbudget
-      - name: salary_payslip
-      - name: stocktaking
-      - name: supplier
-      - name: supplier_invoice
-      - name: supplier_product
-      - name: timesheet_allocated
-      - name: voucher_type
-
-  - name: favrit_api
-    description: 'FAVRIT raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: favrit_api_{{ var('uid') }}
-    tables:
-      - name: user_location
-      - name: orderline
-      - name: accounting
-      - name: ratings
-
   - name: favrit_api_demo
     description: 'FAVRIT DEMO raw data'
     database: "{{ target.project | default(target.database) }}"
@@ -238,123 +163,3 @@ sources:
       - name: accounting
       - name: ratings
 
-  - name: upsales_api
-    description: 'Upsales raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: upsales_api_{{ var('uid') }}
-    tables:
-      - name: accounts
-      - name: activities
-      - name: appointments
-      - name: opportunities
-      - name: orders
-      - name: products
-      - name: self
-
-  - name: visma_eaccounting_api
-    description: 'Visma eAccounting raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: visma_eaccounting_api_{{ var('uid') }}
-    tables:
-      - name: accounts
-      - name: articles
-      - name: companysettings
-      - name: costcenters
-      - name: customerinvoices
-      - name: customers
-      - name: fiscalyears
-      - name: openingbalances
-      - name: orders
-      - name: projects
-      - name: vouchers
-  
-  - name: visma_economic_api
-    description: 'Visma e-conomic raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: visma_economic_api_{{ var('uid') }}
-    tables:
-      - name: accounting_years
-      - name: accounts
-      - name: customer_groups
-      - name: customers
-      - name: employees
-      - name: entries
-      - name: invoices_booked
-      - name: invoices_sent
-      - name: journals
-      - name: orders_archived
-      - name: orders_drafts
-      - name: orders_sent
-      - name: products
-      - name: self
-      - name: suppliers
-
-  - name: xledger_api
-    description: 'Xledger raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: xledger_api_{{ var('uid') }}
-    tables:
-      - name: accounts
-      - name: object_values
-      - name: recent_transactions
-      - name: transactions
-
-  # Shopify is the first source in this file to declare freshness. Every other block
-  # predates the rule and is an undocumented SLA; this one is not. See CONNECTORS.md.
-  # [NEEDS INPUT] `loaded_at_field` assumes the loader stamps `_loaded_at`. Confirm the
-  # actual column against the landed schema — a wrong name makes `dbt source freshness`
-  # error rather than silently pass, which is the safe direction, but it still blocks.
-  # [NEEDS INPUT] warn/error thresholds below are placeholders pending the sync cadence.
-  - name: shopify_api
-    description: 'Shopify raw data'
-    database: "{{ target.project | default(target.database) }}"
-    schema: shopify_api_{{ var('uid') }}
-    loaded_at_field: _loaded_at
-    freshness:
-      warn_after: {count: 12, period: hour}
-      error_after: {count: 24, period: hour}
-    tables:
-      - name: customers
-      - name: orders
-      - name: order_lines
-      - name: products
-
-  # HubSpot — the first CRM source in this project. Two things differ from every
-  # connector above it:
-  #
-  # 1. Only `companies` and `account_details` reach the unified layer. The rest are
-  #    source-aligned by decision, so that CRM concepts with no erp_bi_<concept> union
-  #    model are never claimed in the registry. See use-cases/enhanza-hubspot-connector.
-  # 2. `contacts` carries personal data of identifiable individuals — prospects and
-  #    form-fills, not customers of record. Rule 17 requires the masking/hashing/exclusion
-  #    decision to be made in staging before this table is read.
-  #    [NEEDS INPUT] data-protection owner has not ruled. Until then the staging model is
-  #    a stub and the connector ships with is_hubspot_enabled: false.
-  #
-  # [NEEDS INPUT] no hubspot_api_<uid> dataset exists yet. Every table name below is a
-  # specification for the ingestion job, not an observed schema. Confirm each before the
-  # first run — a wrong name fails at compile time, which is the safe direction.
-  # [NEEDS INPUT] `loaded_at_field` and the thresholds are copied from shopify_api and are
-  # unconfirmed for HubSpot's sync cadence.
-  - name: hubspot_api
-    description: 'HubSpot raw data (CRM). Company-level tables feed the unified layer; deal, ticket, and engagement tables are source-aligned only.'
-    database: "{{ target.project | default(target.database) }}"
-    schema: hubspot_api_{{ var('uid') }}
-    loaded_at_field: _loaded_at
-    freshness:
-      warn_after: {count: 12, period: hour}
-      error_after: {count: 24, period: hour}
-    tables:
-      # reaches the unified layer via an adapter
-      - name: companies
-        description: 'HubSpot company records. Adapted to erp_bi_dim_customers — organisation-shaped, unlike contacts.'
-      - name: account_details
-        description: 'The tenant''s own HubSpot portal/account record. Adapted to erp_bi_dim_company, which holds one row per tenant — NOT one row per HubSpot company.'
-      # source-aligned only — no adapter, no registry claim
-      - name: deals
-      - name: deal_pipelines
-      - name: deal_stages
-      - name: contacts
-        description: 'PII. Personal data of identifiable individuals. See rule 17 and the [NEEDS INPUT] above.'
-      - name: tickets
-      - name: engagements

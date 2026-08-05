@@ -1,0 +1,13 @@
+OrgId,City,CompanyIdentifier,Name
+ORG-1001,Bergen,companyidentifier_value_1,Bergen Bygg AS
+ORG-1002,Uppsala,companyidentifier_value_2,Uppsala Livsmedel AB
+ORG-1003,Aarhus,companyidentifier_value_3,Aarhus Elektronik ApS
+ORG-1004,Tampere,companyidentifier_value_4,Tampere Kone Oy
+ORG-1001,Stavanger,companyidentifier_value_5,Stavanger Marine AS
+ORG-1002,Malmo,companyidentifier_value_6,Malmo Emballage AB
+ORG-1003,Trondheim,companyidentifier_value_7,Trondheim Verktoy AS
+ORG-1004,Odense,companyidentifier_value_8,Odense Papir ApS
+ORG-1001,Stockholm,companyidentifier_value_9,Astrid Lindqvist
+ORG-1002,Oslo,companyidentifier_value_10,Henrik Dahl
+ORG-1003,Copenhagen,companyidentifier_value_11,Mette Sorensen
+ORG-1004,Helsinki,companyidentifier_value_12,Jukka Virtanen

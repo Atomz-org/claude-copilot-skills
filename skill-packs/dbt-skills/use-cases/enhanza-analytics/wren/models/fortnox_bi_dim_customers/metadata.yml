@@ -1,0 +1,77 @@
+name: fortnox_bi_dim_customers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_customers
+columns:
+- name: AdditionalPhone
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Phone2 field in Fortnox
+- name: Address
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Address1 field in Fortnox
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifyer of a customer in your workspace
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: DefaultDeliveryType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer's default invoice delivery type
+- name: DefaultTemplate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer's default invoice template
+- name: DefaultVATType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: VATType field in Fortnox
+- name: PriceListId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer's default price list ID, no relationship since it's a deprecated
+      dimension
+- name: TemplateReference
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Address2 field in Fortnox
+- name: Website
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: WWW field in Fortnox
+cached: false
+properties:
+  description: Detailed information on customers, default pricelists and delivery
+    details
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_customers
+  dbt_resource_type: model
+primary_key: CustomerId

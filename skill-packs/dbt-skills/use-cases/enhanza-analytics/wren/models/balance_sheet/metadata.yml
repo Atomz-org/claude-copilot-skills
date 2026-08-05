@@ -1,0 +1,89 @@
+name: balance_sheet
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_reports_demo
+  table: balance_sheet
+columns:
+- name: AccountClass
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS account class defined by first account digit
+- name: AccountName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The name of the account in the chart of accounts
+- name: AccountNumber
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS account number, consists of four digits, e.g. 1234
+- name: BalanceBroughtForward
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Balance sheet at the beginning of the financial year
+- name: BalanceCarriedForward
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Final current balance for the financial year
+- name: FinancialYear
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The period of the financial year of the transaction in a format yymmdd-yymmdd
+- name: FyCounter
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Current financial year is "0", previous is "-1" and so on
+- name: MainAccount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS main account defined by first two account digits
+- name: Month
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The date of the transaction, e.g. 2023-02-14
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Organization ID of your company(s) in Fortnox
+- name: OrgName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Your company(s) in Fortnox
+- name: PeriodBalance
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Change during the period
+- name: PeriodOpeningBalance
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Balance at the beginning of the month
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_reports_balance_sheet
+  dbt_resource_type: model

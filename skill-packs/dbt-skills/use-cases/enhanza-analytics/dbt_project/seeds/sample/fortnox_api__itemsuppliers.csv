@@ -1,0 +1,13 @@
+OrgId,currencyCode,deliveryTime,itemId,minimumQuantityToPurchase,price,supplierItemId,supplierItemName,supplierNumber
+ORG-1001,SEK,deliverytime_value_1,ITEM-001,137.50,137.50,SUPPLI-001,supplieritemname_value_1,S-2001
+ORG-1002,NOK,deliverytime_value_2,ITEM-002,275.00,275.00,SUPPLI-002,supplieritemname_value_2,S-2002
+ORG-1003,DKK,deliverytime_value_3,ITEM-003,412.50,412.50,SUPPLI-003,supplieritemname_value_3,S-2003
+ORG-1004,EUR,deliverytime_value_4,ITEM-004,550.00,550.00,SUPPLI-004,supplieritemname_value_4,S-2001
+ORG-1001,GBP,deliverytime_value_5,ITEM-005,687.50,687.50,SUPPLI-005,supplieritemname_value_5,S-2002
+ORG-1002,USD,deliverytime_value_6,ITEM-006,825.00,825.00,SUPPLI-006,supplieritemname_value_6,S-2003
+ORG-1003,SEK,deliverytime_value_7,ITEM-007,962.50,962.50,SUPPLI-007,supplieritemname_value_7,S-2001
+ORG-1004,NOK,deliverytime_value_8,ITEM-008,1100.00,1100.00,SUPPLI-008,supplieritemname_value_8,S-2002
+ORG-1001,DKK,deliverytime_value_9,ITEM-009,1237.50,1237.50,SUPPLI-009,supplieritemname_value_9,S-2003
+ORG-1002,EUR,deliverytime_value_10,ITEM-010,1375.00,1375.00,SUPPLI-010,supplieritemname_value_10,S-2001
+ORG-1003,GBP,deliverytime_value_11,ITEM-011,1512.50,1512.50,SUPPLI-011,supplieritemname_value_11,S-2002
+ORG-1004,USD,deliverytime_value_12,ITEM-012,1650.00,1650.00,SUPPLI-012,supplieritemname_value_12,S-2003

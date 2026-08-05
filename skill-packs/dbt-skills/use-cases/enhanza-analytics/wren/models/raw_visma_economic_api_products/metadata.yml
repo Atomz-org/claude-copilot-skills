@@ -1,0 +1,41 @@
+name: raw_visma_economic_api_products
+table_reference:
+  catalog: enhanza_sample
+  schema: visma_economic_api_canonical
+  table: products
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: costPrice
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: inventory
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: productNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: unit
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_visma_economic.visma_economic_api.products
+  dbt_resource_type: source

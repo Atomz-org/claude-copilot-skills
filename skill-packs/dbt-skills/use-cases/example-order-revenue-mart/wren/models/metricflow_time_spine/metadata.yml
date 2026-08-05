@@ -1,0 +1,23 @@
+name: metricflow_time_spine
+table_reference:
+  catalog: dev
+  schema: marts
+  table: metricflow_time_spine
+columns:
+- name: date_day
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Calendar date. One row per day, no gaps.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+cached: false
+properties:
+  description: Daily calendar spine, 2019-01-01 through two years ahead of the current
+    date. Required by cumulative metrics, offset_window, and join_to_timespine.
+  dbt_layer: mart
+  dbt_unique_id: model.analytics.metricflow_time_spine
+  dbt_resource_type: model
+primary_key: date_day

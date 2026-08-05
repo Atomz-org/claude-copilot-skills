@@ -1,0 +1,25 @@
+name: dim_prices
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_prices
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: PriceListId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique price list identifier, no reference since it's a deprecated
+      dimension
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_prices
+  dbt_resource_type: model

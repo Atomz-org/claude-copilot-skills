@@ -1,0 +1,122 @@
+name: fact_profit_loss
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_profit_loss
+columns:
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Amount
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Profit & Loss: Aggregation of Credit and Debit'
+- name: BudgetAmount
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Budget: monthly budgeted amount per account and department'
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: DefaultCurrency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Default currency based on the connected ERP system(s)
+- name: Description
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DescriptionRows
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: FinancialYearId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ReferenceNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Associated transaction document number
+- name: ReferenceTargetName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of the customer or supplier for the associated transaction
+- name: ReferenceType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Type of associated transaction, e.g. Invoice payment, Supplier invoice
+      etc.
+- name: SalesRep
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepCustomer
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: TransactionDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The date of the transaction, e.g. 2023-02-14
+- name: TransactionInformation
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VoucherNumber
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VoucherSeries
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_profit_loss
+  dbt_resource_type: model

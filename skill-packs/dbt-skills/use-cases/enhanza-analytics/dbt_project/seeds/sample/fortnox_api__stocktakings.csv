@@ -1,0 +1,13 @@
+OrgId,date,Name,responsible,Rows,state,usingStockPoints
+ORG-1001,2026-01-05,Bergen Bygg AS,responsible_value_1,rows_value_1,state_value_1,137.50
+ORG-1002,2026-01-12,Uppsala Livsmedel AB,responsible_value_2,rows_value_2,state_value_2,275.00
+ORG-1003,2026-01-19,Aarhus Elektronik ApS,responsible_value_3,rows_value_3,state_value_3,412.50
+ORG-1004,2026-01-26,Tampere Kone Oy,responsible_value_4,rows_value_4,state_value_4,550.00
+ORG-1001,2026-02-02,Stavanger Marine AS,responsible_value_5,rows_value_5,state_value_5,687.50
+ORG-1002,2026-02-09,Malmo Emballage AB,responsible_value_6,rows_value_6,state_value_6,825.00
+ORG-1003,2026-02-16,Trondheim Verktoy AS,responsible_value_7,rows_value_7,state_value_7,962.50
+ORG-1004,2026-02-23,Odense Papir ApS,responsible_value_8,rows_value_8,state_value_8,1100.00
+ORG-1001,2026-03-02,Astrid Lindqvist,responsible_value_9,rows_value_9,state_value_9,1237.50
+ORG-1002,2026-03-09,Henrik Dahl,responsible_value_10,rows_value_10,state_value_10,1375.00
+ORG-1003,2026-03-16,Mette Sorensen,responsible_value_11,rows_value_11,state_value_11,1512.50
+ORG-1004,2026-03-23,Jukka Virtanen,responsible_value_12,rows_value_12,state_value_12,1650.00

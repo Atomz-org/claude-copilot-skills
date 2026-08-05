@@ -1,3 +1,5 @@
+{{ config(enabled = var('is_shopify_enabled', false)) }}
+
 with
 
 source as (

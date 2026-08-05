@@ -1,0 +1,13 @@
+OrgId,Active,Address2,CountryCode,Currency,Name,PreDefinedAccount,SupplierNumber,TermsOfPayment
+ORG-1001,false,address2_value_1,NO,SEK,Bergen Bygg AS,predefinedaccount_value_1,S-2001,termsofpayment_value_1
+ORG-1002,true,address2_value_2,SE,NOK,Uppsala Livsmedel AB,predefinedaccount_value_2,S-2002,termsofpayment_value_2
+ORG-1003,true,address2_value_3,DK,DKK,Aarhus Elektronik ApS,predefinedaccount_value_3,S-2003,termsofpayment_value_3
+ORG-1004,false,address2_value_4,FI,EUR,Tampere Kone Oy,predefinedaccount_value_4,S-2001,termsofpayment_value_4
+ORG-1001,true,address2_value_5,NO,GBP,Stavanger Marine AS,predefinedaccount_value_5,S-2002,termsofpayment_value_5
+ORG-1002,true,address2_value_6,SE,USD,Malmo Emballage AB,predefinedaccount_value_6,S-2003,termsofpayment_value_6
+ORG-1003,false,address2_value_7,NO,SEK,Trondheim Verktoy AS,predefinedaccount_value_7,S-2001,termsofpayment_value_7
+ORG-1004,true,address2_value_8,DK,NOK,Odense Papir ApS,predefinedaccount_value_8,S-2002,termsofpayment_value_8
+ORG-1001,true,address2_value_9,SE,DKK,Astrid Lindqvist,predefinedaccount_value_9,S-2003,termsofpayment_value_9
+ORG-1002,false,address2_value_10,NO,EUR,Henrik Dahl,predefinedaccount_value_10,S-2001,termsofpayment_value_10
+ORG-1003,true,address2_value_11,DK,GBP,Mette Sorensen,predefinedaccount_value_11,S-2002,termsofpayment_value_11
+ORG-1004,true,address2_value_12,FI,USD,Jukka Virtanen,predefinedaccount_value_12,S-2003,termsofpayment_value_12

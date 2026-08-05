@@ -1,0 +1,114 @@
+name: fact_warehouses
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_warehouses
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ClosingQty
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Available quantity at the end of the period
+- name: ClosingValue
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Available stock value at the end of the period
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: DefaultCurrency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Default currency based on the connected ERP system(s)
+- name: OpeningQty
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Available quantity at the beginning of the period
+- name: OpeningValue
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Available value at the beginning of the period
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: ReceivedQty
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Number of items received from suppliers during the period
+- name: ReceivedValue
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Value of items received from suppliers during the period
+- name: SoldQty
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Number of items sold during the period
+- name: SoldValue
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Value of items sold during the period
+- name: StockTakingQty
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Number of items dismissed during the period
+- name: StockTakingValue
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Value of items dismissed during the period
+- name: TotalPeriodChangeQty
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Difference between opening and closing balance
+- name: TotalPeriodChangeValue
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Difference between opening and closing balance
+- name: TransactionDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Transaction date, i.e. 2024-03-25
+cached: false
+properties:
+  description: Article balance in warehouses at given date
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_warehouses
+  dbt_resource_type: model

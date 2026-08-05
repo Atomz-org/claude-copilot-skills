@@ -1,0 +1,159 @@
+name: dim_customers_suppliers
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_customers_suppliers
+columns:
+- name: City
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer and Supplier's address, city
+- name: CityGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CityGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CitySubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CitySubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CitySubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CitySubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Country
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer and Supplier's address, country
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: FirstInvoiceDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The earliest invoice date for the customer / supplier available in
+      your synced data
+- name: Name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Full customer/supplier name and number
+- name: NameGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: NameGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: NameSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: NameSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: NameSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: NameSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepCustomer
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Sales representative assigned to the customer
+- name: SalesRepCustomerGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepCustomerGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepCustomerSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepCustomerSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepCustomerSubSubGroup
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SalesRepCustomerSubSubGroupId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: TargetId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Unique Customer/Supplier identifier used as a primary key
+    dbt_tests: unique
+    dbt_test_status: verified
+- name: TargetType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: '''Customer'' or ''Supplier'' accordingly'
+- name: isActive
+  type: BOOLEAN
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Marks if the customer/supplier is currently active
+cached: false
+properties:
+  description: Details on Customers and Suppliers, grouped
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_customers_suppliers
+  dbt_resource_type: model

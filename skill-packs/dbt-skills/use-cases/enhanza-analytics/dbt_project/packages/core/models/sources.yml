@@ -1,0 +1,78 @@
+version: 2
+
+# Shared reference sources — owned by enhanza_core because several connectors read
+# them (chart-of-accounts mappings, currency rates, public calendars). A source has
+# exactly one owner; a connector-owned copy would be a second declaration.
+sources:
+  - name: global_ds_chart_of_accounts
+    description: 'Pre-defined categories for different charts of accounts'
+    database: "{{ target.project | default(target.database) }}"
+    schema: global_ds_chart_of_accounts
+    tables:
+      - name: account_grouping
+      - name: BAS_account_names
+      - name: full_mapping
+  
+  - name: global_ds_currencies_api
+    description: 'Currency exchange rates, RiksBank'
+    database: "{{ target.project | default(target.database) }}"
+    schema: global_ds_currencies_api
+    tables:
+      - name: rate_series
+      - name: rates
+
+  - name: global_ds_kolada
+    description: 'KOLADA economic and political KPIs for Sweden, raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: global_ds_kolada
+    tables:
+      - name: kpi
+      - name: kpi_data
+      - name: kpi_data_external
+      - name: kpi_data_new
+      - name: kpi_groups
+      - name: municipality
+      - name: municipality_groups
+
+  - name: global_ds_kolada_bi
+    description: 'KOLADA economic and political KPIs for Sweden'
+    database: "{{ target.project | default(target.database) }}"
+    schema: global_ds_kolada_bi
+    tables:
+      - name: kolada_kpis
+
+  - name: public
+    description: 'Access free sources'
+    database: "{{ target.project | default(target.database) }}"
+    schema: public
+    tables:
+      - name: bas_account_chart
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Account
+          - name: AccountClass
+          - name: AccountName
+          - name: MainAccount
+          - name: SubAccount
+      - name: calendar
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Date
+      - name: cause_codes
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Description
+      - name: country_codes
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: CountryName
+      - name: currency_exchange_rates
+

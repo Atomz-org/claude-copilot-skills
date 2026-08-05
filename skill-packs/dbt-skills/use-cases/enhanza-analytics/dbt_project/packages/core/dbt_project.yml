@@ -1,0 +1,19 @@
+# enhanza_core — the shared reference sources, as a dbt package.
+#
+# Owns the sources several connectors read (chart-of-accounts mappings, currency rates,
+# public calendars). A source has exactly one owner, and none of these belongs to any
+# single connector.
+#
+# Deliberately NOT here: the mechanism macros (erp_union, model_alias, auto_config, …)
+# and the registry (global_configs). dbt Core resolves an unqualified macro call through
+# the calling model's own package and then the ROOT project — never through a sibling
+# package — so a macro every package must call unqualified lives in the root project *by
+# construction*, not by preference. Moving them here was tried and reverted: every
+# `config(alias=model_alias(...))` in the project rendered Undefined at parse. The same
+# rule keeps generate_schema_name in the root, where dbt looks for that override.
+name: 'enhanza_core'
+version: '1.0.0'
+config-version: 2
+require-dbt-version: [">=1.9.0", "<2.0.0"]
+
+model-paths: ["models"]

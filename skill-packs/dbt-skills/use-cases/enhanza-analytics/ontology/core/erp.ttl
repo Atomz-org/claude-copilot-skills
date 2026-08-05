@@ -1,0 +1,277 @@
+@prefix erp:     <https://w3id.org/enhanza/erp#> .
+@prefix conn:    <https://w3id.org/enhanza/connector#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#    Ontology
+#################################################################
+
+erp: a owl:Ontology ;
+    dcterms:title "Enhanza ERP Core Ontology"@en ;
+    vann:preferredNamespacePrefix "erp" ;
+    vann:preferredNamespaceUri "https://w3id.org/enhanza/erp#" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    rdfs:comment """A minimal OWL ontology for the entities an ERP system exchanges, and
+nothing else.
+
+The design follows the Building Topology Ontology (https://w3id.org/bot#) rather than
+attempting completeness. BOT models only topology and defers geometry, materials, and
+classification to domain extensions that attach by rdfs:subClassOf. The same discipline
+applies here: this file names the concepts every ERP agrees on and leaves each vendor's
+specifics to a connector extension.
+
+The test of a core class is whether at least two connectors supply it. `dim_customers` is
+supplied by seven and belongs here. A Fortnox-only notion belongs in fortnox.ttl as a
+subclass, not here, however useful it is — a core that grows with each connector is a
+union, not a conformed model, and stops being able to answer a question across sources.
+
+Extensions attach exactly as BOT's do:
+
+    fortnox:Customer  rdfs:subClassOf  erp:Customer .
+    fortnox:customerNumber  rdfs:subPropertyOf  erp:partyNumber .
+
+The connector vocabulary in connector.ttl carries the other half — which physical source
+table and column each extension class was derived from — so an extension is checkable
+against the warehouse rather than merely asserted."""@en .
+
+#################################################################
+#    Classes
+#################################################################
+
+### Party ------------------------------------------------------
+
+erp:Party a owl:Class ;
+    rdfs:label "Party"@en ;
+    rdfs:comment """Any legal or natural person a transaction can name. Deliberately one
+class with subclasses rather than separate hierarchies: the same real-world company is
+routinely a customer in one document and a supplier in another, and modelling those as
+disjoint makes that company two unrelated things."""@en .
+
+erp:Organisation a owl:Class ;
+    rdfs:subClassOf erp:Party ;
+    rdfs:label "Organisation"@en ;
+    rdfs:comment """The tenant whose books these are. Every other individual in this
+ontology belongs to exactly one Organisation via erp:belongsToOrganisation; that is what
+the OrgId column carries in every model, and it is the reason a multi-tenant warehouse can
+share one set of tables."""@en .
+
+erp:Customer a owl:Class ;
+    rdfs:subClassOf erp:Party ;
+    rdfs:label "Customer"@en .
+
+erp:Supplier a owl:Class ;
+    rdfs:subClassOf erp:Party ;
+    rdfs:label "Supplier"@en .
+
+erp:Employee a owl:Class ;
+    rdfs:subClassOf erp:Party ;
+    rdfs:label "Employee"@en .
+
+### Resource ---------------------------------------------------
+
+erp:Resource a owl:Class ;
+    rdfs:label "Resource"@en ;
+    rdfs:comment "Something that can be bought, sold, held, or consumed."@en .
+
+erp:Article a owl:Class ;
+    rdfs:subClassOf erp:Resource ;
+    rdfs:label "Article"@en ;
+    rdfs:comment "A sellable product or service. Called item, product, or SKU by various vendors."@en .
+
+erp:BundleArticle a owl:Class ;
+    rdfs:subClassOf erp:Article ;
+    rdfs:label "Bundle Article"@en ;
+    rdfs:comment "An article composed of other articles, related by erp:hasComponent."@en .
+
+erp:Asset a owl:Class ;
+    rdfs:subClassOf erp:Resource ;
+    rdfs:label "Asset"@en .
+
+### Document ---------------------------------------------------
+
+erp:Document a owl:Class ;
+    rdfs:label "Document"@en ;
+    rdfs:comment """A business document with a number, a date, and usually line items. The
+header/line split is the single most load-bearing distinction in an ERP model: a measure
+true at header grain double-counts at line grain and vice versa, and every conformed fact
+in this ontology declares which one it is."""@en .
+
+erp:Invoice          a owl:Class ; rdfs:subClassOf erp:Document ; rdfs:label "Invoice"@en .
+erp:SupplierInvoice  a owl:Class ; rdfs:subClassOf erp:Document ; rdfs:label "Supplier Invoice"@en .
+erp:Order            a owl:Class ; rdfs:subClassOf erp:Document ; rdfs:label "Order"@en .
+erp:PurchaseOrder    a owl:Class ; rdfs:subClassOf erp:Document ; rdfs:label "Purchase Order"@en .
+erp:Offer            a owl:Class ; rdfs:subClassOf erp:Document ; rdfs:label "Offer"@en ;
+    rdfs:comment "A quotation. Quote in some vendors, estimate in others."@en .
+erp:Contract         a owl:Class ; rdfs:subClassOf erp:Document ; rdfs:label "Contract"@en .
+erp:Voucher          a owl:Class ; rdfs:subClassOf erp:Document ; rdfs:label "Voucher"@en ;
+    rdfs:comment "A journal entry. The general-ledger document; the only one that must balance."@en .
+erp:ProductionOrder  a owl:Class ; rdfs:subClassOf erp:Document ; rdfs:label "Production Order"@en .
+
+erp:LineItem a owl:Class ;
+    rdfs:label "Line Item"@en ;
+    rdfs:comment """One row of a Document. Bound to its document by erp:lineItemOf and to
+what it concerns by erp:referencesResource. A LineItem never exists without its
+Document."""@en .
+
+### Classifier -------------------------------------------------
+
+erp:Classifier a owl:Class ;
+    rdfs:label "Classifier"@en ;
+    rdfs:comment """A dimension a transaction is filed under. Grouped as one class because
+they behave identically in a star schema — a conformed dimension with a key, joined from a
+fact — and separating them into unrelated hierarchies obscures that."""@en .
+
+erp:Account       a owl:Class ; rdfs:subClassOf erp:Classifier ; rdfs:label "Account"@en ;
+    rdfs:comment "A general-ledger account. BAS in Sweden, other charts elsewhere."@en .
+erp:CostCenter    a owl:Class ; rdfs:subClassOf erp:Classifier ; rdfs:label "Cost Center"@en .
+erp:Project       a owl:Class ; rdfs:subClassOf erp:Classifier ; rdfs:label "Project"@en .
+erp:Label         a owl:Class ; rdfs:subClassOf erp:Classifier ; rdfs:label "Label"@en .
+erp:PriceList     a owl:Class ; rdfs:subClassOf erp:Classifier ; rdfs:label "Price List"@en .
+erp:StockPoint    a owl:Class ; rdfs:subClassOf erp:Classifier ; rdfs:label "Stock Point"@en ;
+    rdfs:comment "A warehouse or stock location."@en .
+erp:VoucherSeries a owl:Class ; rdfs:subClassOf erp:Classifier ; rdfs:label "Voucher Series"@en .
+
+### Period -----------------------------------------------------
+
+erp:Period a owl:Class ;
+    rdfs:label "Period"@en ;
+    rdfs:comment "A named interval that transactions fall into."@en .
+
+erp:FinancialYear a owl:Class ; rdfs:subClassOf erp:Period ; rdfs:label "Financial Year"@en .
+erp:LockedPeriod  a owl:Class ; rdfs:subClassOf erp:Period ; rdfs:label "Locked Period"@en ;
+    rdfs:comment "A period closed to further posting. Its existence is why a restated figure is a defect, not an update."@en .
+
+### Event ------------------------------------------------------
+
+erp:Event a owl:Class ;
+    rdfs:label "Event"@en ;
+    rdfs:comment """Something that happened at a point in time and is recorded once.
+Distinct from Document: a Document is a statement about intent or obligation, an Event is
+an observation. A payment is an Event; the invoice it settles is a Document."""@en .
+
+erp:Payment                    a owl:Class ; rdfs:subClassOf erp:Event ; rdfs:label "Payment"@en .
+erp:SalaryTransaction          a owl:Class ; rdfs:subClassOf erp:Event ; rdfs:label "Salary Transaction"@en .
+erp:AbsenceTransaction         a owl:Class ; rdfs:subClassOf erp:Event ; rdfs:label "Absence Transaction"@en .
+erp:AttendanceTransaction      a owl:Class ; rdfs:subClassOf erp:Event ; rdfs:label "Attendance Transaction"@en .
+erp:TimeReportingRegistration  a owl:Class ; rdfs:subClassOf erp:Event ; rdfs:label "Time Reporting Registration"@en .
+erp:StockBalance               a owl:Class ; rdfs:subClassOf erp:Event ; rdfs:label "Stock Balance"@en ;
+    rdfs:comment "A semi-additive observation: summable across articles, never across time."@en .
+erp:Stocktaking                a owl:Class ; rdfs:subClassOf erp:Event ; rdfs:label "Stocktaking"@en .
+erp:IncomingGoods              a owl:Class ; rdfs:subClassOf erp:Event ; rdfs:label "Incoming Goods"@en .
+erp:Budget                     a owl:Class ; rdfs:subClassOf erp:Event ; rdfs:label "Budget"@en ;
+    rdfs:comment "A planned rather than observed amount. Modelled as an Event so it shares the Period and Classifier joins of the actuals it is compared against."@en .
+
+#################################################################
+#    Object properties
+#################################################################
+
+erp:belongsToOrganisation a owl:ObjectProperty ;
+    rdfs:label "belongs to organisation"@en ;
+    rdfs:range erp:Organisation ;
+    rdfs:comment """Tenancy. Every individual carries this, which is why it is not declared
+per class — a model without it cannot be safely queried in a shared warehouse."""@en .
+
+erp:involvesParty a owl:ObjectProperty ;
+    rdfs:label "involves party"@en ;
+    rdfs:range erp:Party ;
+    rdfs:comment "Superproperty of every party role, so 'what touched this counterparty' is one query."@en .
+
+erp:issuedBy a owl:ObjectProperty ; rdfs:subPropertyOf erp:involvesParty ; rdfs:label "issued by"@en .
+erp:issuedTo a owl:ObjectProperty ; rdfs:subPropertyOf erp:involvesParty ; rdfs:label "issued to"@en .
+erp:suppliedBy a owl:ObjectProperty ; rdfs:subPropertyOf erp:involvesParty ; rdfs:range erp:Supplier ; rdfs:label "supplied by"@en .
+erp:performedBy a owl:ObjectProperty ; rdfs:subPropertyOf erp:involvesParty ; rdfs:range erp:Employee ; rdfs:label "performed by"@en .
+
+erp:hasLineItem a owl:ObjectProperty ;
+    rdfs:domain erp:Document ;
+    rdfs:range erp:LineItem ;
+    rdfs:label "has line item"@en .
+
+erp:lineItemOf a owl:ObjectProperty ;
+    owl:inverseOf erp:hasLineItem ;
+    rdfs:label "line item of"@en .
+
+erp:referencesResource a owl:ObjectProperty ;
+    rdfs:range erp:Resource ;
+    rdfs:label "references resource"@en .
+
+erp:hasComponent a owl:ObjectProperty ;
+    rdfs:domain erp:BundleArticle ;
+    rdfs:range erp:Article ;
+    rdfs:label "has component"@en .
+
+erp:classifiedBy a owl:ObjectProperty ;
+    rdfs:range erp:Classifier ;
+    rdfs:label "classified by"@en ;
+    rdfs:comment "Superproperty of every dimensional attribution, mirroring bot:containsZone's role."@en .
+
+erp:postedToAccount        a owl:ObjectProperty ; rdfs:subPropertyOf erp:classifiedBy ; rdfs:range erp:Account ;    rdfs:label "posted to account"@en .
+erp:attributedToCostCenter a owl:ObjectProperty ; rdfs:subPropertyOf erp:classifiedBy ; rdfs:range erp:CostCenter ; rdfs:label "attributed to cost center"@en .
+erp:attributedToProject    a owl:ObjectProperty ; rdfs:subPropertyOf erp:classifiedBy ; rdfs:range erp:Project ;    rdfs:label "attributed to project"@en .
+erp:heldAt                 a owl:ObjectProperty ; rdfs:subPropertyOf erp:classifiedBy ; rdfs:range erp:StockPoint ; rdfs:label "held at"@en .
+
+erp:occursIn a owl:ObjectProperty ;
+    rdfs:range erp:Period ;
+    rdfs:label "occurs in"@en .
+
+erp:settles a owl:ObjectProperty ;
+    rdfs:domain erp:Payment ;
+    rdfs:range erp:Document ;
+    rdfs:label "settles"@en ;
+    rdfs:comment "A Payment against a Document. Many-to-many in every ERP examined: part-payments and lump settlements both occur."@en .
+
+erp:derivedFrom a owl:ObjectProperty ;
+    rdfs:label "derived from"@en ;
+    rdfs:comment """Provenance within the warehouse: a conformed individual and the
+source-aligned one it was unioned from. Populated from the dbt DAG, not asserted by
+hand."""@en .
+
+#################################################################
+#    Datatype properties
+#################################################################
+
+erp:orgId          a owl:DatatypeProperty ; rdfs:range xsd:string  ; rdfs:label "org id"@en .
+
+erp:externalNumber a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "external number"@en ;
+    rdfs:comment """The human-facing identifier a user of the source system would recognise
+and type into a search box — as opposed to the surrogate key a join uses. A superproperty
+because every entity has one and they are never interchangeable: a customer number and an
+article number are both "the number", and conflating them is how a generated mapping ends
+up asserting that an Article is a Party."""@en .
+
+erp:partyNumber a owl:DatatypeProperty ;
+    rdfs:subPropertyOf erp:externalNumber ;
+    rdfs:range xsd:string ;
+    rdfs:label "party number"@en ;
+    rdfs:comment "Customer number, supplier number, employee number."@en .
+
+erp:resourceNumber a owl:DatatypeProperty ;
+    rdfs:subPropertyOf erp:externalNumber ;
+    rdfs:range xsd:string ;
+    rdfs:label "resource number"@en ;
+    rdfs:comment "Article number, SKU, item code."@en .
+
+erp:partyName a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "party name"@en ;
+    rdfs:comment "The display name of a Party. Distinct from erp:partyNumber, which is an identifier."@en .
+
+erp:resourceName a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "resource name"@en .
+erp:documentNumber a owl:DatatypeProperty ; rdfs:range xsd:string  ; rdfs:label "document number"@en .
+erp:documentDate   a owl:DatatypeProperty ; rdfs:range xsd:date    ; rdfs:label "document date"@en .
+erp:amount         a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "amount"@en .
+erp:quantity       a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "quantity"@en .
+erp:currency       a owl:DatatypeProperty ; rdfs:range xsd:string  ; rdfs:label "currency"@en ;
+    rdfs:comment "ISO 4217. Present on the document, not only on the tenant, because a tenant can invoice in several."@en .
+erp:isActive       a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "is active"@en ;
+    rdfs:comment """Conformed name for the flag that six connectors spell differently. The
+`Active`/`isActive` split between adapters was a real defect found by
+scripts/connector_alignment_check.py; this is the name it is checked against."""@en .

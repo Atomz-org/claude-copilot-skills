@@ -1,0 +1,38 @@
+name: shopify_bi_dim_customers_staging
+table_reference:
+  catalog: enhanza_sample
+  schema: shopify_staging_demo
+  table: shopify_bi_dim_customers
+columns:
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Shopify customer id, cast to string. Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: Email
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer email. Nullable — Shopify permits phone-only customers.
+- name: isActive
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: True when Shopify customer `state` is 'enabled'.
+cached: false
+properties:
+  description: One row per Shopify customer. Keys are the raw Shopify `id` with no
+    OrgId prefix — Shopify has no organisation concept and `id` is unique within a
+    shop. Cross-source uniqueness comes from the `-ds_shopify` suffix add_erp_fields()
+    appends downstream. Carries the customer's `default_address` as both the postal
+    and the delivery address.
+  dbt_layer: staging
+  dbt_unique_id: model.enhanza_shopify.shopify_bi_dim_customers_staging
+  dbt_resource_type: model
+primary_key: CustomerId

@@ -1,0 +1,36 @@
+name: raw_v2_offers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: v2_offers
+columns:
+- name: ContributionPercent
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ContributionValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DocumentNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: HouseWork
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Total
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_erp_bi.fortnox_api_demo.v2_offers
+  dbt_resource_type: source

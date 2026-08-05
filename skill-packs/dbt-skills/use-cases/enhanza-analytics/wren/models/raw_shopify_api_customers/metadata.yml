@@ -1,0 +1,51 @@
+name: raw_shopify_api_customers
+table_reference:
+  catalog: enhanza_sample
+  schema: shopify_api_canonical
+  table: customers
+columns:
+- name: created_at
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: orders_count
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: state
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: tax_exempt
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: total_spent
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: updated_at
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: verified_email
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_shopify.shopify_api.customers
+  dbt_resource_type: source

@@ -1,0 +1,59 @@
+name: stg_shopify__order_lines
+table_reference:
+  catalog: dev
+  schema: staging
+  table: stg_shopify__order_lines
+columns:
+- name: order_line_id
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: order_id
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: FK to stg_shopify__orders.
+    dbt_tests: not_null,relationships
+    dbt_test_status: verified
+- name: product_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: quantity
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: line_amount
+  type: DECIMAL(28, 6)
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Line total before discount, order currency.
+- name: discount_amount
+  type: DECIMAL(28, 6)
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Discount applied to this line. Always positive.
+- name: _loaded_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: One row per line item on an order. Roughly 0.3% of orders have no lines
+    — a known upstream defect, which is why the intermediate model coalesces line
+    totals to zero rather than assuming a match.
+  dbt_layer: staging
+  dbt_unique_id: model.analytics.stg_shopify__order_lines
+  dbt_resource_type: model
+primary_key: order_line_id

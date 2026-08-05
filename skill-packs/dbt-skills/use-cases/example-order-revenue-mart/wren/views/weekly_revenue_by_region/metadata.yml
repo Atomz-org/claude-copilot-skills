@@ -1,0 +1,61 @@
+name: weekly_revenue_by_region
+statement: |
+  WITH revenue AS (
+    SELECT date_trunc('week', fct_orders.ordered_at) AS metric_time,
+           dim_customers.region AS region,
+           SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS revenue
+    FROM fct_orders
+      LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+    WHERE (fct_orders.order_status != 'cancelled')
+      AND (dim_customers.region is not null)
+    GROUP BY 1, 2
+  ),
+  order_count AS (
+    SELECT date_trunc('week', fct_orders.ordered_at) AS metric_time,
+           dim_customers.region AS region,
+           COUNT(fct_orders.order_id) AS order_count
+    FROM fct_orders
+      LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+    WHERE (fct_orders.order_status != 'cancelled')
+      AND (dim_customers.region is not null)
+    GROUP BY 1, 2
+  ),
+  average_order_value AS (
+    WITH num AS (
+      SELECT date_trunc('week', fct_orders.ordered_at) AS metric_time,
+             dim_customers.region AS region,
+             SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS num
+      FROM fct_orders
+        LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+      WHERE (fct_orders.order_status != 'cancelled')
+        AND (dim_customers.region is not null)
+      GROUP BY 1, 2
+    ),
+    den AS (
+      SELECT date_trunc('week', fct_orders.ordered_at) AS metric_time,
+             dim_customers.region AS region,
+             COUNT(fct_orders.order_id) AS den
+      FROM fct_orders
+        LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id
+      WHERE (fct_orders.order_status != 'cancelled')
+        AND (dim_customers.region is not null)
+      GROUP BY 1, 2
+    )
+    SELECT den.metric_time AS metric_time,
+           den.region AS region,
+           CAST(COALESCE(num.num, 0) AS DOUBLE) / NULLIF(CAST(den.den AS DOUBLE), 0) AS average_order_value
+    FROM den LEFT JOIN num ON num.metric_time IS NOT DISTINCT FROM den.metric_time AND num.region IS NOT DISTINCT FROM den.region
+  )
+  SELECT revenue.metric_time AS metric_time,
+         revenue.region AS region,
+         revenue.revenue AS revenue,
+         order_count.order_count AS order_count,
+         average_order_value.average_order_value AS average_order_value
+  FROM revenue
+    LEFT JOIN order_count ON order_count.metric_time IS NOT DISTINCT FROM revenue.metric_time AND order_count.region IS NOT DISTINCT FROM revenue.region
+    LEFT JOIN average_order_value ON average_order_value.metric_time IS NOT DISTINCT FROM revenue.metric_time AND average_order_value.region IS NOT DISTINCT FROM revenue.region
+properties:
+  description: "Feeds the executive revenue dashboard. Exported to bi_marts on dbt Core, since the hosted Semantic Layer API is dbt Cloud only."
+  source: dbt_metric
+  metric_type: saved_query
+  grain: week

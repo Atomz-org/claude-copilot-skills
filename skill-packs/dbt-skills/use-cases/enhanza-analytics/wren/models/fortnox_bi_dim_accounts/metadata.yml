@@ -1,0 +1,102 @@
+name: fortnox_bi_dim_accounts
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_accounts
+columns:
+- name: AccountClass
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS account class defined by the first account digit
+- name: AccountClassId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: First account digit, e.g., 1xxx
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique Account identifier used as a primary key
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: AccountName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The name of the account in the chart of accounts
+- name: BalanceBroughtForward
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Balance sheet at the beginning of the financial year
+- name: BalanceCarriedForward
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Final current balance for the financial year
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Foreign key to dim_cost_centers
+- name: FinancialYearId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Foreign key to dim_financial_years
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: MainAccount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS main account defined by first two account digits
+- name: MainAccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: First two digits, e.g., 12xx
+- name: Number
+  type: INT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS account number, consists of four digits, e.g., 1234
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Foreign key to dim_projects
+- name: SubAccount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: BAS sub-account defined by first three account digits
+- name: SubAccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: First three digits, e.g., 123x
+cached: false
+properties:
+  description: List of BAS accounts used in Fortnox, only Active
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_accounts
+  dbt_resource_type: model
+primary_key: AccountId

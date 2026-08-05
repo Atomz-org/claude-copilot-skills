@@ -1,0 +1,51 @@
+name: raw_fortnox_api_v2_orders
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: v2_orders
+columns:
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: CurrencyRate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DeliveryDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DocumentNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: InvoiceReference
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrderDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VATIncluded
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.v2_orders
+  dbt_resource_type: source

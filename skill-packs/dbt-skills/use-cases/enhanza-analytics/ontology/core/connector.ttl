@@ -1,0 +1,144 @@
+@prefix conn:    <https://w3id.org/enhanza/connector#> .
+@prefix erp:     <https://w3id.org/enhanza/erp#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#    Ontology
+#################################################################
+
+conn: a owl:Ontology ;
+    dcterms:title "Enhanza Connector Alignment Vocabulary"@en ;
+    vann:preferredNamespacePrefix "conn" ;
+    vann:preferredNamespaceUri "https://w3id.org/enhanza/connector#" ;
+    owl:imports erp: ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    rdfs:comment """The vocabulary a connector extension uses to say what it supplies and
+where it came from.
+
+BOT ships eight alignment modules mapping BRICK, ifcOWL and SAREF4Bldg onto its core. The
+same idea applies here, with one difference that matters: BOT's alignments map one
+vocabulary to another and are checked by reading them, while these map a vocabulary to
+physical tables in a warehouse — so they can be checked by *running* something.
+
+That is the whole reason this vocabulary exists rather than plain rdfs:subClassOf. An
+extension that says
+
+    fortnox:Customer  rdfs:subClassOf  erp:Customer ;
+                      conn:dbtModel    "fortnox_erp_bi_dim_customers" ;
+                      conn:sourceTable "fortnox_api.customers" .
+
+is falsifiable: the model either exists in manifest.json or it does not. An ontology whose
+claims cannot go stale is one nobody has to trust.
+
+Every extension in ontology/connectors/ is generated from the dbt registry, manifest, and
+column lineage by scripts/ontology_generator.py. Editing one by hand is reverted on the next
+generation — fix the dbt project instead, which is where the truth is."""@en .
+
+#################################################################
+#    Classes
+#################################################################
+
+conn:Connector a owl:Class ;
+    rdfs:label "Connector"@en ;
+    rdfs:comment """One source system feeding the warehouse. Individuals correspond exactly
+to the keys of `global_configs('all_available_sources')`; the registry is the single source
+of truth for which connectors exist, and this ontology is generated from it rather than
+maintained alongside it."""@en .
+
+conn:ERPConnector a owl:Class ;
+    rdfs:subClassOf conn:Connector ;
+    rdfs:label "ERP Connector"@en .
+
+conn:CRMConnector a owl:Class ;
+    rdfs:subClassOf conn:Connector ;
+    rdfs:label "CRM Connector"@en .
+
+conn:CommerceConnector a owl:Class ;
+    rdfs:subClassOf conn:Connector ;
+    rdfs:label "Commerce Connector"@en ;
+    rdfs:comment "A storefront or point-of-sale system. Supplies orders and articles but no general ledger."@en .
+
+conn:Concept a owl:Class ;
+    rdfs:label "Concept"@en ;
+    rdfs:comment """A conformed subject a connector may supply — one entry of
+`included_models`, and one `erp_bi_<concept>` model in the warehouse."""@en .
+
+conn:Mapping a owl:Class ;
+    rdfs:label "Mapping"@en ;
+    rdfs:comment """One column-level correspondence: a conformed property, the source column
+behind it, and how it got there. Reified rather than a plain property because the
+interesting part is the transform — six connectors all supply erp:partyNumber and no two
+read it from a column of the same name."""@en .
+
+#################################################################
+#    Object properties
+#################################################################
+
+conn:supplies a owl:ObjectProperty ;
+    rdfs:domain conn:Connector ;
+    rdfs:range conn:Concept ;
+    rdfs:label "supplies"@en ;
+    rdfs:comment "Generated from `included_models`. A claim here with no adapter model on disk fails tests/test_enhanza_connector_registry.py."@en .
+
+conn:conformsTo a owl:ObjectProperty ;
+    rdfs:range owl:Class ;
+    rdfs:label "conforms to"@en ;
+    rdfs:comment "The core class an extension class specialises. Redundant with rdfs:subClassOf by design, so a consumer that does no reasoning can still follow it."@en .
+
+conn:providedBy a owl:ObjectProperty ;
+    rdfs:range conn:Connector ;
+    rdfs:label "provided by"@en .
+
+conn:hasMapping a owl:ObjectProperty ;
+    rdfs:range conn:Mapping ;
+    rdfs:label "has mapping"@en .
+
+conn:mapsToProperty a owl:ObjectProperty ;
+    rdfs:domain conn:Mapping ;
+    rdfs:label "maps to property"@en .
+
+#################################################################
+#    Datatype properties
+#################################################################
+
+conn:registryKey a owl:DatatypeProperty ; rdfs:domain conn:Connector ; rdfs:range xsd:string ;
+    rdfs:label "registry key"@en ;
+    rdfs:comment "The key in all_available_sources, which is also the `is_<key>_enabled` var and the staging directory name."@en .
+
+conn:enableVar a owl:DatatypeProperty ; rdfs:domain conn:Connector ; rdfs:range xsd:string ; rdfs:label "enable var"@en .
+conn:defaultCurrency a owl:DatatypeProperty ; rdfs:domain conn:Connector ; rdfs:range xsd:string ; rdfs:label "default currency"@en .
+
+conn:dbtModel a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "dbt model"@en ;
+    rdfs:comment "The model that materialises this class. Checkable against manifest.json."@en .
+
+conn:dbtPackage a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "dbt package"@en ;
+    rdfs:comment "The connector project the model belongs to, once connectors are separate dbt packages."@en .
+
+conn:sourceTable a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "source table"@en ;
+    rdfs:comment "`<source_name>.<table>` as declared in sources.yml."@en .
+
+conn:sourceColumn a owl:DatatypeProperty ; rdfs:domain conn:Mapping ; rdfs:range xsd:string ; rdfs:label "source column"@en .
+conn:targetColumn a owl:DatatypeProperty ; rdfs:domain conn:Mapping ; rdfs:range xsd:string ; rdfs:label "target column"@en .
+
+conn:transform a owl:DatatypeProperty ;
+    rdfs:domain conn:Mapping ;
+    rdfs:range xsd:string ;
+    rdfs:label "transform"@en ;
+    rdfs:comment """How the source column became the target: direct, renamed, derived,
+passthrough, or union. Read from scripts/dbt_column_lineage.py, which parses the SQL — so
+`renamed` means a parser saw the rename, not that someone wrote it down."""@en .
+
+conn:status a owl:DatatypeProperty ;
+    rdfs:domain conn:Connector ;
+    rdfs:range xsd:string ;
+    rdfs:label "status"@en ;
+    rdfs:comment """`implemented` when the connector has adapter models in the warehouse;
+`planned` when it is named but its source schema is not yet known. A planned connector
+carries no invented tables or columns — rule 5 — so its extension is a stub naming the
+concepts it is expected to supply and nothing more."""@en .

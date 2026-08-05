@@ -1,0 +1,70 @@
+name: PR Auto Update
+
+# Conflicts come from divergence windows: the longer a branch trails main, the
+# bigger the eventual collision. Updating every open PR branch on each push to
+# main keeps that window one merge wide — a conflict surfaces while both sides
+# are still small, on the PR that caused it, instead of accumulating.
+#
+# Two deliberate behaviors:
+# - A PR GitHub reports CONFLICTING cannot be auto-updated; it gets one comment
+#   (marker-deduplicated) naming the local resolution recipe, not a silent skip.
+# - Updates pushed with the default GITHUB_TOKEN do not re-trigger the PR's own
+#   CI runs (GitHub's recursion guard). Set a classic/fine-grained PAT in the
+#   PR_AUTOUPDATE_TOKEN secret to lift that; without it, checks re-run on the
+#   next real push to the branch.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: pr-auto-update
+  cancel-in-progress: true
+
+jobs:
+  update-open-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update open PR branches against main
+        env:
+          GH_TOKEN: ${{ secrets.PR_AUTOUPDATE_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          marker='<!-- pr-auto-update-conflict -->'
+
+          gh pr list --repo "$GITHUB_REPOSITORY" --state open --base main \
+            --json number,isDraft,mergeable \
+            --jq '.[] | select(.isDraft | not) | [.number, .mergeable] | @tsv' |
+          while IFS=$'\t' read -r num mergeable; do
+            if [ "$mergeable" = "CONFLICTING" ]; then
+              if gh pr view "$num" --repo "$GITHUB_REPOSITORY" \
+                   --json comments --jq '.comments[].body' | grep -qF "$marker"; then
+                echo "#$num: conflicting, already commented"
+              else
+                gh pr comment "$num" --repo "$GITHUB_REPOSITORY" --body "$marker
+          This branch conflicts with \`main\` and cannot be auto-updated. Resolve locally:
+
+          \`\`\`bash
+          git fetch origin
+          git merge origin/main   # union/generated merge drivers resolve list files and artifacts
+          python3 scripts/use_case_sync.py --all   # regenerate derived artifacts after the merge
+          git push origin HEAD
+          \`\`\`
+
+          Generated artifacts (\`graphify-fragment.json\`, \`column-memory.json\`, ontology outputs) are never hand-merged — keep either side and regenerate."
+                echo "#$num: conflicting, commented"
+              fi
+            else
+              # 422 "no new commits" means already current — that is success here.
+              if gh api -X PUT "repos/$GITHUB_REPOSITORY/pulls/$num/update-branch" >/dev/null 2>&1; then
+                echo "#$num: updated with main"
+              else
+                echo "#$num: already current (or update not applicable)"
+              fi
+            fi
+          done

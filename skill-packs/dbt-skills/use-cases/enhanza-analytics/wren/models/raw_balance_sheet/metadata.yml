@@ -1,0 +1,21 @@
+name: raw_balance_sheet
+table_reference:
+  catalog: enhanza_sample
+  schema: tripletex_api_canonical
+  table: balance_sheet
+columns:
+- name: balanceIn
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: balanceOut
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tripletex.tripletex_api.balance_sheet
+  dbt_resource_type: source

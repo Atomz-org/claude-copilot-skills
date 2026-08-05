@@ -1,0 +1,31 @@
+{
+  "name": "skill-map",
+  "version": "1.0.0",
+  "description": "Harness cartography pack: maps this repository's skills, commands, and agents as one graph and reports name collisions, dead references, and reserved-name shadowing. Deterministic, no LLM.",
+  "sourceOfTruth": "skill-packs/skill-map/.claude",
+  "components": {
+    "commands": "skill-packs/skill-map/.claude/commands",
+    "skills": "skill-packs/skill-map/.claude/skills",
+    "rules": "skill-packs/skill-map/.claude/rules"
+  },
+  "harnessTargets": ["claude", "copilot", "cursor", "codex", "gemini"],
+  "canonicalEntrySkill": "harness-mapping",
+  "useCaseRoot": "skill-packs/skill-map/use-cases",
+  "upstream": {
+    "project": "skill-map",
+    "author": "Crystian",
+    "source": "https://github.com/PackMaaan/skill-map",
+    "package": "@skill-map/cli",
+    "pinnedVersion": "1.2.3",
+    "license": "MIT",
+    "integration": "wrapper",
+    "runner": "scripts/skill_map_scan.py"
+  },
+  "portability": {
+    "requiresLlm": false,
+    "requiresApiKey": false,
+    "offlineCapable": true,
+    "runtime": { "node": ">=24.0.0" },
+    "degradesTo": "skip"
+  }
+}

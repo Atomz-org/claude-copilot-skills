@@ -1,0 +1,28 @@
+name: revenue_growth_mom
+statement: |
+  WITH revenue AS (
+    SELECT date_trunc('month', fct_orders.ordered_at) AS metric_time,
+           SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS revenue
+    FROM fct_orders
+    WHERE (fct_orders.order_status != 'cancelled')
+    GROUP BY 1
+  ),
+  revenue_prev_month AS (
+    SELECT metric_time + INTERVAL '1 month' AS metric_time, revenue_prev_month
+    FROM (
+      SELECT date_trunc('month', fct_orders.ordered_at) AS metric_time,
+             SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS revenue_prev_month
+      FROM fct_orders
+      WHERE (fct_orders.order_status != 'cancelled')
+      GROUP BY 1
+    ) t
+  )
+  SELECT revenue.metric_time,
+         ((revenue - revenue_prev_month) * 100.0 / nullif(revenue_prev_month, 0)) AS revenue_growth_mom
+  FROM revenue
+    LEFT JOIN revenue_prev_month ON revenue_prev_month.metric_time = revenue.metric_time
+properties:
+  description: "Month-over-month revenue growth, percent. Null for the first month in the series."
+  source: dbt_metric
+  metric_type: derived
+  grain: month

@@ -1,0 +1,26 @@
+name: raw_fortnox_api_accounts
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: accounts
+columns:
+- name: Number
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Year
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.accounts
+  dbt_resource_type: source

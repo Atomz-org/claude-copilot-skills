@@ -1,0 +1,41 @@
+name: raw_stockbalance
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: stockbalance
+columns:
+- name: AvailableStock
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ENZ_SYNC_TS
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: InStock
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ItemId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: StockPointCode
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.stockbalance
+  dbt_resource_type: source

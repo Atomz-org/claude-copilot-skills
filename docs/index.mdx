@@ -1,0 +1,306 @@
+---
+title: Code Skills
+description: A reusable module that brings Git workflow automation, dbt Core analytics engineering, and deterministic AI-harness auditing into one governed scaffold.
+sidebar:
+  label: Overview
+  order: 1
+  icon: home
+seo:
+  title: Code Skills — Git, dbt Core, and harness automation in one module
+  description: An embeddable scaffold of 38 skills, 38 commands, and 10 agents for Git workflow automation, dbt Core analytics engineering, and LLM-free harness auditing.
+---
+
+<Badge variant="accent">dbt Core</Badge> <Badge variant="default">Git workflow</Badge> <Badge variant="success">No API key required</Badge>
+
+**Code Skills** is a self-contained module you drop into another repository as a submodule. It ships the skills, slash commands, agents, and static analyzers that turn three separate disciplines — shipping code, shipping data models, and maintaining the AI harness itself — into one reviewable workflow.
+
+Everything here runs from a checkout and a Python interpreter. No warehouse connection, no dbt Cloud account, no model API key.
+
+## Three domains, one module
+
+<CardGroup cols={3}>
+  <Card title="Git workflow automation" icon="git-branch" href="/skills-inventory#github--git-skills">
+    Conventional commits, branch planning, PR review ceremonies, and guardrail hooks that refuse dangerous operations before they run.
+  </Card>
+  <Card title="dbt Core analytics engineering" icon="database" href="/skills-inventory#dbt-skills">
+    A senior analytics engineer's full method — use-case spec, grain, layers, contracts, tests, semantic layer — plus eleven artifact-driven analyzers.
+  </Card>
+  <Card title="Harness cartography" icon="map" href="/skills-inventory#harness--repository-maintenance">
+    `skill-map` scans the harness itself for name collisions, dead references, and reserved-name shadowing. Deterministic, no LLM.
+  </Card>
+</CardGroup>
+
+## How the pieces fit
+
+Skill packs are the source of truth. Activation materialises them into the paths agents actually load, and two independent graphs keep the result honest — one over the code, one over the harness.
+
+```mermaid
+flowchart LR
+    subgraph SRC["skill-packs/ — source of truth"]
+        direction TB
+        P1["dbt-skills"]
+        P2["github-skills"]
+        P3["skill-map"]
+    end
+
+    ACT["scripts/<br/>activate_skill_stack.sh"]
+
+    subgraph LIVE["Generated — what agents load"]
+        direction TB
+        C1[".claude/skills · commands<br/>agents · rules · hooks"]
+        C2["references/ · templates/"]
+    end
+
+    SRC --> ACT
+    ACT --> LIVE
+
+    G["graphify<br/>maps the code"]
+    S["skill-map<br/>maps the harness"]
+
+    C1 -.->|scanned by| S
+    C2 -.->|scanned by| S
+    LIVE -.->|navigated with| G
+```
+
+:::warning[Edit the pack, never the mirror]
+`.claude/`, `references/`, and `templates/` are **generated output**. A direct edit there is silently reverted the next time `./scripts/activate_skill_stack.sh` runs. Change the file under `skill-packs/<pack>/`, re-activate, and commit both.
+:::
+
+## Quick start
+
+<Steps>
+  <Step title="Set up the environment">
+    Clone the repository and run the suite. A clean run means the scaffold, the hooks, and the analyzers all agree.
+
+    ```bash Terminal
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pytest -q
+    ```
+  </Step>
+
+  <Step title="Activate a skill stack">
+    Activation copies a pack into the live `.claude/` tree. It is idempotent — a clean `git status` afterwards is the check that nothing drifted.
+
+    ```bash Terminal
+    ./scripts/activate_skill_stack.sh dbt-skills wren-skills
+    git status --short
+    ```
+  </Step>
+
+  <Step title="Pick your first path">
+    <Tabs param="path">
+      <Tab title="dbt Core">
+        Run the self-contained worked example on DuckDB. No cloud warehouse account needed.
+
+        ```bash Terminal
+        .venv/bin/pip install 'dbt-core~=1.9.0' 'dbt-duckdb~=1.9.0'
+        cd skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project
+        ./run_local.sh
+        ```
+      </Tab>
+      <Tab title="Git workflow">
+        Start from the intent index — it maps what you want to do onto the command that does it.
+
+        ```bash Terminal
+        /skills-index
+        /branch-plan
+        /review
+        ```
+      </Tab>
+      <Tab title="Harness map">
+        Audit the harness for structural defects. Deterministic, and safe to wire into CI.
+
+        ```bash Terminal
+        python scripts/skill_map_scan.py --summary
+        python scripts/skill_map_scan.py --check --max-errors 1
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+:::tip[Start with `/skills-index`]
+Capabilities are organised by **intent**, not by filename. `/skills-index` is the fastest way to find the command for the task in front of you across all 38 skills.
+:::
+
+## What you get
+
+<CardGroup cols={2}>
+  <Card title="Static analysis suite" icon="search" href="/SKILL#tools">
+    Eleven standard-library Python analyzers that read dbt's JSON artifacts — project health, lineage and blast radius, test coverage, contract breaks, ERDs. None of them touch the warehouse.
+  </Card>
+  <Card title="Modular skill packs" icon="package">
+    Three portable packs, each with its own `.claude-plugin/plugin.json`, so a pack can be adopted on its own and portability is checked in CI.
+  </Card>
+  <Card title="Guardrails that hold" icon="shield-check">
+    PreToolUse hooks block dangerous git operations, enforce graph-first navigation, and pin the token pipeline. Enforcement is registered, not remembered.
+  </Card>
+  <Card title="Token-aware AI context" icon="brain" href="/docs/INTEGRATIONS">
+    RTK filters command output, Graphify replaces file-reading with graph queries, and TOON serialises uniform record lists at a fraction of JSON's token cost.
+  </Card>
+</CardGroup>
+
+## Two graphs, two purposes
+
+Neither substitutes for the other, and conflating them is the most common mistake when adopting this module.
+
+<Columns cols={2}>
+  <Column>
+    ### `graphify` — the code
+
+    Answers structural questions about the application: what calls this, what breaks if I change it, where does this concept live.
+
+    ```bash
+    graphify query "how does activation work"
+    graphify path "GraphManager" "toon-serializer"
+    ```
+
+    Traversal is fixed at BFS depth 2. `--budget N` is the lever; `--depth` is accepted and silently ignored.
+  </Column>
+  <Column>
+    ### `skill-map` — the harness
+
+    Answers questions about the agent surface: which skills collide, which references are dead, which names the runtime shadows.
+
+    ```bash
+    python scripts/skill_map_scan.py --summary
+    ```
+
+    Every finding is **doubled** — pack and mirror are both scanned. A finding in only one tree is drift, and a different problem.
+  </Column>
+</Columns>
+
+<Panel title="Why the harness scan needs no model">
+  skill-map upstream ships a deterministic scanner *and* a probabilistic layer that queues LLM jobs. Only the first is wired in. Every invocation goes through `_run_sm()` in `scripts/skill_map_scan.py`, which **raises** on all four probabilistic verb families — `jobs`, `agent`, `findings`, `refresh` — and `tests/test_skill_map_pack.py` pins that allowlist independently, so weakening the wrapper fails the suite rather than quietly changing what CI depends on.
+
+  Where Node is absent the runner exits `3` and the caller records a `skip`. A repository check never goes red for a missing optional toolchain.
+</Panel>
+
+## The decision path
+
+When a prompt arrives, most of what happens next is **not the model deciding**. A chain of hooks reads the command the model intends to run and passes it, edits it, or blocks it — before it reaches the shell. That chain, the token budget deciding what the model is allowed to see, and the dbt lineage under one reported figure have their own page, with an interactive version of every diagram.
+
+<Card title="The Decision Path" icon="route" href="/decision-path">
+  Four requests and their four verdicts, the budget curve that cuts a 176-node search down to eleven, and the 378-model lineage behind a single business number. Every figure measured from this repository, and the artifact-derived ones pinned by `tests/test_decision_path_page.py`.
+</Card>
+
+## System architecture
+
+The decision path above answers *how a prompt becomes an action*. This answers *what the thing is*: nineteen source systems, 378 dbt models, 58 conformed concepts, and one semantic layer served to BI and to agents — plus the gates that decide whether any of it can be trusted.
+
+Three lanes, and the arrow between the first two runs **both ways**. Meaning is derived from the warehouse — dbt's own `manifest.json` is the input to every ontology artifact — and the business layer is then generated back *from* that meaning. A conventional layer diagram flattens that into one direction and loses the only structurally interesting thing here.
+
+<iframe
+  src="/code-skills-architecture.html"
+  title="code-skills system architecture — data flow, derivation pipeline, and layers"
+  width="100%"
+  height="900"
+  loading="lazy"
+></iframe>
+
+:::tip[If the frame is blank]
+The page is committed at `public/code-skills-architecture.html` and serves at `/code-skills-architecture.html` under Astro's static-asset convention — the same arrangement as the decision path above. It is entirely self-contained, with no external requests, so it works from any path that serves it.
+:::
+
+Every figure on that page taken from a committed artifact is checked against that artifact by `tests/test_architecture_diagram.py`, so the picture cannot quietly stop being true. Figures that need a rebuild — the test count, the size of the code graph — are deliberately left unpinned and the page names the command that re-derives each: a gate that goes red because somebody added a test is a gate that gets switched off.
+
+The sticky PR comment `scripts/pr_decision_diagram.py` posts is a different view and no longer a projection of this stack: it draws the *impact subgraph* of the PR's own diff — the code-graph nodes it touches plus one hop either side — because that is the part a reviewer cannot read off the file list.
+
+## Repository layout
+
+Only the first branch is hand-written. Everything under `.claude/`, `references/`, and `templates/` is produced by activation.
+
+<FileTree>
+- skill-packs/
+  - dbt-skills/
+  - github-skills/
+  - skill-map/
+- .claude/
+  - skills/
+  - commands/
+  - agents/
+  - rules/
+  - hooks/
+- scripts/
+  - activate_skill_stack.sh
+  - skill_map_scan.py
+- references/
+- templates/
+- tests/
+</FileTree>
+
+| Path | Role | Editable |
+|---|---|---|
+| `skill-packs/<pack>/` | Source of truth for every skill, command, agent, and rule | Yes |
+| `.claude/` | The tree agents actually load, materialised by activation | No — generated |
+| `references/`, `templates/` | Shared assets, mirrored so one relative path resolves in both trees | No — generated |
+| `scripts/` | Analyzers, activation, and the CI gates | Yes |
+| `tests/` | 13 suites pinning the contracts on this page | Yes |
+
+## Non-negotiables
+
+These are enforced by tests and hooks, not by convention. Each one exists because its absence has a specific, silent failure mode.
+
+<Accordion>
+  <AccordionItem title="No model before a use-case spec" icon="file-text">
+    Every dbt engagement starts by writing `use-case-spec.md`. A request that sounds well specified almost always still has an undefined grain or an unnamed consumer — and both surface as a rebuild later.
+  </AccordionItem>
+  <AccordionItem title="Declare the grain before writing SQL" icon="ruler">
+    One sentence: "one row per `<entity>` per `<period>`". Every downstream ambiguity traces back to a grain nobody wrote down, and a measure that is true at a coarser grain double-counts, passes every test, and produces a dashboard that looks correct.
+  </AccordionItem>
+  <AccordionItem title="`dbt build`, never `run` then `test`" icon="play">
+    `build` runs each model's tests immediately after that model and stops its dependents on failure. Running all models and then all tests propagates bad data through the entire DAG before anything fails.
+  </AccordionItem>
+  <AccordionItem title="Only `source()` and `ref()`" icon="link">
+    No model selects from a hardcoded `database.schema.table`. These two functions are what make lineage, `--select`, and state comparison work at all.
+  </AccordionItem>
+  <AccordionItem title="Never commit directly to `main`" icon="git-branch">
+    Branches follow `<type>/<ticket>-<description>` and commits follow Conventional Commits. `.claude/hooks/block-dangerous-git.sh` blocks `push`, `reset --hard`, `clean -fd`, and friends at the tool boundary.
+  </AccordionItem>
+</Accordion>
+
+The complete list lives in [the analytics engineering rules](/CLAUDE) and is loaded into every session.
+
+## Verifying a change
+
+<CodeGroup>
+```bash Everything
+pytest -q
+./scripts/activate_skill_stack.sh dbt-skills wren-skills && git status --short
+./scripts/marketplace_portability_check.sh
+```
+
+```bash Harness
+python scripts/skill_map_scan.py --check --max-errors 1 --summary
+```
+
+```bash dbt
+python scripts/dbt_project_auditor.py --manifest target/manifest.json --strict
+python scripts/test_coverage_reporter.py --manifest target/manifest.json --layer marts --min-coverage 0.9
+```
+</CodeGroup>
+
+:::note[Activation must leave a clean tree]
+`git status --short` after activation is the drift check CI runs. Unexpected modifications in that output mean an edit landed in a generated path — fix the pack and re-activate rather than committing the mirror.
+:::
+
+## Dive deeper
+
+<CardGroup cols={2}>
+  <Card title="Skills inventory" icon="list" href="/skills-inventory">
+    Every skill, indexed by intent, with syntax and a worked example.
+  </Card>
+  <Card title="The dbt method" icon="workflow" href="/SKILL">
+    The end-to-end analytics engineering workflow, from raw request to deployed mart.
+  </Card>
+  <Card title="Way of working" icon="compass" href="/docs/WAY_OF_WORKING">
+    The delivery contract this module holds itself to.
+  </Card>
+  <Card title="Integrations" icon="plug" href="/docs/INTEGRATIONS">
+    RTK, Graphify, TOON, and AgentMemory — setup and operational commands.
+  </Card>
+  <Card title="The decision path" icon="route" href="/decision-path">
+    How a prompt becomes an action: the checkpoints, the token budget, and the lineage under one number.
+  </Card>
+</CardGroup>

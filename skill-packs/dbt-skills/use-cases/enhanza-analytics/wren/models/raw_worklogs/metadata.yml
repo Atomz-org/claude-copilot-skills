@@ -1,0 +1,31 @@
+name: raw_worklogs
+table_reference:
+  catalog: enhanza_sample
+  schema: tempo_api_canonical
+  table: worklogs
+columns:
+- name: createdAt
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: org_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: startDateTimeUTC
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: timeSpentSeconds
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_tempo.tempo_api.worklogs
+  dbt_resource_type: source

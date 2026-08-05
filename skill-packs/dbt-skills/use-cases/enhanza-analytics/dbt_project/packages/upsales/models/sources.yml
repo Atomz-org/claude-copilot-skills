@@ -1,0 +1,86 @@
+version: 2
+
+sources:
+  - name: upsales_api
+    description: 'Upsales raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: upsales_api_{{ var('uid') }}
+    tables:
+      - name: accounts
+      - name: activities
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: client
+          - name: closeDate
+          - name: date
+          - name: id
+          - name: lastOutcome
+          - name: opportunity
+          - name: parentActivityId
+          - name: parentAppointmentId
+          - name: priority
+          - name: project
+          - name: projectPlan
+          - name: regBy
+          - name: regDate
+      - name: appointments
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: client
+          - name: date
+          - name: endDate
+          - name: id
+          - name: isExternalHost
+          - name: opportunity
+          - name: private
+          - name: project
+          - name: projectPlan
+          - name: regBy
+          - name: regDate
+          - name: weblinkUrl
+      - name: opportunities
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: client
+          - name: closeDate
+          - name: confirmedBudget
+          - name: confirmedDate
+          - name: contributionMargin
+          - name: currency
+          - name: currencyRate
+          - name: date
+          - name: description
+          - name: id
+          - name: notes
+          - name: purchaseCost
+          - name: stage
+          - name: user
+          - name: value
+      - name: orders
+      - name: products
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: active
+          - name: id
+          - name: name
+          - name: purchaseCost
+      - name: self
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: client
+

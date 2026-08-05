@@ -1,7 +1,7 @@
 ---
 name: data-contract-owner
 description: Owns the boundaries of a dbt Core project — source definitions and freshness SLAs, enforced model contracts, model versions, group and access control, and downstream impact analysis before a breaking change ships. Use when adding or auditing sources, when a schema change might break a consumer, when a model needs a contract or a version bump, when asked "what breaks if I change this", or when two teams share models.
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
 # Data Contract Owner

@@ -1,0 +1,13 @@
+OrgId,_id,country,customerNumber,isActive,name,organizationNumber
+ORG-1001,_-001,NO,C-1001,false,Bergen Bygg AS,ORGANI-001
+ORG-1002,_-002,SE,C-1002,true,Uppsala Livsmedel AB,ORGANI-002
+ORG-1003,_-003,DK,C-1003,true,Aarhus Elektronik ApS,ORGANI-003
+ORG-1004,_-004,FI,C-1004,false,Tampere Kone Oy,ORGANI-004
+ORG-1001,_-005,NO,C-1005,true,Stavanger Marine AS,ORGANI-005
+ORG-1002,_-006,SE,C-1001,true,Malmo Emballage AB,ORGANI-006
+ORG-1003,_-007,NO,C-1002,false,Trondheim Verktoy AS,ORGANI-007
+ORG-1004,_-008,DK,C-1003,true,Odense Papir ApS,ORGANI-008
+ORG-1001,_-009,SE,C-1004,true,Astrid Lindqvist,ORGANI-009
+ORG-1002,_-010,NO,C-1005,false,Henrik Dahl,ORGANI-010
+ORG-1003,_-011,DK,C-1001,true,Mette Sorensen,ORGANI-011
+ORG-1004,_-012,FI,C-1002,true,Jukka Virtanen,ORGANI-012

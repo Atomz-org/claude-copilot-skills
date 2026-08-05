@@ -1,0 +1,10 @@
+Number,Name,AccountClass
+1510,Kundfordringar,asset
+1930,Foretagskonto,asset
+2440,Leverantorsskulder,liability
+2611,Utgaende moms 25%,liability
+3011,Forsaljning varor 25%,revenue
+3041,Forsaljning tjanster 25%,revenue
+4010,Inkop material,expense
+5010,Lokalhyra,expense
+7010,Loner tjansteman,expense

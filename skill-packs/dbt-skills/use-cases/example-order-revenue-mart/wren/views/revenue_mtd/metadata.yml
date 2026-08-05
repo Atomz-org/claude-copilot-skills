@@ -1,0 +1,24 @@
+name: revenue_mtd
+statement: |
+  WITH daily AS (
+    SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,
+           SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS v
+    FROM fct_orders
+    GROUP BY 1
+  ),
+  spine AS (
+    SELECT DISTINCT CAST(date_day AS TIMESTAMP) AS metric_time
+    FROM metricflow_time_spine
+  )
+  SELECT spine.metric_time, SUM(daily.v) AS revenue_mtd
+  FROM spine LEFT JOIN daily
+    ON daily.metric_time >= date_trunc('month', spine.metric_time)
+    AND daily.metric_time <= spine.metric_time
+  WHERE spine.metric_time BETWEEN (SELECT MIN(metric_time) FROM daily)
+                              AND (SELECT MAX(metric_time) FROM daily)
+  GROUP BY 1
+properties:
+  description: "Revenue accumulated from the start of the calendar month."
+  source: dbt_metric
+  metric_type: cumulative
+  grain: day

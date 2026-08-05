@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The code-skills system architecture: the three-lane data flow from raw sources to a served semantic layer, the ten derivation stages and what each one refuses to do, and the five layers underneath.">
+<title>code-skills — System Architecture</title>
+<style>
+/* ---------------------------------------------------------------------------
+   code-skills architecture page.
+
+   Palette: the four semantic roles are the architecture-diagram-creator
+   parameters (data #4299e1, processing #ed8936, meaning #9f7aea, output
+   #48bb78), validated with the dataviz six-checks validator. Light passes as
+   given; the dark surface needed orange and green re-stepped (#cf7220,
+   #41a874) — the band is L 0.48–0.67 there, and a naive flip fails it.
+   Contrast vs surface WARNs below 3:1 in light mode, so every node carries a
+   visible ink label and a legend: identity is never colour alone.
+--------------------------------------------------------------------------- */
+:root {
+  --font-display: Charter, "Bitstream Charter", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --bg: #f7f9fb;
+  --surface: #ffffff;
+  --surface-2: #eef2f6;
+  --ink: #131a22;
+  --ink-2: #47535f;
+  --ink-3: #6d7986;
+  --rule: #dce3ea;
+  --rule-strong: #b6c2cd;
+
+  --c-data: #4299e1;
+  --c-proc: #ed8936;
+  --c-mean: #9f7aea;
+  --c-out:  #48bb78;
+  --c-gate: #d64545;
+
+  --f-data: #4299e11f;
+  --f-proc: #ed89361f;
+  --f-mean: #9f7aea1f;
+  --f-out:  #48bb781f;
+
+  --shadow: 0 1px 2px #131a2210, 0 8px 24px #131a220a;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1319;
+    --surface: #151c24;
+    --surface-2: #1b242e;
+    --ink: #e7edf3;
+    --ink-2: #aab7c3;
+    --ink-3: #7e8c99;
+    --rule: #26313c;
+    --rule-strong: #3b4855;
+    --c-proc: #cf7220;
+    --c-out:  #41a874;
+    --f-data: #4299e12b;
+    --f-proc: #cf72202b;
+    --f-mean: #9f7aea2b;
+    --f-out:  #41a8742b;
+    --shadow: 0 1px 2px #00000040, 0 8px 24px #00000030;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1319;
+  --surface: #151c24;
+  --surface-2: #1b242e;
+  --ink: #e7edf3;
+  --ink-2: #aab7c3;
+  --ink-3: #7e8c99;
+  --rule: #26313c;
+  --rule-strong: #3b4855;
+  --c-proc: #cf7220;
+  --c-out:  #41a874;
+  --f-data: #4299e12b;
+  --f-proc: #cf72202b;
+  --f-mean: #9f7aea2b;
+  --f-out:  #41a8742b;
+  --shadow: 0 1px 2px #00000040, 0 8px 24px #00000030;
+}
+:root[data-theme="light"] {
+  --bg: #f7f9fb;
+  --surface: #ffffff;
+  --surface-2: #eef2f6;
+  --ink: #131a22;
+  --ink-2: #47535f;
+  --ink-3: #6d7986;
+  --rule: #dce3ea;
+  --rule-strong: #b6c2cd;
+  --c-proc: #ed8936;
+  --c-out:  #48bb78;
+  --f-data: #4299e11f;
+  --f-proc: #ed89361f;
+  --f-mean: #9f7aea1f;
+  --f-out:  #48bb781f;
+  --shadow: 0 1px 2px #131a2210, 0 8px 24px #131a220a;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.65;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 96px; }
+.prose { max-width: 68ch; }
+p { margin: 0 0 1em; color: var(--ink-2); }
+p strong, li strong { color: var(--ink); font-weight: 700; }
+a { color: inherit; text-decoration-color: var(--rule-strong); text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--c-data); outline-offset: 3px; border-radius: 3px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+code { background: var(--surface-2); padding: 0.1em 0.36em; border-radius: 3px; color: var(--ink); }
+
+/* --- masthead ---------------------------------------------------------- */
+header.masthead { padding: 72px 0 40px; border-bottom: 1px solid var(--rule); }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-3); margin: 0 0 18px;
+}
+h1 {
+  font-size: clamp(2.1rem, 4.4vw, 3.1rem); line-height: 1.1; margin: 0 0 18px;
+  letter-spacing: -0.015em; text-wrap: balance; font-weight: 700;
+}
+h1 .dim { color: var(--ink-3); font-weight: 400; }
+.standfirst { font-size: 1.16rem; color: var(--ink-2); max-width: 62ch; margin: 0; }
+
+/* --- stat strip -------------------------------------------------------- */
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+  margin: 40px 0 0; border-radius: 6px; overflow: hidden;
+}
+.stat { background: var(--surface); padding: 18px 20px; }
+.stat b {
+  display: block; font-family: var(--font-mono); font-size: 1.5rem; font-weight: 600;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em; color: var(--ink);
+}
+.stat span {
+  display: block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--ink-3); margin-top: 4px;
+}
+
+/* --- sections ---------------------------------------------------------- */
+section { padding: 64px 0 0; }
+.sec-head { display: flex; align-items: baseline; gap: 16px; border-bottom: 1px solid var(--rule); padding-bottom: 10px; margin-bottom: 28px; }
+.sec-head h2 { font-size: 1.6rem; margin: 0; letter-spacing: -0.01em; font-weight: 700; }
+.sec-head .tag {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3); margin-left: auto; white-space: nowrap;
+}
+h3 {
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.11em;
+  text-transform: uppercase; color: var(--ink-3); font-weight: 600;
+  margin: 34px 0 12px;
+}
+
+/* --- panels ------------------------------------------------------------ */
+.grid { display: grid; gap: 18px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.panel {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
+  padding: 20px 22px 22px; box-shadow: var(--shadow); border-top: 3px solid var(--rule-strong);
+}
+.panel.data { border-top-color: var(--c-data); }
+.panel.proc { border-top-color: var(--c-proc); }
+.panel.mean { border-top-color: var(--c-mean); }
+.panel.out  { border-top-color: var(--c-out); }
+.panel.gate { border-top-color: var(--c-gate); }
+.panel h4 {
+  font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.04em;
+  margin: 0 0 4px; color: var(--ink); font-weight: 600;
+}
+.panel .role {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.11em;
+  text-transform: uppercase; color: var(--ink-3); margin: 0 0 12px;
+}
+.panel p:last-child { margin-bottom: 0; }
+.panel ul { margin: 0; padding-left: 1.1em; }
+.panel li { color: var(--ink-2); margin-bottom: 6px; font-size: 0.95rem; }
+.panel li:last-child { margin-bottom: 0; }
+
+/* --- diagram scroller -------------------------------------------------- */
+.scroller {
+  overflow-x: auto; background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 8px; box-shadow: var(--shadow);
+}
+.scroller svg { display: block; width: 100%; min-width: 940px; height: auto; }
+.caption {
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-3);
+  margin: 10px 2px 0; line-height: 1.6;
+}
+
+/* --- svg node styling -------------------------------------------------- */
+svg .box { stroke-width: 1.5; rx: 4; }
+svg .box.data { fill: var(--f-data); stroke: var(--c-data); }
+svg .box.proc { fill: var(--f-proc); stroke: var(--c-proc); }
+svg .box.mean { fill: var(--f-mean); stroke: var(--c-mean); }
+svg .box.out  { fill: var(--f-out);  stroke: var(--c-out); }
+svg .lane { fill: var(--surface-2); stroke: none; }
+svg .t-title { font-family: var(--font-mono); font-size: 12px; font-weight: 600; fill: var(--ink); }
+svg .t-sub   { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-2); }
+svg .t-num   { font-family: var(--font-mono); font-size: 11px; font-weight: 600; fill: var(--ink-3); }
+svg .t-lane  { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em; fill: var(--ink-3); }
+svg .t-edge  { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-3); }
+svg .t-gate  { font-family: var(--font-mono); font-size: 10px; fill: var(--c-gate); }
+svg .edge { stroke: var(--rule-strong); stroke-width: 1.6; fill: none; }
+svg .edge.accent { stroke: var(--c-mean); stroke-width: 2; }
+svg .edge.dashed { stroke-dasharray: 5 4; }
+svg .ah { fill: var(--rule-strong); }
+svg .ah-accent { fill: var(--c-mean); }
+
+/* --- legend ------------------------------------------------------------ */
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0 0 20px; padding: 0; list-style: none; }
+.legend li {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-2);
+}
+.swatch { width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid; flex: none; }
+.swatch.data { background: var(--f-data); border-color: var(--c-data); }
+.swatch.proc { background: var(--f-proc); border-color: var(--c-proc); }
+.swatch.mean { background: var(--f-mean); border-color: var(--c-mean); }
+.swatch.out  { background: var(--f-out);  border-color: var(--c-out); }
+
+/* --- tables ------------------------------------------------------------ */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+table { border-collapse: collapse; width: 100%; min-width: 620px; }
+th, td { text-align: left; padding: 11px 16px; border-bottom: 1px solid var(--rule); vertical-align: top; font-size: 0.94rem; }
+th {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3); font-weight: 600; background: var(--surface-2);
+}
+td { color: var(--ink-2); }
+td.mono, td code { font-family: var(--font-mono); font-size: 0.86rem; color: var(--ink); }
+tr:last-child td { border-bottom: none; }
+td b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.pill {
+  display: inline-block; font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px;
+  border-radius: 999px; border: 1px solid; white-space: nowrap;
+}
+.pill.gate { color: var(--c-gate); border-color: var(--c-gate); }
+.pill.skip { color: var(--ink-3); border-color: var(--rule-strong); }
+.pill.ok   { color: var(--c-out); border-color: var(--c-out); }
+
+pre {
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6;
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
+  padding: 16px 18px; overflow-x: auto; color: var(--ink-2); margin: 0 0 16px;
+  box-shadow: var(--shadow);
+}
+pre b { color: var(--ink); font-weight: 600; }
+
+footer {
+  margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--rule);
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-3); line-height: 1.8;
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .wrap { padding: 0 16px 64px; }
+  header.masthead { padding: 44px 0 28px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">System architecture · code-skills</p>
+  <h1>Deriving an analytics warehouse<br><span class="dim">from the things nobody can derive</span></h1>
+  <p class="standfirst">
+    A reusable submodule that turns one hand-written specification and a raw schema into a
+    tested dbt project, a published ontology, and a served semantic layer — where every
+    generator refuses, loudly, at the exact point where it would have to invent.
+  </p>
+
+  <!-- Every figure carrying data-metric is pinned against a committed artifact
+       by tests/test_architecture_diagram.py. Numbers in the prose below that
+       come from a rebuild rather than a committed file (test count, graph size)
+       are snapshots, and the footer names the command that re-derives each. -->
+  <div class="stats">
+    <div class="stat"><b data-metric="connectors">19</b><span>connectors</span></div>
+    <div class="stat"><b data-metric="dbt_models">396</b><span>dbt models</span></div>
+    <div class="stat"><b data-metric="concepts">58</b><span>conformed concepts</span></div>
+    <div class="stat"><b data-metric="bindings">1,039</b><span>column bindings</span></div>
+    <div class="stat"><b data-metric="annotated_columns">89</b><span>annotated columns</span></div>
+    <div class="stat"><b data-metric="coverage_gaps">42</b><span>coverage gaps</span></div>
+  </div>
+</header>
+
+<!-- =====================================================================
+     1. BUSINESS CONTEXT
+     ===================================================================== -->
+<section id="context">
+  <div class="sec-head">
+    <h2>Business context</h2>
+    <span class="tag">Objective · users · value · metrics</span>
+  </div>
+
+  <div class="prose">
+    <p>
+      The engagement is multi-tenant financial analytics: nineteen ERP, CRM and commerce
+      systems land in one warehouse, and a tenant may have any combination of them enabled.
+      Every connector answers roughly the same questions — what did we sell, to whom, against
+      which account — under nineteen different sets of column names.
+    </p>
+    <p>
+      Conformance is therefore the whole product, and conformance drift is invisible by
+      construction: an adapter that renames one column breaks a union <strong>only when two
+      connectors are enabled at once</strong>, so the connector's own build passes and the
+      failure waits for a tenant with both.
+    </p>
+  </div>
+
+  <div class="grid g3" style="margin-top:28px">
+    <div class="panel data">
+      <h4>Who operates it</h4>
+      <p class="role">Users</p>
+      <ul>
+        <li><strong>Analytics engineers</strong> onboarding a connector or changing a mart</li>
+        <li><strong>Coding agents</strong> that read the harness before touching SQL</li>
+        <li><strong>BI consumers</strong> reading marts and metric views</li>
+        <li><strong>MCP clients</strong> asking the ontology structured questions</li>
+      </ul>
+    </div>
+    <div class="panel mean">
+      <h4>What it is worth</h4>
+      <p class="role">Value</p>
+      <ul>
+        <li>Artifacts are <strong>derived and gated</strong>, not hand-maintained and hopeful</li>
+        <li>Drift is caught at review, not at a tenant's second connector</li>
+        <li>A fresh clone rebuilds every artifact with <strong>no warehouse and no credentials</strong></li>
+        <li>The meaning of a column survives the person who knew it</li>
+      </ul>
+    </div>
+    <div class="panel out">
+      <h4>How it is measured</h4>
+      <p class="role">Metrics</p>
+      <ul>
+        <li><strong>0</strong> drift findings, <strong>0</strong> alignment errors, 9 accepted warnings</li>
+        <li><strong>359 of 359</strong> models checksum-match their files</li>
+        <li><strong>0</strong> parse failures across 359 models (225 parsed, 134 macro-only)</li>
+        <li><strong>1,640</strong> tests, 34s wall clock across cores</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The decision this architecture encodes</h3>
+  <div class="prose">
+    <p>
+      Adding a connector has exactly <strong>one</strong> genuinely unknown input: the raw
+      table's column list. Everything else in the project is a rename of it. That one unknown
+      was also the only thing nobody had written down — measured at the start,
+      <strong>200 source tables declared, zero of them declaring their columns</strong>. The
+      raw schema existed only inside whatever somebody had hand-typed into a staging model,
+      which is why drift was detectable downstream but not preventable upstream.
+    </p>
+  </div>
+</section>
+
+<!-- =====================================================================
+     2. DATA FLOW
+     ===================================================================== -->
+<section id="dataflow">
+  <div class="sec-head">
+    <h2>Data flow</h2>
+    <span class="tag">Sources → conformance → serving</span>
+  </div>
+
+  <div class="prose">
+    <p>
+      Three lanes, and the arrow between the first two runs <strong>both ways</strong>. Meaning
+      is derived from the warehouse — dbt's own <code>manifest.json</code> is the input to every
+      ontology artifact. The business layer is then generated back <em>from</em> that meaning,
+      which is what closes the loop the middle lane exists to hold.
+    </p>
+  </div>
+
+  <ul class="legend" style="margin-top:24px">
+    <li><span class="swatch data"></span>Data / raw layer</li>
+    <li><span class="swatch proc"></span>Processing / transformation</li>
+    <li><span class="swatch mean"></span>Semantic / generated meaning</li>
+    <li><span class="swatch out"></span>Serving / consumer output</li>
+  </ul>
+
+  <div class="scroller">
+    <svg viewBox="0 0 1180 540" role="img" aria-labelledby="df-title df-desc">
+      <title id="df-title">Data flow across the warehouse, meaning, and serving lanes</title>
+      <desc id="df-desc">Raw source APIs flow through sources.yml, staging, connector BI adapters,
+      erp_bi unions and logic_bi business models. The dbt manifest feeds a meaning lane of source
+      contracts, column memory, annotations and the ontology, which in turn generates the logic_bi
+      models and is projected into the WrenAI serving lane feeding BI, MCP tools and agents.</desc>
+
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path class="ah" d="M 0 0 L 10 5 L 0 10 z"/>
+        </marker>
+        <marker id="ah-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path class="ah-accent" d="M 0 0 L 10 5 L 0 10 z"/>
+        </marker>
+      </defs>
+
+      <!-- lane bands -->
+      <rect class="lane" x="0"  y="34"  width="1180" height="106" rx="6"/>
+      <rect class="lane" x="0"  y="216" width="1180" height="106" rx="6"/>
+      <rect class="lane" x="0"  y="398" width="1180" height="106" rx="6"/>
+
+      <text class="t-lane" x="10" y="91">RAW</text>
+      <text class="t-lane" x="10" y="273">MEANING</text>
+      <text class="t-lane" x="10" y="455">SERVING</text>
+
+      <!-- lane 1: warehouse -->
+      <g>
+        <rect class="box data" x="104" y="56" width="156" height="64"/>
+        <text class="t-title" x="118" y="82">Source APIs</text>
+        <text class="t-sub"   x="118" y="100" data-metric="connectors">19 connectors</text>
+
+        <rect class="box data" x="280" y="56" width="156" height="64"/>
+        <text class="t-title" x="294" y="82">sources.yml</text>
+        <text class="t-sub"   x="294" y="100" data-metric="source_tables">208 tables</text>
+        <text class="t-sub"   x="294" y="114" data-metric="declared_source_columns">569 columns declared</text>
+
+        <rect class="box proc" x="456" y="56" width="156" height="64"/>
+        <text class="t-title" x="470" y="82">staging</text>
+        <text class="t-sub"   x="470" y="100">174 models</text>
+        <text class="t-sub"   x="470" y="114">rename · cast</text>
+
+        <rect class="box proc" x="632" y="56" width="156" height="64"/>
+        <text class="t-title" x="646" y="82">connector BI</text>
+        <text class="t-sub"   x="646" y="100">fortnox_bi_*</text>
+        <text class="t-sub"   x="646" y="114">shopify_bi_* …</text>
+
+        <rect class="box proc" x="808" y="56" width="156" height="64"/>
+        <text class="t-title" x="822" y="82">erp_bi_* union</text>
+        <text class="t-sub"   x="822" y="100">27 concepts</text>
+        <text class="t-sub"   x="822" y="114">erp_union()</text>
+
+        <rect class="box out" x="984" y="56" width="156" height="64"/>
+        <text class="t-title" x="998" y="82">logic_bi_*</text>
+        <text class="t-sub"   x="998" y="100">36 models</text>
+        <text class="t-sub"   x="998" y="114">19 generated</text>
+
+        <path class="edge" marker-end="url(#ah)" d="M 260 88 H 276"/>
+        <path class="edge" marker-end="url(#ah)" d="M 436 88 H 452"/>
+        <path class="edge" marker-end="url(#ah)" d="M 612 88 H 628"/>
+        <path class="edge" marker-end="url(#ah)" d="M 788 88 H 804"/>
+        <path class="edge" marker-end="url(#ah)" d="M 964 88 H 980"/>
+      </g>
+
+      <!-- lane 2: meaning -->
+      <g>
+        <rect class="box mean" x="104" y="238" width="230" height="64"/>
+        <text class="t-title" x="118" y="264">source contracts</text>
+        <text class="t-sub"   x="118" y="282">what we depend on,</text>
+        <text class="t-sub"   x="118" y="296">not what the API returns</text>
+
+        <rect class="box mean" x="358" y="238" width="230" height="64"/>
+        <text class="t-title" x="372" y="264">column-memory.json</text>
+        <text class="t-sub"   x="372" y="282">29 contracts · 1,024 bindings</text>
+        <text class="t-sub"   x="372" y="296">sqlglot column lineage</text>
+
+        <rect class="box mean" x="612" y="238" width="230" height="64"/>
+        <text class="t-title" x="626" y="264">column-annotations</text>
+        <text class="t-sub"   x="626" y="282">role · additivity · PII</text>
+        <text class="t-sub"   x="626" y="296">89 of 272 conformed</text>
+
+        <rect class="box mean" x="866" y="238" width="274" height="64"/>
+        <text class="t-title" x="880" y="264">ontology</text>
+        <text class="t-sub"   x="880" y="282">24 Turtle files · index.json</text>
+        <text class="t-sub"   x="880" y="296">58 concepts · 42 gaps</text>
+
+        <path class="edge" marker-end="url(#ah)" d="M 334 270 H 354"/>
+        <path class="edge" marker-end="url(#ah)" d="M 588 270 H 608"/>
+        <path class="edge" marker-end="url(#ah)" d="M 842 270 H 862"/>
+      </g>
+
+      <!-- lane 3: serving -->
+      <g>
+        <rect class="box out" x="104" y="420" width="222" height="64"/>
+        <text class="t-title" x="118" y="446">WrenAI MDL</text>
+        <text class="t-sub"   x="118" y="464">221 models · relationships</text>
+        <text class="t-sub"   x="118" y="478">metric views</text>
+
+        <rect class="box out" x="350" y="420" width="200" height="64"/>
+        <text class="t-title" x="364" y="446">knowledge/</text>
+        <text class="t-sub"   x="364" y="464">contracts · caveats</text>
+        <text class="t-sub"   x="364" y="478">PII · drift · semantics</text>
+
+        <rect class="box out" x="574" y="420" width="176" height="64"/>
+        <text class="t-title" x="588" y="446">BI · GenBI</text>
+        <text class="t-sub"   x="588" y="464">dashboards</text>
+        <text class="t-sub"   x="588" y="478">gsheets export</text>
+
+        <rect class="box out" x="774" y="420" width="176" height="64"/>
+        <text class="t-title" x="788" y="446">MCP tools</text>
+        <text class="t-sub"   x="788" y="464">6 tools, ontology-backed</text>
+        <text class="t-sub"   x="788" y="478">describe_column …</text>
+
+        <rect class="box out" x="974" y="420" width="166" height="64"/>
+        <text class="t-title" x="988" y="446">agents</text>
+        <text class="t-sub"   x="988" y="464">read the rules</text>
+        <text class="t-sub"   x="988" y="478">before the SQL</text>
+
+        <path class="edge" marker-end="url(#ah)" d="M 326 452 H 346"/>
+        <path class="edge" marker-end="url(#ah)" d="M 550 452 H 570"/>
+        <path class="edge" marker-end="url(#ah)" d="M 750 452 H 770"/>
+        <path class="edge" marker-end="url(#ah)" d="M 950 452 H 970"/>
+      </g>
+
+      <!-- cross-lane edges -->
+      <path class="edge" marker-end="url(#ah)" d="M 470 124 V 234"/>
+      <text class="t-edge" x="482" y="166">manifest.json — dbt already</text>
+      <text class="t-edge" x="482" y="182">computed the DAG</text>
+
+      <path class="edge accent" marker-end="url(#ah-a)" d="M 1030 234 V 124"/>
+      <text class="t-edge" x="880" y="180" text-anchor="end">ontology_to_dbt.py generates</text>
+      <text class="t-edge" x="880" y="196" text-anchor="end">the models nobody built</text>
+
+      <path class="edge" marker-end="url(#ah)" d="M 215 306 V 416"/>
+      <text class="t-edge" x="228" y="348">index.json · column-memory</text>
+      <text class="t-edge" x="228" y="364">projected into knowledge</text>
+
+      <path class="edge dashed" marker-end="url(#ah)" d="M 84 124 V 452 H 100"/>
+      <text class="t-edge" x="96" y="356" transform="rotate(-90 96 356)" text-anchor="middle">manifest + catalog → wren import</text>
+    </svg>
+  </div>
+  <p class="caption">
+    Solid arrows are generated dependencies; the dashed left rail is WrenAI's own dbt importer,
+    which owns the mechanical layer while the bridge adds only what dbt cannot know. The purple
+    return arrow is the one that makes this an ontology-first project rather than a documented one.
+  </p>
+</section>
+
+<!-- =====================================================================
+     3. PROCESSING PIPELINE
+     ===================================================================== -->
+<section id="pipeline">
+  <div class="sec-head">
+    <h2>Processing pipeline</h2>
+    <span class="tag">use_case_sync.py — ten stages, dependency order</span>
+  </div>
+
+  <div class="prose">
+    <p>
+      One command runs every derived artifact in dependency order and reports each stage as
+      <span class="pill ok">ok</span> <span class="pill skip">changed / skip</span> with a reason.
+      The order is load-bearing: <code>columns → annotations → ontology</code> is the whole path
+      from raw data to a served semantic layer, and running <code>ontology</code> where it used to
+      sit still regenerates everything, still reports <code>ok</code>, and describes the
+      <em>previous</em> generation's columns.
+    </p>
+  </div>
+
+  <div class="scroller" style="margin-top:24px">
+    <svg viewBox="0 0 1180 400" role="img" aria-labelledby="pl-title pl-desc">
+      <title id="pl-title">The ten stages of use_case_sync in dependency order</title>
+      <desc id="pl-desc">Stages one to ten: taxonomy, columns, annotations, ontology, index, seeds,
+      graphify, graph, alignment and wren, each with the artifact it produces and the condition
+      under which it skips rather than fails.</desc>
+
+      <defs>
+        <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path class="ah" d="M 0 0 L 10 5 L 0 10 z"/>
+        </marker>
+      </defs>
+
+      <!-- row 1 -->
+      <g>
+        <rect class="box data" x="24" y="40" width="204" height="76"/>
+        <text class="t-num"   x="38" y="62">01</text>
+        <text class="t-title" x="66" y="62">taxonomy</text>
+        <text class="t-sub"   x="38" y="82">conceptual-model.json</text>
+        <text class="t-sub"   x="38" y="98">what the project should build</text>
+        <text class="t-gate"  x="38" y="132">skips: no taxonomy.yml</text>
+
+        <rect class="box data" x="252" y="40" width="204" height="76"/>
+        <text class="t-num"   x="266" y="62">02</text>
+        <text class="t-title" x="294" y="62">columns</text>
+        <text class="t-sub"   x="266" y="82">column-memory.json</text>
+        <text class="t-sub"   x="266" y="98">1,024 bindings · 29 contracts</text>
+        <text class="t-gate"  x="266" y="132">skips: no sqlglot</text>
+
+        <rect class="box mean" x="480" y="40" width="204" height="76"/>
+        <text class="t-num"   x="494" y="62">03</text>
+        <text class="t-title" x="522" y="62">annotations</text>
+        <text class="t-sub"   x="494" y="82">column-annotations.json</text>
+        <text class="t-sub"   x="494" y="98">role · additivity · PII</text>
+        <text class="t-gate"  x="494" y="132">abstains: 49 of 272</text>
+
+        <rect class="box mean" x="708" y="40" width="204" height="76"/>
+        <text class="t-num"   x="722" y="62">04</text>
+        <text class="t-title" x="750" y="62">ontology</text>
+        <text class="t-sub"   x="722" y="82">19 connector + 5 shared .ttl</text>
+        <text class="t-sub"   x="722" y="98">869 semantic triples</text>
+        <text class="t-gate"  x="722" y="132">declines without sqlglot</text>
+
+        <rect class="box mean" x="936" y="40" width="204" height="76"/>
+        <text class="t-num"   x="950" y="62">05</text>
+        <text class="t-title" x="978" y="62">index</text>
+        <text class="t-sub"   x="950" y="82">index.json</text>
+        <text class="t-sub"   x="950" y="98">the MCP-facing projection</text>
+        <text class="t-gate"  x="950" y="132">same pass as 04</text>
+
+        <path class="edge" marker-end="url(#ah2)" d="M 228 78 H 248"/>
+        <path class="edge" marker-end="url(#ah2)" d="M 456 78 H 476"/>
+        <path class="edge" marker-end="url(#ah2)" d="M 684 78 H 704"/>
+        <path class="edge" marker-end="url(#ah2)" d="M 912 78 H 932"/>
+      </g>
+
+      <!-- wrap -->
+      <path class="edge" marker-end="url(#ah2)" d="M 1140 78 H 1162 V 178 H 12 V 236 H 20"/>
+
+      <!-- row 2 -->
+      <g>
+        <rect class="box proc" x="24" y="198" width="204" height="76"/>
+        <text class="t-num"   x="38" y="220">06</text>
+        <text class="t-title" x="66" y="220">seeds</text>
+        <text class="t-sub"   x="38" y="240">seeds/sample/*.csv</text>
+        <text class="t-sub"   x="38" y="256" data-metric="seeds">121 seeds, no warehouse</text>
+        <text class="t-gate"  x="38" y="290">skips: no manifest</text>
+
+        <rect class="box proc" x="252" y="198" width="204" height="76"/>
+        <text class="t-num"   x="266" y="220">07</text>
+        <text class="t-title" x="294" y="220">graphify</text>
+        <text class="t-sub"   x="266" y="240">graph.json rebuilt</text>
+        <text class="t-sub"   x="266" y="256">5,349 nodes · 6,896 edges</text>
+        <text class="t-gate"  x="266" y="290">only with --graphify-update</text>
+
+        <rect class="box proc" x="480" y="198" width="204" height="76"/>
+        <text class="t-num"   x="494" y="220">08</text>
+        <text class="t-title" x="522" y="220">graph</text>
+        <text class="t-sub"   x="494" y="240">dbt lineage + topology merged</text>
+        <text class="t-sub"   x="494" y="256">confidence 1.0, EXTRACTED</text>
+        <text class="t-gate"  x="494" y="290">never update graphify after</text>
+
+        <rect class="box proc" x="708" y="198" width="204" height="76"/>
+        <text class="t-num"   x="722" y="220">09</text>
+        <text class="t-title" x="750" y="220">alignment</text>
+        <text class="t-sub"   x="722" y="240">convention + contract verdict</text>
+        <text class="t-sub"   x="722" y="256">0 errors · 9 known warnings</text>
+        <text class="t-gate"  x="722" y="290">no profile, no warehouse</text>
+
+        <rect class="box out" x="936" y="198" width="204" height="76"/>
+        <text class="t-num"   x="950" y="220">10</text>
+        <text class="t-title" x="978" y="220">wren</text>
+        <text class="t-sub"   x="950" y="240">MDL · knowledge · mcp.json</text>
+        <text class="t-sub"   x="950" y="256">dry-plan + validate gated</text>
+        <text class="t-gate"  x="950" y="290">skips: no wren CLI</text>
+
+        <path class="edge" marker-end="url(#ah2)" d="M 228 236 H 248"/>
+        <path class="edge" marker-end="url(#ah2)" d="M 456 236 H 476"/>
+        <path class="edge" marker-end="url(#ah2)" d="M 684 236 H 704"/>
+        <path class="edge" marker-end="url(#ah2)" d="M 912 236 H 932"/>
+      </g>
+
+      <text class="t-edge" x="24" y="344">Every stage is idempotent: --check distinguishes “would change” from “could not run”, because a summary</text>
+      <text class="t-edge" x="24" y="362">that says “synced” while four stages skipped is a false statement — and a gate that goes red on a correct</text>
+      <text class="t-edge" x="24" y="380">state gets switched off inside a week, taking the real failures with it.</text>
+    </svg>
+  </div>
+
+  <h3>What each stage refuses to do</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:18%">Stage</th><th style="width:36%">Refusal</th><th>Why it is a refusal and not a bug</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">taxonomy <span class="pill gate">refuses</span></td>
+          <td>An attribute tracing to no declared source column is reported and kept out.</td>
+          <td>Written before anything can check it. Otherwise the output is a beautiful description of a warehouse nobody can build.</td>
+        </tr>
+        <tr>
+          <td class="mono">columns <span class="pill gate">refuses</span></td>
+          <td><b>295</b> ambiguous bindings refused; <b>252</b> columns pruned from 7 files.</td>
+          <td>An unqualified column with five tables in scope binds to each. Fine for lineage, fatal for a contract.</td>
+        </tr>
+        <tr>
+          <td class="mono">annotations <span class="pill gate">abstains</span></td>
+          <td><b>49 of 272</b> columns abstain; a closed domain with no cited source is refused.</td>
+          <td>A wrong enum passes every <code>accepted_values</code> test, because it generated them.</td>
+        </tr>
+        <tr>
+          <td class="mono">ontology <span class="pill gate">declines</span></td>
+          <td>Regenerating without sqlglot declines rather than emitting 0 of 91 mappings.</td>
+          <td>The silent version produces the same classes with none of the mappings — a diff that reads as tidying.</td>
+        </tr>
+        <tr>
+          <td class="mono">seeds <span class="pill skip">skips</span></td>
+          <td>No manifest, no sqlglot, no reference data → skip with the remedy named.</td>
+          <td>A fresh use-case has no manifest and four of five stages need one.</td>
+        </tr>
+        <tr>
+          <td class="mono">wren <span class="pill gate">skips + counts</span></td>
+          <td>A metric with no faithful SQL compilation is skipped and counted in the payload.</td>
+          <td>An approximated definition is a wrong contract that plans successfully.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- =====================================================================
+     4. SYSTEM ARCHITECTURE
+     ===================================================================== -->
+<section id="architecture">
+  <div class="sec-head">
+    <h2>System architecture</h2>
+    <span class="tag">Five layers · 43 scripts · 4 packs</span>
+  </div>
+
+  <div class="prose">
+    <p>
+      The repository is layered by <em>who reads the output</em>, not by language. An agent reads
+      the harness; a script reads the manifest; a consumer reads an artifact; a test reads all
+      three and refuses to let them disagree.
+    </p>
+  </div>
+
+  <h3 data-layer="harness">Layer 1 · Harness — what an agent loads</h3>
+  <div class="grid g3">
+    <div class="panel proc">
+      <h4>skill-packs/</h4>
+      <p class="role">source of truth</p>
+      <ul>
+        <li><code>dbt-skills</code> — 28 skills, 11 commands, 7 agents</li>
+        <li><code>github-skills</code> — 13 skills, 13 commands, 3 agents</li>
+        <li><code>wren-skills</code> — the semantic-layer surface</li>
+        <li><code>skill-map</code> — the harness's own cartography</li>
+      </ul>
+    </div>
+    <div class="panel proc">
+      <h4>.claude/</h4>
+      <p class="role">generated mirror</p>
+      <p>
+        <code>activate_skill_stack.sh</code> materialises the active pack into the paths agents
+        load. A direct edit here is reverted on the next activation — <strong>fix the pack,
+        never the mirror</strong>. Both copies must exist, because one relative path has to
+        resolve in each.
+      </p>
+    </div>
+    <div class="panel proc">
+      <h4>hooks</h4>
+      <p class="role">enforcement, not convention</p>
+      <ul>
+        <li><code>block-dangerous-git.sh</code> — blocks destructive git</li>
+        <li><code>graphify hook-guard</code> — graph before grep</li>
+        <li><code>toon_graphify_pipe.py</code> — auto-serialises graph output</li>
+        <li><code>dbt_column_memory_watch.py</code> — rebuilds on edit, never blocks</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 data-layer="core">Layer 2 · Derivation core — 34 Python CLIs on the standard library</h3>
+  <div class="grid g2">
+    <div class="panel data">
+      <h4>Three shared modules, and no fourth</h4>
+      <p class="role">scripts/_*.py</p>
+      <ul>
+        <li><code>_manifest.py</code> — dbt's JSON artifacts, the <code>Manifest</code> wrapper</li>
+        <li><code>_miniyaml.py</code> — YAML for the subset these files use</li>
+        <li><code>_paths.py</code> — repo root, use-case lookup, project resolution</li>
+      </ul>
+      <p style="margin-top:12px">
+        The root is a parameter, never a closure, and nothing is cached — a cache populated
+        before a <code>mkdir</code> reports a just-created use-case as missing.
+      </p>
+    </div>
+    <div class="panel data">
+      <h4>Generators, in the order they run</h4>
+      <p class="role">the ten stages, plus their primitives</p>
+      <ul>
+        <li><code>raw_taxonomy.py</code> · <code>dbt_column_lineage.py</code> · <code>dbt_column_memory.py</code></li>
+        <li><code>column_annotations.py</code> · <code>lm_propose.py</code></li>
+        <li><code>ontology_generator.py</code> · <code>ontology_to_dbt.py</code></li>
+        <li><code>dbt_manifest_to_graphify.py</code> · <code>connector_alignment_check.py</code></li>
+        <li><code>wren_context_sync.py</code> · <code>eval_dbt_models.py</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 data-layer="artifacts">Layer 3 · Artifacts — committed, reviewable, machine-read</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:30%">Artifact</th><th style="width:22%">Holds</th><th>Committed because</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">ontology/column-memory.json</td><td><span data-metric="contracts">29 contracts</span> · 1,024 bindings · drift</td><td>the store of record; a reviewable diff when a contract changes</td></tr>
+        <tr><td class="mono">ontology/index.json</td><td>19 connectors · 58 concepts · 110 models · 92 mappings</td><td>backs six MCP tools; <code>rdflib</code> is optional, so no Turtle parsing at request time</td></tr>
+        <tr><td class="mono">ontology/**/*.ttl</td><td><span data-metric="ttl_files">24 files</span> — 19 connectors, 3 core, 2 topology</td><td>the graph itself, declaring the vocabulary it uses rather than assuming it</td></tr>
+        <tr><td class="mono">graphify-out/graph.json</td><td>5,349 nodes · 6,896 edges</td><td>orientation; the dbt fragment is 736 KB against a 3.0 MB manifest</td></tr>
+        <tr><td class="mono">wren/</td><td>221 MDL models · knowledge · relationships</td><td><code>target/</code>, <code>mcp.json</code> and <code>.wren-home/</code> stay out — one command recreates them</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 data-layer="serving">Layer 4 · Serving — what a consumer actually calls</h3>
+  <div class="grid g3">
+    <div class="panel out">
+      <h4>WrenAI MDL</h4>
+      <p class="role">semantic layer</p>
+      <p>
+        Each MetricFlow metric compiles to an MDL <strong>view of the same name</strong> — filter,
+        ratio legs, offsets and windows included. <code>SELECT * FROM revenue</code> <em>is</em>
+        the metric, for BI and for agents alike.
+      </p>
+    </div>
+    <div class="panel out">
+      <h4>MCP tools</h4>
+      <p class="role">ontology-backed</p>
+      <p>
+        <code>list_connectors</code>, <code>describe_concept</code>, <code>locate_model</code>,
+        <code>resolve_column</code>, <code>describe_column</code>, <code>coverage_gaps</code> —
+        each names the <code>index.json</code> key that backs it.
+      </p>
+    </div>
+    <div class="panel out">
+      <h4>knowledge/</h4>
+      <p class="role">what an agent reads first</p>
+      <p>
+        The aggregation contract in prose, leading with the prohibitions —
+        <code>Price</code> is per unit, <code>QuantityInStock</code> is a level. Both look
+        summable and both produce a plausible wrong number.
+      </p>
+    </div>
+  </div>
+
+  <h3 data-layer="verification">Layer 5 · Verification — 1,640 tests, 10 workflows</h3>
+  <div class="grid g2">
+    <div class="panel gate">
+      <h4>What the suite pins</h4>
+      <p class="role">tests/ — 38 files</p>
+      <ul>
+        <li>Every committed artifact is current (<code>--check</code> on each stage)</li>
+        <li>Every resolver bug found while building the parser, by name</li>
+        <li>Every <em>rejected</em> optimisation, so nobody re-derives the table</li>
+        <li>Index and Turtle agree on every model, mapping, and annotated column</li>
+      </ul>
+    </div>
+    <div class="panel gate">
+      <h4>How it runs</h4>
+      <p class="role">python -m pytest -q</p>
+      <p>
+        Parallel across cores where <code>pytest-xdist</code> exists, serial where it does not —
+        <strong>97s → 34s</strong> measured. Grouping is correctness, not tuning: three files
+        share one xdist group because they mutate the same <code>.sql</code> and the same
+        artifact, and on separate workers each <code>finally</code> restored the other's probe.
+      </p>
+    </div>
+  </div>
+
+  <h3>Context tier — the layer that keeps all of this affordable</h3>
+  <div class="grid g3">
+    <div class="panel data">
+      <h4>graphify</h4>
+      <p class="role">inbound repo context</p>
+      <p>Structural questions are answered by a BFS query against the graph, not by reading files. The dbt DAG is merged in from <code>manifest.json</code>, because graphify has no SQL parser.</p>
+    </div>
+    <div class="panel proc">
+      <h4>RTK</h4>
+      <p class="role">Bash output filtering</p>
+      <p>A <code>PreToolUse</code> hook rewrites shell commands through filters that drop passing steps and keep failures. <code>dbt</code> has none, so <code>refresh.sh</code> routes it through <code>rtk err</code>.</p>
+    </div>
+    <div class="panel mean">
+      <h4>TOON</h4>
+      <p class="role">serialisation, where measured</p>
+      <p>Uniform record lists only. Routed: lineage edges <strong>−41%</strong>, drift findings <strong>−31%</strong>. Rejected: everything whose output is already a handful of counts — a format cannot rescue an unbounded dump.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     5. FEATURES
+     ===================================================================== -->
+<section id="features">
+  <div class="sec-head">
+    <h2>Features</h2>
+    <span class="tag">Functional · non-functional</span>
+  </div>
+
+  <div class="grid g2">
+    <div class="panel data">
+      <h4>Functional</h4>
+      <p class="role">what it does</p>
+      <ul>
+        <li><strong>Connector onboarding</strong> — scaffold, convention check, contract check, alignment verdict, with no warehouse and no profile</li>
+        <li><strong>Column-level lineage</strong> to the raw source column, through <code>select *</code> passthroughs and union branches, naming every transform crossed</li>
+        <li><strong>Adapter drift detection</strong> — the failure that only appears when two connectors are enabled at once</li>
+        <li><strong>Ontology publication</strong> — Turtle for the graph, <code>index.json</code> for the server, prose for the agent</li>
+        <li><strong>Model extraction</strong> — the 19 business models the ontology declared and the project never built</li>
+        <li><strong>Model evaluation</strong> — each generated model built on DuckDB from sample seeds and interrogated against what the ontology promised</li>
+        <li><strong>LM-assisted proposals</strong> where derivation legitimately stops, as proposals that a human promotes</li>
+      </ul>
+    </div>
+    <div class="panel mean">
+      <h4>Non-functional</h4>
+      <p class="role">how it behaves</p>
+      <ul>
+        <li><strong>Standard library by default.</strong> Every optional accelerator is guarded; its absence degrades a run rather than failing it</li>
+        <li><strong>No credentials anywhere.</strong> Lineage parses <code>raw_code</code>, not compiled SQL, because <code>dbt compile</code> needs a live warehouse</li>
+        <li><strong>Deterministic by construction.</strong> The skill-map wrapper rejects all four LLM verb families; a test fails if one is ever added</li>
+        <li><strong>Incremental and exact.</strong> Cache keyed on dbt's own checksum — 1.6s cold, 0.35s warm across 359 models</li>
+        <li><strong>Nothing run-dependent in an artifact.</strong> Cache counters and timestamps made files change when the project had not, so <code>--check</code> was permanently red</li>
+        <li><strong>Unavailable is not failed.</strong> Exit 3 and a recorded skip wherever an optional toolchain is missing</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The property that distinguishes it — five ways a generated field is wrong while reading well</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:34%">Refusal at <code>--apply</code></th><th>The answer it caught</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">id not in the batch</td><td>a column name that exists in no artifact</td></tr>
+        <tr><td class="mono">definition restates the name</td><td><code>Unit</code> → “The unit.”</td></tr>
+        <tr><td class="mono">closed domain with no source</td><td><code>TermsOfDelivery</code> → five invented Incoterm codes</td></tr>
+        <tr><td class="mono">evidence names nothing in the item</td><td>“I know how ERP systems model this”</td></tr>
+        <tr><td class="mono">answer contradicts its own casts</td><td><code>Manufacturer</code> (string everywhere) → additive currency measure</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">
+    Measured: 24 real items answered, <b>24 accepted, 0 dropped</b>; a deliberately fabricated
+    batch of 4 was <b>rejected 4 for 4</b>. Two of these five refusals exist only because the
+    first version of that fabricated batch passed.
+  </p>
+
+  <h3>What the model eval found that nothing else could</h3>
+  <div class="grid g2">
+    <div class="panel gate">
+      <h4>label-mismatch</h4>
+      <p class="role">invisible to dbt, to the checker, and to a reader</p>
+      <p>
+        The ontology publishes <code>Visma eAccounting</code>; the union writes
+        <code>Visma e-Accounting</code>. An agent filtering by the published name gets
+        <strong>zero rows and no error</strong>.
+      </p>
+    </div>
+    <div class="panel gate">
+      <h4>ambiguous-sql</h4>
+      <p class="role">a portability defect, found sideways</p>
+      <p>
+        <code>Ambiguous reference to column name "Date"</code>. BigQuery resolves an unqualified
+        column with several tables in scope; DuckDB refuses. The same ambiguity that made a
+        source contract claim columns nobody established.
+      </p>
+    </div>
+  </div>
+  <p class="caption">
+    19 cases · 4 scored · 2 passed · 2 failed · 15 reported-not-scored. The first run scored 1 of
+    19 — sixteen of those failures were in an upstream staging model the generated one merely
+    depends on. Blaming the generator for an absent CSV is how an eval stops being believed.
+  </p>
+</section>
+
+<!-- =====================================================================
+     6. DEPLOYMENT
+     ===================================================================== -->
+<section id="deployment">
+  <div class="sec-head">
+    <h2>Deployment</h2>
+    <span class="tag">Submodule · activation · gates · egress</span>
+  </div>
+
+  <div class="prose">
+    <p>
+      The repository is designed to be adopted by a parent repository as a submodule and to
+      behave identically there. Nothing in the derivation path needs a warehouse, a profile, or
+      a key.
+    </p>
+  </div>
+
+  <h3>Prerequisites, and what happens without each</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:20%">Requirement</th><th style="width:20%">Needed for</th><th>Absent</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">python3</td><td>everything</td><td><span class="pill gate">hard</span> — the only hard requirement</td></tr>
+        <tr><td class="mono">sqlglot 30.x</td><td>column lineage, seeds</td><td><span class="pill skip">skip</span> — stages report skip with the remedy</td></tr>
+        <tr><td class="mono">duckdb</td><td>sample build, model eval</td><td><span class="pill skip">exit 3</span></td></tr>
+        <tr><td class="mono">rdflib</td><td>Turtle validation</td><td><span class="pill skip">skip</span> — <code>index.json</code> exists for exactly this reason</td></tr>
+        <tr><td class="mono">wrenai wheel</td><td>the serving tier</td><td><span class="pill skip">skip</span> — pinned with the submodule, moves with it</td></tr>
+        <tr><td class="mono">node</td><td>skill-map scan</td><td><span class="pill skip">exit 3</span> — a recorded skip, never a red check</td></tr>
+        <tr><td class="mono">rustc</td><td>the TOON serializer</td><td><span class="pill skip">hook stays silent</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The four commands that regenerate everything</h3>
+<pre><b>./scripts/activate_skill_stack.sh</b> dbt-skills wren-skills   <span style="color:var(--ink-3)"># pack → agent-loaded paths</span>
+<b>./skill-packs/dbt-skills/use-cases/&lt;slug&gt;/artifacts/refresh.sh</b>  <span style="color:var(--ink-3)"># manifest + fragment + checks</span>
+<b>python3 scripts/use_case_sync.py</b> --use-case &lt;slug&gt; --graphify-update
+<b>python -m pytest -q</b>                                     <span style="color:var(--ink-3)"># 1,640 tests, ~34s</span></pre>
+
+  <h3>Delivery discipline</h3>
+  <div class="grid g3">
+    <div class="panel proc">
+      <h4>Branching</h4>
+      <p class="role">stacked, path-scoped</p>
+      <p>
+        <code>&lt;type&gt;/&lt;ticket&gt;-&lt;lane&gt;-&lt;topic&gt;-&lt;NN&gt;-&lt;layer&gt;</code>, at most four layers,
+        generated artifacts in the top layer only. Never a direct commit to <code>main</code>.
+      </p>
+    </div>
+    <div class="panel proc">
+      <h4>CI</h4>
+      <p class="role">10 workflows</p>
+      <p>
+        Six call sites run <code>python -m pytest -q</code> — that exact command. The artifact
+        gates are the test suite itself, so a stale committed artifact fails the build rather
+        than a separate step.
+      </p>
+    </div>
+    <div class="panel gate">
+      <h4>Egress</h4>
+      <p class="role">explicit confirmation required</p>
+      <p>
+        <code>wren genbi deploy</code> ships app bundles — possibly including snapshot data — to
+        a hosting provider. That is data egress: never run without the user's explicit,
+        per-deploy confirmation.
+      </p>
+    </div>
+  </div>
+
+  <h3>Proving it locally, with no Docker and no keys</h3>
+  <div class="prose">
+    <p>
+      <code>./skill-packs/wren-skills/demo/run_wren_demo.sh</code> re-proves the semantic tier end
+      to end: 13 models, 3 relationships, 8 metric views, validate clean, and
+      <code>revenue = 277,183.41</code> — the filtered metric, not the 289,470.66 raw measure the
+      earlier cube projection shipped. Every view is row-for-row equal to a hand-written oracle.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <p style="margin:0 0 8px">
+    Every number on this page is measured, not estimated. Re-derive them:
+    <code>python3 scripts/use_case_sync.py --all --check</code> ·
+    <code>python -m pytest -q --collect-only</code> ·
+    <code>python3 scripts/ontology_to_dbt.py --use-case enhanza-analytics --dry-run</code> ·
+    <code>python3 scripts/eval_dbt_models.py --use-case enhanza-analytics</code>.
+  </p>
+  <p style="margin:0">
+    Counts reflect the <code>enhanza-analytics</code> use-case. Colour encodes layer role only —
+    every node is labelled, and the palette was validated for colour-vision separation and
+    contrast in both themes.
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

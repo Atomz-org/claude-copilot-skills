@@ -1,0 +1,13 @@
+OrgId,active,addresses,id,journeyStep,name,orgNo,users
+ORG-1001,false,addresses_value_1,KEY-001,journeystep_value_1,Bergen Bygg AS,ORG-001,users_value_1
+ORG-1002,true,addresses_value_2,KEY-002,journeystep_value_2,Uppsala Livsmedel AB,ORG-002,users_value_2
+ORG-1003,true,addresses_value_3,KEY-003,journeystep_value_3,Aarhus Elektronik ApS,ORG-003,users_value_3
+ORG-1004,false,addresses_value_4,KEY-004,journeystep_value_4,Tampere Kone Oy,ORG-004,users_value_4
+ORG-1001,true,addresses_value_5,KEY-005,journeystep_value_5,Stavanger Marine AS,ORG-005,users_value_5
+ORG-1002,true,addresses_value_6,KEY-006,journeystep_value_6,Malmo Emballage AB,ORG-006,users_value_6
+ORG-1003,false,addresses_value_7,KEY-007,journeystep_value_7,Trondheim Verktoy AS,ORG-007,users_value_7
+ORG-1004,true,addresses_value_8,KEY-008,journeystep_value_8,Odense Papir ApS,ORG-008,users_value_8
+ORG-1001,true,addresses_value_9,KEY-009,journeystep_value_9,Astrid Lindqvist,ORG-009,users_value_9
+ORG-1002,false,addresses_value_10,KEY-010,journeystep_value_10,Henrik Dahl,ORG-010,users_value_10
+ORG-1003,true,addresses_value_11,KEY-011,journeystep_value_11,Mette Sorensen,ORG-011,users_value_11
+ORG-1004,true,addresses_value_12,KEY-012,journeystep_value_12,Jukka Virtanen,ORG-012,users_value_12

@@ -1,0 +1,16 @@
+name: raw_country_codes
+table_reference:
+  catalog: enhanza_sample
+  schema: public
+  table: country_codes
+columns:
+- name: CountryName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_core.public.country_codes
+  dbt_resource_type: source

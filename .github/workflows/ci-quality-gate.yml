@@ -15,20 +15,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
       - name: Install test dependencies
-        run: python -m pip install -q pytest
+        run: python -m pip install -q pytest pytest-xdist sqlglot
 
       - name: Activate stack from shared packs
         run: |
           chmod +x scripts/activate_skill_stack.sh
-          ./scripts/activate_skill_stack.sh dbt-skills
+          ./scripts/activate_skill_stack.sh dbt-skills wren-skills
 
       - name: Apply readiness label for review
         env:
@@ -86,3 +86,4 @@ jobs:
           test -f .github/workflows/pr-issue-auto-close.yml
           test -f .github/workflows/smart-sync.yml
           test -f .github/workflows/ci-quality-gate.yml
+          test -f .github/workflows/pr-decision-diagram.yml

@@ -1,0 +1,32 @@
+name: fortnox_bi_dim_suppliers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_suppliers
+columns:
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique supplier's identifiyer for your workspace
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+cached: false
+properties:
+  description: Detailed information on suppliers
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_suppliers
+  dbt_resource_type: model
+primary_key: SupplierId

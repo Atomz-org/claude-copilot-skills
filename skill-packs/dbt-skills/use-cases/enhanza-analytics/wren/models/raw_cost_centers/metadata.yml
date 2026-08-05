@@ -1,0 +1,16 @@
+name: raw_cost_centers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: cost_centers
+columns:
+- name: Code
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_erp_bi.fortnox_api_demo.cost_centers
+  dbt_resource_type: source

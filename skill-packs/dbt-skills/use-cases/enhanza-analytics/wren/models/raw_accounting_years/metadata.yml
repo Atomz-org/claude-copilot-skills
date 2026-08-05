@@ -1,0 +1,31 @@
+name: raw_accounting_years
+table_reference:
+  catalog: enhanza_sample
+  schema: visma_economic_api_canonical
+  table: accounting_years
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: fromDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: toDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: year
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_visma_economic.visma_economic_api.accounting_years
+  dbt_resource_type: source

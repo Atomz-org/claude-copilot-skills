@@ -1,0 +1,13 @@
+OrgId,id,number,voucherType
+ORG-1001,KEY-001,KEY-001,vouchertype_value_1
+ORG-1002,KEY-002,KEY-002,vouchertype_value_2
+ORG-1003,KEY-003,KEY-003,vouchertype_value_3
+ORG-1004,KEY-004,KEY-004,vouchertype_value_4
+ORG-1001,KEY-005,KEY-005,vouchertype_value_5
+ORG-1002,KEY-006,KEY-006,vouchertype_value_6
+ORG-1003,KEY-007,KEY-007,vouchertype_value_7
+ORG-1004,KEY-008,KEY-008,vouchertype_value_8
+ORG-1001,KEY-009,KEY-009,vouchertype_value_9
+ORG-1002,KEY-010,KEY-010,vouchertype_value_10
+ORG-1003,KEY-011,KEY-011,vouchertype_value_11
+ORG-1004,KEY-012,KEY-012,vouchertype_value_12

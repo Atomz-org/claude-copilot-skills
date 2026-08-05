@@ -1,0 +1,49 @@
+name: fact_time_reporting_registrations
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_time_reporting_registrations
+columns:
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: DocumentType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Based on document the file is linked to
+- name: StartTime
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date and time the work/absence started
+- name: UserId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of ERP user who registered the transaction
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: UserNo
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: UserId available in Fortnox UI only
+    dbt_tests: not_null
+    dbt_test_status: unknown
+cached: false
+properties:
+  description: The conformed `fact_time_reporting_registrations`, one row per row
+    of the union across its suppliers (fortnox, seventime, tempo). Carries the 4 column(s)
+    whose meaning is recorded; 13 conformed column(s) are not annotated yet and none
+    is withheld.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_time_reporting_registrations
+  dbt_resource_type: model

@@ -1,0 +1,19 @@
+Bound the mcp extra below 2.0 — mcp 2.0 removed mcp.server.fastmcp
+
+wren/mcp_server.py imports `from mcp.server.fastmcp import FastMCP`, which the mcp
+package removed in 2.0.0. The extra declares `mcp[cli]>=1.19` with no upper bound, so
+a fresh `pip install 'wrenai[mcp]'` resolves mcp 2.x and `wren serve mcp` dies on
+import after the engine has already come up:
+
+    ModuleNotFoundError: No module named 'mcp.server.fastmcp'
+
+Reproduced against wrenai 0.13.2 with mcp 2.0.0; works with mcp 1.29.0. This
+repository pins `mcp<2` beside the wrenai pin in requirements.txt as the workaround;
+that pin can be dropped when a release ships either this bound or a port to the 2.x
+server API.
+
+--- a/core/wren/pyproject.toml
++++ b/core/wren/pyproject.toml
+@@ -63,7 +63,7 @@
+-mcp = ["mcp[cli]>=1.19"]
++mcp = ["mcp[cli]>=1.19,<2"]

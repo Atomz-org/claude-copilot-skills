@@ -1,0 +1,46 @@
+name: raw_invoice_accruals
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: invoice_accruals
+columns:
+- name: AccrualAccount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: EndDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Period
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: StartDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Times
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Total
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.invoice_accruals
+  dbt_resource_type: source

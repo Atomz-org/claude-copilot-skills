@@ -1,0 +1,26 @@
+name: raw_invoices_booked
+table_reference:
+  catalog: enhanza_sample
+  schema: visma_economic_api_canonical
+  table: invoices_booked
+columns:
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: bookedInvoiceNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_visma_economic.visma_economic_api.invoices_booked
+  dbt_resource_type: source

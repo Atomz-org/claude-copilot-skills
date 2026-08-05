@@ -1,0 +1,22 @@
+name: dim_labels
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: dim_labels
+columns:
+- name: LableId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+cached: false
+properties:
+  description: Detailed information on document labels. For offers, orders and invoices
+    one label per document is available in corresponding tables
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_dim_labels
+  dbt_resource_type: model
+primary_key: LableId

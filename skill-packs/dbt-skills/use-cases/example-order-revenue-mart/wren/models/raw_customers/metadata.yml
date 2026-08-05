@@ -1,0 +1,44 @@
+name: raw_customers
+table_reference:
+  catalog: dev
+  schema: raw
+  table: raw_demopos_customers
+columns:
+- name: customer_ref
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Till customer reference. Primary key.
+    dbt_tests: not_null,unique
+    dbt_test_status: verified
+  is_primary_key: true
+- name: email_address
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: country
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: signed_up_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: exported_at
+  type: TIMESTAMPNTZ
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: 'One row per customer registered at the till, full snapshot per export.
+    The columns declared here are the connector''s source contract: exactly what staging
+    reads, not everything the till could export.'
+  dbt_layer: raw
+  dbt_unique_id: source.analytics.demopos.customers
+  dbt_resource_type: source
+primary_key: customer_ref

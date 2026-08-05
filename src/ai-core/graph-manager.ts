@@ -1,3 +1,5 @@
+import { encodeToon, type ToonValue } from './toon-serializer';
+
 export interface GraphNode {
   id: string;
   type: string;
@@ -25,6 +27,19 @@ export class GraphManager {
 
   snapshot(): { nodes: GraphNode[]; edges: GraphEdge[] } {
     return { nodes: this.nodes, edges: this.edges };
+  }
+
+  /**
+   * Snapshot serialized as TOON for LLM context. Uniform node/edge rows encode
+   * tabular (fields declared once); `metadata` is omitted because per-row
+   * optional keys break tabular eligibility — fetch it per node when needed.
+   */
+  snapshotToToon(): string {
+    const doc = {
+      nodes: this.nodes.map(({ id, type, label }) => ({ id, type, label })),
+      edges: this.edges.map(({ source, target, relation }) => ({ source, target, relation })),
+    };
+    return encodeToon(doc as ToonValue);
   }
 }
 

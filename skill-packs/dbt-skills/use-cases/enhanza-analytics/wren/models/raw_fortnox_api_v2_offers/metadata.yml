@@ -1,0 +1,36 @@
+name: raw_fortnox_api_v2_offers
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_api_canonical
+  table: v2_offers
+columns:
+- name: CurrencyRate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DocumentNumber
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OfferDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: VATIncluded
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_fortnox.fortnox_api.v2_offers
+  dbt_resource_type: source

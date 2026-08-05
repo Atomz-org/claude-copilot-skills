@@ -1,0 +1,289 @@
+# Posts a sticky PR comment (updated in place) holding two things: a Mermaid
+# impact subgraph derived from this PR's own diff, and the repository's
+# merge-decision gate results. The same document lands in the step summary,
+# which also renders Mermaid.
+#
+# A third section projected the changed paths onto the architecture layer stack.
+# It was removed: only the highlighting varied between PRs, and most PRs lit the
+# same two layers, so it restated the Files-changed tab. $RUNNER_TEMP/changed.txt
+# is still collected and still passed as --changed — the impact subgraph and the
+# harness subgraph both read it.
+#
+# The diagram is built by mapping the PR's changed line ranges onto nodes in a
+# graphify graph rebuilt from the PR's tree, then walking one hop of cross-file
+# edges. It is therefore PR-specific — an earlier version drew the fixed gate
+# chain, which was identical on every PR by construction.
+#
+# Triggers are deliberately in lockstep with the other PR-time workflows
+# (ci-quality-gate.yml, claude-code-review.yml) so all three fire on the same
+# events for every commit pushed to a PR. tests/test_pr_decision_diagram.py
+# compares the three trigger blocks and fails if that parity is ever broken.
+#
+# This workflow REPORTS; ci-quality-gate.yml is what blocks. Keeping them
+# separate means a red gate here shows up as a red node in the diagram rather
+# than a second failing check for the same cause.
+#
+# Untrusted inputs (branch name, PR title) are passed through the environment,
+# never interpolated into run: scripts.
+name: PR Decision Diagram
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to re-render the decision diagram for'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+# One diagram per PR. Without this, two quick pushes race and the slower,
+# older run finishes last — overwriting the sticky comment with a stale verdict.
+concurrency:
+  group: pr-decision-diagram-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  decision-diagram:
+    runs-on: ubuntu-latest
+    steps:
+      # Resolves PR metadata from the event payload, or from the API when the
+      # run was dispatched by hand. Everything downstream reads these outputs,
+      # so the gates behave identically on both triggers.
+      - name: Resolve PR context
+        id: ctx
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR: ${{ inputs.pr_number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            PR_NUMBER="$INPUT_PR"
+            gh api "repos/${REPO}/pulls/${PR_NUMBER}" > "$RUNNER_TEMP/pr.json"
+            PR_TITLE=$(jq -r '.title' "$RUNNER_TEMP/pr.json")
+            HEAD_REF=$(jq -r '.head.ref' "$RUNNER_TEMP/pr.json")
+            BASE_SHA=$(jq -r '.base.sha' "$RUNNER_TEMP/pr.json")
+            HEAD_SHA=$(jq -r '.head.sha' "$RUNNER_TEMP/pr.json")
+          fi
+          # The title is attacker-controlled and may contain newlines, so it
+          # goes to a file rather than $GITHUB_OUTPUT, which is line-based and
+          # therefore injectable. The rest are shas, a number, and a git ref.
+          printf '%s' "$PR_TITLE" > "$RUNNER_TEMP/pr_title.txt"
+          {
+            printf 'number=%s\n' "$PR_NUMBER"
+            printf 'head_ref=%s\n' "$HEAD_REF"
+            printf 'base_sha=%s\n' "$BASE_SHA"
+            printf 'head_sha=%s\n' "$HEAD_SHA"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          # pull_request keeps the default merge ref — the tree that would
+          # actually land. A manual re-run has no merge ref, so it takes the
+          # PR head instead; an empty value means "checkout default".
+          ref: ${{ github.event_name == 'workflow_dispatch' && steps.ctx.outputs.head_sha || '' }}
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+          cache-dependency-path: .github/requirements/ci.txt
+
+      # pytest is not preinstalled on the runner; without this the test-suite
+      # gate below reports a false failure on every PR. graphifyy is the
+      # graphify CLI, pinned so the impact graph cannot change shape under us.
+      - name: Install test dependencies
+        run: python -m pip install -q -r .github/requirements/ci.txt
+
+      # What the impact graph is computed from. Collected before the gates run,
+      # because the activation-drift gate below mutates and restores the tree.
+      - name: Collect PR diff
+        env:
+          BASE_SHA: ${{ steps.ctx.outputs.base_sha }}
+        run: |
+          set -u
+          : > "$RUNNER_TEMP/changed.txt"
+          : > "$RUNNER_TEMP/pr.diff"
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=200 origin "$BASE_SHA" 2>/dev/null || true
+          fi
+          if git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            # -d excludes deletions: a deleted file has no node to seed from.
+            git diff --name-only --diff-filter=d "$BASE_SHA" HEAD > "$RUNNER_TEMP/changed.txt"
+            git diff -U0 "$BASE_SHA" HEAD > "$RUNNER_TEMP/pr.diff"
+          fi
+          echo "changed files: $(wc -l < "$RUNNER_TEMP/changed.txt")"
+
+      # AST-only rebuild: no LLM, no API key, ~6s on this repo. Output lands in
+      # graphify-out/, which .gitignore already excludes, so the activation
+      # drift gate below still sees a clean tree.
+      - name: Build code graph
+        continue-on-error: true
+        run: graphify update . --no-cluster
+
+      # skill-map maps the *harness* (skills, commands, agents) rather than the
+      # code, and feeds the nested Harness subgraph in the diagram. Deterministic
+      # by construction: scripts/skill_map_scan.py only reaches skill-map's
+      # scanner, never its LLM job queue. No API key is involved.
+      #
+      # Node is set up rather than assumed so the runner resolves `npx`; when the
+      # scan is unavailable anyway the wrapper exits 3, the gate records a skip,
+      # and the subgraph is simply not drawn.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Map the harness
+        continue-on-error: true
+        run: |
+          python scripts/skill_map_scan.py \
+            --summary-json "$RUNNER_TEMP/skill-map.json" \
+            --summary || true
+
+      - name: Run decision gates
+        env:
+          HEAD_REF: ${{ steps.ctx.outputs.head_ref }}
+          BASE_SHA: ${{ steps.ctx.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
+        run: |
+          set -u
+          # Kept outside the work tree on purpose: an untracked scratch file in
+          # the repo root makes the activation-drift gate below see a dirty
+          # tree and fail against itself.
+          DECISIONS="$RUNNER_TEMP/decisions.txt"
+          : > "$DECISIONS"
+          # record <gate> <status> <detail...> — pipes stripped so the
+          # renderer's field separator stays unambiguous
+          record() {
+            gate="$1"; status="$2"; shift 2
+            printf '%s|%s|%s\n' "$gate" "$status" "$(printf '%s' "$*" | tr -d '|' | head -c 200)" >> "$DECISIONS"
+          }
+
+          # 1. Branch naming: <type>/<ticket>-<description>
+          if printf '%s' "$HEAD_REF" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)/[A-Za-z0-9._-]+'; then
+            record "branch naming" pass "$HEAD_REF"
+          else
+            record "branch naming" fail "$HEAD_REF does not match <type>/<ticket>-<description>"
+          fi
+
+          # 2. Conventional Commits on every non-merge commit in the PR
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=200 origin "$BASE_SHA" 2>/dev/null || true
+          fi
+          if git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            bad=$(git log --no-merges --format='%s' "$BASE_SHA".."$HEAD_SHA" \
+              | grep -Ev '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([A-Za-z0-9._/-]+\))?!?: .+' || true)
+            if [ -z "$bad" ]; then
+              n=$(git log --no-merges --oneline "$BASE_SHA".."$HEAD_SHA" | wc -l | tr -d ' ')
+              record "conventional commits" pass "$n commit(s) conform"
+            else
+              record "conventional commits" fail "$(printf '%s' "$bad" | head -1)"
+            fi
+          else
+            record "conventional commits" skip "base commit unavailable in this checkout"
+          fi
+
+          # 3. Generated-path drift: activation must leave the tree clean
+          if ./scripts/activate_skill_stack.sh dbt-skills wren-skills >/dev/null 2>&1 && [ -z "$(git status --porcelain)" ]; then
+            record "activation drift" pass "pack and mirror in sync"
+          else
+            record "activation drift" fail "$(git status --porcelain | head -1) (edit the pack, not the mirror)"
+            git checkout -- . 2>/dev/null || true
+          fi
+
+          # 4. Marketplace portability
+          if out=$(./scripts/marketplace_portability_check.sh 2>&1); then
+            record "marketplace portability" pass "manifests and SKILL.md sizes OK"
+          else
+            record "marketplace portability" fail "$(printf '%s' "$out" | head -1)"
+          fi
+
+          # 5. TOON serializer build (gate skips on branches that predate it)
+          if [ -x scripts/build_toon_rs.sh ]; then
+            if out=$(./scripts/build_toon_rs.sh 2>&1); then
+              record "toon serializer build" pass "rustc -O clean"
+            else
+              record "toon serializer build" fail "$(printf '%s' "$out" | tail -1)"
+            fi
+          else
+            record "toon serializer build" skip "not present on this branch"
+          fi
+
+          # 6. Test suite — the same command ci-quality-gate.yml blocks on, so
+          #    the diagram cannot disagree with the blocking check.
+          if out=$(python -m pytest -q 2>&1); then
+            record "test suite" pass "$(printf '%s' "$out" | grep -Eo '[0-9]+ passed[^,]*' | head -1)"
+          else
+            record "test suite" fail "$(printf '%s' "$out" | grep -E 'failed|error' | head -1)"
+          fi
+
+          # 7. Harness integrity. Budgets only name collisions and frontmatter
+          #    parse errors — the two failures that are silent at runtime and
+          #    that nothing else here checks. Broken references are excluded on
+          #    purpose; tests/test_docs_links.py owns those and is stricter.
+          #
+          #    The budget of 1 is the documented `senior-analytics-engineer`
+          #    alias, which is deliberately both an agent and a skill (CLAUDE.md).
+          #    A second collision means a real one was introduced.
+          if [ -f scripts/skill_map_scan.py ]; then
+            out=$(python scripts/skill_map_scan.py --check --max-errors 1 --summary 2>&1)
+            case $? in
+              0) record "skill map" pass "$(printf '%s' "$out" | head -1)" ;;
+              1) record "skill map" fail "$(printf '%s' "$out" | tail -1)" ;;
+              *) record "skill map" skip "scanner unavailable on this runner" ;;
+            esac
+          else
+            record "skill map" skip "not present on this branch"
+          fi
+
+      - name: Render Mermaid diagram
+        env:
+          PR_NUMBER: ${{ steps.ctx.outputs.number }}
+          HEAD_REF: ${{ steps.ctx.outputs.head_ref }}
+        run: |
+          set -eu
+          title=$(cat "$RUNNER_TEMP/pr_title.txt")
+          python scripts/pr_decision_diagram.py \
+            --input "$RUNNER_TEMP/decisions.txt" \
+            --pr-number "$PR_NUMBER" \
+            --pr-title "$title" \
+            --head-ref "$HEAD_REF" \
+            --graph graphify-out/graph.json \
+            --changed "$RUNNER_TEMP/changed.txt" \
+            --diff "$RUNNER_TEMP/pr.diff" \
+            --skill-map "$RUNNER_TEMP/skill-map.json" \
+            --out "$RUNNER_TEMP/diagram.md"
+          cat "$RUNNER_TEMP/diagram.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post or update sticky PR comment
+        # GITHUB_TOKEN is read-only on fork PRs; the step summary above still
+        # carries the diagram there.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.ctx.outputs.number }}
+        run: |
+          marker='<!-- pr-decision-diagram -->'
+          comment_id=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq "[.[] | select(.body | startswith(\"$marker\"))][0].id // empty")
+          if [ -n "$comment_id" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${comment_id}" \
+              -f "body=$(cat "$RUNNER_TEMP/diagram.md")" >/dev/null
+          else
+            gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+              -f "body=$(cat "$RUNNER_TEMP/diagram.md")" >/dev/null
+          fi

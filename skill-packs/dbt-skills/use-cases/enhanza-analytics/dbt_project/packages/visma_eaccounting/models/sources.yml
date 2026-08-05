@@ -1,0 +1,56 @@
+version: 2
+
+sources:
+  - name: visma_eaccounting_api
+    description: 'Visma eAccounting raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: visma_eaccounting_api_{{ var('uid') }}
+    tables:
+      - name: accounts
+      - name: articles
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Id
+          - name: IsActive
+          - name: IsStock
+          - name: Name
+          - name: Number
+          - name: OrgId
+          - name: PurchasePrice
+          - name: StockBalanceAvailable
+      - name: companysettings
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: City
+          - name: Name
+          - name: OrgId
+      - name: costcenters
+      - name: customerinvoices
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: CurrencyRate
+          - name: Id
+          - name: InvoiceDate
+          - name: OrgId
+          - name: OurReference
+      - name: customers
+      - name: fiscalyears
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: EndDate
+          - name: Id
+          - name: OrgId
+          - name: StartDate
+      - name: openingbalances
+      - name: orders
+      - name: projects
+      - name: vouchers
+

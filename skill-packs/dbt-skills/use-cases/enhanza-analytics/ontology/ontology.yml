@@ -1,0 +1,22 @@
+# Ontology settings for this use-case
+# ===================================
+#
+# What a use-case owns, as opposed to what the platform owns. The shared ERP/CRM vocabulary
+# lives in scripts/ontology_generator.py because an invoice does not become a different thing
+# when a second use-case appears. Two things are genuinely local, and they are here.
+
+# The IRI root every generated class, property, and individual hangs off. Pinned rather than
+# derived from the slug, because the hand-authored core in `core/*.ttl` already publishes
+# these IRIs: a namespace that moves when a default moves is not an identifier, and anything
+# that had resolved against the old one silently stops matching.
+namespace: https://w3id.org/enhanza/
+
+title: Enhanza ERP/CRM analytics
+
+# Concept -> core class, merged over the shared map in scripts/ontology_generator.py.
+#
+# Empty on purpose. Every concept this project's connectors supply is ERP or CRM, so the
+# shared map classifies all of them. A domain-specific concept goes here instead of into the
+# shared map — a lease, a berth, a clinical episode. The generator reports an unclassified
+# concept rather than guessing at one, so the failure mode is a named gap, not a wrong class.
+concept_classes: {}

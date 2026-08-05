@@ -1,0 +1,66 @@
+version: 2
+
+sources:
+  - name: seventime_api
+    description: 'Seventime raw data'
+    database: "{{ target.project | default(target.database) }}"
+    schema: seventime_api_{{ var('uid') }}
+    tables:
+      - name: companyinformation
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: city
+          - name: companyName
+      - name: customers
+      - name: expenseitems
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: _id
+          - name: articleNumber
+          - name: distributor
+          - name: distributorName
+          - name: isActive
+          - name: unitCost
+      - name: expenses
+      - name: invoices
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: _id
+          - name: currencyRate
+          - name: invoiceDate
+          - name: invoiceNumber
+      - name: quotes
+      - name: timelogs
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: OrgId
+          - name: _id
+      - name: workorders
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: categoryName
+          - name: cost
+          - name: endTimestamp
+          - name: invoiceableTime
+          - name: isAbsence
+          - name: isInvoiceable
+          - name: isWorkTime
+          - name: pricePerHour
+          - name: time
+          - name: timestamp
+          - name: user
+          - name: userName
+

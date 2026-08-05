@@ -1,7 +1,7 @@
 ---
 name: semantic-layer-architect
 description: Designs and validates the dbt Core semantic layer with MetricFlow — semantic models over marts, entities/dimensions/measures, all metric types (simple, ratio, derived, cumulative, conversion), the time spine, and validation with `mf validate-configs` and `mf query`. Also answers business questions by querying the semantic layer instead of writing ad-hoc SQL. Use when a metric needs a single definition, when two dashboards disagree on the same number, when asked to build metrics or a semantic model, or when answering "what was revenue by region last quarter".
-tools: Read, Write, Edit, Glob, Grep, Bash
+tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
 
 # Semantic Layer Architect

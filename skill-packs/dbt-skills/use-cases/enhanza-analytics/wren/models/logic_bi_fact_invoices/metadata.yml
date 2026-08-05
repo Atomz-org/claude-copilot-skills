@@ -1,0 +1,114 @@
+name: logic_bi_fact_invoices
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_invoices
+columns:
+- name: AdministrationFee
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Balance
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of ERP system where the data came from
+- name: DefaultCurrency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Default currency based on the connected ERP system(s)
+- name: Due
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Indicates if an invoice is overdue (isDue) or not (NotDue)
+- name: DueDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date on which the document is due
+- name: DueStatus
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Whether the document is sent, paid, or overdue
+- name: FinalPayDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Final payment deadline for the document
+- name: Freight
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: InvoiceDate
+  type: DATE
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Date the document is issued
+- name: InvoiceId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: InvoiceNo
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Document number
+- name: InvoiceType
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: '''Sales'' for Customer invoices, ''Supplier'' for Supplier invoices'
+- name: Net
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Sales value of delivered items excluding VAT
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    dbt_tests: not_null
+    dbt_test_status: verified
+- name: TargetId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: TotalToPay
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: TotalVAT
+  type: FLOAT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: Combined data on supplier and customer invoices
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_invoices
+  dbt_resource_type: model
