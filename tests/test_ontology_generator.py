@@ -358,7 +358,14 @@ def test_index_and_turtle_agree_on_every_annotated_column() -> None:
     """Same rule as the models and the mappings: the projection cannot lead the graph."""
     index = json.loads((ONTOLOGY / "index.json").read_text(encoding="utf-8"))
     ttl = ONTOLOGY / "topology/column-semantics.ttl"
-    if not index["column_semantics"]:
+    # `render_index` always emits the key, so a *committed* index without it is one that
+    # predates this feature rather than one with nothing to say. That is the normal state
+    # of every stack layer below the one that regenerates: `scripts/stack_lint.py` lists
+    # `ontology/index.json` and `ontology/**/*.ttl` as top-layer-only, so a lower layer
+    # ships the generator and leaves the projection alone. Absent and empty assert the
+    # same invariant — nothing projected means no turtle — and neither may pass silently
+    # once the artifact is regenerated, which is what the comparison below then checks.
+    if not index.get("column_semantics"):
         assert not ttl.exists(), "no annotations, so nothing should have been written"
         return
 
@@ -774,9 +781,14 @@ def test_fragment_concepts_agree_with_the_committed_index() -> None:
 
 
 @needs_ontology
+@needs_manifest
 def test_fragment_cli_never_rewrites_the_ontology(tmp_path: Path) -> None:
     """--graphify-fragment is a read of the generator, not a run of it: the ontology
-    stage owns the files, this mode owns the graph."""
+    stage owns the files, this mode owns the graph.
+
+    Needs the manifest for the same reason the mode itself does — an implemented
+    connector's topology without one asserts `implemented_by` with no `implements`
+    edges, so the generator exits 2 rather than emit it."""
     watched = sorted(ONTOLOGY.rglob("*.ttl")) + [ONTOLOGY / "index.json"]
     before = {p: p.read_bytes() for p in watched}
     out = tmp_path / "frag.json"

@@ -7,8 +7,9 @@ Binding rules for the WrenAI semantic-layer integration in this repository.
 1. **Two generators, disjoint files, regenerate-never-edit.** WrenAI's importer owns
    `wren_project.yml`, `models/`, `relationships.yml`, `knowledge/rules/general.md`,
    `knowledge/sql/*`, and `AGENTS.md`. `scripts/wren_context_sync.py` owns
-   `knowledge/rules/ontology-concepts.md`, `column-contracts.md`, `semantic-metrics.md`,
-   `knowledge/caveats/adapter-drift.md`, and every view under `views/` carrying the
+   `knowledge/rules/ontology-concepts.md`, `column-contracts.md`, `column-semantics.md`,
+   `semantic-metrics.md`, `knowledge/caveats/adapter-drift.md`, `knowledge/caveats/pii.md`,
+   and every view under `views/` carrying the
    `source: dbt_metric` marker — a hand-authored view in the same directory has no
    marker and is reported `stale`, never touched. Hand-authored knowledge goes in
    **other** filenames under `knowledge/` — both generators leave unknown files alone and
