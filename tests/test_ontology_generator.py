@@ -209,29 +209,16 @@ def test_every_generated_class_carries_a_label_qualified_by_its_connector() -> N
     Qualified by the connector because the collision is the design: ten connectors each
     declare an `Account`, so ten classes labelled "Account" are not distinguishable by the
     one property whose job is to distinguish them.
+
+    This is the renderer half. The gate over the committed artifact —
+    `test_no_committed_class_is_unlabelled` — lives in the stack layer that regenerates
+    `ontology/**/*.ttl`, because that is the first layer on which it can be true.
     """
     spec = og.ConnectorSpec(key="acme", name="Acme", kind="erp", status="implemented")
     spec.concepts = ["fact_invoice_rows"]
     turtle = og.render_connector(spec)
     assert 'acme:InvoiceRow a owl:Class ;' in turtle
     assert 'rdfs:label "Acme Invoice Row"@en ;' in turtle
-
-
-@needs_ontology
-@needs_rdflib
-def test_no_committed_class_is_unlabelled() -> None:
-    """The gate for the above, over the artifact rather than the renderer."""
-    from rdflib import Graph, RDF, RDFS
-    from rdflib.namespace import OWL
-
-    graph = Graph()
-    for path in sorted(ONTOLOGY.rglob("*.ttl")):
-        graph.parse(path, format="turtle")
-    unlabelled = [
-        str(c) for c in graph.subjects(RDF.type, OWL.Class)
-        if not list(graph.objects(c, RDFS.label))
-    ]
-    assert not unlabelled, f"{len(unlabelled)} classes carry no rdfs:label: {unlabelled[:5]}"
 
 
 # ---------------------------------------------------------------------------------------
