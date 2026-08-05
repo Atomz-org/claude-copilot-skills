@@ -120,14 +120,51 @@ table, and that table's own **Availability** column is what decides portability 
 | `data-quality` | `setup-data-quality` | Sign up | no |
 | `performance` | `optimize-performance` | Sign up | no |
 
-Five runnable, five gated. `find-source` backs two toolkits, so it is one skill rather
-than two.
+Five runnable, five gated.
 
 Upstream's per-toolkit layout is `.claude-plugin/` + `rules/` + `skills/`, which already
 matches this repository's pack convention — compare
 [`skill-packs/wren-skills/.claude-plugin/plugin.json`](../wren-skills/.claude-plugin/plugin.json).
 The work is therefore a pack plus its root mirror, and one entry in
 [`scripts/activate_skill_stack.sh`](../../scripts/activate_skill_stack.sh).
+
+### The real inventory — 19 skills, not five
+
+Enumerated from the repository tree, not from the toolkit table: a toolkit is a
+*directory* of skills, and the table counts directories.
+
+| Toolkit | Skills | Commands |
+|---|---|---|
+| `bootstrap` | — | `init-workspace` |
+| `quick-start` | `quick-start` | `start` |
+| `rest-api-pipeline` | `find-source`, `create-rest-api-pipeline`, `debug-pipeline`, `validate-data`, `view-data`, `adjust-endpoint`, `new-endpoint`, `optimize-rest-api-performance` | — |
+| `sql-database-pipeline` | `find-source`, `create-sql-database-pipeline`, `debug-pipeline`, `validate-data`, `view-data`, `add-table`, `adjust-table`, `optimize-sql-performance` | — |
+| `data-exploration` | `explore-data`, `build-notebook` | — |
+
+Each of the last three toolkits also carries a `rules/workflow.md`.
+
+**`find-source` is two skills, not one.** 86 lines under `rest-api-pipeline`, 129 under
+`sql-database-pipeline`, with different classification tables. The same holds for
+`debug-pipeline`, `validate-data`, and `view-data`. An earlier note here said it was one
+skill backing two toolkits — that was inferred from the table's Workflow-entry column
+rather than read from the tree.
+
+### The blocker — "runnable" does not mean "OSS-only"
+
+`find-source` step 2 runs `dlthub --non-interactive pipeline init --list-sources`, and
+step 3 calls the `search_dlthub_sources` MCP tool. Neither is open-source `dlt`:
+`dlthub` is a separate package, and the tool belongs to its MCP server. The Availability
+column means **no paid signup**, not **no dltHub tooling**.
+
+A faithful port is therefore not a copy. Every skill's Platform calls need an OSS
+substitute — `dlt init --list-sources` and dlt's own verified-sources index — and each
+substitute needs checking against installed `dlt`, because a skill that tells an agent to
+run a command that does not exist fails at the point of use, not at review.
+
+That is what layer 02 actually is: **19 skills, each read, substituted, and verified
+against `dlt 1.29.1`.** Nothing is ported until that holds — a pack of skills citing an
+absent CLI is worse than no pack, because the harness loads it and the failure surfaces
+in front of a user.
 
 **A gate is known to be weak here.** CI's `baseline` job checks activation drift with
 `git diff --exit-code`, which inspects tracked files only — so a brand-new pack mirror is
