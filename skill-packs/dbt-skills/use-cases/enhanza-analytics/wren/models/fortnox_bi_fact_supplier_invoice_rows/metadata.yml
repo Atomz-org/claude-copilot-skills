@@ -1,0 +1,75 @@
+name: fortnox_bi_fact_supplier_invoice_rows
+table_reference:
+  catalog: enhanza_sample
+  schema: fortnox_bi_demo
+  table: fact_supplier_invoice_rows
+columns:
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: Balance
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Calculated field from difference between Credit and Debit
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Original currency used in Fortnox
+- name: CurrencyRate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Exchange rate from Fortnox, used to convert all values to SEK
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: SupplierId
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    dbt_tests: relationships
+    dbt_test_status: verified
+- name: SupplierInvoiceNo
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: GivenNumber field in Fortnox
+cached: false
+properties:
+  description: Supplier invoice detailed to purchased articles, all values in SEK.
+    See Document-level info in fortnox_bi.fact_supplier_invoices
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_fortnox.fortnox_bi_fact_supplier_invoice_rows
+  dbt_resource_type: model

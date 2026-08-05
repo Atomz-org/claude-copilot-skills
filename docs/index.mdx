@@ -338,6 +338,28 @@ The interactive version renders the same data as live diagrams — a clickable m
 The page is committed at `public/decision-path.html`, which serves at `/decision-path.html` under Astro's static-asset convention. If Blume publishes assets from a different root, adjust the `src` above — the file is entirely self-contained, with no external requests, so it works from any path that serves it.
 :::
 
+## System architecture
+
+The decision path above answers *how a prompt becomes an action*. This answers *what the thing is*: nineteen source systems, 378 dbt models, 58 conformed concepts, and one semantic layer served to BI and to agents — plus the gates that decide whether any of it can be trusted.
+
+Three lanes, and the arrow between the first two runs **both ways**. Meaning is derived from the warehouse — dbt's own `manifest.json` is the input to every ontology artifact — and the business layer is then generated back *from* that meaning. A conventional layer diagram flattens that into one direction and loses the only structurally interesting thing here.
+
+<iframe
+  src="/code-skills-architecture.html"
+  title="code-skills system architecture — data flow, derivation pipeline, and layers"
+  width="100%"
+  height="900"
+  loading="lazy"
+></iframe>
+
+:::tip[If the frame is blank]
+The page is committed at `public/code-skills-architecture.html` and serves at `/code-skills-architecture.html` under Astro's static-asset convention — the same arrangement as the decision path above. It is entirely self-contained, with no external requests, so it works from any path that serves it.
+:::
+
+Every figure on that page taken from a committed artifact is checked against that artifact by `tests/test_architecture_diagram.py`, so the picture cannot quietly stop being true. Figures that need a rebuild — the test count, the size of the code graph — are deliberately left unpinned and the page names the command that re-derives each: a gate that goes red because somebody added a test is a gate that gets switched off.
+
+The same layer stack is projected onto every pull request. `scripts/pr_decision_diagram.py` classifies a PR's changed paths onto it and draws the layers that moved, so the sticky PR comment answers "which part of the system does this touch" before a reviewer opens a single file.
+
 ## Repository layout
 
 Only the first branch is hand-written. Everything under `.claude/`, `references/`, and `templates/` is produced by activation.

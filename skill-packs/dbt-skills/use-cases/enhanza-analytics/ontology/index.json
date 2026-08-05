@@ -11,7 +11,7 @@
   },
   "provenance": {
     "column_lineage_available": true,
-    "models_parsed": 225,
+    "models_parsed": 244,
     "models_macro_only": 134,
     "models_parse_failed": 0,
     "annotated_columns": 89

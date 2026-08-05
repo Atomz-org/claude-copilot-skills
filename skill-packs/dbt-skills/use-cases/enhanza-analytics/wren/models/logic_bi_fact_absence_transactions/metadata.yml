@@ -1,0 +1,74 @@
+name: logic_bi_fact_absence_transactions
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_absence_transactions
+columns:
+- name: CauseCode
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: 'Absence/attendance: standard abbreviation of absence/attendance
+      reason'
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: CauseCodeName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Absence/attendance: detailed explanation of absence/attendance reason'
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_cost_centers
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: Date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Transaction date, i.e. 2024-03-25
+- name: EmployeeId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique employee identifier in your workspace
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_projects
+    dbt_tests: not_null
+    dbt_test_status: unknown
+cached: false
+properties:
+  description: The conformed `fact_absence_transactions`, one row per row of the union
+    across its suppliers (fortnox). Carries the 7 column(s) whose meaning is recorded;
+    3 conformed column(s) are not annotated yet and none is withheld.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_absence_transactions
+  dbt_resource_type: model

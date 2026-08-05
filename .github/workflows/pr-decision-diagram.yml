@@ -1,7 +1,12 @@
-# Posts a sticky PR comment (updated in place) holding two things: a Mermaid
-# impact subgraph derived from this PR's own diff, and the repository's
-# merge-decision gate results. The same document lands in the step summary,
-# which also renders Mermaid.
+# Posts a sticky PR comment (updated in place) holding three things: a Mermaid
+# impact subgraph derived from this PR's own diff, the architecture layers that
+# diff moves, and the repository's merge-decision gate results. The same
+# document lands in the step summary, which also renders Mermaid.
+#
+# The architecture section needs no new step or input: it is a projection of
+# $RUNNER_TEMP/changed.txt, already collected below and already passed to the
+# renderer as --changed. public/code-skills-architecture.html holds the layer
+# definitions, and tests/test_architecture_diagram.py fails if the two drift.
 #
 # The diagram is built by mapping the PR's changed line ranges onto nodes in a
 # graphify graph rebuilt from the PR's tree, then walking one hop of cross-file

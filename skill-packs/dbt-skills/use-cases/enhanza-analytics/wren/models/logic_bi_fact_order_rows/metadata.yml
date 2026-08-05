@@ -1,0 +1,149 @@
+name: logic_bi_fact_order_rows
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_order_rows
+columns:
+- name: AccountId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique Account identifier used as a primary key
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique Article identifier used as a primary key
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: ArticleNumber
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: The article number indicated on the line where applicable
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: ContributionValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Sold value minus estimated price of the item. The item row value
+      is used
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_cost_centers
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Original transaction currency used in Fortnox
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifyer of a customer in your workspace
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: Description
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Text description of the asset type
+- name: InvoiceReference
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 0 if no invoice is created for this order yet
+- name: OrderDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Order creation date, from `created_at`.
+- name: OrderId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Shopify order id. Primary key.
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: OrderedQuantity
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Line quantity ordered.
+- name: OrderedValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Potential NET value in SEK, discounts applied of the total ordered
+      quantity
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: PriceAfterDiscount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: NET price in SEK after all discounts applied
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_projects
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: SalesValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: The total value of the selected document type line in SEK after discounts
+- name: isVATIncluded
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: TRUE is VAT is originally included in article price. Already used
+      in calculations
+cached: false
+properties:
+  description: The conformed `fact_order_rows`, one row per row of the union across
+    its suppliers (favrit, fortnox, shopify, upsales). Carries the 18 column(s) whose
+    meaning is recorded; 10 conformed column(s) are not annotated yet and none is
+    withheld.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_order_rows
+  dbt_resource_type: model

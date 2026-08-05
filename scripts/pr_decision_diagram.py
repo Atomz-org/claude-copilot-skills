@@ -9,6 +9,8 @@ Used by .github/workflows/pr-decision-diagram.yml. The document contains:
   differs per PR. `scripts/pr_impact_graph.py` does the graph work;
 - a colour legend for that flowchart, naming only the classes it drew;
 - a per-file table of touched symbols;
+- the architecture layers this PR moves, drawn on the layer stack from
+  `public/code-skills-architecture.html`;
 - the merge-gate results (branch naming, Conventional Commits, activation
   drift, portability, TOON build, tests) as a table with a verdict;
 - a sticky-comment marker so the workflow updates one comment per PR.
@@ -16,6 +18,13 @@ Used by .github/workflows/pr-decision-diagram.yml. The document contains:
 This replaced an earlier diagram that drew the same fixed gate chain on every
 PR — identical by construction, and therefore worthless as a diagram. The
 gates now render as a table, and the diagram carries PR-specific structure.
+
+That rule is why the architecture section draws a *projection* rather than the
+architecture. The five-layer stack is fixed, but which layers a PR moves is
+not, and it is the first thing a reviewer needs: a change confined to
+`scripts/` is a different review from one that also rewrites an ontology
+artifact and a serving projection. Untouched layers stay drawn but quiet, so
+the stack still reads as a whole.
 
 GitHub renders ```mermaid fences natively in PR comments and in
 $GITHUB_STEP_SUMMARY, so the same document serves both. It also scales the
@@ -75,6 +84,62 @@ _HARNESS_PREFIXES = (".claude/", "skill-packs/")
 # is deliberately excluded: every doc file is a node, and counting them here
 # would swamp the three numbers a reviewer is looking for.
 _ENTRY_KINDS = ("skill", "command", "agent")
+
+# The architecture page, and the layer stack it draws, in its own order. The
+# ids are matched against the page's `data-layer` attributes by
+# tests/test_architecture_diagram.py, so the comment and the page cannot drift
+# into naming the same structure differently.
+ARCH_DOC = "public/code-skills-architecture.html"
+_ARCH_LAYERS = (
+    ("harness", "Harness"),
+    ("core", "Derivation core"),
+    ("artifacts", "Artifacts"),
+    ("serving", "Serving"),
+    ("verification", "Verification"),
+    ("docs", "Docs"),
+)
+
+# Layer ids the page has no section for. Written down rather than inferred,
+# because the agreement test asserts both directions: a new `data-layer` in the
+# page with no rule here is a hole, and a new id here that the page never draws
+# is a claim the page does not make.
+_ARCH_EXTRA_LAYERS = ("docs", "other")
+
+# First match wins, so these are ordered by specificity rather than by layer.
+# A use-case's dbt project and ontology live *under* `skill-packs/`, so the
+# artifact rules have to be reached before the harness rule that would
+# otherwise swallow the whole tree.
+#
+# A pattern with a leading `/` matches a path segment anywhere; anything else
+# is a prefix. `*.md` matches a markdown file at the repository root only —
+# `wren/knowledge/rules/general.md` is a serving artifact, not documentation.
+_ARCH_RULES = (
+    ("tests/", "verification"),
+    (".github/", "verification"),
+    ("conftest.py", "verification"),
+    ("pytest.ini", "verification"),
+    ("_pytest_parallel.py", "verification"),
+    ("/wren/", "serving"),
+    ("external/", "serving"),
+    ("/ontology/", "artifacts"),
+    ("/dbt_project/", "artifacts"),
+    ("/artifacts/", "artifacts"),
+    ("graphify-out/", "artifacts"),
+    ("scripts/hooks/", "harness"),
+    (".claude/", "harness"),
+    ("/skills/", "harness"),
+    ("/commands/", "harness"),
+    ("/agents/", "harness"),
+    ("references/", "harness"),
+    ("templates/", "harness"),
+    ("skill-packs/", "harness"),
+    ("scripts/", "core"),
+    ("/scripts/", "core"),
+    ("src/", "core"),
+    ("rust/", "core"),
+    ("docs/", "docs"),
+    ("*.md", "docs"),
+)
 
 # Drawn in the harness subgraph's findings box, most-serious first. The first
 # two are `GATE_ANALYZERS` in scripts/skill_map_scan.py — the silent-failure
@@ -255,6 +320,90 @@ def load_skill_map(path: Path | None) -> dict | None:
 def harness_files(changed_files: list[str]) -> list[str]:
     """The changed paths that are harness assets rather than application code."""
     return [p for p in changed_files if p.startswith(_HARNESS_PREFIXES)]
+
+
+def _rule_matches(path: str, pattern: str) -> bool:
+    if pattern.startswith("*."):
+        return "/" not in path and path.endswith(pattern[1:])
+    if pattern.startswith("/"):
+        return pattern in "/" + path
+    return path.startswith(pattern)
+
+
+def classify_layer(path: str) -> str:
+    """The architecture layer a changed path belongs to; `other` when none fits.
+
+    `other` is a real answer rather than a bucket to be tidied away: a path
+    nothing here recognises is either a new kind of thing or a rule that has
+    gone stale, and both are worth seeing in the comment.
+    """
+    for pattern, layer in _ARCH_RULES:
+        if _rule_matches(path, pattern):
+            return layer
+    return "other"
+
+
+def architecture_layers(changed_files: list[str]) -> list[dict]:
+    """The page's layer stack, annotated with what this PR touched.
+
+    Every layer is returned, touched or not — the stack is the frame and the
+    counts are the message. `other` is appended only when something landed in
+    it, because an empty box for "nothing we could not classify" is noise.
+    """
+    counts: dict[str, int] = {}
+    for path in changed_files:
+        layer = classify_layer(path)
+        counts[layer] = counts.get(layer, 0) + 1
+    layers = [
+        {"id": lid, "label": label, "count": counts.get(lid, 0)}
+        for lid, label in _ARCH_LAYERS
+    ]
+    if counts.get("other"):
+        layers.append({"id": "other", "label": "Other", "count": counts["other"]})
+    return layers
+
+
+def render_architecture(layers: list[dict]) -> list[str]:
+    """The layer stack with this PR's layers lit up, and a link to the page.
+
+    Drawn top-down because that is the order the page states and the order the
+    dependency runs: the harness invokes the derivation core, which writes the
+    artifacts, which the serving tier projects. Verification hangs off the side
+    — it pins all four rather than following them.
+    """
+    lines = [
+        "```mermaid",
+        "flowchart TB",
+        "    classDef touched fill:#0969da,color:#ffffff,stroke:#0550ae",
+        "    classDef quiet fill:#eaeef2,color:#57606a,stroke:#d0d7de",
+    ]
+    chain: list[str] = []
+    aside: list[str] = []
+    for i, layer in enumerate(layers):
+        count = layer["count"]
+        detail = _plural(count, "file") if count else "untouched"
+        style = "touched" if count else "quiet"
+        node = f"A{i}"
+        lines.append(f'    {node}["{_escape(layer["label"])}<br/>{detail}"]:::{style}')
+        (aside if layer["id"] in ("verification", "docs", "other") else chain).append(node)
+    if len(chain) > 1:
+        lines.append("    " + " --> ".join(chain))
+    for node in aside:
+        if chain:
+            lines.append(f"    {node} -.-> {chain[0]}")
+    lines += ["```", ""]
+    touched = [lay for lay in layers if lay["count"]]
+    if touched:
+        named = ", ".join(f"**{_escape(lay['label'])}** ({lay['count']})" for lay in touched)
+        lines.append(f"This PR moves {named}.")
+    else:
+        lines.append("No changed file resolved to an architecture layer.")
+    lines += [
+        "",
+        f"_Layer definitions and the full system architecture: [`{ARCH_DOC}`]({ARCH_DOC})._",
+        "",
+    ]
+    return lines
 
 
 def render_harness(summary: dict, touched: list[str], indent: str = "    ") -> list[str]:
@@ -452,6 +601,12 @@ def render(
                 extra = f" (+{len(paths) - 8} more)" if len(paths) > 8 else ""
                 lines.append(f"_{note}: {shown}{extra}._")
         lines.append("")
+
+    # Drawn from the changed paths alone, so it survives a run where the code
+    # graph was not built and the impact subgraph above says so.
+    if changed_files:
+        lines += ["### Architecture layers touched", ""]
+        lines += render_architecture(architecture_layers(changed_files))
 
     lines += ["### Merge gates", "", "| Gate | Result | Detail |", "|---|---|---|"]
     for r in records:

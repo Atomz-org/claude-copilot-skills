@@ -1,0 +1,43 @@
+name: logic_bi_dim_supplier_invoice_files
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: dim_supplier_invoice_files
+columns:
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: FileName
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Name of the file in the system
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: SupplierInvoiceNo
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: GivenNumber field in Fortnox
+    dbt_tests: not_null
+    dbt_test_status: unknown
+cached: false
+properties:
+  description: The conformed `dim_supplier_invoice_files`, one row per row of the
+    union across its suppliers (fortnox). Carries the 3 column(s) whose meaning is
+    recorded; 2 conformed column(s) are not annotated yet and none is withheld.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_dim_supplier_invoice_files
+  dbt_resource_type: model
