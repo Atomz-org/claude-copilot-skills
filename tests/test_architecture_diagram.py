@@ -284,3 +284,22 @@ def test_the_page_and_the_pr_diagram_name_the_same_layers() -> None:
 def test_the_pr_diagram_links_to_a_page_that_exists() -> None:
     assert (REPO / pdd.ARCH_DOC).is_file()
 
+
+# --- how the documentation site serves it ---------------------------------------------
+
+DOCS_INDEX = REPO / "docs/index.mdx"
+
+
+def test_the_docs_site_embeds_the_page_at_the_path_it_is_served_from() -> None:
+    """`public/` is the static-asset root, so `public/x.html` serves at `/x.html`.
+    An iframe src and a file path that disagree render an empty frame and no
+    error — the same silent failure the rest of this file exists to catch."""
+    assert PAGE.parent.name == "public", "the docs site serves assets from public/"
+    served = "/" + PAGE.name
+    index = DOCS_INDEX.read_text(encoding="utf-8")
+    assert f'src="{served}"' in index, f"docs/index.mdx does not embed {served}"
+
+
+def test_the_page_carries_a_description_for_the_docs_site() -> None:
+    """It is a page on a documentation site now, not only an artifact."""
+    assert re.search(r'<meta name="description" content="[^"]{40,}"', page_text())
