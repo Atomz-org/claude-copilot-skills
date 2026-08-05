@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """Bring every derived artifact of a use-case back into agreement with the project.
 
-A use-case is one hand-written thing and five derived ones. The hand-written thing is the
-spec plus the dbt project; the derived ones are the ontology extensions, the machine index,
-the sample seeds, the graphify fragment, and the alignment verdict. Each has its own script,
-each was run by hand, and "run all five in the right order" is exactly the instruction that
-gets followed nine times out of ten — the tenth leaves an ontology asserting a model that no
-longer exists, which is the failure mode an ontology is famous for.
+A use-case is one hand-written thing and a set of derived ones. The hand-written thing is
+the spec plus the dbt project; every stage in the table below derives from it.
+Each derived artifact has its own script, each was run by hand, and "run them all in the
+right order" is exactly the instruction that gets followed nine times out of ten — the
+tenth leaves an ontology asserting a model that no longer exists, which is the failure
+mode an ontology is famous for.
 
-So the five are one command, in dependency order, and each stage reports what it did:
+So the stages are one command, in dependency order, and each reports what it did:
 
     ontology   connectors/*.ttl + topology/*.ttl   <- registry, manifest, column lineage
     index      index.json                          <- same pass as the Turtle
     columns    ontology/column-memory.json         <- the .sql on disk, parsed and cached
     seeds      seeds/sample/*.csv                  <- manifest + parsed source columns
     graphify   the code graph, rebuilt             <- opt-in; must precede the merge
-    graph      graphify fragment, merged           <- manifest
+    graph      dbt lineage + ontology topology, merged  <- manifest
     alignment  the verdict                         <- project files + manifest
     wren       wren/ WrenAI semantic-layer project <- manifest + catalog + ontology artifacts
 
@@ -316,7 +316,31 @@ def stage_graph(use_case: Path, manifest: Optional[Path], check: bool) -> Stage:
         f"{payload.get('models', 0)} models, {payload.get('edges', 0)} edges "
         f"at {payload.get('coverage_pct', 0)}% manifest coverage"
     )
-    return Stage("graph", OK, f"{detail}{'; ' + merged if merged else ''}")
+
+    # The ontology topology rides the same stage because it obeys the same ordering rule
+    # (rebuild before merge, never update after) — a second stage would be a second place
+    # to state that rule. A dry run stops at the dbt emitter's verdict: the topology
+    # fragment has no dry form, and mutating the graph under --check is not checking.
+    topology = ""
+    catalogue = use_case / "ontology" / "connectors.yml"
+    if not check and catalogue.exists():
+        oproc = subprocess.run(
+            [sys.executable, str(REPO / "scripts/ontology_generator.py"),
+             "--use-case", use_case.name, "--manifest", str(manifest), "--merge-graphify"],
+            capture_output=True, text=True, cwd=REPO, timeout=600,
+        )
+        if oproc.returncode != 0:
+            tail = (oproc.stderr or oproc.stdout).strip().splitlines()
+            return Stage(
+                "graph", FAIL,
+                f"ontology topology: {tail[-1] if tail else f'exit {oproc.returncode}'}",
+            )
+        topology = next(
+            (ln for ln in oproc.stdout.splitlines() if ln.startswith("fragment:")), ""
+        ).split(" -> ")[0].replace("fragment:", "topology:")
+
+    parts = [detail] + [p for p in (merged, topology) if p]
+    return Stage("graph", OK, "; ".join(parts))
 
 
 def _first_json_line(stream: str) -> Optional[Dict[str, Any]]:

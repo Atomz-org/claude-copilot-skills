@@ -349,8 +349,9 @@ question would use. `--remember-bindings` adds the resolved bindings, capped at 
 
 ## Use-case derived artifacts — one command
 
-A use-case is one hand-written thing and six derived ones. `scripts/use_case_sync.py` runs
-all six in dependency order and reports each as `ok`, `changed`, or `skip` with a reason:
+A use-case is one hand-written thing — the spec plus the dbt project — and a set of derived
+ones. `scripts/use_case_sync.py` runs every stage in dependency order and reports each as
+`ok`, `changed`, or `skip` with a reason:
 
 ```bash
 python3 scripts/use_case_sync.py --init <slug>                       # scaffold a use-case
@@ -365,7 +366,7 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 | `columns` | `ontology/column-memory.json` — the column contract | manifest, sqlglot |
 | `seeds` | `dbt_project/seeds/sample/*.csv` | manifest, sqlglot, reference data |
 | `graphify` | the code graph, rebuilt | `--graphify-update` |
-| `graph` | dbt lineage merged into `graphify-out/graph.json` | manifest |
+| `graph` | dbt lineage + connector/concept topology merged into `graphify-out/graph.json` | manifest |
 | `alignment` | the convention-drift verdict | a dbt project |
 | `wren` | `wren/` — the WrenAI semantic-layer project | manifest, catalog.json, wrenai CLI |
 
@@ -384,6 +385,17 @@ graph that still looks populated, because the source nodes have no file to be re
 from. Measured here: 366 model nodes with the correct order, 0 with the wrong one. That is
 why the rebuild is a stage sequenced *before* the merge rather than a line in a runbook, and
 why `--all --graphify-update` rebuilds once for the repository instead of once per use-case.
+
+The `graph` stage merges two fragments in sequence: dbt lineage, then the connector/concept
+topology (`ontology_generator.py --merge-graphify`) — one node per connector and per
+conformed concept, connectors edging `supplies` / `plans_to_supply` into the concepts and
+the adapter model nodes edging `implements` into the concepts they realise, built from the
+same in-memory pass that renders `index.json` without rewriting it.
+The relation carries the implemented-versus-planned distinction because a flat edge loses
+it: naive traversal once answered "ten connectors supply Account" when five were catalogue
+expectations. graphify's detector puts `.ttl` in no category at all, so without this merge
+the topology is invisible during orientation — and the same never-update-after rule covers
+it.
 
 Three further rules decide whether the output can be trusted:
 

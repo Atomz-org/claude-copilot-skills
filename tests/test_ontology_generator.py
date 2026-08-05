@@ -209,6 +209,10 @@ def test_every_generated_class_carries_a_label_qualified_by_its_connector() -> N
     Qualified by the connector because the collision is the design: ten connectors each
     declare an `Account`, so ten classes labelled "Account" are not distinguishable by the
     one property whose job is to distinguish them.
+
+    This is the renderer half. The gate over the committed artifact —
+    `test_no_committed_class_is_unlabelled` — lives in the stack layer that regenerates
+    `ontology/**/*.ttl`, because that is the first layer on which it can be true.
     """
     spec = og.ConnectorSpec(key="acme", name="Acme", kind="erp", status="implemented")
     spec.concepts = ["fact_invoice_rows"]
@@ -605,3 +609,168 @@ def test_the_tenant_key_is_consistent_wherever_it_appears() -> None:
         f"reference organisations never used in any seed: {sorted(known - seen)} — "
         f"an unused tenant makes multi-tenant filtering untested"
     )
+
+
+# ---------------------------------------------------------------------------------------
+# Graphify fragment
+# ---------------------------------------------------------------------------------------
+#
+# The topology fragment is the third merge into graphify-out/graph.json (after dbt
+# lineage and column contracts), and it fails the same way the others would: an endpoint
+# id that drifts from the graph's own formula makes build_merge mint a silent duplicate
+# beside the real node instead of an edge onto it. Nothing errors; the picture is wrong.
+
+GRAPH_JSON = REPO / "graphify-out" / "graph.json"
+
+_FRAGMENT_CACHE: list = []
+
+
+def _fragment() -> dict:
+    if not _FRAGMENT_CACHE:
+        result = og.generate("enhanza-analytics", None)
+        _FRAGMENT_CACHE.append(og.build_graphify_fragment(
+            result["specs"], result["config"], result["use_case"], result["manifest_path"]
+        ))
+    return _FRAGMENT_CACHE[0]
+
+
+@needs_ontology
+def test_fragment_reuses_the_envelope_and_the_id_formula() -> None:
+    import dbt_manifest_to_graphify as emitter
+
+    frag = _fragment()
+    assert set(frag) == {"nodes", "edges", "hyperedges", "input_tokens", "output_tokens"}
+    ids = [n["id"] for n in frag["nodes"]]
+    assert len(ids) == len(set(ids)), "duplicate node ids inside one fragment"
+    topo = "skill-packs/dbt-skills/use-cases/enhanza-analytics/ontology/topology/concept-coverage.ttl"
+    assert emitter.node_id(topo, "dim_accounts") in ids
+    fortnox = "skill-packs/dbt-skills/use-cases/enhanza-analytics/ontology/connectors/fortnox.ttl"
+    assert emitter.node_id(fortnox) in ids
+    for e in frag["edges"]:
+        assert e["confidence"] == "EXTRACTED" and e["confidence_score"] == 1.0
+
+
+@needs_ontology
+def test_no_edge_dangles_inside_the_fragment() -> None:
+    """Every endpoint is a fragment node, except the model end of `implements` — that one
+    is external BY DESIGN, because it must land on a node the dbt merge already put there."""
+    frag = _fragment()
+    own = {n["id"] for n in frag["nodes"]}
+    for e in frag["edges"]:
+        if e["relation"] == "implements":
+            assert e["target"] in own and e["source"] not in own
+        else:
+            assert e["source"] in own and e["target"] in own
+
+
+@needs_ontology
+@needs_manifest
+def test_implements_endpoints_are_the_graphs_own_model_ids() -> None:
+    """The upgrade-not-duplicate guarantee, pinned against the real graph."""
+    if not GRAPH_JSON.exists():
+        pytest.skip("no graphify-out/graph.json in this clone")
+    graph_ids = {n["id"] for n in json.loads(GRAPH_JSON.read_text(encoding="utf-8"))["nodes"]}
+    ends = {e["source"] for e in _fragment()["edges"] if e["relation"] == "implements"}
+    assert ends, "implemented connectors must yield implements edges"
+    missing = sorted(ends - graph_ids)
+    assert not missing, (
+        f"{len(missing)} model endpoints unknown to the graph — build_merge would mint "
+        f"silent stubs for: {missing[:5]}"
+    )
+
+
+@needs_ontology
+def test_a_planned_connector_only_plans() -> None:
+    """`plans_to_supply` vs `supplies` is the epistemic line naive traversal erased once:
+    'ten connectors supply Account', five of which were catalogue expectations."""
+    import dbt_manifest_to_graphify as emitter
+
+    frag = _fragment()
+    xero = emitter.node_id(
+        "skill-packs/dbt-skills/use-cases/enhanza-analytics/ontology/connectors/xero.ttl"
+    )
+    node = next(n for n in frag["nodes"] if n["id"] == xero)
+    assert node["connector_status"] == "planned"
+    rels = {e["relation"] for e in frag["edges"] if xero in (e["source"], e["target"])}
+    assert rels == {"plans_to_supply"}
+
+
+@needs_ontology
+def test_fragment_concepts_agree_with_the_committed_index() -> None:
+    """One generator pass feeds both artifacts; this holds them to the same facts, the
+    same way test_index_and_turtle_agree_on_every_model holds Turtle to index.json."""
+    index = json.loads((ONTOLOGY / "index.json").read_text(encoding="utf-8"))
+    concepts = {
+        n["label"].removeprefix("concept: "): n
+        for n in _fragment()["nodes"]
+        if n["dbt_resource_type"] == "ontology_concept"
+    }
+    assert set(concepts) == {c["concept"] for c in index["concepts"]}
+    for c in index["concepts"]:
+        node = concepts[c["concept"]]
+        assert node["implemented_by"] == c["implemented_by"]
+        assert node["planned_by"] == c["planned_by"]
+        assert node["ontology_id"] == c["id"]
+
+
+@needs_ontology
+@needs_manifest
+def test_fragment_cli_never_rewrites_the_ontology(tmp_path: Path) -> None:
+    """--graphify-fragment is a read of the generator, not a run of it: the ontology
+    stage owns the files, this mode owns the graph.
+
+    Needs the manifest for the same reason the mode itself does — an implemented
+    connector's topology without one asserts `implemented_by` with no `implements`
+    edges, so the generator exits 2 rather than emit it."""
+    watched = sorted(ONTOLOGY.rglob("*.ttl")) + [ONTOLOGY / "index.json"]
+    before = {p: p.read_bytes() for p in watched}
+    out = tmp_path / "frag.json"
+    result = subprocess.run(
+        [sys.executable, str(REPO / "scripts/ontology_generator.py"),
+         "--use-case", "enhanza-analytics", "--graphify-fragment", str(out)],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert result.returncode == 0, result.stderr
+    frag = json.loads(out.read_text(encoding="utf-8"))
+    assert frag["nodes"] and frag["edges"]
+    assert {p: p.read_bytes() for p in watched} == before
+
+
+@needs_ontology
+@needs_manifest
+def test_fragment_mode_fails_and_refuses_to_merge_on_problems(
+    monkeypatch, tmp_path: Path, capsys,
+) -> None:
+    """Found by adversarial review: this mode exited 0 and merged while every other mode
+    exits 1 on the same problems — the quiet detector was the one mutating the graph."""
+    import dbt_manifest_to_graphify as emitter
+
+    doctored = dict(og.generate("enhanza-analytics", None))
+    doctored["problems"] = ["registry has connector 'qbo' with no row in connectors.yml"]
+    monkeypatch.setattr(og, "generate", lambda *a, **k: doctored)
+    merges: list = []
+    monkeypatch.setattr(emitter, "merge_into_graph", lambda *a: merges.append(a) or 0)
+
+    out = tmp_path / "frag.json"
+    rc = og.main(["--use-case", "enhanza-analytics", "--merge-graphify",
+                  "--graphify-fragment", str(out)])
+    assert rc == 1
+    assert not merges, "a problem-bearing topology must never reach the graph"
+    assert out.exists(), "the fragment is still written, like every other mode's files"
+    err = capsys.readouterr().err
+    assert "qbo" in err and "REFUSED" in err
+
+
+@needs_ontology
+def test_fragment_mode_dies_without_a_manifest_when_connectors_are_implemented(
+    monkeypatch, tmp_path: Path,
+) -> None:
+    """implemented_by with zero implements edges is incomplete carried through as
+    silence; the dbt emitter requires --manifest for the same input."""
+    doctored = dict(og.generate("enhanza-analytics", None))
+    doctored["manifest_path"] = tmp_path / "absent" / "manifest.json"
+    monkeypatch.setattr(og, "generate", lambda *a, **k: doctored)
+    with pytest.raises(SystemExit) as exc:
+        og.main(["--use-case", "enhanza-analytics",
+                 "--graphify-fragment", str(tmp_path / "f.json")])
+    assert exc.value.code == 2

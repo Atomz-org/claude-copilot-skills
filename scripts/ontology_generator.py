@@ -779,6 +779,137 @@ def render_index(specs: List[ConnectorSpec], cfg: OntologyConfig, slug: str,
 
 
 # ---------------------------------------------------------------------------------------
+# Graphify fragment
+# ---------------------------------------------------------------------------------------
+
+
+def build_graphify_fragment(
+    specs: List[ConnectorSpec],
+    cfg: OntologyConfig,
+    use_case: Path,
+    manifest_path: Optional[Path],
+) -> Dict[str, Any]:
+    """The connector/concept topology as a graphify extraction fragment.
+
+    Built from the same in-memory specs that render the Turtle and `index.json`, never by
+    re-parsing the Turtle: rdflib is optional in this repository, and a parser dependency
+    to restate facts the generator already holds is the trade `index.json` exists to
+    avoid. graphify itself never sees these facts either way — its detector puts `.ttl`
+    in no category at all, so without this fragment the topology is invisible to the
+    graph the Graphify-first rule makes agents orient with.
+
+    Node ids reuse `dbt_manifest_to_graphify.node_id()`, so `implements` edges land on
+    the model nodes the dbt merge already upgraded — and the same ordering rule follows:
+    a `graphify update` after this merge deletes everything it added.
+
+    Deliberately absent: edges to the column-contract nodes `dbt_column_memory.py`
+    merges. An edge whose endpoint is missing would make `build_merge` mint a bare stub
+    node silently, and both node families already edge the same adapter models, so the
+    contract sits two hops away without asserting anything new.
+    """
+    import dbt_manifest_to_graphify as emitter
+
+    ontology = use_case / "ontology"
+    topo_rel = emitter._rel(ontology / "topology" / "concept-coverage.ttl")
+
+    nodes: List[Dict[str, Any]] = []
+    edges: List[Dict[str, Any]] = []
+    blank = {
+        "source_location": None, "source_url": None, "captured_at": None,
+        "author": None, "contributor": None,
+    }
+
+    def edge(source: str, target: str, relation: str) -> None:
+        edges.append({
+            "source": source,
+            "target": target,
+            "relation": relation,
+            "confidence": "EXTRACTED",
+            "confidence_score": 1.0,
+            "source_file": None,
+            "source_location": None,
+            "weight": 1.0,
+        })
+
+    # Model name -> the graph's own node id, through the dbt emitter's path map. Resolved
+    # from the manifest rather than from a naming rule so a packages/ model cannot land on
+    # a root-model id — the exact drift `package_prefixes` exists to prevent.
+    model_gid: Dict[str, str] = {}
+    if manifest_path and manifest_path.exists():
+        man = Manifest.load(str(manifest_path))
+        project_root = use_case / "dbt_project"
+        for parent in manifest_path.resolve().parents:
+            if (parent / "dbt_project.yml").exists():
+                project_root = parent
+                break
+        prefixes = emitter.package_prefixes(man, project_root)
+        project_rel = emitter._rel(project_root)
+        for mnode in man.nodes.values():
+            if mnode.get("resource_type") != "model":
+                continue
+            path = emitter.model_source_file(mnode, man, project_rel, prefixes)
+            model_gid[mnode.get("name", "")] = emitter.node_id(path)
+
+    # One node per conformed concept, keyed to the topology file that asserts it —
+    # the entity form node_id() gives symbols that live inside a shared file.
+    by_concept: Dict[str, Dict[str, List[str]]] = {}
+    for spec in specs:
+        bucket = "implemented_by" if spec.status == "implemented" else "planned_by"
+        for concept in (spec.concepts if spec.status == "implemented" else spec.expected_concepts):
+            by_concept.setdefault(concept, {"implemented_by": [], "planned_by": []})
+            by_concept[concept][bucket].append(spec.key)
+
+    concept_ids: Dict[str, str] = {}
+    for concept in sorted(by_concept):
+        entry = by_concept[concept]
+        cid = emitter.node_id(topo_rel, concept)
+        concept_ids[concept] = cid
+        nodes.append({
+            "id": cid,
+            "label": f"concept: {concept}",
+            "file_type": "code",
+            "source_file": topo_rel,
+            **blank,
+            "dbt_resource_type": "ontology_concept",
+            "ontology_id": f"{cfg.topo}{_local(concept)}",
+            "ontology_class": cfg.concept_class.get(concept),
+            "implemented_by": sorted(entry["implemented_by"]),
+            "planned_by": sorted(entry["planned_by"]),
+            "supplier_count": len(entry["implemented_by"]),
+        })
+
+    for spec in sorted(specs, key=lambda s: s.key):
+        ttl_rel = emitter._rel(ontology / "connectors" / f"{spec.key}.ttl")
+        gid = emitter.node_id(ttl_rel)
+        nodes.append({
+            "id": gid,
+            "label": f"connector: {spec.name}",
+            "file_type": "code",
+            "source_file": ttl_rel,
+            **blank,
+            "dbt_resource_type": "ontology_connector",
+            "ontology_id": f"{cfg.connector_ns(spec.key)}connector",
+            "connector_key": spec.key,
+            "connector_kind": spec.kind,
+            "connector_status": spec.status,
+            "enable_var": f"is_{spec.key}_enabled",
+        })
+        # The relation carries the epistemic status, because a flat edge loses it: naive
+        # traversal already conflated planned with implemented once ("10 connectors
+        # supply Account" — 5 of them were expectations from the catalogue).
+        relation = "supplies" if spec.status == "implemented" else "plans_to_supply"
+        for concept in (spec.concepts if spec.status == "implemented" else spec.expected_concepts):
+            edge(gid, concept_ids[concept], relation)
+            model = spec.models.get(concept)
+            target = model_gid.get(model) if model else None
+            if target:
+                edge(target, concept_ids[concept], "implements")
+
+    return {"nodes": nodes, "edges": edges, "hyperedges": [],
+            "input_tokens": 0, "output_tokens": 0}
+
+
+# ---------------------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------------------
 
@@ -825,6 +956,11 @@ def generate(
         "problems": problems,
         "unclassified": unclassified,
         "lineage": lineage_stats,
+        # The resolved inputs, so a caller building the graphify fragment resolves them
+        # zero more times (two resolutions of one path is one more than stays in
+        # agreement — same rule as the use_case parameter above).
+        "use_case": use_case,
+        "manifest_path": manifest_path,
     }
 
 
@@ -835,11 +971,85 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--check", action="store_true", help="exit 1 if regeneration would change anything")
     p.add_argument("--force", action="store_true", help="rewrite even when column mappings would be lost")
     p.add_argument("--format", choices=("text", "json"), default="text")
+    p.add_argument("--graphify-fragment", metavar="PATH",
+                   help="write the connector/concept topology as a graphify extraction "
+                        "fragment to PATH and exit — the ontology files are not rewritten")
+    p.add_argument("--merge-graphify", action="store_true",
+                   help="write the fragment and merge it into graphify-out/graph.json "
+                        "(never run graphify update after)")
     args = p.parse_args(argv)
 
     result = generate(args.use_case, args.manifest)
     specs: List[ConnectorSpec] = result["specs"]
     files: Dict[Path, str] = result["files"]
+
+    # A separate mode, not a side effect of generation: the `ontology` stage owns the
+    # files, this mode owns the graph. Running it must not rewrite Turtle, and therefore
+    # cannot hit the sqlglot downgrade refusal — the fragment carries models, not column
+    # mappings, so it is the same with or without the parser.
+    if args.graphify_fragment or args.merge_graphify:
+        if args.check:
+            p.error("--check does not combine with --graphify-fragment/--merge-graphify")
+        import dbt_manifest_to_graphify as emitter
+
+        # An implemented connector's topology built without the manifest would assert
+        # `implemented_by` on every concept while carrying zero `implements` edges —
+        # incomplete carried through as silence, the bug class the column-memory rules
+        # name. The dbt emitter makes --manifest required for the same input; a
+        # planned-only catalogue has nothing to implement and passes freely.
+        manifest_path = result["manifest_path"]
+        if any(s.status == "implemented" for s in specs) and not (
+            manifest_path and manifest_path.exists()
+        ):
+            die(
+                f"no manifest at {manifest_path} — run artifacts/refresh.sh. An "
+                f"implemented connector's topology without it asserts implemented_by "
+                f"with no implements edges."
+            )
+
+        fragment = build_graphify_fragment(
+            specs, result["config"], result["use_case"], manifest_path
+        )
+        target = (
+            Path(args.graphify_fragment)
+            if args.graphify_fragment
+            else REPO / "graphify-out" / ".graphify_ontology_topology.json"
+        )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(
+            json.dumps(fragment, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+
+        # The same contract as every other mode: problems are printed and fail the run.
+        # Here they also refuse the merge — a detector that mutates the graph while
+        # staying quiet is the one people read, and a fragment encoding the very drift
+        # the problems describe must not become the graph agents orient with.
+        if result["problems"]:
+            for problem in result["problems"]:
+                print(f"  {problem}", file=sys.stderr)
+            print(
+                f"REFUSED to merge: {len(result['problems'])} problem(s) above. The "
+                f"fragment is at {target}; fix the drift and re-run.",
+                file=sys.stderr,
+            )
+        merge_rc = 0
+        if args.merge_graphify and not result["problems"]:
+            merge_rc = emitter.merge_into_graph(target, result["use_case"] / "dbt_project")
+        if args.format == "json":
+            print(json.dumps({
+                "use_case": args.use_case,
+                "fragment": str(target),
+                "nodes": len(fragment["nodes"]),
+                "edges": len(fragment["edges"]),
+                "merged": bool(
+                    args.merge_graphify and merge_rc == 0 and not result["problems"]
+                ),
+                "problems": result["problems"],
+            }, ensure_ascii=False))
+        else:
+            print(f"fragment: {len(fragment['nodes'])} nodes, "
+                  f"{len(fragment['edges'])} edges -> {target}")
+        return merge_rc or (1 if result["problems"] else 0)
 
     changed: List[str] = []
     downgrades: List[str] = []
