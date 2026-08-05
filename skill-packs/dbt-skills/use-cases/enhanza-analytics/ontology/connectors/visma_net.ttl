@@ -23,48 +23,56 @@ visma_net:connector a conn:ERPConnector ;
 
 visma_net:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Visma.net Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy visma_net:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 visma_net:Supplier a owl:Class ;
     rdfs:subClassOf erp:Supplier ;
+    rdfs:label "Visma.net Supplier"@en ;
     conn:conformsTo erp:Supplier ;
     conn:providedBy visma_net:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 visma_net:Account a owl:Class ;
     rdfs:subClassOf erp:Account ;
+    rdfs:label "Visma.net Account"@en ;
     conn:conformsTo erp:Account ;
     conn:providedBy visma_net:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 visma_net:CostCenter a owl:Class ;
     rdfs:subClassOf erp:CostCenter ;
+    rdfs:label "Visma.net Cost Center"@en ;
     conn:conformsTo erp:CostCenter ;
     conn:providedBy visma_net:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 visma_net:Project a owl:Class ;
     rdfs:subClassOf erp:Project ;
+    rdfs:label "Visma.net Project"@en ;
     conn:conformsTo erp:Project ;
     conn:providedBy visma_net:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 visma_net:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "Visma.net Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy visma_net:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 visma_net:Invoice a owl:Class ;
     rdfs:subClassOf erp:Invoice ;
+    rdfs:label "Visma.net Invoice"@en ;
     conn:conformsTo erp:Invoice ;
     conn:providedBy visma_net:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 visma_net:Voucher a owl:Class ;
     rdfs:subClassOf erp:Voucher ;
+    rdfs:label "Visma.net Voucher"@en ;
     conn:conformsTo erp:Voucher ;
     conn:providedBy visma_net:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .

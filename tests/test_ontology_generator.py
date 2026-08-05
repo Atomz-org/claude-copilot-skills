@@ -221,6 +221,23 @@ def test_every_generated_class_carries_a_label_qualified_by_its_connector() -> N
     assert 'rdfs:label "Acme Invoice Row"@en ;' in turtle
 
 
+@needs_ontology
+@needs_rdflib
+def test_no_committed_class_is_unlabelled() -> None:
+    """The gate for the above, over the artifact rather than the renderer."""
+    from rdflib import Graph, RDF, RDFS
+    from rdflib.namespace import OWL
+
+    graph = Graph()
+    for path in sorted(ONTOLOGY.rglob("*.ttl")):
+        graph.parse(path, format="turtle")
+    unlabelled = [
+        str(c) for c in graph.subjects(RDF.type, OWL.Class)
+        if not list(graph.objects(c, RDFS.label))
+    ]
+    assert not unlabelled, f"{len(unlabelled)} classes carry no rdfs:label: {unlabelled[:5]}"
+
+
 # ---------------------------------------------------------------------------------------
 # Per-use-case configuration
 # ---------------------------------------------------------------------------------------
