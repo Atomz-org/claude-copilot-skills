@@ -842,6 +842,40 @@ Accepted, do not re-report: the `senior-analytics-engineer` alias collision,
 `/review` shadowed by the Claude Code built-in, and agent `tools`-as-string
 warnings. Details in the pack's `.claude/skills/harness-mapping/references/findings.md`.
 
+## The architecture page, and why a PR reads it back
+
+[docs/code-skills-architecture.html](docs/code-skills-architecture.html) is the
+hand-authored view of the whole system: the three-lane data flow, the ten derivation
+stages with what each one refuses to do, five layers, and the deployment surface. It is
+self-contained — no CDN, no webfont — because it is also published under a CSP that
+blocks every external host.
+
+A hand-authored page rots, so two mechanisms hold it:
+
+- **Numbers are pinned or declared as snapshots, never left ambiguous.** Every figure
+  derived from a *committed* artifact carries `data-metric` and is checked against that
+  artifact by `tests/test_architecture_diagram.py` — 19 connectors, 378 dbt models, 1024
+  bindings, 569 declared source columns. The dbt model count comes from
+  `graphify-fragment.json` rather than the manifest, for the same reason the fragment is
+  committed at all. Figures that need a rebuild — test count, graph size — are **not**
+  pinned: a gate that goes red because somebody added a test is a gate that gets switched
+  off, so the footer names the command that re-derives each instead.
+- **The PR comment projects it.** `scripts/pr_decision_diagram.py` classifies a PR's
+  changed paths onto the page's own layer stack and draws the layers that moved, untouched
+  ones quiet. No new workflow step and no new input — it reads `changed.txt`, which the
+  workflow already collects. The two agree by test: every `data-layer` in the page must be
+  a layer the classifier produces, and every classifier layer must be drawn in the page or
+  declared as a deliberate extra.
+
+The classification rules are ordered by **specificity, not by layer**, because a use-case's
+dbt project and ontology live under `skill-packs/` — layer order files the whole warehouse
+as harness. Same trap in the other direction: `/rules/` reads as a harness segment, and
+`wren/knowledge/rules/general.md` is a generated serving artifact.
+
+The section is a projection rather than a copy of the diagram on purpose. This renderer
+already deleted one fixed diagram — an earlier version drew the same gate chain on every
+PR, identical by construction — so what varies per PR is what gets drawn.
+
 ## Agent and command topology
 
 Canonical dbt skill entrypoint: `dbt-skill` (compatibility alias: `senior-analytics-engineer`).
