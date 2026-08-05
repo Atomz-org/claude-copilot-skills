@@ -361,9 +361,11 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 
 | Stage | Produces | Needs |
 |---|---|---|
-| `ontology` | `ontology/connectors/*.ttl`, `topology/*.ttl` | `connectors.yml` |
-| `index` | `ontology/index.json` — the machine-facing projection | same generator pass |
+| `taxonomy` | `ontology/conceptual-model.json` — what the project *should* build | `sources.yml`, `taxonomy.yml` |
 | `columns` | `ontology/column-memory.json` — the column contract | manifest, sqlglot |
+| `annotations` | `ontology/column-annotations.json` — what each column *means* | `annotations.yml`, column-memory |
+| `ontology` | `ontology/connectors/*.ttl`, `topology/*.ttl` | `connectors.yml`, annotations |
+| `index` | `ontology/index.json` — the machine-facing projection | same generator pass |
 | `seeds` | `dbt_project/seeds/sample/*.csv` | manifest, sqlglot, reference data |
 | `graphify` | the code graph, rebuilt | `--graphify-update` |
 | `graph` | dbt lineage + connector/concept topology merged into `graphify-out/graph.json` | manifest |
@@ -373,6 +375,22 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 The `wren` stage is sequenced last on purpose: it projects the artifacts the earlier
 stages just refreshed (`index.json`, `column-memory.json`), so running it earlier would
 enrich from the previous generation.
+
+`columns → annotations → ontology` is one chain, and it is the whole path from raw data to
+a served semantic layer:
+
+```
+raw layer ─ taxonomy ─┐
+                      ├─ columns ─ annotations ─ ontology ─ wren ─ BI / MCP
+dbt models ───────────┘             (decisions)   (RDF+index)  (knowledge)
+```
+
+Each link reads the one before it. Annotations are keyed on the conformed columns
+`columns` derives; the ontology projects them into `topology/column-semantics.ttl` and
+`index.json`'s `column_semantics`; the `wren` stage turns that into
+`knowledge/rules/column-semantics.md` and `knowledge/caveats/pii.md`. Run `ontology` first
+— where it used to sit — and every artifact still regenerates, every stage still reports
+`ok`, and the ontology describes the previous generation's columns.
 
 `/new-use-case` and `/new-connector` both end here. The gate is the existing test suite —
 `tests/test_use_case_sync.py` asserts the committed artifacts are current — so **do not add
@@ -411,10 +429,280 @@ Three further rules decide whether the output can be trusted:
   every identifier the ontology has published. The shared ERP/CRM vocabulary stays in
   `scripts/ontology_generator.py`; a domain's own concepts go in its `ontology.yml`.
 
+### The other direction — ontology before models
+
+Every artifact above is derived from `manifest.json`, so all of them describe what the dbt
+project **is**. That is the right direction for keeping an ontology honest and the wrong
+one for building a project: rule 6 wants the conceptual model to precede the physical one,
+and a model derived from the manifest cannot exist until the models do.
+
+`scripts/raw_taxonomy.py` runs the other way. Its inputs are the raw layer and the
+use-case spec; its output declares what the project **should** build:
+
+```bash
+python3 scripts/raw_taxonomy.py --use-case <slug> --propose   # candidates + evidence
+python3 scripts/raw_taxonomy.py --use-case <slug>             # ontology/conceptual-model.json
+python3 scripts/raw_taxonomy.py --use-case <slug> --plan      # entities with no dbt model yet
+```
+
+The two directions meet at `--plan`: every declared entity is either realised by a dbt
+model or reported as an open gap, so the conceptual model is falsifiable the same way
+`test_every_declared_dbt_model_exists` makes the generated Turtle falsifiable. Agent
+surface: skill `raw-layer-ontology`, command `/raw-ontology`.
+
+**One input is hand-authored and it is the only one.** Whether `tblCust01` is a Customer,
+which column identifies it, and what one row means are judgements no schema contains.
+`--propose` emits candidates *with their evidence*; a human confirms them into
+`ontology/taxonomy.yml`; everything downstream is derived. Same split, same reason, as
+`connectors.yml`.
+
+Three rules, each enforced rather than documented:
+
+- **An attribute that is not a declared source column does not exist** (rule 5). This
+  artifact is written before anything can check it, so an entity attribute tracing to no
+  column in `sources.yml` is reported and kept out — otherwise the output is a beautiful
+  description of a warehouse nobody can build. This is why source column contracts are a
+  prerequisite, not a nicety.
+- **A grain is declared or the entity is incomplete** (rule 4). No schema supplies "one row
+  per customer per tenant", so the taxonomy carries it and an entity without one fails.
+  Silence here is what makes a measure double-count three layers down while every test
+  passes.
+- **A proposal never overwrites a decision.** `--propose` refuses when `taxonomy.yml`
+  exists. Name matching is evidence for a human, and rewriting a curated mapping would make
+  the guess authoritative over the judgement — the same rule that stops the source-column
+  emitter touching a table that already declares `columns:`.
+
+A fourth rule was a bug first, found by running the pipeline end to end on a two-entity
+demo: **a gap is a concept this domain asked for**, meaning one its own `ontology.yml`
+declares. Counting every concept in the shared ERP/CRM vocabulary as a gap buried the one
+that mattered under 56 nobody had requested — rule 3, and the same unbounded-dump problem
+as the untested-model list. The shared ones are now `shared_vocabulary_unused`: a count
+plus a ten-name sample.
+
+Measured against this repo's raw layer: **200 declared tables across 12 `sources.yml`, 807
+declared columns, 40 concepts matched by name, 97 tables matched nothing** (each reported,
+never guessed at). The key-shape heuristic earns its keep and was wrong first: requiring a
+stem before `Number`/`Code` meant `accounts.Number` — the account number — was not a
+candidate while `OrgId` and `SalaryCode` were. With a bare stem allowed, the top-ranked
+candidate for `dim_accounts`, `dim_customers`, and `dim_articles` is `Number`,
+`CustomerNumber`, `ArticleNumber`. A bare `Id` stays excluded: it identifies a row in
+whichever table it sits in and names no entity.
+
+**No `taxonomy.yml` is committed for enhanza-analytics, deliberately.** Only 10 of its 359
+models state a grain anywhere, so authoring one would mean inventing ~40 grain sentences —
+rule 5, and the exact failure this script exists to prevent. The tool ships; the taxonomy
+is a human deliverable, and the stage skips with the remedy named until someone writes it.
+
+### Column annotations — what a column *means*
+
+`column-memory.json` records which raw column feeds which conformed column. Nothing recorded
+what the conformed column **is**, and three binding rules need exactly that: additivity per
+measure (rule 11), PII declared and tagged (rule 17), `accepted_values` on every closed
+domain (rule 28). Measured before this existed: **272 conformed columns, 1 accepted_values
+test in the entire project**, and nothing anywhere recording additivity or PII.
+
+```bash
+python3 scripts/column_annotations.py --use-case <slug> --propose --evidenced-only  # bootstrap
+python3 scripts/column_annotations.py --use-case <slug> --propose    # candidates + evidence
+python3 scripts/column_annotations.py --use-case <slug>              # the artifact
+python3 scripts/column_annotations.py --use-case <slug> --coverage   # what is unannotated
+```
+
+Annotated here: **89 of 272 conformed columns** — 78 whose every facet the project already
+evidenced, plus 11 measures whose additivity is a decision, each recorded with its reason.
+5 columns carry PII; 9 may not be summed the way their names suggest. The remaining 183 are
+in `--coverage`'s backlog, unannotated rather than guessed at.
+
+`--propose --evidenced-only` is what makes the first run produce an artifact instead of a
+page of blanks: it emits exactly the columns whose facets are already backed — a description
+the project wrote in its own `schema.yml`, a role derived from a cast or a name, and for a
+measure an additivity that followed from its definition. Everything else is left out, and
+a column absent from the file is honestly unannotated.
+
+The consequence was concrete: `wren/knowledge/rules/column-contracts.md`, the file an agent
+reads before writing SQL, lists `QuantityInStock` beside `TotalToPay` as bare names — so the
+agent cannot know that summing the first across time is wrong, or that `RecipientEmail` must
+not reach a shared dashboard.
+
+Four decisions shape the artifact:
+
+- **Facets, not a tree.** A column is several things at once — `TotalToPay` is a measure
+  *and* additive *and* currency-denominated *and* not PII. A single hierarchy has to pick one
+  of those as the parent and loses the rest, so `role` / `additivity` / `pii` / `unit` /
+  `domain` are independent.
+- **Annotated at the conformed column, not per model.** Conformance already asserts
+  `ArticleNumber` means the same thing in Fortnox and Shopify. Measured: **272 decisions
+  cover 952 (column, connector) pairs**, and a per-model annotation would let one column be a
+  measure in one connector and a dimension in another — the drift the conformed layer exists
+  to prevent.
+- **Evidence, never invention.** Candidates come from cast types, name shapes, existing
+  `accepted_values` tests, and the project's own column descriptions — **97 definitions
+  harvested** rather than paraphrased. A closed domain with no cited source is refused
+  (rule 5): a wrong enum passes every `accepted_values` test, because it generated them.
+- **Abstain rather than guess.** 49 of 272 columns abstain, and `additive` is never proposed
+  — it is what a reader already assumes, so proposing it removes the prompt to decide while
+  adding nothing.
+
+Six derivation rules were wrong first and are pinned. The last four were found by reading
+the project's own descriptions next to what the deriver had proposed for the same column —
+which is the argument for harvesting definitions rather than paraphrasing them:
+
+- **A regex cannot read a cast.** `cast(nullif(c.city,'') as string) City` is the ordinary
+  form here, and a `[^()]*` body stops at the inner paren — so the simple case read and every
+  wrapped one silently lost its type. Balanced-paren scan instead: type coverage 179 of 272.
+- **An identifier suffix outranks a numeric cast.** `OrderNumber` is an `int64` and summing
+  it is meaningless. The Swedish accounting reference states the same rule for account
+  numbers: *"They are identifiers, not quantities; arithmetic on them is always a bug."*
+- **A definition outranks a name shape.** `Account` carries no suffix and casts to `numeric`,
+  so nothing in its name or type stops it being read as a measure — only its own description,
+  *"BAS account number, consists of four digits"*, does. Same signal makes `AccountClass` a
+  dimension rather than a quantity.
+- **A BAS account number is not a bank account.** The bank-identifier shape matched a bare
+  `AccountNumber`, so all four of this project's were classed as **direct PII** — putting the
+  chart of accounts behind a masking rule. `BankAccount`, Bankgiro, Plusgiro and IBAN still
+  match; the bare form does not.
+- **A price per unit is non-additive at every grain.** Nothing in `AmountPerUnit` reads as a
+  rate, so the name shapes left it additive by omission; *"Price per unit (day, hour etc.)"*
+  is what makes summing it meaningless. Its unit is currency, not a count.
+- **`Discount` contains `count`.** Matching quantity words as substrings proposed
+  `PriceAfterDiscount` as a quantity. Words, not substrings.
+
+The one enum this project declares, Shopify's `FinancialStatus`, is **not** a conformed
+column, so the annotated set has zero closed domains — and `AccountClass`, which obviously
+has one, gets none: the class *names* live in a warehouse lookup this repo cannot read, and
+BAS class names transliterated from memory would be exactly the invented enum rule 5
+forbids. Refusing there is the rule working, not a gap in it.
+
+Shaped after the annotation and taxonomy skills the request cited — poly-hierarchical facets
+rather than one tree, per-item confidence with an explicit abstain, evidence bound to every
+node, and refuse-to-overwrite-a-decision.
+
+### Generating the fields nobody wrote down
+
+Every generator here stops at the same wall, correctly: `raw_taxonomy.py` refuses to write a
+grain, `column_annotations.py` abstains on additivity and PII. That leaves real work undone
+— **183 of 272 conformed columns unannotated, and no `taxonomy.yml` at all**.
+`scripts/lm_propose.py` closes it with a language model without giving up rule 5:
+
+```bash
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --prepare --out batch.json
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --apply answers.json
+python3 scripts/lm_propose.py --use-case <slug> --target annotations --review   # then --promote
+```
+
+Four decisions, and the module is mostly the last one:
+
+- **The script assembles the evidence; the model only decides.** Each item ships the cast
+  types, the raw source columns the value traces to, the sibling columns of its concept, and
+  the project's own descriptions. A model asked "what is `AmountPerUnit`?" recalls; one
+  handed `favrit_api__orderline.unit_price` classifies. Only the second is checkable.
+- **Output is a proposal, never an artifact.** `ontology/proposals/*.lm.yml`, every entry
+  `source: lm` with its confidence and cited evidence, `reviewed: false`. `--promote` moves
+  only what a human marked, holds anything below `--min-confidence`, and never touches a
+  column the hand-authored file already decides.
+- **No hidden API call.** The default backend is the agent running it — `--prepare` writes
+  the questions, `--apply` reads the answers — which is how graphify's own skill works here.
+  `--backend anthropic` exists for unattended runs and skips when the key or the package is
+  absent.
+- **Five refusals at `--apply`, each a way a generated field is wrong while reading well.**
+
+Measured on the first real batch: 24 items answered, **24 accepted, 0 dropped**; a
+deliberately fabricated batch of 4 was **rejected 4 for 4**. Two of those five refusals
+exist because the first version of the fabricated batch *passed*:
+
+| Refusal | The answer it caught |
+|---|---|
+| id not in the batch | a column name that exists in no artifact |
+| definition restates the name | `Unit` → "The unit." |
+| closed domain with no source | `TermsOfDelivery` → five invented Incoterm codes |
+| evidence names nothing in the item | "I know how ERP systems model this" |
+| answer contradicts its own casts | `Manufacturer` (string in every connector) → additive currency measure |
+
+The grounding check is the subtle one and was wrong twice. Matching the item as **text** let
+prose ground on the JSON *key* `source_model`; matching the item's own **name** let "the
+Incoterms standard defines these terms" ground on `terms`. It now matches values only, minus
+the item's own name, **as written** — `fortnox_api__articles` grounds, a loose `article` does
+not. It cannot catch a plausible misreading of real evidence; that is what review is for.
+
+Real output worth reading: `DiscountType` gained the project's **second** closed domain
+(`PERCENT | AMOUNT`, cited to the project's own description), which in turn made `Discount`
+**non-additive** — its unit is decided by another column, so summing it mixes percentages
+with amounts. And `ChargeHours`, which the deriver had proposed as *currency* from its name,
+is `duration`: the lineage says `seventime_api__timelogs.invoiceableTime`.
+
+### Ambiguous bindings, and why a contract may not be built from one
+
+Found by trying to use the source contracts: `fortnox_api.accounts` declared `Amount`,
+`Date`, `Total` and `VAT` — voucher columns.
+
+The cause is one line of SQL, not a sloppy bootstrap. `select Amount from st, fy, e, a, ee`
+references a column **unqualified with five tables in scope**; the resolver resolves it
+against each, which its docstring states as a deliberate choice — *"reported against each,
+because guessing one is worse than saying so"*. For lineage that is right: every candidate
+is visible. For a contract it is fatal, because "accounts has an `Amount` column" is exactly
+the claim nobody established.
+
+So the resolver keeps its behaviour and now **says** it: `ColumnEdge.ambiguous` marks a
+binding that is one of N guesses. Two consumers read the same flag, and the symmetry is the
+point:
+
+- `--emit-source-columns` will not **write** a contract from an ambiguous binding.
+- `check_source_columns` will not **fail** one with it. Blaming `accounts` for a bare
+  `Amount` five tables could own is the same guess pointed the other way.
+
+A contract also answers a different question from lineage — "what do we read", not "what fed
+this output column" — so `qualified_source_reads()` collects every *qualified* reference
+anywhere in the statement, including join keys and filters a projection never mentions.
+Without it `accounts` came out with **one** column while its own SQL demonstrably reads
+three: `a.OrgId` and `a.Year` appear only in a JOIN.
+
+Measured on enhanza-analytics: **295 ambiguous bindings refused, 252 columns pruned across 7
+files**, dbt parse clean, alignment check unchanged at 0 errors / 9 accepted warnings.
+`--prune` deletes only from blocks carrying the generated banner — the same ownership marker
+as WrenAI's `source: dbt_metric` — never from a hand-authored one, and never adds.
+
+Two rules that were bugs first:
+
+- **A block that loses every column withdraws; it does not become `columns:` with nothing
+  under it.** dbt refuses to parse the project. Found by running the prune for real: one
+  `seventime` table lost all twelve and the whole parse failed.
+- **Normalise the edge width at construction, not at each unpack.** A cache written before
+  the flag existed, and a hand-built lineage in a test, both hold 4-tuples.
+
+The remaining thinness is honest rather than fixed: where a project never qualifies a
+reference, nothing in the SQL says which table owns the column. Measured, of 305 fanned-out
+references only **41** are resolvable by elimination against qualified evidence elsewhere.
+A precise thin contract is what ontology-first generation needs — an entity built from the
+broad one would carry `VAT` on `dim_accounts`.
+
+### Where the annotations go — the ontology, then the serving tier
+
+An annotation nothing carries forward reaches neither BI nor an agent, which are the two
+consumers that need it. Three projections, all from the one artifact:
+
+| Destination | Holds | Why |
+|---|---|---|
+| `ontology/topology/column-semantics.ttl` | one `conn:ConformedColumn` per column, facets as triples | the ontology is where a concept's meaning already lives; **869 triples, rdflib-clean** |
+| `ontology/index.json` → `column_semantics` | the same facets, flat | backs the `describe_column` MCP tool; `rdflib` is optional here, so a server cannot parse Turtle at request time |
+| `wren/knowledge/rules/column-semantics.md` + `caveats/pii.md` | the aggregation contract and the disclosure rule, in prose | what an agent reads before it writes `SUM(...)` |
+
+The Turtle **declares the vocabulary it uses** — `conn:ConformedColumn`, `conn:role`,
+`conn:additivity`, `conn:pii` — rather than assuming it, because a consumer meeting
+`conn:additivity` for the first time has nowhere else to look it up. Index and Turtle come
+out of one pass and `test_index_and_turtle_agree_on_every_annotated_column` fails if they
+diverge, exactly as for models and mappings.
+
+`column-semantics.md` **leads with the prohibitions**, because those are the part a name
+cannot convey: `Price` is per unit and `QuantityInStock` is a level, so both look summable
+and both produce a plausible wrong number. It also states what it does not cover — a file
+listing 89 columns and silent about the other 183 reads as complete, and an agent then
+assumes defaults for the rest.
+
 ### Serving it later — `index.json`
 
 `ontology/index.json` is a flat projection of the same facts the Turtle asserts: four
-uniform record lists (`connectors`, `concepts`, `models`, `mappings`) plus `gaps` and a
+uniform record lists (`connectors`, `concepts`, `models`, `mappings`,
+`column_semantics`) plus `gaps` and a
 `provenance` block, with `mcp_tools` naming the key that backs each tool. Both artifacts come
 out of one generator pass, and `test_index_and_turtle_agree_on_every_model` fails if they
 diverge.

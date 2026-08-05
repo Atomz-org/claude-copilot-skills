@@ -9,11 +9,6 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: amount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: customer
   type: TEXT
   is_calculated: false

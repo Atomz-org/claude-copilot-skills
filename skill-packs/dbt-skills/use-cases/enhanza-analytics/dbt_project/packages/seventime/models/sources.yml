@@ -46,18 +46,6 @@ sources:
         columns:
           - name: OrgId
           - name: _id
-          - name: categoryName
-          - name: cost
-          - name: endTimestamp
-          - name: invoiceableTime
-          - name: isAbsence
-          - name: isInvoiceable
-          - name: isWorkTime
-          - name: pricePerHour
-          - name: time
-          - name: timestamp
-          - name: user
-          - name: userName
       - name: workorders
         # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
         # from the staging SQL that reads them, so this is a statement of what we depend on and

@@ -6,6 +6,10 @@ Conformed column lists per concept, derived from parsed column lineage across
 every connector's adapter model. When writing SQL against a conformed concept,
 these are the column names that exist on every supplier.
 
+This file says which columns *exist*. What they *mean* — whether SUM() over one
+is meaningful, what unit it carries, whether it is personal data — is in
+`column-semantics.md` and `../caveats/pii.md`.
+
 ## dim_accounts
 
 Suppliers: fortnox (fortnox_erp_bi_dim_accounts)

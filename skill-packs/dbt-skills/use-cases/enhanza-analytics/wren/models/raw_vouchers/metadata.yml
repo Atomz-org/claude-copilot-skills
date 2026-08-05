@@ -9,21 +9,6 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: VoucherNumber
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VoucherSeries
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Year
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 cached: false
 properties:
   dbt_layer: raw

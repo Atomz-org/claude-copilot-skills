@@ -9,17 +9,7 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: Date
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: EmployeeId
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Hours
   type: TEXT
   is_calculated: false
   not_null: false
