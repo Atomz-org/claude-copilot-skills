@@ -64,6 +64,19 @@ _SHARED_REAL_TREE = frozenset({
 
 _SHARED_GROUP = "enhanza_committed_tree"
 
+#: Same rule, different tree: both of these run `wren context build` against the
+#: committed example-order-revenue-mart wren/ project, which writes wren/target/.
+#: On separate workers the two builds race and one reads a half-written mdl.json —
+#: measured: 4 reproducible equivalence failures that all pass serially. A second
+#: group rather than membership in _SHARED_REAL_TREE, because serialising them
+#: against the ~16s enhanza set would cost wall time for no shared state.
+_SHARED_WREN_TREE = frozenset({
+    "test_wren_semantic_equivalence.py",
+    "test_metricflow_wren_agreement.py",
+})
+
+_WREN_GROUP = "example_wren_tree"
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(config, items) -> None:
@@ -82,7 +95,12 @@ def pytest_collection_modifyitems(config, items) -> None:
     """
     for item in items:
         filename = Path(str(getattr(item, "path", "") or getattr(item, "fspath", ""))).name
-        group = _SHARED_GROUP if filename in _SHARED_REAL_TREE else filename
+        if filename in _SHARED_REAL_TREE:
+            group = _SHARED_GROUP
+        elif filename in _SHARED_WREN_TREE:
+            group = _WREN_GROUP
+        else:
+            group = filename
         item.add_marker(pytest.mark.xdist_group(group))
 
 

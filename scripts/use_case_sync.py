@@ -420,7 +420,49 @@ def stage_graph(use_case: Path, manifest: Optional[Path], check: bool) -> Stage:
             (ln for ln in oproc.stdout.splitlines() if ln.startswith("fragment:")), ""
         ).split(" -> ")[0].replace("fragment:", "topology:")
 
-    parts = [detail] + [p for p in (merged, topology) if p]
+    # Fragment C — the semantic layer: joins_to edges from relationships tests, plus
+    # semantic-model/metric/saved-query nodes. Manifest-derived (never wren/, which is
+    # this stage's *downstream*), and rides here for the same ordering-rule reason as
+    # the topology. Emits a skip payload, not a failure, when the project has neither
+    # relationships tests nor a semantic layer.
+    semantic = ""
+    if not check:
+        sproc = subprocess.run(
+            [sys.executable, str(REPO / "scripts/semantic_layer_to_graphify.py"),
+             "--manifest", str(manifest), "--format", "json", "--merge-graphify"],
+            capture_output=True, text=True, cwd=REPO, timeout=600,
+        )
+        if sproc.returncode != 0:
+            tail = (sproc.stderr or sproc.stdout).strip().splitlines()
+            return Stage(
+                "graph", FAIL,
+                f"semantic layer: {tail[-1] if tail else f'exit {sproc.returncode}'}",
+            )
+        spayload = _first_json_line(sproc.stdout) or {}
+        if spayload.get("status") == "ok":
+            semantic = (f"semantic: {spayload.get('joins', 0)} joins, "
+                        f"{spayload.get('metrics', 0)} metrics")
+
+    # Fragment D — the column contracts. Previously a manual command outside this
+    # stage, which left its merge unprotected by the rebuild-before-merge ordering:
+    # anyone running `graphify update` after it silently deleted every merged node.
+    contracts = ""
+    if not check and (use_case / "ontology" / "column-memory.json").exists():
+        cproc = subprocess.run(
+            [sys.executable, str(REPO / "scripts/dbt_column_memory.py"),
+             "--use-case", use_case.name, "--manifest", str(manifest),
+             "--merge-graphify"],
+            capture_output=True, text=True, cwd=REPO, timeout=600,
+        )
+        if cproc.returncode != 0:
+            tail = (cproc.stderr or cproc.stdout).strip().splitlines()
+            return Stage(
+                "graph", FAIL,
+                f"column contracts: {tail[-1] if tail else f'exit {cproc.returncode}'}",
+            )
+        contracts = "contracts merged"
+
+    parts = [detail] + [p for p in (merged, topology, semantic, contracts) if p]
     return Stage("graph", OK, "; ".join(parts))
 
 

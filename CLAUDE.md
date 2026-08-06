@@ -404,11 +404,26 @@ from. Measured here: 366 model nodes with the correct order, 0 with the wrong on
 why the rebuild is a stage sequenced *before* the merge rather than a line in a runbook, and
 why `--all --graphify-update` rebuilds once for the repository instead of once per use-case.
 
-The `graph` stage merges two fragments in sequence: dbt lineage, then the connector/concept
-topology (`ontology_generator.py --merge-graphify`) — one node per connector and per
-conformed concept, connectors edging `supplies` / `plans_to_supply` into the concepts and
-the adapter model nodes edging `implements` into the concepts they realise, built from the
-same in-memory pass that renders `index.json` without rewriting it.
+The `graph` stage merges four fragments in sequence, all manifest- or artifact-derived
+and all protected by the same rebuild-before-merge ordering:
+
+1. **dbt lineage** (`dbt_manifest_to_graphify.py`) — the model DAG.
+2. **connector/concept topology** (`ontology_generator.py --merge-graphify`) — one node
+   per connector and per conformed concept, connectors edging `supplies` /
+   `plans_to_supply` into the concepts and the adapter model nodes edging `implements`
+   into the concepts they realise, built from the same in-memory pass that renders
+   `index.json` without rewriting it.
+3. **semantic layer** (`semantic_layer_to_graphify.py`) — `joins_to` edges from dbt
+   `relationships` tests (child → parent, with the FK columns and a unique-test-derived
+   cardinality as edge attributes), plus semantic-model / metric / saved-query nodes
+   edged `describes` / `measures` / `composes` / `bundles`. Manifest-derived, never
+   read from `wren/` — `relationships.yml` is the wren importer's projection of the
+   same tests, and this stage runs before `wren`. Measured on enhanza: **0 of the 101
+   FK pairs were recoverable from `parent_map`** — a fact model does not `ref()` the
+   dim it joins to, so before this fragment the join topology was invisible to
+   `graphify query` entirely.
+4. **column contracts** (`dbt_column_memory.py --merge-graphify`) — previously a manual
+   command outside the stage, which left its merge unprotected by the ordering rule.
 The relation carries the implemented-versus-planned distinction because a flat edge loses
 it: naive traversal once answered "ten connectors supply Account" when five were catalogue
 expectations. graphify's detector puts `.ttl` in no category at all, so without this merge

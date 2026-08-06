@@ -70,7 +70,13 @@ SAMPLE = 10
 # 359-model project buries the DAG in leaf noise, and what a reader actually wants to know
 # — is the primary key tested — is one boolean. Tests become attributes on the model they
 # cover, and `relationships` tests are already edges via depends_on.
-MODELLED_TYPES = ("model", "snapshot", "seed", "analysis", "exposure", "metric")
+#
+# `metric` is deliberately absent too, and used to sit here as dead code:
+# Manifest.all_nodes() merges only nodes|sources|exposures, so a "metric" entry never
+# reached the loop and read as handled when it was not. Metrics, semantic models, and
+# saved queries are emitted by scripts/semantic_layer_to_graphify.py — a separate
+# fragment, so this file's committed byte-for-byte artifact never churns for them.
+MODELLED_TYPES = ("model", "snapshot", "seed", "analysis", "exposure")
 
 # A model's layer, read off the path rather than the name. Order matters: the first match
 # wins, so `staging/erp` resolves to `unified` before the generic `staging` rule.
