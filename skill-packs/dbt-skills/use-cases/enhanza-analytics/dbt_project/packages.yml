@@ -5,6 +5,9 @@
 #
 # Paths are local: `dbt deps` symlinks them into dbt_packages/. Run it after editing.
 packages:
+  # Hub package: date_spine for models/semantic/metricflow_time_spine.sql.
+  - package: dbt-labs/dbt_utils
+    version: [">=1.1.0", "<2.0.0"]
   - local: packages/core
   - local: packages/favrit
   - local: packages/fortnox

@@ -1,0 +1,129 @@
+version: 2
+
+# Every metric this project serves, defined once (analytics rule 42). The WrenAI
+# sync compiles each into an MDL view of the same name, so
+# `SELECT * FROM invoiced_sales` through the engine IS the metric — filter,
+# spine join, and null fill included. Changing a number means changing this file
+# and regenerating; never editing a projection.
+#
+# Filter literals come from the fact SQL ('Invoice', 'Order', 'isDue'), never
+# from schema.yml descriptions — the InvoiceType description there says 'Sales'
+# while the SQL emits 'Customer', which is exactly why.
+
+metrics:
+  # --- simple ---------------------------------------------------------------
+  - name: invoiced_sales
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_upsales_enabled', false) or var('is_favrit_enabled', false)) }}"
+    label: Invoiced Sales
+    description: >
+      Sum of SalesValue over invoice lines only (document_type = 'Invoice').
+      Tenant DefaultCurrency; not converted across currencies — group by
+      sales_line__default_currency before comparing tenants.
+    type: simple
+    type_params:
+      measure:
+        name: sales_value
+        fill_nulls_with: 0
+        join_to_timespine: true
+    filter: "{{ Dimension('sales_line__document_type') }} = 'Invoice'"
+
+  - name: order_intake
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_upsales_enabled', false) or var('is_favrit_enabled', false)) }}"
+    label: Order Intake
+    description: Sum of SalesValue over order lines (document_type = 'Order').
+    type: simple
+    type_params:
+      measure: sales_value
+    filter: "{{ Dimension('sales_line__document_type') }} = 'Order'"
+
+  - name: contribution_margin
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_upsales_enabled', false) or var('is_favrit_enabled', false)) }}"
+    label: Contribution Margin
+    description: >
+      Sum of ContributionValue (sold value minus estimated item cost) on
+      invoice lines.
+    type: simple
+    type_params:
+      measure: contribution_value
+    filter: "{{ Dimension('sales_line__document_type') }} = 'Invoice'"
+
+  - name: invoice_count
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_tripletex_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_visma_economic_enabled', false)) }}"
+    label: Invoices
+    description: Count of invoice documents, customer and supplier combined.
+    type: simple
+    type_params:
+      measure: invoice_count
+
+  - name: overdue_invoice_count
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_tripletex_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_visma_economic_enabled', false)) }}"
+    label: Overdue Invoices
+    description: Count of invoice documents currently flagged due (due = 'isDue').
+    type: simple
+    type_params:
+      measure: invoice_count
+    filter: "{{ Dimension('invoice__due') }} = 'isDue'"
+
+  # --- ratio ----------------------------------------------------------------
+  - name: contribution_margin_pct
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_upsales_enabled', false) or var('is_favrit_enabled', false)) }}"
+    label: Contribution Margin %
+    description: Contribution margin over invoiced sales, invoice lines only.
+    type: ratio
+    type_params:
+      numerator: contribution_margin
+      denominator: invoiced_sales
+
+  - name: overdue_invoice_share
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_tripletex_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_visma_economic_enabled', false)) }}"
+    label: Overdue Invoice Share
+    description: Overdue invoices as a share of all invoices.
+    type: ratio
+    type_params:
+      numerator: overdue_invoice_count
+      denominator: invoice_count
+
+  # --- cumulative (needs metricflow_time_spine) -----------------------------
+  - name: invoiced_sales_mtd
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_upsales_enabled', false) or var('is_favrit_enabled', false)) }}"
+    label: Invoiced Sales (Month to Date)
+    description: Invoiced sales accumulated from the start of the calendar month.
+    type: cumulative
+    type_params:
+      measure: sales_value
+      cumulative_type_params:
+        grain_to_date: month
+    filter: "{{ Dimension('sales_line__document_type') }} = 'Invoice'"
+
+  # An outstanding_invoice_balance metric over invoice_open_balance is the
+  # natural ninth — it waits on wren compiler support for non_additive_dimension,
+  # so the measure ships (semantic models) and the metric does not.
+
+saved_queries:
+  - name: monthly_invoiced_sales_by_country
+    # Gated on BOTH legs: the sales metrics AND the counterparties semantic model
+    # whose `country` dimension the query groups by. A favrit-only tenant enables
+    # sales but not counterparties, and a one-leg gate would fail its parse.
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_upsales_enabled', false) or var('is_favrit_enabled', false)) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_tripletex_enabled', false) or var('is_upsales_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_visma_economic_enabled', false)) }}"
+    description: >
+      Monthly invoiced sales and contribution margin by counterparty country.
+      Simple and ratio metrics only — the wren compiler's saved-query support.
+    query_params:
+      metrics:
+        - invoiced_sales
+        - contribution_margin
+        - contribution_margin_pct
+      group_by:
+        - TimeDimension('metric_time', 'month')
+        - Dimension('counterparty__country')
+      where:
+        - "{{ Dimension('counterparty__country') }} is not null"

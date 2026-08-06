@@ -149,10 +149,10 @@ flowchart LR
     S6 --> S7["logic_bi_fact_sales"]
 ```
 
-That single figure stands on **178 other tables through 231 computed links, seven steps deep**, starting from 75 raw source tables across twelve connectors — of which one, `fortnox`, accounts for 170 of the project's <b data-metric="dbt_models">378</b> models. Every block to the left of the figure has to be correct, on time, and unchanged in shape for the number to be right.
+That single figure stands on **178 other tables through 231 computed links, seven steps deep**, starting from 75 raw source tables across twelve connectors — of which one, `fortnox`, accounts for 170 of the project's <b data-metric="dbt_models">379</b> models. Every block to the left of the figure has to be correct, on time, and unchanged in shape for the number to be right.
 
 :::warning[Never run `graphify update` after a dbt merge]
-A rebuild deletes all <b data-metric="dbt_models">378</b> models and their <b data-metric="dbt_edges">1336</b> edges, because there is no SQL parser to re-extract them from — and leaves a graph that still looks populated. This is not hypothetical: it happened in this checkout, and the measurement taken at the time was 104 of 688 lineage links surviving. Re-running `--merge` restored all 688 and dropped isolated nodes from 353 to 94. Rebuild **before** the merge, never after.
+A rebuild deletes all <b data-metric="dbt_models">379</b> models and their <b data-metric="dbt_edges">1336</b> edges, because there is no SQL parser to re-extract them from — and leaves a graph that still looks populated. This is not hypothetical: it happened in this checkout, and the measurement taken at the time was 104 of 688 lineage links surviving. Re-running `--merge` restored all 688 and dropped isolated nodes from 353 to 94. Rebuild **before** the merge, never after.
 :::
 
 ## See it move

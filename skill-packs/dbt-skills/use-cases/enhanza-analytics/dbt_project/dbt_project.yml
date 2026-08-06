@@ -109,6 +109,14 @@ models:
       +schema: logic_bi
       +tags: ['logic', 'mart']
 
+    # MetricFlow semantic layer: semantic models, metrics, and the time spine.
+    # The spine materializes beside the marts it serves; the YAML in this
+    # directory is parsed from model-paths automatically (no extra path config).
+    semantic:
+      +schema: logic_bi
+      +tags: ['semantic', 'mart']
+      +materialized: table
+
   # ------------------------------------------------------------------------------------
   # Tenancy gates for the connector packages — in the ROOT project, twice over. First,
   # doctrine: packages.yml decides what is installed (composition); these vars decide what
