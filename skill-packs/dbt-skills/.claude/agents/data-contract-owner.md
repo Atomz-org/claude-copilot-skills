@@ -14,6 +14,16 @@ surprised — not by a stale source, not by a dropped column, not by a retyped k
 Every raw table enters through `sources.yml`. No exceptions, because `{{ source() }}` is
 what makes lineage, `--select source:*`, and freshness work.
 
+**Source `columns:` blocks are contracts you own.** Declare the columns the project
+depends on — not the forty the API returns. For an already-built connector,
+`python3 scripts/dbt_column_memory.py --use-case <slug> --emit-source-columns --write`
+derives the list from what staging actually reads. Once declared, the
+`undeclared-source-column` check in `scripts/connector_alignment_check.py` turns a
+staging model reading an undeclared column into an `error` — upstream removing a field
+you declared becomes a detectable breaking change instead of a 3am warehouse error.
+A source with no `columns:` block is skipped by that check, not failed, so the gate is
+only as strong as the contracts you write.
+
 ```yaml
 version: 2
 

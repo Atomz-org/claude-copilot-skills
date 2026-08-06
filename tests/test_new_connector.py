@@ -13,6 +13,7 @@ Two things are under test:
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -461,3 +462,114 @@ def test_missing_dbt_project_is_an_error(tmp_path, monkeypatch):
     monkeypatch.setattr(new_connector, "REPO", tmp_path)
     with pytest.raises(SystemExit, match="dbt_project.yml"):
         new_connector.detect(use_case)
+
+
+# ---------------------------------------------------------------------------------------
+# Contract-first scaffolding: the committed contract reaches the stub, offline
+# ---------------------------------------------------------------------------------------
+
+
+def _with_column_memory(use_case: Path) -> None:
+    """A committed contract for dim_customers, as ontology/column-memory.json holds it."""
+    ontology = use_case / "ontology"
+    ontology.mkdir(parents=True, exist_ok=True)
+    (ontology / "column-memory.json").write_text(
+        json.dumps(
+            {
+                "contracts": [
+                    {
+                        "concept": "dim_customers",
+                        "suppliers": ["acme", "beta"],
+                        "column_count": 3,
+                        "columns": [
+                            {"column": "CustomerId", "missing_from": []},
+                            {"column": "CustomerName", "missing_from": []},
+                            {"column": "Country", "missing_from": ["beta"]},
+                        ],
+                    }
+                ],
+                "bindings": [
+                    {"concept": "dim_customers", "connector": "acme",
+                     "column": "CustomerId", "source_model": "acme_api__customers",
+                     "source_column": "id"},
+                    {"concept": "dim_customers", "connector": "beta",
+                     "column": "CustomerId", "source_model": "beta_api__clients",
+                     "source_column": "client_no"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_adapter_stub_carries_the_committed_contract(fake_use_case):
+    """The contract is read before the SQL is written — mechanically, not as advice.
+    column-memory.json is committed, so this works on a fresh clone with no manifest,
+    which is the exact state a new connector starts in."""
+    _with_column_memory(fake_use_case)
+    new_connector.main(
+        [
+            "shopify", "--use-case", "fake-uc",
+            "--tables", "customers=dim_customers", "--unified-concepts", "dim_customers",
+        ]
+    )
+    sql = (
+        fake_use_case / "dbt_project/models/staging/shopify/shopify_erp_bi_dim_customers.sql"
+    ).read_text(encoding="utf-8")
+    # every contract column, in contract order
+    assert sql.index("CustomerId") < sql.index("CustomerName") < sql.index("Country")
+    # peer evidence: what each existing connector mapped
+    assert "acme_api__customers.id" in sql
+    assert "beta_api__clients.client_no" in sql
+    # a column a peer dropped is flagged, not silently listed
+    assert "MISSING FROM beta" in sql
+    # and the stub never pretends the SQL is done
+    assert "NEEDS INPUT" in sql
+
+
+def test_adapter_stub_without_contract_names_the_recovery_command(fake_use_case):
+    """No contract is absence of knowledge, not licence to guess: the stub says how
+    to derive one instead of fabricating a column list."""
+    new_connector.main(
+        [
+            "shopify", "--use-case", "fake-uc",
+            "--tables", "orders=fact_orders", "--unified-concepts", "fact_orders",
+        ]
+    )
+    sql = (
+        fake_use_case / "dbt_project/models/staging/shopify/shopify_erp_bi_fact_orders.sql"
+    ).read_text(encoding="utf-8")
+    assert "No committed contract" in sql
+    assert "dbt_column_memory.py" in sql
+    assert "NEEDS INPUT" in sql
+
+
+def test_connectors_yml_row_is_printed_when_the_catalogue_exists(fake_use_case, capsys):
+    """The ontology catalogue row was the one paste file the printout never included —
+    it lived in a different document, and nothing checked the paste until the
+    alignment stage four steps later."""
+    (fake_use_case / "ontology").mkdir(parents=True, exist_ok=True)
+    (fake_use_case / "ontology" / "connectors.yml").write_text(
+        "connectors: []\n", encoding="utf-8"
+    )
+    new_connector.main(
+        [
+            "shopify", "--use-case", "fake-uc",
+            "--tables", "customers=dim_customers", "--unified-concepts", "dim_customers",
+            "--dry-run",
+        ]
+    )
+    out = capsys.readouterr().out
+    assert "connectors.yml" in out
+    assert "- key: shopify" in out
+    assert "status: planned" in out
+    assert "- dim_customers" in out
+
+
+def test_no_catalogue_no_connectors_block(fake_use_case, capsys):
+    """A use-case without an ontology gets no row to forget."""
+    new_connector.main(
+        ["shopify", "--use-case", "fake-uc", "--tables", "customers", "--dry-run"]
+    )
+    out = capsys.readouterr().out
+    assert "connectors.yml" not in out

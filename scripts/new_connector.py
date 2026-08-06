@@ -34,6 +34,7 @@ See .claude/skills/connector-onboarding/SKILL.md for the full procedure.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass, field
@@ -324,7 +325,7 @@ ADAPTER_STUB = """\
 -- column in the wrong position with a compatible type does not fail at all — it silently
 -- transposes the data. Diff this against {compare} before merging.
 -- [NEEDS INPUT] replace the column list
-
+{contract_block}
 select
     -- ColumnName
     *
@@ -364,6 +365,74 @@ BI_PLAIN_STUB = """\
 select *
 from {{{{ ref('{staging_model}') }}}}
 """
+
+
+def concept_contract(use_case: Path, concept: str) -> dict | None:
+    """The committed column contract for a concept, from ontology/column-memory.json.
+
+    The store is committed precisely so this works on a fresh clone with no manifest
+    and no warehouse — which is the exact state a new connector starts in, and why
+    the recovery path (`dbt_column_memory.py --emit-source-columns`) cannot help
+    here: it needs a parse, which needs the connector to already exist.
+    """
+    path = use_case / "ontology" / "column-memory.json"
+    if not path.exists():
+        return None
+    try:
+        memory = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    for contract in memory.get("contracts", []):
+        if contract.get("concept") == concept:
+            return contract
+    return None
+
+
+def contract_block(use_case: Path, concept: str, source: str) -> str:
+    """The conformed contract rendered into the adapter stub, so the column list is
+    read before the SQL is written rather than after the union fails.
+
+    One line per contract column, in contract order — order is load-bearing for a
+    UNION ALL. Each line carries up to two peer bindings (connector: source.column)
+    as evidence of what an existing adapter mapped; more than two is summarised,
+    because the stub is a worksheet, not a dump. Returns '' when no contract exists,
+    and the stub's [NEEDS INPUT] marker stands alone — absence of a contract is
+    absence of knowledge, not licence to guess (rule 5).
+    """
+    contract = concept_contract(use_case, concept)
+    if contract is None:
+        return (
+            f"-- No committed contract for '{concept}' yet. Once any adapter exists:\n"
+            f"--   python3 scripts/dbt_column_memory.py --use-case {use_case.name} "
+            f"--concept {concept}\n"
+        )
+
+    memory = json.loads((use_case / "ontology" / "column-memory.json").read_text(encoding="utf-8"))
+    bindings: dict[str, list[str]] = {}
+    for row in memory.get("bindings", []):
+        if row.get("concept") != concept:
+            continue
+        bindings.setdefault(row.get("column", ""), []).append(
+            f"{row.get('connector')}: {row.get('source_model')}.{row.get('source_column')}"
+        )
+
+    suppliers = ", ".join(contract.get("suppliers", [])) or "(none)"
+    lines = [
+        "--",
+        f"-- Conformed contract for {concept} ({contract.get('column_count', '?')} columns, "
+        f"in order; suppliers: {suppliers}).",
+        f"-- Land exactly these names in this order; '{source}' is then mechanical.",
+    ]
+    for col in contract.get("columns", []):
+        name = col.get("column", "?")
+        evidence = bindings.get(name, [])
+        shown = "; ".join(evidence[:2])
+        if len(evidence) > 2:
+            shown += f"; +{len(evidence) - 2} more"
+        missing = col.get("missing_from") or []
+        note = f"  MISSING FROM {','.join(missing)}" if missing else ""
+        lines.append(f"--   {name:<32s}{('<- ' + shown) if shown else ''}{note}")
+    return "\n".join(lines) + "\n"
 
 
 def write(path: Path, content: str, created: list, skipped: list, dry_run: bool) -> None:
@@ -573,6 +642,7 @@ def main(argv: list[str] | None = None) -> int:
                 union_model=f"{union_prefix}_bi_{concept}",
                 compare=compare,
                 staging_model=conv.staging_model(source, concept),
+                contract_block=contract_block(conv.use_case, concept, source),
             ),
             created,
             skipped,
@@ -619,7 +689,7 @@ def main(argv: list[str] | None = None) -> int:
         for f in sorted(skipped):
             print(f"  {rel(f)}")
 
-    print(paste_blocks(conv, source, display, args.currency, tables, model_names))
+    print(paste_blocks(conv, source, display, args.currency, tables, model_names, concepts))
     return 0
 
 
@@ -630,6 +700,7 @@ def paste_blocks(
     currency: str | None,
     tables: list[tuple[str, str]],
     model_names: set[str],
+    concepts: list[str] | None = None,
 ) -> str:
     """The three files a reviewer must see as a hand-written diff."""
     rel = lambda path: path.relative_to(REPO)  # noqa: E731
@@ -718,6 +789,29 @@ def paste_blocks(
             "   arriving, add one before the third — a per-connector `if` in every union",
             "   model is what the registry exists to prevent.",
         ]
+
+    # The ontology catalogue row — the fourth paste file, and the one this printout
+    # never used to include: the command's step 6 lived in a different document, and
+    # nothing verified the paste happened until the alignment stage four steps later.
+    # Only offered when the use-case has a catalogue; a use-case without an ontology
+    # gets no row to forget.
+    connectors_yml = conv.use_case / "ontology" / "connectors.yml"
+    if connectors_yml.exists():
+        next_no = 4 if conv.registry_macro else 3
+        out += [
+            "",
+            f"{next_no}. {rel(connectors_yml)} — the ontology catalogue row",
+            "   (status stays `planned` until the registry entry above lands; the",
+            "   ontology stage cross-checks the two and fails on a mismatch)",
+            "",
+            f"  - key: {source}",
+            f"    name: {display}",
+            "    kind: erp                  # [NEEDS INPUT] erp | crm | commerce",
+            "    status: planned",
+        ]
+        if concepts:
+            out += ["    expected_concepts:"]
+            out += [f"      - {c}" for c in concepts]
 
     out += [
         "",
