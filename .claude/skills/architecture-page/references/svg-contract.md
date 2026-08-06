@@ -42,7 +42,7 @@ are **exempt** from the overlap test, which only looks at rects whose class cont
 
 | | |
 |---|---|
-| Box | `rect class="box <role>"`, `height="64"`, `width` 156 or 230 |
+| Box | `rect class="box <role>"`, `height="64"`, `width` 156 or 192 |
 | Role | one of `data` `proc` `mean` `out` — the four palette roles, plus `.t-gate` ink for refusals |
 | Text origin | `x = box.x + 14` |
 | Baselines | title `box.y + 26`, first sub `+44`, second sub `+58` |
@@ -59,11 +59,11 @@ runs past the box's right edge minus 4px, or past the viewBox width minus 4px.
 
 Usable width is `box.width − 18`. Round **down**:
 
-| Class | Size | 156-wide box | 230-wide box |
+| Class | Size | 156-wide box | 192-wide box |
 |---|---|---|---|
-| `t-title` | 12px | 19 chars | 29 chars |
-| `t-sub` | 10.5px | 21 chars | 33 chars |
-| `t-num` | 11px | 20 chars | 32 chars |
+| `t-title` | 12px | 19 chars | 24 chars |
+| `t-sub` | 10.5px | 21 chars | 27 chars |
+| `t-num` | 11px | 20 chars | 26 chars |
 
 Count characters, not bytes: `·` and `…` are one each, and both are used freely.
 

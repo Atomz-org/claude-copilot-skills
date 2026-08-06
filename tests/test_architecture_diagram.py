@@ -90,6 +90,15 @@ def _declared_source_columns() -> int:
     return total
 
 
+def _semantic_layer(filename: str, key: str) -> int:
+    """Count entries in the committed MetricFlow YAML — the semantic layer is the
+    one definition of every number, and its files are committed, so the count is
+    pinnable for the same reason the fragment's model count is."""
+    path = ENHANZA / "dbt_project" / "models" / "semantic" / filename
+    doc = miniyaml.load(path.read_text(encoding="utf-8")) or {}
+    return len(doc.get(key) or [])
+
+
 METRICS = {
     "connectors": lambda: len(_index()["connectors"]),
     "concepts": lambda: len(_index()["concepts"]),
@@ -102,6 +111,8 @@ METRICS = {
     "source_tables": lambda: _fragment_kind("source"),
     "declared_source_columns": _declared_source_columns,
     "ttl_files": lambda: len(list((ENHANZA / "ontology").rglob("*.ttl"))),
+    "semantic_models": lambda: _semantic_layer("_semantic_models.yml", "semantic_models"),
+    "metrics": lambda: _semantic_layer("_metrics.yml", "metrics"),
 }
 
 needs_artifacts = pytest.mark.skipif(

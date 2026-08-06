@@ -36,7 +36,7 @@ DIAGRAM_TEST = REPO / "tests/test_architecture_diagram.py"
 # The two box widths the page draws with; the skill states a character budget for
 # each. Anything wider is fine, but a documented width that the page no longer
 # uses means the budget table describes a diagram nobody has.
-DOCUMENTED_BOX_WIDTHS = (156, 230)
+DOCUMENTED_BOX_WIDTHS = (156, 192)
 PADDING = 18  # 14px text inset + the test's 4px right margin
 
 

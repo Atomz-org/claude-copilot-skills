@@ -35,6 +35,8 @@ attribute naming anything else fails the test rather than passing silently.
 | `source_tables` | nodes with `dbt_resource_type == "source"` | same |
 | `declared_source_columns` | `columns:` entries summed over every `sources.yml` | `ENHANZA/dbt_project/**/sources.yml` |
 | `ttl_files` | `*.ttl` under the ontology | `ENHANZA/ontology/` |
+| `semantic_models` | entries under `semantic_models:` | `ENHANZA/dbt_project/models/semantic/_semantic_models.yml` |
+| `metrics` | entries under `metrics:` | `ENHANZA/dbt_project/models/semantic/_metrics.yml` |
 
 ## Why the model count comes from the fragment
 
