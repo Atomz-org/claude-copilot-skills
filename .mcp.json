@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ontology-enhanza-analytics": {
+      "command": "python3",
+      "args": [
+        "scripts/ontology_mcp_server.py",
+        "--use-case",
+        "enhanza-analytics"
+      ]
+    }
+  }
+}
