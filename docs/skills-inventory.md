@@ -41,6 +41,7 @@ This pack provides skills for managing git workflows and interacting with GitHub
 | `git-flow-branch-planner` | Assists in planning branching strategies based on git-flow. | `/branch-plan <task>` | `/branch-plan "Fix checkout bug JIRA-123"` |
 | `github-actions-docs-grounded` | Generates documentation for GitHub Actions workflows. | `/write-docs` | "Write documentation for our `ci.yml` GitHub Actions workflow." |
 | `documentation-writer-diataxis` | Writes documentation following the Diátaxis framework. | `/write-docs` | "Write a tutorial for setting up a new dbt project." |
+| `architecture-page` | Authors and updates the hand-drawn architecture pages under `public/`, with every figure pinned to a committed artifact. | `/architecture` | "The connector count on the architecture page is stale — update it." |
 | `resolve-merge-conflicts` | Resolves merge or rebase conflicts by preserving intent. | `/resolve-conflicts` | "I have merge conflicts on my branch, can you help me resolve them?" |
 | `focused-fix` | Applies a small, targeted fix to the codebase. | `/focused-fix <description>` | `/focused-fix "Correct a typo in the main README file."` |
 | `sync-submodule` | Synchronizes and updates git submodules within the repository. | `/sync-submodule` | `/sync-submodule` |
