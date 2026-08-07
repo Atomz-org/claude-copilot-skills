@@ -106,7 +106,7 @@ directly in one of them works until the next activation silently reverts it. Edi
 pack, then re-run:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills wren-skills
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
 ```
 
 ## Slash commands

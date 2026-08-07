@@ -907,7 +907,7 @@ Exceptions maintained directly at repository level, because no pack owns them:
 After changing any pack asset:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills wren-skills && git status --short
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills && git status --short
 ```
 
 Unexpected modifications in that output mean an edit landed in a generated path.
