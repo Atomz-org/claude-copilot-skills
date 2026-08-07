@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revenue performance — governed by the Wren semantic layer</title>
+<style>
+:root{
+  color-scheme:light;
+  --plane:#f9f9f7; --surface:#fcfcfb; --surface-2:#f2f2ee;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --line:#e1e0d9; --rule:#c3c2b7; --ring:rgba(11,11,11,0.10);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --good:#006300; --bad:#d03b3b; --warn:#fab219;
+}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){
+  color-scheme:dark;
+  --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+  --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+  --line:#2c2c2a; --rule:#383835; --ring:rgba(255,255,255,0.10);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --good:#0ca30c;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+  --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+  --line:#2c2c2a; --rule:#383835; --ring:rgba(255,255,255,0.10);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --good:#0ca30c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--ink);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 18px 56px}
+.top{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;justify-content:space-between;
+  padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:16px}
+h1{font-size:19px;margin:0;letter-spacing:-.01em}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.f{font-size:12px;background:var(--surface);border:1px solid var(--ring);border-radius:7px;
+  padding:4px 10px;color:var(--ink-2)}
+.f b{color:var(--ink);font-weight:600}
+.pill{font-size:11px;border-radius:999px;padding:3px 9px;border:1px solid var(--ring);
+  background:var(--surface);color:var(--ink-2)}
+.pill.ok{border-color:var(--good);color:var(--good)}
+.pill.off{border-color:var(--warn);color:var(--ink-2)}
+.grid2{display:grid;gap:14px;grid-template-columns:minmax(300px,5fr) minmax(340px,7fr)}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--ring);border-radius:11px;padding:15px 16px}
+.panel h2{font-size:13px;margin:0 0 2px;color:var(--ink-2);font-weight:600;letter-spacing:.01em}
+.panel .src{font-size:11px;color:var(--muted);margin:0 0 12px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.kpis{display:grid;gap:12px;grid-template-columns:1fr}
+.kpi{border:1px solid var(--ring);border-radius:10px;padding:13px 14px;background:var(--surface-2)}
+.kpi .l{font-size:12px;color:var(--ink-2);display:block}
+.kpi .v{font-size:31px;font-weight:600;letter-spacing:-.02em;display:block;line-height:1.15;margin-top:2px}
+.kpi .c{font-size:12px;display:block;margin-top:3px}
+.kpi .c.up{color:var(--good)} .kpi .c.down{color:var(--bad)} .kpi .c.na{color:var(--muted)}
+.kpi .src{font-size:10.5px;color:var(--muted);margin:5px 0 0;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font:11px system-ui,-apple-system,sans-serif;fill:var(--muted)}
+svg .axis{stroke:var(--rule);stroke-width:1}
+svg .grid{stroke:var(--line);stroke-width:1}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink-2);margin:10px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:2px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:11.5px;color:var(--ink-2);font-weight:600;border-bottom:1px solid var(--rule)}
+tbody tr:last-child td{border-bottom:none}
+tfoot td{font-weight:600;border-top:1px solid var(--rule);border-bottom:none;padding-top:9px}
+td.n,th.n{font-variant-numeric:tabular-nums}
+.shr{display:flex;align-items:center;gap:7px;justify-content:flex-end}
+.shr .t{width:56px;height:5px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.shr .b{height:100%;border-radius:3px}
+.note{margin-top:14px;background:var(--surface);border:1px solid var(--ring);
+  border-left:3px solid var(--warn);border-radius:9px;padding:13px 15px}
+.note h2{font-size:13px;margin:0 0 7px}
+.note ul{margin:0;padding-left:17px;font-size:12.5px;color:var(--ink-2)}
+.note li{margin:3px 0} .note li b{color:var(--ink);font-weight:600}
+footer{margin-top:22px;font-size:11.5px;color:var(--muted);line-height:1.6}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.93em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="top">
+  <div>
+    <h1>Revenue performance</h1>
+    <p style="margin:3px 0 0;font-size:12px;color:var(--muted)">
+      Every figure comes from a compiled MetricFlow view through the Wren engine —
+      not from aggregating a table.</p>
+  </div>
+  <div class="filters">
+    <span class="f">Period <b>2026-06-20 → 2026-08-04</b></span>
+    <span class="f">Grain <b>Weekly</b></span>
+    <span class="f">Regions <b>AMER, EMEA, OTHER</b></span>
+    <span class="pill" id="engine">checking engine…</span>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="panel">
+    <h2>Headline</h2>
+    <p class="src">views: revenue · order_count · average_order_value · revenue_growth_mom</p>
+    <div class="kpis" id="kpis"></div>
+  </div>
+  <div class="panel">
+    <h2>Revenue by week</h2>
+    <p class="src">view: revenue</p>
+    <div id="trend"></div>
+  </div>
+</div>
+
+<div class="grid2" style="margin-top:14px">
+  <div class="panel">
+    <h2>Breakdown by region</h2>
+    <p class="src">view: weekly_revenue_by_region</p>
+    <table id="tbl"></table>
+  </div>
+  <div class="panel">
+    <h2>Weekly revenue by region, with orders</h2>
+    <p class="src">view: weekly_revenue_by_region</p>
+    <div id="stack"></div>
+  </div>
+</div>
+
+<div class="note">
+  <h2>Four things the reference dashboard shows that this dataset cannot</h2>
+  <ul id="absent"></ul>
+  <p style="margin:9px 0 0;font-size:12.5px;color:var(--ink-2)">
+    They are listed rather than filled with plausible numbers. The general ledger,
+    account classes and budgets exist in <code>enhanza-analytics</code>
+    (<code>fact_vouchers</code>, <code>dim_accounts</code>, <code>fact_budgets</code>);
+    that project has no MetricFlow metrics yet, which is the next step.</p>
+</div>
+
+<footer>
+Built by <code>wren genbi</code> from
+<code>example-order-revenue-mart</code>. Total revenue reads
+<b>277,183.41</b> — the governed metric. Aggregating
+<code>fct_orders.order_amount_usd</code> directly gives 289,470.66, which is 4.4% higher
+and internally consistent: the reason measures come from views here and never from tables.
+</footer>
+
+</div>
+<script type="application/json" id="d">{"generated_from": "wren query against MDL views (governed)", "span": {"from": "2026-06-20", "to": "2026-08-04", "days": 46}, "kpis": [{"label": "Revenue", "value": 277183.41, "unit": "USD", "view": "revenue", "change": -90.73, "change_label": "MoM, latest month", "fmt": "money"}, {"label": "Orders", "value": 470, "unit": "", "view": "order_count", "change": null, "change_label": "", "fmt": "int"}, {"label": "Average order value", "value": 589.75, "unit": "USD", "view": "average_order_value", "change": null, "change_label": "", "fmt": "money"}], "weeks": ["2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03"], "regions": ["AMER", "EMEA", "OTHER"], "by_region": [{"week": "2026-06-15", "region": "AMER", "revenue": 1698.88, "orders": 3}, {"week": "2026-06-15", "region": "EMEA", "revenue": 9923.63, "orders": 17}, {"week": "2026-06-15", "region": "OTHER", "revenue": 118.2, "orders": 1}, {"week": "2026-06-22", "region": "AMER", "revenue": 16324.04, "orders": 25}, {"week": "2026-06-22", "region": "EMEA", "revenue": 29352.23, "orders": 49}, {"week": "2026-06-29", "region": "AMER", "revenue": 9146.55, "orders": 16}, {"week": "2026-06-29", "region": "EMEA", "revenue": 27681.51, "orders": 48}, {"week": "2026-06-29", "region": "OTHER", "revenue": 30.28, "orders": 1}, {"week": "2026-07-06", "region": "AMER", "revenue": 15723.86, "orders": 27}, {"week": "2026-07-06", "region": "EMEA", "revenue": 28890.78, "orders": 57}, {"week": "2026-07-06", "region": "OTHER", "revenue": 428.59, "orders": 1}, {"week": "2026-07-13", "region": "AMER", "revenue": 6036.29, "orders": 14}, {"week": "2026-07-13", "region": "EMEA", "revenue": 30836.29, "orders": 46}, {"week": "2026-07-20", "region": "AMER", "revenue": 8897.72, "orders": 18}, {"week": "2026-07-20", "region": "EMEA", "revenue": 36422.18, "orders": 56}, {"week": "2026-07-27", "region": "AMER", "revenue": 18718.52, "orders": 25}, {"week": "2026-07-27", "region": "EMEA", "revenue": 23144.6, "orders": 44}, {"week": "2026-08-03", "region": "AMER", "revenue": 1925.11, "orders": 4}, {"week": "2026-08-03", "region": "EMEA", "revenue": 2686.49, "orders": 4}], "daily": [{"date": "2026-06-20", "revenue": 6281.15, "orders": 11}, {"date": "2026-06-21", "revenue": 5459.56, "orders": 10}, {"date": "2026-06-22", "revenue": 5530.29, "orders": 9}, {"date": "2026-06-23", "revenue": 7863.72, "orders": 16}, {"date": "2026-06-24", "revenue": 2379.5, "orders": 6}, {"date": "2026-06-25", "revenue": 9395.07, "orders": 13}, {"date": "2026-06-26", "revenue": 6172.87, "orders": 9}, {"date": "2026-06-27", "revenue": 10879.07, "orders": 15}, {"date": "2026-06-28", "revenue": 4148.31, "orders": 8}, {"date": "2026-06-29", "revenue": 1924.12, "orders": 4}, {"date": "2026-06-30", "revenue": 4094.72, "orders": 8}, {"date": "2026-07-01", "revenue": 8047.77, "orders": 17}, {"date": "2026-07-02", "revenue": 6365.03, "orders": 11}, {"date": "2026-07-03", "revenue": 7063.39, "orders": 9}, {"date": "2026-07-04", "revenue": 4843.57, "orders": 8}, {"date": "2026-07-05", "revenue": 6275.66, "orders": 10}, {"date": "2026-07-06", "revenue": 9053.66, "orders": 17}, {"date": "2026-07-07", "revenue": 6323.56, "orders": 9}, {"date": "2026-07-08", "revenue": 4040.23, "orders": 9}, {"date": "2026-07-09", "revenue": 5632.16, "orders": 13}, {"date": "2026-07-10", "revenue": 8280.41, "orders": 15}, {"date": "2026-07-11", "revenue": 5973.03, "orders": 14}, {"date": "2026-07-12", "revenue": 5740.18, "orders": 8}, {"date": "2026-07-13", "revenue": 5467.02, "orders": 9}, {"date": "2026-07-14", "revenue": 6477.46, "orders": 10}, {"date": "2026-07-15", "revenue": 5296.9, "orders": 10}, {"date": "2026-07-16", "revenue": 7357.94, "orders": 11}, {"date": "2026-07-17", "revenue": 4685.11, "orders": 8}, {"date": "2026-07-18", "revenue": 6770.78, "orders": 10}, {"date": "2026-07-19", "revenue": 2936.87, "orders": 7}, {"date": "2026-07-20", "revenue": 9367.05, "orders": 15}, {"date": "2026-07-21", "revenue": 4849.91, "orders": 10}, {"date": "2026-07-22", "revenue": 6222.34, "orders": 9}, {"date": "2026-07-23", "revenue": 6120.64, "orders": 10}, {"date": "2026-07-24", "revenue": 8503.98, "orders": 11}, {"date": "2026-07-25", "revenue": 4813.54, "orders": 9}, {"date": "2026-07-26", "revenue": 7611.57, "orders": 12}, {"date": "2026-07-27", "revenue": 6891.31, "orders": 12}, {"date": "2026-07-28", "revenue": 6376.88, "orders": 11}, {"date": "2026-07-29", "revenue": 4362.72, "orders": 6}, {"date": "2026-07-30", "revenue": 4245.42, "orders": 6}, {"date": "2026-07-31", "revenue": 8987.97, "orders": 15}, {"date": "2026-08-01", "revenue": 2753.68, "orders": 5}, {"date": "2026-08-02", "revenue": 10705.69, "orders": 17}, {"date": "2026-08-03", "revenue": 3712.97, "orders": 7}, {"date": "2026-08-04", "revenue": 898.63, "orders": 1}], "monthly": [{"month": "2026-06-01", "revenue": 64128.38, "mom": null}, {"month": "2026-07-01", "revenue": 194984.06, "mom": 204.05}, {"month": "2026-08-01", "revenue": 18070.97, "mom": -90.73}], "region_totals": [{"region": "EMEA", "revenue": 188937.71, "orders": 321, "aov": 588.59, "share": 68.2}, {"region": "AMER", "revenue": 78470.97, "orders": 132, "aov": 594.48, "share": 28.3}, {"region": "OTHER", "revenue": 577.07, "orders": 3, "aov": 192.36, "share": 0.2}], "views_used": ["revenue", "order_count", "average_order_value", "revenue_growth_mom", "weekly_revenue_by_region", "emea_revenue_share"], "absent": [["Gross profit / net profit", "no cost or COGS data in this project — only order revenue"], ["Account classes (Kontoklass)", "no general ledger; that lives in enhanza-analytics (fact_vouchers + dim_accounts)"], ["Budget variance", "no budget data here; enhanza-analytics has fact_budgets from Fortnox"], ["Year-over-year", "the dataset spans 46 days (2026-06-20 to 2026-08-04) — there is no prior year to compare"]]}</script>
+<script type="module">
+const D = JSON.parse(document.getElementById("d").textContent);
+const NS = "http://www.w3.org/2000/svg";
+const COL = ["var(--s1)", "var(--s2)", "var(--s3)"];
+const money = v => "$" + v.toLocaleString("en-US", {minimumFractionDigits:0, maximumFractionDigits:0});
+const money2 = v => "$" + v.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+const el=(t,c,x)=>{const n=document.createElement(t);if(c)n.className=c;if(x!==undefined)n.textContent=x;return n};
+const mk=(t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);
+  if(x!==undefined)e.textContent=x;return e};
+const short = iso => { const d=new Date(iso+"T00:00:00Z");
+  return d.toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"UTC"}); };
+
+/* ---- KPI tiles ---------------------------------------------------------- */
+const kpiBox = document.getElementById("kpis");
+D.kpis.forEach(k => {
+  const b = el("div","kpi");
+  b.appendChild(el("span","l",k.label));
+  b.appendChild(el("span","v", k.fmt==="money" ? money2(k.value) : k.value.toLocaleString("en-US")));
+  const c = el("span","c");
+  if (k.change === null || k.change === undefined) {
+    c.className="c na"; c.textContent="no prior period in this dataset";
+  } else {
+    const up = k.change >= 0;
+    c.className = "c " + (up?"up":"down");
+    c.textContent = (up?"▲ ":"▼ ") + Math.abs(k.change).toFixed(1) + "%  " + k.change_label;
+  }
+  b.appendChild(c);
+  b.appendChild(el("p","src","view: " + k.view));
+  kpiBox.appendChild(b);
+});
+
+/* ---- Revenue trend (mirrors the Fortnox "Resultat" line) ----------------- */
+function lineChart(host, series, label) {
+  const W=680, H=230, P={t:14,r:16,b:30,l:56};
+  const iw=W-P.l-P.r, ih=H-P.t-P.b;
+  const max=Math.max(...series.map(d=>d.revenue))*1.1 || 1;
+  const x=i=>P.l+(series.length<2?iw/2:i*iw/(series.length-1));
+  const y=v=>P.t+ih-(v/max)*ih;
+  const svg=mk("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":label});
+  for(let i=0;i<=4;i++){const v=max*i/4, yy=y(v);
+    svg.appendChild(mk("line",{class:"grid",x1:P.l,x2:W-P.r,y1:yy,y2:yy}));
+    svg.appendChild(mk("text",{x:P.l-8,y:yy+4,"text-anchor":"end"}, money(v)));}
+  svg.appendChild(mk("line",{class:"axis",x1:P.l,x2:W-P.r,y1:P.t+ih,y2:P.t+ih}));
+  const d=series.map((s,i)=>(i?"L":"M")+x(i)+" "+y(s.revenue)).join(" ");
+  svg.appendChild(mk("path",{d,fill:"none",stroke:"var(--s1)","stroke-width":2,
+    "stroke-linejoin":"round","stroke-linecap":"round"}));
+  series.forEach((s,i)=>{
+    const c=mk("circle",{cx:x(i),cy:y(s.revenue),r:3.5,fill:"var(--s1)",
+      stroke:"var(--surface)","stroke-width":2});
+    c.appendChild(mk("title",{}, short(s.week||s.date)+" — "+money2(s.revenue)));
+    svg.appendChild(c);
+    if(i%Math.ceil(series.length/6)===0||i===series.length-1)
+      svg.appendChild(mk("text",{x:x(i),y:H-9,"text-anchor":"middle"}, short(s.week||s.date)));
+  });
+  host.appendChild(svg);
+}
+
+/* Weekly is the readable grain for 46 days; daily is 46 points of noise. */
+const weekly = D.weeks.map(w => ({
+  week: w,
+  revenue: D.by_region.filter(r=>r.week===w).reduce((a,r)=>a+r.revenue,0),
+  orders:  D.by_region.filter(r=>r.week===w).reduce((a,r)=>a+r.orders,0),
+}));
+lineChart(document.getElementById("trend"), weekly, "Weekly revenue");
+
+/* ---- Stacked bars by region + orders line (mirrors the bottom chart) ----- */
+(function stacked(){
+  const host=document.getElementById("stack");
+  const W=680,H=250,P={t:16,r:44,b:34,l:56};
+  const iw=W-P.l-P.r, ih=H-P.t-P.b;
+  const maxRev=Math.max(...weekly.map(w=>w.revenue))*1.12||1;
+  const maxOrd=Math.max(...weekly.map(w=>w.orders))*1.25||1;
+  const bw=Math.min(46, iw/weekly.length*0.62);
+  const cx=i=>P.l+(i+0.5)*iw/weekly.length;
+  const y=v=>P.t+ih-(v/maxRev)*ih;
+  const yo=v=>P.t+ih-(v/maxOrd)*ih;
+  const svg=mk("svg",{viewBox:`0 0 ${W} ${H}`,role:"img",
+    "aria-label":"Weekly revenue by region, with order count"});
+  for(let i=0;i<=4;i++){const v=maxRev*i/4,yy=y(v);
+    svg.appendChild(mk("line",{class:"grid",x1:P.l,x2:W-P.r,y1:yy,y2:yy}));
+    svg.appendChild(mk("text",{x:P.l-8,y:yy+4,"text-anchor":"end"},money(v)));}
+  weekly.forEach((w,i)=>{
+    let acc=0;
+    D.regions.forEach((reg,ri)=>{
+      const row=D.by_region.find(r=>r.week===w.week&&r.region===reg);
+      const v=row?row.revenue:0; if(!v) return;
+      const y0=y(acc+v), y1=y(acc);
+      /* 2px surface gap between stacked segments — they must not read as one block. */
+      const h=Math.max(1,y1-y0-2);
+      const rect=mk("rect",{x:cx(i)-bw/2,y:y0,width:bw,height:h,fill:COL[ri%3],rx:2});
+      rect.appendChild(mk("title",{},`${short(w.week)} · ${reg} — ${money2(v)}`));
+      svg.appendChild(rect); acc+=v;
+    });
+    svg.appendChild(mk("text",{x:cx(i),y:H-11,"text-anchor":"middle"},short(w.week)));
+  });
+  const d=weekly.map((w,i)=>(i?"L":"M")+cx(i)+" "+yo(w.orders)).join(" ");
+  svg.appendChild(mk("path",{d,fill:"none",stroke:"var(--ink)","stroke-width":2,
+    "stroke-dasharray":"5 3",opacity:.65}));
+  weekly.forEach((w,i)=>{
+    const c=mk("circle",{cx:cx(i),cy:yo(w.orders),r:3,fill:"var(--ink)",
+      stroke:"var(--surface)","stroke-width":2});
+    c.appendChild(mk("title",{},`${short(w.week)} — ${w.orders} orders`));
+    svg.appendChild(c);
+  });
+  for(let i=0;i<=2;i++){const v=Math.round(maxOrd*i/2);
+    svg.appendChild(mk("text",{x:W-P.r+7,y:yo(v)+4,"text-anchor":"start"},String(v)));}
+  host.appendChild(svg);
+  const lg=el("div","legend");
+  D.regions.forEach((r,i)=>{const s=el("span");const sw=el("i","sw");
+    sw.style.background=COL[i%3];s.appendChild(sw);s.appendChild(document.createTextNode(r));lg.appendChild(s);});
+  const o=el("span");const ln=el("i","sw");ln.style.background="var(--ink)";ln.style.opacity=".65";
+  o.appendChild(ln);o.appendChild(document.createTextNode("Orders (right axis)"));lg.appendChild(o);
+  host.appendChild(lg);
+})();
+
+/* ---- Region table (mirrors the Kontoklass table) ------------------------- */
+(function table(){
+  const t=document.getElementById("tbl");
+  const thead=el("thead"),hr=el("tr");
+  ["Region","Revenue","Orders","Avg order","Share"].forEach((h,i)=>{
+    const th=el("th",i?"n":null,h);hr.appendChild(th)});
+  thead.appendChild(hr);t.appendChild(thead);
+  const tb=el("tbody");
+  D.region_totals.forEach((r,i)=>{
+    const tr=el("tr");
+    tr.appendChild(el("td",null,r.region));
+    tr.appendChild(el("td","n",money2(r.revenue)));
+    tr.appendChild(el("td","n",r.orders.toLocaleString("en-US")));
+    tr.appendChild(el("td","n",money2(r.aov)));
+    const td=el("td","n");const w=el("div","shr");
+    w.appendChild(el("span",null,r.share.toFixed(1)+"%"));
+    const tr2=el("div","t");const b=el("div","b");
+    b.style.width=r.share+"%";b.style.background=COL[D.regions.indexOf(r.region)%3];
+    tr2.appendChild(b);w.appendChild(tr2);td.appendChild(w);tr.appendChild(td);
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  const tf=el("tfoot"),fr=el("tr");
+  const tot=D.region_totals.reduce((a,r)=>({rev:a.rev+r.revenue,ord:a.ord+r.orders}),{rev:0,ord:0});
+  fr.appendChild(el("td",null,"Total"));
+  fr.appendChild(el("td","n",money2(tot.rev)));
+  fr.appendChild(el("td","n",tot.ord.toLocaleString("en-US")));
+  fr.appendChild(el("td","n",money2(tot.rev/tot.ord)));
+  fr.appendChild(el("td","n","100.0%"));
+  tf.appendChild(fr);t.appendChild(tf);
+})();
+
+/* ---- Absent-by-design notes --------------------------------------------- */
+(function notes(){
+  const ul=document.getElementById("absent");
+  D.absent.forEach(([what,why])=>{
+    const li=el("li");li.appendChild(el("b",null,what));
+    li.appendChild(document.createTextNode(" — "+why));ul.appendChild(li);
+  });
+})();
+
+/* ---- wren-core-wasm: re-run one governed query in the browser ------------
+   The acceptance criteria ask the app to load its MDL and run a query. It does that
+   here, against the bundled parquet. The dashboard has already rendered from results
+   the wren CLI produced at build time, so an offline viewer sees the same numbers —
+   the engine confirms them, it is not the only way to see them. */
+(async function live(){
+  const pill=document.getElementById("engine");
+  try{
+    const {WrenEngine}=await import("https://unpkg.com/@wrenai/wren-core-wasm@0.4.1/dist/index.js");
+    const engine=await WrenEngine.init();
+    const mdl=await (await fetch("mdl.json")).json();
+    await engine.loadMDL(mdl,{source:"data/"});
+    const res=await engine.query("select round(sum(revenue),2) as revenue from revenue");
+    const v=parseFloat(JSON.parse(JSON.stringify(res))?.[0]?.revenue ?? NaN);
+    if(Math.abs(v-D.kpis[0].value)<0.01){
+      pill.className="pill ok";pill.textContent="engine ✓ live query matches";
+    }else{
+      pill.className="pill off";pill.textContent="engine returned "+v+" (built: "+D.kpis[0].value+")";
+    }
+  }catch(e){
+    pill.className="pill off";
+    pill.textContent="snapshot only — engine unavailable offline";
+    pill.title=String(e).slice(0,200);
+  }
+})();
+</script>
+</body>
+</html>

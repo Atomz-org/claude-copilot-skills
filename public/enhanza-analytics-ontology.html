@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enhanza ERP/CRM analytics — what we track and where it comes from</title>
+<meta name="description" content="Every business thing this project tracks, which source systems supply it, and where the gaps are.">
+</head>
+<body>
+<style>
+:root{
+  color-scheme:light;
+  --plane:#f9f9f7; --surface:#fcfcfb; --surface-2:#f2f2ee;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --line:#e1e0d9; --rule:#c3c2b7; --ring:rgba(11,11,11,0.10);
+  --erp:#2a78d6; --crm:#eb6834;
+  --live:#0ca30c; --planned:#fab219; --none:#c3c2b7; --crit:#d03b3b;
+  --seq-1:#cde2fb; --seq-2:#9ec5f4; --seq-3:#5598e7; --seq-4:#2a78d6; --seq-5:#184f95;
+}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme:dark;
+    --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+    --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --rule:#383835; --ring:rgba(255,255,255,0.10);
+    --erp:#3987e5; --crm:#d95926;
+    --none:#383835;
+    --seq-1:#104281; --seq-2:#184f95; --seq-3:#256abf; --seq-4:#3987e5; --seq-5:#86b6ef;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+  --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+  --line:#2c2c2a; --rule:#383835; --ring:rgba(255,255,255,0.10);
+  --erp:#3987e5; --crm:#d95926;
+  --none:#383835;
+  --seq-1:#104281; --seq-2:#184f95; --seq-3:#256abf; --seq-4:#3987e5; --seq-5:#86b6ef;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--ink);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 72px}
+h1{font-size:26px;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+h2{font-size:17px;margin:32px 0 10px;letter-spacing:-.005em}
+p.lede{color:var(--ink-2);margin:0 0 4px;max-width:70ch}
+.sub{color:var(--muted);font-size:13px;margin:0}
+a{color:inherit}
+
+/* ---- KPI row ---- */
+.kpis{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:22px 0 4px}
+.kpi{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:13px 14px}
+.kpi .n{font-size:27px;font-weight:600;letter-spacing:-.02em;display:block;line-height:1.1}
+.kpi .l{font-size:12px;color:var(--ink-2);display:block;margin-top:3px}
+.kpi .h{font-size:11px;color:var(--muted);display:block;margin-top:2px}
+
+/* ---- controls ---- */
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:20px 0 14px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{appearance:none;background:var(--surface);border:1px solid var(--ring);color:var(--ink-2);
+  border-radius:999px;padding:6px 13px;font:inherit;font-size:13px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.tab:focus-visible,.chip:focus-visible,.card:focus-visible,.cell:focus-visible{outline:2px solid var(--erp);outline-offset:2px}
+input[type=search]{flex:1;min-width:180px;background:var(--surface);color:var(--ink);
+  border:1px solid var(--ring);border-radius:8px;padding:7px 11px;font:inherit;font-size:13px}
+.count{font-size:12px;color:var(--muted)}
+
+/* ---- legend ---- */
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--ink-2);
+  background:var(--surface);border:1px solid var(--ring);border-radius:8px;padding:9px 12px;margin-bottom:14px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.dot.live{background:var(--live)} .dot.planned{background:var(--planned)}
+.dot.none{background:var(--none)} .dot.unbacked{background:var(--crit)}
+.dot.erp{background:var(--erp)} .dot.crm{background:var(--crm)}
+
+/* ---- ERD cards ---- */
+.family{margin:26px 0 8px;display:flex;align-items:baseline;gap:9px}
+.family h3{font-size:14px;margin:0;letter-spacing:-.005em}
+.family .c{font-size:12px;color:var(--muted)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:10px;overflow:hidden;
+  text-align:left;font:inherit;color:inherit;cursor:pointer;padding:0;display:block;width:100%}
+.card:hover{border-color:var(--rule)}
+.card[aria-pressed="true"]{border-color:var(--erp);box-shadow:0 0 0 1px var(--erp)}
+.card .hd{padding:11px 13px 9px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:flex-start}
+.card .hd .t{flex:1;min-width:0}
+.card .nm{font-weight:600;font-size:14px;display:block;letter-spacing:-.005em}
+.card .tn{font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  display:block;margin-top:2px;overflow-wrap:anywhere}
+.badge{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid var(--ring);
+  color:var(--ink-2);white-space:nowrap;flex:none}
+.badge.k{background:var(--surface-2)}
+.attrs{list-style:none;margin:0;padding:6px 0;max-height:168px;overflow:auto}
+.attrs li{display:flex;gap:8px;padding:3px 13px;font-size:12.5px;align-items:baseline}
+.attrs .a{flex:1;min-width:0;overflow-wrap:anywhere}
+.attrs .m{color:var(--muted);font-size:11px;white-space:nowrap}
+.attrs .empty{color:var(--muted);font-style:italic;padding:5px 13px;font-size:12px;display:block}
+.sup{display:flex;flex-wrap:wrap;gap:4px;padding:9px 13px;border-top:1px solid var(--line);background:var(--surface-2)}
+.chip{font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid var(--ring);
+  background:var(--surface);color:var(--ink-2);white-space:nowrap}
+.chip.live{border-color:var(--live)} .chip.planned{border-color:var(--planned);border-style:dashed}
+.chip.unbacked{border-color:var(--crit);color:var(--crit)}
+.chip.more{color:var(--muted);border-style:dotted}
+
+/* ---- detail ---- */
+.detail{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:16px;margin:14px 0 0}
+.detail h3{margin:0 0 2px;font-size:16px}
+.spoke{width:100%;height:auto;display:block;margin:8px 0 2px;overflow:visible}
+.spoke text{font:11px system-ui,-apple-system,sans-serif}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:12.5px;margin-top:10px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;overflow-wrap:anywhere}
+
+/* ---- matrix ---- */
+.scroll{overflow-x:auto;border:1px solid var(--ring);border-radius:10px;background:var(--surface)}
+table{border-collapse:separate;border-spacing:0;font-size:12px;width:max-content;min-width:100%}
+th,td{padding:5px 7px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+thead th{position:sticky;top:0;background:var(--surface);z-index:2;font-weight:600;
+  color:var(--ink-2);border-bottom:1px solid var(--rule)}
+tbody th{position:sticky;left:0;background:var(--surface);z-index:1;font-weight:500;
+  border-right:1px solid var(--line);max-width:220px;overflow:hidden;text-overflow:ellipsis}
+thead th.rot{height:132px;padding:0;vertical-align:bottom}
+thead th.rot>div{width:24px;transform-origin:bottom left;
+  transform:translateX(15px) rotate(-60deg);position:relative;left:2px}
+thead th.rot span{padding:0 4px;font-weight:500;font-size:11px}
+td.cell{text-align:center;font-size:11px;color:var(--muted);cursor:default}
+td.cell.live{color:var(--live);font-weight:700} td.cell.planned{color:var(--planned);font-weight:700}
+td.cell.unbacked{color:var(--crit);font-weight:700}
+tbody tr:hover td,tbody tr:hover th{background:var(--surface-2)}
+.tot{color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ---- lists ---- */
+.rows{display:grid;gap:8px}
+.row{background:var(--surface);border:1px solid var(--ring);border-radius:9px;padding:11px 13px}
+.row .top{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.row .nm{font-weight:600}
+.row .why{color:var(--ink-2);font-size:12.5px;margin-top:3px}
+.bar-track{height:5px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-top:7px}
+.bar-fill{height:100%;background:var(--seq-4);border-radius:3px}
+.hidden{display:none}
+footer{margin-top:44px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em}
+@media (max-width:640px){ .wrap{padding:18px 13px 56px} h1{font-size:21px} }
+@media print{ .bar,.tab{display:none} .scroll{overflow:visible} }
+</style>
+<div class="wrap">
+<h1>Enhanza ERP/CRM analytics</h1>
+<p class="lede">Different accounting and sales systems call the same thing by different
+names — one calls it <code>CustomerNumber</code>, another <code>customer_id</code>. This
+page shows the shared vocabulary underneath: every <strong>business thing</strong> the
+project tracks, which <strong>source systems</strong> can supply it, and where the gaps
+are.</p>
+<p class="sub">Generated from <code>ontology/index.json</code> by
+<code>scripts/ontology_ui.py</code>. Nothing here is inferred — every link is one
+the model already declares.</p>
+
+<div class="kpis"><div class="kpi"><span class="n">19</span><span class="l">Source systems</span><span class="h">10 live, 9 planned</span></div><div class="kpi"><span class="n">58</span><span class="l">Business things</span><span class="h">58 supplied by at least one system</span></div><div class="kpi"><span class="n">112</span><span class="l">System → thing links</span><span class="h">110 backed by a dbt model, 2 without one</span></div><div class="kpi"><span class="n">48</span><span class="l">Fields mapped</span><span class="h">raw column → shared meaning</span></div><div class="kpi"><span class="n">42</span><span class="l">Flagged for review</span><span class="h">mostly single-supplier</span></div></div>
+
+<div class="bar" role="tablist" aria-label="Views">
+  <div class="tabs">
+    <button class="tab" data-v="map" role="tab" aria-selected="true">Map</button>
+    <button class="tab" data-v="matrix" role="tab" aria-selected="false">Coverage grid</button>
+    <button class="tab" data-v="systems" role="tab" aria-selected="false">Source systems</button>
+    <button class="tab" data-v="gaps" role="tab" aria-selected="false">Gaps</button>
+  </div>
+  <input id="q" type="search" placeholder="Search a thing, a field, or a system…"
+         aria-label="Search">
+  <span class="count" id="count"></span>
+</div>
+
+<div class="legend" id="legend">
+  <span><i class="dot live"></i> ● Live — a model exists today</span>
+  <span><i class="dot planned"></i> ○ Planned — declared, not built</span>
+  <span><i class="dot unbacked"></i> ▲ Declared, but no dbt model found</span>
+  <span><i class="dot none"></i> · Not supplied by that system</span>
+  <span><i class="dot erp"></i> Finance &amp; operations</span>
+  <span><i class="dot crm"></i> Sales &amp; customers</span>
+</div>
+
+<div id="view"></div>
+
+<footer>
+Every relationship drawn here is one the model asserts: which system supplies which
+thing, which family a thing belongs to, and which raw column became which shared field.
+Foreign keys between things are a different question, answered by
+<code>scripts/erd_generator.py</code> from the dbt tests.
+</footer>
+</div>
+<script type="application/json" id="payload">{"concepts": [{"attributes": [{"columns": ["isActive"], "connectors": ["fortnox", "shopify"], "label": "Is active", "property": "erp:isActive", "transforms": ["direct"]}, {"columns": ["CustomerNumber"], "connectors": ["fortnox", "shopify"], "label": "Party number", "property": "erp:partyNumber", "transforms": ["direct"]}], "family": "Customer", "family_key": "erp:Customer", "gap": "", "key": "dim_customers", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Customers", "live": ["fortnox", "seventime", "shopify", "tripletex", "upsales", "visma_eaccounting", "visma_economic"], "models": {"fortnox": "fortnox_erp_bi_dim_customers", "seventime": "seventime_erp_bi_dim_customers", "shopify": "shopify_erp_bi_dim_customers", "tripletex": "tripletex_erp_bi_dim_customers", "upsales": "upsales_erp_bi_dim_customers", "visma_eaccounting": "visma_eaccounting_erp_bi_dim_customers", "visma_economic": "visma_economic_erp_bi_dim_customers"}, "no_model": [], "planned": ["dynamics365", "hogia_your_landlord", "hubspot", "poweroffice", "quickbooks", "salesforce", "serviceprotokoll", "visma_net", "xero"], "supplier_count": 7, "technical": "dim_customers"}, {"attributes": [{"columns": ["OrgId"], "connectors": ["fortnox", "seventime", "tripletex", "upsales", "visma_eaccounting", "visma_economic", "xledger"], "label": "Org ID", "property": "erp:orgId", "transforms": ["derived", "direct"]}], "family": "Financial year", "family_key": "erp:FinancialYear", "gap": "", "key": "dim_financial_years", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Financial years", "live": ["fortnox", "seventime", "tripletex", "upsales", "visma_eaccounting", "visma_economic", "xledger"], "models": {"fortnox": "fortnox_erp_bi_dim_financial_years", "seventime": "seventime_erp_bi_dim_financial_years", "tripletex": "tripletex_erp_bi_dim_financial_years", "upsales": "upsales_erp_bi_dim_financial_years", "visma_eaccounting": "visma_eaccounting_erp_bi_dim_financial_years", "visma_economic": "visma_economic_erp_bi_dim_financial_years", "xledger": "xledger_erp_bi_dim_financial_years"}, "no_model": [], "planned": ["poweroffice", "quickbooks", "visma_net", "xero"], "supplier_count": 7, "technical": "dim_financial_years"}, {"attributes": [{"columns": ["ArticleNumber", "Number", "articleNumber", "id", "productNumber"], "connectors": ["fortnox", "seventime", "shopify", "upsales", "visma_eaccounting", "visma_economic"], "label": "Resource number", "property": "erp:resourceNumber", "transforms": ["derived", "direct", "renamed"]}, {"columns": ["Active", "IsActive", "active", "isActive"], "connectors": ["fortnox", "seventime", "shopify", "upsales", "visma_eaccounting"], "label": "Is active", "property": "erp:isActive", "transforms": ["direct", "renamed"]}, {"columns": ["ArticleName", "Description", "Name", "name"], "connectors": ["fortnox", "shopify", "upsales", "visma_eaccounting", "visma_economic"], "label": "Resource name", "property": "erp:resourceName", "transforms": ["derived", "renamed"]}], "family": "Article", "family_key": "erp:Article", "gap": "", "key": "dim_articles", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Articles", "live": ["fortnox", "seventime", "shopify", "upsales", "visma_eaccounting", "visma_economic"], "models": {"fortnox": "fortnox_erp_bi_dim_articles", "seventime": "seventime_erp_bi_dim_articles", "shopify": "shopify_erp_bi_dim_articles", "upsales": "upsales_erp_bi_dim_articles", "visma_eaccounting": "visma_eaccounting_erp_bi_dim_articles", "visma_economic": "visma_economic_erp_bi_dim_articles"}, "no_model": [], "planned": ["dynamics365", "quickbooks", "xero"], "supplier_count": 6, "technical": "dim_articles"}, {"attributes": [{"columns": ["OrgId"], "connectors": ["fortnox", "seventime", "tripletex", "upsales", "visma_eaccounting", "visma_economic"], "label": "Org ID", "property": "erp:orgId", "transforms": ["derived", "direct"]}, {"columns": ["Name", "OrgName", "client", "company", "companyName", "name"], "connectors": ["fortnox", "seventime", "tripletex", "upsales", "visma_eaccounting", "visma_economic"], "label": "Party name", "property": "erp:partyName", "transforms": ["direct", "renamed"]}], "family": "Organisation", "family_key": "erp:Organisation", "gap": "", "key": "dim_company", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Company", "live": ["fortnox", "seventime", "tripletex", "upsales", "visma_eaccounting", "visma_economic"], "models": {"fortnox": "fortnox_erp_bi_dim_company", "seventime": "seventime_erp_bi_dim_company", "tripletex": "tripletex_erp_bi_dim_company", "upsales": "upsales_erp_bi_dim_company", "visma_eaccounting": "visma_eaccounting_erp_bi_dim_company", "visma_economic": "visma_economic_erp_bi_dim_company"}, "no_model": [], "planned": [], "supplier_count": 6, "technical": "dim_company"}, {"attributes": [], "family": "Account", "family_key": "erp:Account", "gap": "", "key": "dim_accounts", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Accounts", "live": ["fortnox", "tripletex", "visma_eaccounting", "visma_economic", "xledger"], "models": {"fortnox": "fortnox_erp_bi_dim_accounts", "tripletex": "tripletex_erp_bi_dim_accounts", "visma_eaccounting": "visma_eaccounting_erp_bi_dim_accounts", "visma_economic": "visma_economic_erp_bi_dim_accounts", "xledger": "xledger_erp_bi_dim_accounts"}, "no_model": [], "planned": ["hogia_your_landlord", "poweroffice", "quickbooks", "visma_net", "xero"], "supplier_count": 5, "technical": "dim_accounts"}, {"attributes": [{"columns": ["Total"], "connectors": ["fortnox"], "label": "Amount", "property": "erp:amount", "transforms": ["direct"]}, {"columns": ["Currency"], "connectors": ["fortnox"], "label": "Currency", "property": "erp:currency", "transforms": ["direct"]}, {"columns": ["InvoiceDate"], "connectors": ["fortnox"], "label": "Document date", "property": "erp:documentDate", "transforms": ["direct"]}, {"columns": ["OrgId"], "connectors": ["fortnox"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Invoice", "family_key": "erp:Invoice", "gap": "", "key": "fact_invoices", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Invoices", "live": ["fortnox", "seventime", "tripletex", "visma_eaccounting", "visma_economic"], "models": {"fortnox": "fortnox_erp_bi_fact_invoices", "seventime": "seventime_erp_bi_fact_invoices", "tripletex": "tripletex_erp_bi_fact_invoices", "visma_eaccounting": "visma_eaccounting_erp_bi_fact_invoices", "visma_economic": "visma_economic_erp_bi_fact_invoices"}, "no_model": [], "planned": ["hogia_your_landlord", "poweroffice", "quickbooks", "visma_net", "xero"], "supplier_count": 5, "technical": "fact_invoices"}, {"attributes": [], "family": "Cost center", "family_key": "erp:CostCenter", "gap": "", "key": "dim_cost_centers", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Cost centers", "live": ["fortnox", "tripletex", "visma_eaccounting", "xledger"], "models": {"fortnox": "fortnox_erp_bi_dim_cost_centers", "tripletex": "tripletex_erp_bi_dim_cost_centers", "visma_eaccounting": "visma_eaccounting_erp_bi_dim_cost_centers", "xledger": "xledger_erp_bi_dim_cost_centers"}, "no_model": [], "planned": ["visma_net"], "supplier_count": 4, "technical": "dim_cost_centers"}, {"attributes": [{"columns": ["InvoiceDate", "date", "invoiceDate"], "connectors": ["fortnox", "seventime", "visma_eaccounting", "visma_economic"], "label": "Document date", "property": "erp:documentDate", "transforms": ["direct", "renamed"]}, {"columns": ["OrgId"], "connectors": ["fortnox", "seventime", "visma_eaccounting", "visma_economic"], "label": "Org ID", "property": "erp:orgId", "transforms": ["derived", "direct"]}], "family": "Line item", "family_key": "erp:LineItem", "gap": "", "key": "fact_invoice_rows", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Invoice rows", "live": ["fortnox", "seventime", "visma_eaccounting", "visma_economic"], "models": {"fortnox": "fortnox_erp_bi_fact_invoice_rows", "seventime": "seventime_erp_bi_fact_invoice_rows", "visma_eaccounting": "visma_eaccounting_erp_bi_fact_invoice_rows", "visma_economic": "visma_economic_erp_bi_fact_invoice_rows"}, "no_model": [], "planned": ["hogia_your_landlord", "quickbooks", "xero"], "supplier_count": 4, "technical": "fact_invoice_rows"}, {"attributes": [{"columns": ["Currency"], "connectors": ["favrit", "fortnox", "shopify"], "label": "Currency", "property": "erp:currency", "transforms": ["derived", "direct"]}, {"columns": ["CreatedAt", "OrderDate"], "connectors": ["favrit", "fortnox", "shopify"], "label": "Document date", "property": "erp:documentDate", "transforms": ["derived", "direct"]}, {"columns": ["OrgId"], "connectors": ["fortnox"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Line item", "family_key": "erp:LineItem", "gap": "", "key": "fact_order_rows", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Order rows", "live": ["favrit", "fortnox", "shopify", "upsales"], "models": {"favrit": "favrit_erp_bi_fact_order_rows", "fortnox": "fortnox_erp_bi_fact_order_rows", "shopify": "shopify_erp_bi_fact_order_rows", "upsales": "upsales_erp_bi_fact_order_rows"}, "no_model": [], "planned": ["dynamics365"], "supplier_count": 4, "technical": "fact_order_rows"}, {"attributes": [{"columns": ["Currency"], "connectors": ["fortnox", "shopify"], "label": "Currency", "property": "erp:currency", "transforms": ["direct"]}, {"columns": ["OrderDate"], "connectors": ["fortnox", "shopify"], "label": "Document date", "property": "erp:documentDate", "transforms": ["direct"]}, {"columns": ["OrgId"], "connectors": ["fortnox"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Order", "family_key": "erp:Order", "gap": "", "key": "fact_orders", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Orders", "live": ["fortnox", "shopify", "upsales", "visma_economic"], "models": {"fortnox": "fortnox_erp_bi_fact_orders", "shopify": "shopify_erp_bi_fact_orders", "upsales": "upsales_erp_bi_fact_orders", "visma_economic": "visma_economic_erp_bi_fact_orders"}, "no_model": [], "planned": ["dynamics365"], "supplier_count": 4, "technical": "fact_orders"}, {"attributes": [], "family": "Project", "family_key": "erp:Project", "gap": "", "key": "dim_projects", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Projects", "live": ["fortnox", "tripletex", "visma_eaccounting", "xledger"], "models": {"fortnox": "fortnox_erp_bi_dim_projects", "tripletex": "tripletex_erp_bi_dim_projects", "visma_eaccounting": "visma_eaccounting_erp_bi_dim_projects", "xledger": "xledger_erp_bi_dim_projects"}, "no_model": [], "planned": ["poweroffice", "visma_net"], "supplier_count": 4, "technical": "dim_projects"}, {"attributes": [{"columns": ["OrgId"], "connectors": ["fortnox", "visma_economic"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct", "union"]}, {"columns": ["Balance"], "connectors": ["fortnox"], "label": "Amount", "property": "erp:amount", "transforms": ["renamed"]}], "family": "Voucher", "family_key": "erp:Voucher", "gap": "", "key": "fact_vouchers", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Vouchers", "live": ["fortnox", "tripletex", "visma_eaccounting", "visma_economic"], "models": {"fortnox": "fortnox_erp_bi_fact_vouchers", "tripletex": "tripletex_erp_bi_fact_vouchers", "visma_eaccounting": "visma_eaccounting_erp_bi_fact_vouchers", "visma_economic": "visma_economic_erp_bi_fact_vouchers"}, "no_model": [], "planned": ["poweroffice", "quickbooks", "visma_net", "xero"], "supplier_count": 4, "technical": "fact_vouchers"}, {"attributes": [{"columns": ["Currency"], "connectors": ["fortnox"], "label": "Currency", "property": "erp:currency", "transforms": ["direct"]}, {"columns": ["Active"], "connectors": ["fortnox"], "label": "Is active", "property": "erp:isActive", "transforms": ["renamed"]}, {"columns": ["SupplierNumber"], "connectors": ["fortnox"], "label": "Party number", "property": "erp:partyNumber", "transforms": ["direct"]}], "family": "Supplier", "family_key": "erp:Supplier", "gap": "", "key": "dim_suppliers", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Suppliers", "live": ["fortnox", "tripletex", "visma_economic"], "models": {"fortnox": "fortnox_erp_bi_dim_suppliers", "tripletex": "tripletex_erp_bi_dim_suppliers", "visma_economic": "visma_economic_erp_bi_dim_suppliers"}, "no_model": [], "planned": ["poweroffice", "quickbooks", "visma_net", "xero"], "supplier_count": 3, "technical": "dim_suppliers"}, {"attributes": [], "family": "Time reporting registration", "family_key": "erp:TimeReportingRegistration", "gap": "", "key": "fact_time_reporting_registrations", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Time reporting registrations", "live": ["fortnox", "seventime", "tempo"], "models": {"fortnox": "fortnox_erp_bi_fact_time_reporting_registrations", "seventime": "seventime_erp_bi_fact_time_reporting_registrations", "tempo": "tempo_erp_bi_fact_time_reporting_registrations"}, "no_model": [], "planned": ["serviceprotokoll"], "supplier_count": 3, "technical": "fact_time_reporting_registrations"}, {"attributes": [{"columns": ["Currency"], "connectors": ["fortnox"], "label": "Currency", "property": "erp:currency", "transforms": ["direct"]}, {"columns": ["OrgId"], "connectors": ["fortnox"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Offer", "family_key": "erp:Offer", "gap": "", "key": "fact_offers", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Offers", "live": ["fortnox", "seventime"], "models": {"fortnox": "fortnox_erp_bi_fact_offers", "seventime": "seventime_erp_bi_fact_offers"}, "no_model": [], "planned": [], "supplier_count": 2, "technical": "fact_offers"}, {"attributes": [], "family": "Voucher series", "family_key": "erp:VoucherSeries", "gap": "", "key": "dim_voucher_series", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Voucher series", "live": ["fortnox", "tripletex"], "models": {"fortnox": "fortnox_bi_dim_voucher_series"}, "no_model": ["tripletex"], "planned": [], "supplier_count": 2, "technical": "dim_voucher_series"}, {"attributes": [], "family": "Absence transaction", "family_key": "erp:AbsenceTransaction", "gap": "single supplier", "key": "fact_absence_transactions", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Absence transactions", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_absence_transactions"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_absence_transactions"}, {"attributes": [], "family": "Classifier", "family_key": "erp:Classifier", "gap": "single supplier", "key": "dim_accounting", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Accounting", "live": ["favrit"], "models": {"favrit": "favrit_bi_dim_accounting"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_accounting"}, {"attributes": [{"columns": ["OrgId"], "connectors": ["upsales"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Activity", "family_key": "crm:Activity", "gap": "single supplier", "key": "fact_activities", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Activities", "live": ["upsales"], "models": {"upsales": "upsales_bi_fact_activities_staging"}, "no_model": [], "planned": ["dynamics365", "hubspot", "salesforce"], "supplier_count": 1, "technical": "fact_activities"}, {"attributes": [{"columns": ["OrgId"], "connectors": ["upsales"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Appointment", "family_key": "crm:Appointment", "gap": "single supplier", "key": "fact_appointments", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Appointments", "live": ["upsales"], "models": {"upsales": "upsales_bi_fact_appointments_staging"}, "no_model": [], "planned": ["hubspot", "salesforce"], "supplier_count": 1, "technical": "fact_appointments"}, {"attributes": [], "family": "Line item", "family_key": "erp:LineItem", "gap": "single supplier", "key": "fact_asset_rows", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Asset rows", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_asset_rows"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_asset_rows"}, {"attributes": [], "family": "Asset", "family_key": "erp:Asset", "gap": "single supplier", "key": "fact_assets", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Assets", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_assets"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_assets"}, {"attributes": [], "family": "Asset", "family_key": "erp:Asset", "gap": "single supplier", "key": "dim_assets_types", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Assets types", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_dim_assets_types"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_assets_types"}, {"attributes": [], "family": "Attendance transaction", "family_key": "erp:AttendanceTransaction", "gap": "single supplier", "key": "fact_attendance_transactions", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Attendance transactions", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_attendance_transactions"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_attendance_transactions"}, {"attributes": [], "family": "Budget", "family_key": "erp:Budget", "gap": "single supplier", "key": "fact_budgets", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Budgets", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_budgets"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_budgets"}, {"attributes": [], "family": "Bundle article", "family_key": "erp:BundleArticle", "gap": "single supplier", "key": "dim_bundle_articles", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Bundle articles", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_dim_bundle_articles"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_bundle_articles"}, {"attributes": [], "family": "Line item", "family_key": "erp:LineItem", "gap": "single supplier", "key": "fact_contract_rows", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Contract rows", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_contract_rows"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_contract_rows"}, {"attributes": [], "family": "Contract", "family_key": "erp:Contract", "gap": "single supplier", "key": "fact_contracts", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Contracts", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_contracts"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_contracts"}, {"attributes": [], "family": "Event", "family_key": "erp:Event", "gap": "single supplier", "key": "fact_employee_schedules", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Employee schedules", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_employee_schedules"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_employee_schedules"}, {"attributes": [{"columns": ["OrgId"], "connectors": ["fortnox"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Salary transaction", "family_key": "erp:SalaryTransaction", "gap": "single supplier", "key": "fact_employee_wages", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Employee wages", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_employee_wages"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_employee_wages"}, {"attributes": [], "family": "Employee", "family_key": "erp:Employee", "gap": "single supplier", "key": "dim_employees", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Employees", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_dim_employees"}, "no_model": [], "planned": ["dynamics365", "salesforce", "serviceprotokoll"], "supplier_count": 1, "technical": "dim_employees"}, {"attributes": [], "family": "Classifier", "family_key": "erp:Classifier", "gap": "single supplier", "key": "dim_expenses", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Expenses", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_dim_expenses"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_expenses"}, {"attributes": [], "family": "Incoming goods", "family_key": "erp:IncomingGoods", "gap": "single supplier", "key": "fact_incoming_goods", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Incoming goods", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_incoming_goods"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_incoming_goods"}, {"attributes": [], "family": "Event", "family_key": "erp:Event", "gap": "single supplier", "key": "fact_invoice_accruals", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Invoice accruals", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_invoice_accruals"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_invoice_accruals"}, {"attributes": [{"columns": ["Currency"], "connectors": ["fortnox"], "label": "Currency", "property": "erp:currency", "transforms": ["direct"]}, {"columns": ["OrgId"], "connectors": ["fortnox"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Payment", "family_key": "erp:Payment", "gap": "single supplier", "key": "fact_invoice_payments", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Invoice payments", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_invoice_payments"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_invoice_payments"}, {"attributes": [], "family": "Label", "family_key": "erp:Label", "gap": "single supplier", "key": "dim_labels", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Labels", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_dim_labels"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_labels"}, {"attributes": [], "family": "Locked period", "family_key": "erp:LockedPeriod", "gap": "single supplier", "key": "fact_locked_period", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Locked period", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_locked_period"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_locked_period"}, {"attributes": [], "family": "Classifier", "family_key": "erp:Classifier", "gap": "single supplier", "key": "dim_meta_data", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Meta data", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_dim_meta_data"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_meta_data"}, {"attributes": [], "family": "Line item", "family_key": "erp:LineItem", "gap": "single supplier", "key": "fact_offer_rows", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Offer rows", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_offer_rows"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_offer_rows"}, {"attributes": [{"columns": ["currency"], "connectors": ["upsales"], "label": "Currency", "property": "erp:currency", "transforms": ["renamed"]}, {"columns": ["OrgId"], "connectors": ["upsales"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Opportunity", "family_key": "crm:Opportunity", "gap": "single supplier", "key": "fact_opportunities", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Opportunities", "live": ["upsales"], "models": {"upsales": "upsales_bi_fact_opportunities_staging"}, "no_model": [], "planned": ["dynamics365", "hubspot", "salesforce"], "supplier_count": 1, "technical": "fact_opportunities"}, {"attributes": [{"columns": ["currency"], "connectors": ["upsales"], "label": "Currency", "property": "erp:currency", "transforms": ["renamed"]}, {"columns": ["OrgId"], "connectors": ["upsales"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Opportunity line", "family_key": "crm:OpportunityLine", "gap": "single supplier", "key": "fact_opportunity_rows", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Opportunity rows", "live": ["upsales"], "models": {"upsales": "upsales_bi_fact_opportunity_rows_staging"}, "no_model": [], "planned": ["hubspot", "salesforce"], "supplier_count": 1, "technical": "fact_opportunity_rows"}, {"attributes": [], "family": "Price list", "family_key": "erp:PriceList", "gap": "single supplier", "key": "dim_pricelists", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Pricelists", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_dim_pricelists"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_pricelists"}, {"attributes": [], "family": "Price list", "family_key": "erp:PriceList", "gap": "single supplier", "key": "dim_prices", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Prices", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_dim_prices"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_prices"}, {"attributes": [], "family": "Production order", "family_key": "erp:ProductionOrder", "gap": "single supplier", "key": "fact_production_orders", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Production orders", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_production_orders"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_production_orders"}, {"attributes": [], "family": "Purchase order", "family_key": "erp:PurchaseOrder", "gap": "single supplier", "key": "fact_purchase_orders", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Purchase orders", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_purchase_orders"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_purchase_orders"}, {"attributes": [], "family": "Classifier", "family_key": "erp:Classifier", "gap": "single supplier", "key": "dim_ratings", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Ratings", "live": ["favrit"], "models": {"favrit": "favrit_bi_dim_ratings"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_ratings"}, {"attributes": [], "family": "Event", "family_key": "erp:Event", "gap": "single supplier", "key": "fact_rolling_sum", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Rolling sum", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_rolling_sum"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_rolling_sum"}, {"attributes": [], "family": "Salary transaction", "family_key": "erp:SalaryTransaction", "gap": "single supplier", "key": "fact_salary_transactions", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Salary transactions", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_salary_transactions"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_salary_transactions"}, {"attributes": [], "family": "Stock balance", "family_key": "erp:StockBalance", "gap": "single supplier", "key": "fact_stockbalance", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Stockbalance", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_stockbalance"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_stockbalance"}, {"attributes": [{"columns": ["isActive"], "connectors": ["fortnox"], "label": "Is active", "property": "erp:isActive", "transforms": ["direct"]}], "family": "Stock point", "family_key": "erp:StockPoint", "gap": "single supplier", "key": "dim_stockpoints", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Stockpoints", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_dim_stockpoints"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_stockpoints"}, {"attributes": [], "family": "Stocktaking", "family_key": "erp:Stocktaking", "gap": "single supplier", "key": "fact_stocktakings", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Stocktakings", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_stocktakings"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_stocktakings"}, {"attributes": [], "family": "Event", "family_key": "erp:Event", "gap": "single supplier", "key": "fact_supplier_invoice_accruals", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Supplier invoice accruals", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_fact_supplier_invoice_accruals"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_supplier_invoice_accruals"}, {"attributes": [], "family": "Classifier", "family_key": "erp:Classifier", "gap": "single supplier", "key": "dim_supplier_invoice_files", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Supplier invoice files", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_dim_supplier_invoice_files"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_supplier_invoice_files"}, {"attributes": [{"columns": ["Total"], "connectors": ["fortnox"], "label": "Amount", "property": "erp:amount", "transforms": ["direct"]}, {"columns": ["Currency"], "connectors": ["fortnox"], "label": "Currency", "property": "erp:currency", "transforms": ["direct"]}, {"columns": ["InvoiceDate"], "connectors": ["fortnox"], "label": "Document date", "property": "erp:documentDate", "transforms": ["direct"]}, {"columns": ["InvoiceNumber"], "connectors": ["fortnox"], "label": "Document number", "property": "erp:documentNumber", "transforms": ["direct"]}, {"columns": ["OrgId"], "connectors": ["fortnox"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}, {"columns": ["Quantity"], "connectors": ["fortnox"], "label": "Quantity", "property": "erp:quantity", "transforms": ["direct"]}], "family": "Line item", "family_key": "erp:LineItem", "gap": "single supplier", "key": "fact_supplier_invoice_rows", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Supplier invoice rows", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_supplier_invoice_rows"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_supplier_invoice_rows"}, {"attributes": [{"columns": ["Total"], "connectors": ["fortnox"], "label": "Amount", "property": "erp:amount", "transforms": ["direct"]}, {"columns": ["Currency"], "connectors": ["fortnox"], "label": "Currency", "property": "erp:currency", "transforms": ["direct"]}, {"columns": ["InvoiceDate"], "connectors": ["fortnox"], "label": "Document date", "property": "erp:documentDate", "transforms": ["direct"]}, {"columns": ["InvoiceNumber"], "connectors": ["fortnox"], "label": "Document number", "property": "erp:documentNumber", "transforms": ["direct"]}, {"columns": ["OrgId"], "connectors": ["fortnox"], "label": "Org ID", "property": "erp:orgId", "transforms": ["direct"]}], "family": "Supplier invoice", "family_key": "erp:SupplierInvoice", "gap": "single supplier", "key": "fact_supplier_invoices", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Supplier invoices", "live": ["fortnox"], "models": {"fortnox": "fortnox_erp_bi_fact_supplier_invoices"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "fact_supplier_invoices"}, {"attributes": [], "family": "Article", "family_key": "erp:Article", "gap": "single supplier", "key": "dim_supplier_items", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "Supplier items", "live": ["fortnox"], "models": {"fortnox": "fortnox_bi_dim_supplier_items"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_supplier_items"}, {"attributes": [], "family": "Organisation", "family_key": "erp:Organisation", "gap": "single supplier", "key": "dim_user_locations", "kind": "Reference data", "kind_blurb": "Things you look up — a customer, an article, an account.", "label": "User locations", "live": ["favrit"], "models": {"favrit": "favrit_bi_dim_user_locations"}, "no_model": [], "planned": [], "supplier_count": 1, "technical": "dim_user_locations"}, {"attributes": [], "family": "Document", "family_key": "erp:Document", "gap": "single supplier", "key": "fact_work_orders", "kind": "Activity", "kind_blurb": "Things that happen and can be counted — an order, an invoice line.", "label": "Work orders", "live": ["seventime"], "models": {}, "no_model": ["seventime"], "planned": ["serviceprotokoll"], "supplier_count": 1, "technical": "fact_work_orders"}], "connectors": [{"currency": "SEK", "enable_var": "is_fortnox_enabled", "key": "fortnox", "kind": "erp", "kind_label": "Finance & operations", "label": "Fortnox", "live": ["dim_accounts", "dim_articles", "dim_assets_types", "dim_bundle_articles", "dim_company", "dim_cost_centers", "dim_customers", "dim_employees", "dim_expenses", "dim_financial_years", "dim_labels", "dim_meta_data", "dim_pricelists", "dim_prices", "dim_projects", "dim_stockpoints", "dim_supplier_invoice_files", "dim_supplier_items", "dim_suppliers", "dim_voucher_series", "fact_absence_transactions", "fact_asset_rows", "fact_assets", "fact_attendance_transactions", "fact_budgets", "fact_contract_rows", "fact_contracts", "fact_employee_schedules", "fact_employee_wages", "fact_incoming_goods", "fact_invoice_accruals", "fact_invoice_payments", "fact_invoice_rows", "fact_invoices", "fact_locked_period", "fact_offer_rows", "fact_offers", "fact_order_rows", "fact_orders", "fact_production_orders", "fact_purchase_orders", "fact_rolling_sum", "fact_salary_transactions", "fact_stockbalance", "fact_stocktakings", "fact_supplier_invoice_accruals", "fact_supplier_invoice_rows", "fact_supplier_invoices", "fact_time_reporting_registrations", "fact_vouchers"], "planned": [], "region": "SE", "status": "implemented", "status_label": "Live"}, {"currency": "NOK", "enable_var": "is_tripletex_enabled", "key": "tripletex", "kind": "erp", "kind_label": "Finance & operations", "label": "Tripletex", "live": ["dim_accounts", "dim_company", "dim_cost_centers", "dim_customers", "dim_financial_years", "dim_projects", "dim_suppliers", "dim_voucher_series", "fact_invoices", "fact_vouchers"], "planned": [], "region": "NO", "status": "implemented", "status_label": "Live"}, {"currency": "SEK", "enable_var": "is_upsales_enabled", "key": "upsales", "kind": "crm", "kind_label": "Sales & customers", "label": "Upsales", "live": ["dim_articles", "dim_company", "dim_customers", "dim_financial_years", "fact_activities", "fact_appointments", "fact_opportunities", "fact_opportunity_rows", "fact_order_rows", "fact_orders"], "planned": [], "region": "SE", "status": "implemented", "status_label": "Live"}, {"currency": "DKK", "enable_var": "is_visma_economic_enabled", "key": "visma_economic", "kind": "erp", "kind_label": "Finance & operations", "label": "Visma e-conomic", "live": ["dim_accounts", "dim_articles", "dim_company", "dim_customers", "dim_financial_years", "dim_suppliers", "fact_invoice_rows", "fact_invoices", "fact_orders", "fact_vouchers"], "planned": [], "region": "DK", "status": "implemented", "status_label": "Live"}, {"currency": "SEK", "enable_var": "is_visma_eaccounting_enabled", "key": "visma_eaccounting", "kind": "erp", "kind_label": "Finance & operations", "label": "Visma eAccounting", "live": ["dim_accounts", "dim_articles", "dim_company", "dim_cost_centers", "dim_customers", "dim_financial_years", "dim_projects", "fact_invoice_rows", "fact_invoices", "fact_vouchers"], "planned": [], "region": "SE", "status": "implemented", "status_label": "Live"}, {"currency": "SEK", "enable_var": "is_seventime_enabled", "key": "seventime", "kind": "erp", "kind_label": "Finance & operations", "label": "SevenTime", "live": ["dim_articles", "dim_company", "dim_customers", "dim_financial_years", "fact_invoice_rows", "fact_invoices", "fact_offers", "fact_time_reporting_registrations", "fact_work_orders"], "planned": [], "region": "SE", "status": "implemented", "status_label": "Live"}, {"currency": "", "enable_var": "is_favrit_enabled", "key": "favrit", "kind": "commerce", "kind_label": "Other", "label": "Favrit", "live": ["dim_accounting", "dim_ratings", "dim_user_locations", "fact_order_rows"], "planned": [], "region": "NO", "status": "implemented", "status_label": "Live"}, {"currency": "SEK", "enable_var": "is_shopify_enabled", "key": "shopify", "kind": "commerce", "kind_label": "Other", "label": "Shopify", "live": ["dim_articles", "dim_customers", "fact_order_rows", "fact_orders"], "planned": [], "region": "", "status": "implemented", "status_label": "Live"}, {"currency": "NOK", "enable_var": "is_xledger_enabled", "key": "xledger", "kind": "erp", "kind_label": "Finance & operations", "label": "Xledger", "live": ["dim_accounts", "dim_cost_centers", "dim_financial_years", "dim_projects"], "planned": [], "region": "NO", "status": "implemented", "status_label": "Live"}, {"currency": "", "enable_var": "is_tempo_enabled", "key": "tempo", "kind": "erp", "kind_label": "Finance & operations", "label": "Tempo", "live": ["fact_time_reporting_registrations"], "planned": [], "region": "", "status": "implemented", "status_label": "Live"}, {"currency": "", "enable_var": "is_hogia_your_landlord_enabled", "key": "hogia_your_landlord", "kind": "erp", "kind_label": "Finance & operations", "label": "Hogia Your Landlord", "live": [], "planned": ["dim_accounts", "dim_customers", "fact_invoice_rows", "fact_invoices"], "region": "SE", "status": "planned", "status_label": "Planned"}, {"currency": "", "enable_var": "is_hubspot_enabled", "key": "hubspot", "kind": "crm", "kind_label": "Sales & customers", "label": "HubSpot", "live": [], "planned": ["dim_customers", "fact_activities", "fact_appointments", "fact_opportunities", "fact_opportunity_rows"], "region": "", "status": "planned", "status_label": "Planned"}, {"currency": "", "enable_var": "is_dynamics365_enabled", "key": "dynamics365", "kind": "crm", "kind_label": "Sales & customers", "label": "Microsoft Dynamics 365", "live": [], "planned": ["dim_articles", "dim_customers", "dim_employees", "fact_activities", "fact_opportunities", "fact_order_rows", "fact_orders"], "region": "", "status": "planned", "status_label": "Planned"}, {"currency": "", "enable_var": "is_poweroffice_enabled", "key": "poweroffice", "kind": "erp", "kind_label": "Finance & operations", "label": "PowerOffice", "live": [], "planned": ["dim_accounts", "dim_customers", "dim_financial_years", "dim_projects", "dim_suppliers", "fact_invoices", "fact_vouchers"], "region": "NO", "status": "planned", "status_label": "Planned"}, {"currency": "", "enable_var": "is_quickbooks_enabled", "key": "quickbooks", "kind": "erp", "kind_label": "Finance & operations", "label": "QuickBooks", "live": [], "planned": ["dim_accounts", "dim_articles", "dim_customers", "dim_financial_years", "dim_suppliers", "fact_invoice_rows", "fact_invoices", "fact_vouchers"], "region": "", "status": "planned", "status_label": "Planned"}, {"currency": "", "enable_var": "is_salesforce_enabled", "key": "salesforce", "kind": "crm", "kind_label": "Sales & customers", "label": "Salesforce", "live": [], "planned": ["dim_customers", "dim_employees", "fact_activities", "fact_appointments", "fact_opportunities", "fact_opportunity_rows"], "region": "", "status": "planned", "status_label": "Planned"}, {"currency": "", "enable_var": "is_serviceprotokoll_enabled", "key": "serviceprotokoll", "kind": "erp", "kind_label": "Finance & operations", "label": "Serviceprotokoll", "live": [], "planned": ["dim_customers", "dim_employees", "fact_time_reporting_registrations", "fact_work_orders"], "region": "SE", "status": "planned", "status_label": "Planned"}, {"currency": "", "enable_var": "is_visma_net_enabled", "key": "visma_net", "kind": "erp", "kind_label": "Finance & operations", "label": "Visma.net", "live": [], "planned": ["dim_accounts", "dim_cost_centers", "dim_customers", "dim_financial_years", "dim_projects", "dim_suppliers", "fact_invoices", "fact_vouchers"], "region": "NO", "status": "planned", "status_label": "Planned"}, {"currency": "", "enable_var": "is_xero_enabled", "key": "xero", "kind": "erp", "kind_label": "Finance & operations", "label": "Xero", "live": [], "planned": ["dim_accounts", "dim_articles", "dim_customers", "dim_financial_years", "dim_suppliers", "fact_invoice_rows", "fact_invoices", "fact_vouchers"], "region": "", "status": "planned", "status_label": "Planned"}], "families": [{"count": 6, "family": "Line item"}, {"count": 5, "family": "Classifier"}, {"count": 4, "family": "Event"}, {"count": 2, "family": "Article"}, {"count": 2, "family": "Asset"}, {"count": 2, "family": "Organisation"}, {"count": 2, "family": "Price list"}, {"count": 2, "family": "Salary transaction"}, {"count": 1, "family": "Absence transaction"}, {"count": 1, "family": "Account"}, {"count": 1, "family": "Activity"}, {"count": 1, "family": "Appointment"}, {"count": 1, "family": "Attendance transaction"}, {"count": 1, "family": "Budget"}, {"count": 1, "family": "Bundle article"}, {"count": 1, "family": "Contract"}, {"count": 1, "family": "Cost center"}, {"count": 1, "family": "Customer"}, {"count": 1, "family": "Document"}, {"count": 1, "family": "Employee"}, {"count": 1, "family": "Financial year"}, {"count": 1, "family": "Incoming goods"}, {"count": 1, "family": "Invoice"}, {"count": 1, "family": "Label"}, {"count": 1, "family": "Locked period"}, {"count": 1, "family": "Offer"}, {"count": 1, "family": "Opportunity"}, {"count": 1, "family": "Opportunity line"}, {"count": 1, "family": "Order"}, {"count": 1, "family": "Payment"}, {"count": 1, "family": "Production order"}, {"count": 1, "family": "Project"}, {"count": 1, "family": "Purchase order"}, {"count": 1, "family": "Stock balance"}, {"count": 1, "family": "Stock point"}, {"count": 1, "family": "Stocktaking"}, {"count": 1, "family": "Supplier"}, {"count": 1, "family": "Supplier invoice"}, {"count": 1, "family": "Time reporting registration"}, {"count": 1, "family": "Voucher"}, {"count": 1, "family": "Voucher series"}], "gaps": [{"concept": "dim_accounting", "label": "Accounting", "live": ["favrit"], "planned": [], "reason": "single supplier"}, {"concept": "dim_assets_types", "label": "Assets types", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_bundle_articles", "label": "Bundle articles", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_employees", "label": "Employees", "live": ["fortnox"], "planned": ["dynamics365", "salesforce", "serviceprotokoll"], "reason": "single supplier"}, {"concept": "dim_expenses", "label": "Expenses", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_labels", "label": "Labels", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_meta_data", "label": "Meta data", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_pricelists", "label": "Pricelists", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_prices", "label": "Prices", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_ratings", "label": "Ratings", "live": ["favrit"], "planned": [], "reason": "single supplier"}, {"concept": "dim_stockpoints", "label": "Stockpoints", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_supplier_invoice_files", "label": "Supplier invoice files", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_supplier_items", "label": "Supplier items", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "dim_user_locations", "label": "User locations", "live": ["favrit"], "planned": [], "reason": "single supplier"}, {"concept": "fact_absence_transactions", "label": "Absence transactions", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_activities", "label": "Activities", "live": ["upsales"], "planned": ["dynamics365", "hubspot", "salesforce"], "reason": "single supplier"}, {"concept": "fact_appointments", "label": "Appointments", "live": ["upsales"], "planned": ["hubspot", "salesforce"], "reason": "single supplier"}, {"concept": "fact_asset_rows", "label": "Asset rows", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_assets", "label": "Assets", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_attendance_transactions", "label": "Attendance transactions", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_budgets", "label": "Budgets", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_contract_rows", "label": "Contract rows", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_contracts", "label": "Contracts", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_employee_schedules", "label": "Employee schedules", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_employee_wages", "label": "Employee wages", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_incoming_goods", "label": "Incoming goods", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_invoice_accruals", "label": "Invoice accruals", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_invoice_payments", "label": "Invoice payments", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_locked_period", "label": "Locked period", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_offer_rows", "label": "Offer rows", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_opportunities", "label": "Opportunities", "live": ["upsales"], "planned": ["dynamics365", "hubspot", "salesforce"], "reason": "single supplier"}, {"concept": "fact_opportunity_rows", "label": "Opportunity rows", "live": ["upsales"], "planned": ["hubspot", "salesforce"], "reason": "single supplier"}, {"concept": "fact_production_orders", "label": "Production orders", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_purchase_orders", "label": "Purchase orders", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_rolling_sum", "label": "Rolling sum", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_salary_transactions", "label": "Salary transactions", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_stockbalance", "label": "Stockbalance", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_stocktakings", "label": "Stocktakings", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_supplier_invoice_accruals", "label": "Supplier invoice accruals", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_supplier_invoice_rows", "label": "Supplier invoice rows", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_supplier_invoices", "label": "Supplier invoices", "live": ["fortnox"], "planned": [], "reason": "single supplier"}, {"concept": "fact_work_orders", "label": "Work orders", "live": ["seventime"], "planned": ["serviceprotokoll"], "reason": "single supplier"}], "generated_by": "scripts/ontology_ui.py", "source": "ontology/index.json", "title": "Enhanza ERP/CRM analytics", "totals": {"attributes": 48, "concepts": 58, "concepts_live": 58, "connectors": 19, "connectors_live": 10, "gaps": 42, "links": 112, "links_unbacked": 2, "links_with_model": 110}, "unbacked": [{"concept": "dim_voucher_series", "connector": "tripletex", "label": "Voucher series", "system": "Tripletex"}, {"concept": "fact_work_orders", "connector": "seventime", "label": "Work orders", "system": "SevenTime"}], "use_case": "enhanza-analytics", "words": {"crm": "Sales & customers", "derived": "calculated", "direct": "copied as-is", "erp": "Finance & operations", "implemented": "Live", "planned": "Planned", "renamed": "renamed", "union": "merged from several"}}</script>
+<script>
+const D = JSON.parse(document.getElementById("payload").textContent);
+const $ = (s, r) => (r || document).querySelector(s);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+const esc = s => String(s == null ? "" : s);
+
+let view = "map", q = "", picked = null;
+
+/* A concept matches on its plain name, its technical name, its family, or any system
+   that supplies it — because a reader searching "shopify" means "show me what Shopify
+   gives us", not "find a concept literally called shopify". */
+function matches(c) {
+  if (!q) return true;
+  const hay = [c.label, c.technical, c.family, c.kind, ...c.live, ...c.planned,
+               ...c.attributes.map(a => a.label + " " + a.columns.join(" "))]
+              .join(" ").toLowerCase();
+  return hay.includes(q);
+}
+function matchesConn(c) {
+  if (!q) return true;
+  return [c.label, c.key, c.kind_label, c.region, c.currency, c.status_label]
+    .join(" ").toLowerCase().includes(q);
+}
+
+function supplierChips(c) {
+  const box = el("div", "sup");
+  const live = c.live.slice(0, 6), planned = c.planned.slice(0, 3);
+  live.forEach(k => {
+    const chip = el("span", "chip live", nameOf(k));
+    /* Declared implemented by the registry, but no dbt model was found for the pair.
+       Marked rather than dropped: the claim is real, the evidence is missing, and
+       which of the two is wrong is not this page's call. */
+    if (c.no_model.includes(k)) {
+      chip.className = "chip unbacked";
+      chip.textContent = nameOf(k) + " (no model)";
+      chip.title = "Declared in the connector registry, but no dbt model realises it";
+    }
+    box.appendChild(chip);
+  });
+  if (c.live.length > live.length)
+    box.appendChild(el("span", "chip more", "+" + (c.live.length - live.length) + " more"));
+  planned.forEach(k => box.appendChild(el("span", "chip planned", nameOf(k) + " (planned)")));
+  if (!c.live.length && !c.planned.length)
+    box.appendChild(el("span", "chip more", "no system supplies this yet"));
+  return box;
+}
+const CONN = {}; D.connectors.forEach(c => CONN[c.key] = c);
+const nameOf = k => (CONN[k] && CONN[k].label) || k;
+
+function conceptCard(c) {
+  const card = el("button", "card");
+  card.type = "button";
+  card.setAttribute("aria-pressed", picked === c.key ? "true" : "false");
+  card.addEventListener("click", () => { picked = picked === c.key ? null : c.key; render(); });
+
+  const hd = el("div", "hd"), t = el("div", "t");
+  t.appendChild(el("span", "nm", c.label));
+  t.appendChild(el("span", "tn", c.technical));
+  hd.appendChild(t);
+  hd.appendChild(el("span", "badge k", c.kind));
+  card.appendChild(hd);
+
+  const ul = el("ul", "attrs");
+  if (c.attributes.length) {
+    c.attributes.forEach(a => {
+      const li = el("li");
+      li.appendChild(el("span", "a", a.label));
+      li.appendChild(el("span", "m", a.transforms.map(t => D.words[t] || t).join(", ")));
+      li.title = "From: " + a.columns.join(", ");
+      ul.appendChild(li);
+    });
+  } else {
+    ul.appendChild(el("span", "empty", "No field-level mapping recorded yet"));
+  }
+  card.appendChild(ul);
+  card.appendChild(supplierChips(c));
+  return card;
+}
+
+/* Hub and spoke: the concept in the middle, every system that supplies it around the
+   rim. These are the ontology's real `providedBy` edges — the only relationship it
+   asserts about a concept. Solid = live, dashed = planned. */
+function spoke(c) {
+  const NS = "http://www.w3.org/2000/svg";
+  const all = c.live.map(k => [k, "live"]).concat(c.planned.map(k => [k, "planned"]));
+  const n = all.length;
+  const W = 720, rowH = 26, H = Math.max(150, n * rowH + 40);
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("class", "spoke");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label",
+    c.label + " is supplied by " + c.live.length + " live and " + c.planned.length + " planned systems");
+  const cx = 150, cy = H / 2;
+
+  const mk = (t, attrs, txt) => { const e = document.createElementNS(NS, t);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (txt !== undefined) e.textContent = txt; return e; };
+
+  all.forEach(([k, state], i) => {
+    const y = 24 + i * rowH, x = 430;
+    svg.appendChild(mk("path", {
+      d: "M" + (cx + 96) + " " + cy + " C " + (cx + 190) + " " + cy + ", " + (x - 90) + " " + y + ", " + x + " " + y,
+      fill: "none", stroke: state === "live" ? "var(--live)" : "var(--planned)",
+      "stroke-width": 2, "stroke-dasharray": state === "live" ? "0" : "4 3", opacity: .75
+    }));
+    svg.appendChild(mk("circle", { cx: x, cy: y, r: 4,
+      fill: state === "live" ? "var(--live)" : "var(--planned)" }));
+    svg.appendChild(mk("text", { x: x + 10, y: y + 4, fill: "var(--ink)" },
+      nameOf(k) + (state === "planned" ? "  (planned)" : "")));
+  });
+  if (!n) svg.appendChild(mk("text", { x: cx + 110, y: cy + 4, fill: "var(--muted)" },
+    "no system supplies this yet"));
+
+  svg.appendChild(mk("rect", { x: cx - 96, y: cy - 21, width: 192, height: 42, rx: 8,
+    fill: "var(--surface-2)", stroke: "var(--erp)", "stroke-width": 2 }));
+  svg.appendChild(mk("text", { x: cx, y: cy - 3, "text-anchor": "middle",
+    fill: "var(--ink)", "font-weight": "600" }, c.label));
+  svg.appendChild(mk("text", { x: cx, y: cy + 12, "text-anchor": "middle",
+    fill: "var(--muted)", "font-size": "10" }, c.technical));
+  return svg;
+}
+
+function detail(c) {
+  const d = el("div", "detail");
+  d.appendChild(el("h3", null, c.label));
+  d.appendChild(el("p", "sub", c.kind + " — " + c.kind_blurb));
+  d.appendChild(spoke(c));
+  const kv = el("dl", "kv");
+  const add = (k, v) => { kv.appendChild(el("dt", null, k)); kv.appendChild(el("dd", null, v)); };
+  add("Technical name", c.technical);
+  add("Family", c.family + "  (" + c.family_key + ")");
+  add("Live in", c.live.length ? c.live.map(nameOf).join(", ") : "—");
+  add("Planned in", c.planned.length ? c.planned.map(nameOf).join(", ") : "—");
+  add("Fields mapped", c.attributes.length
+    ? c.attributes.map(a => a.label + " (" + a.columns.join(", ") + ")").join("; ") : "none recorded");
+  const models = Object.keys(c.models).sort();
+  add("dbt models", models.length ? models.map(k => c.models[k]).join(", ") : "—");
+  if (c.gap) add("Flagged", c.gap);
+  d.appendChild(kv);
+  return d;
+}
+
+function renderMap(root) {
+  const list = D.concepts.filter(matches);
+  $("#count").textContent = list.length + " of " + D.concepts.length + " business things";
+  if (picked) {
+    const c = D.concepts.find(x => x.key === picked);
+    if (c) root.appendChild(detail(c));
+  }
+  const byFam = {};
+  list.forEach(c => (byFam[c.family] = byFam[c.family] || []).push(c));
+  Object.keys(byFam).sort((a, b) => byFam[b].length - byFam[a].length || a.localeCompare(b))
+    .forEach(fam => {
+      const h = el("div", "family");
+      const h3 = el("h3", null, fam); h.appendChild(h3);
+      h.appendChild(el("span", "c", byFam[fam].length + (byFam[fam].length === 1 ? " thing" : " things")));
+      root.appendChild(h);
+      const g = el("div", "grid");
+      byFam[fam].forEach(c => g.appendChild(conceptCard(c)));
+      root.appendChild(g);
+    });
+  if (!list.length) root.appendChild(el("p", "sub", "Nothing matches that search."));
+}
+
+function renderMatrix(root) {
+  const cs = D.concepts.filter(matches);
+  const conns = D.connectors;
+  $("#count").textContent = conns.length + " systems x " + cs.length + " business things";
+  const wrap = el("div", "scroll"), table = el("table");
+  table.setAttribute("aria-label", "Which source system supplies which business thing");
+
+  const thead = el("thead"), hr = el("tr");
+  hr.appendChild(el("th", null, "Source system"));
+  cs.forEach(c => { const th = el("th", "rot"); const d = el("div");
+    d.appendChild(el("span", null, c.label)); th.appendChild(d);
+    th.title = c.technical; hr.appendChild(th); });
+  hr.appendChild(el("th", null, "Live"));
+  thead.appendChild(hr); table.appendChild(thead);
+
+  const tb = el("tbody");
+  conns.forEach(cn => {
+    const tr = el("tr");
+    const th = el("th", null, cn.label); th.title = cn.key; tr.appendChild(th);
+    let live = 0;
+    cs.forEach(c => {
+      const isLive = c.live.includes(cn.key), isPlan = c.planned.includes(cn.key);
+      const unbacked = isLive && c.no_model.includes(cn.key);
+      if (isLive) live++;
+      const state = unbacked ? "unbacked" : isLive ? "live" : isPlan ? "planned" : "none";
+      const glyph = { unbacked: "▲", live: "●", planned: "○", none: "·" }[state];
+      const td = el("td", "cell " + state, glyph);
+      td.title = cn.label + " → " + c.label + ": " + {
+        unbacked: "declared implemented, but no dbt model found",
+        live: "live", planned: "planned", none: "not supplied"
+      }[state];
+      tr.appendChild(td);
+    });
+    tr.appendChild(el("td", "tot", String(live)));
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb); wrap.appendChild(table); root.appendChild(wrap);
+}
+
+function renderSystems(root) {
+  const list = D.connectors.filter(matchesConn);
+  $("#count").textContent = list.length + " of " + D.connectors.length + " source systems";
+  const rows = el("div", "rows");
+  const max = Math.max(1, ...D.connectors.map(c => c.live.length));
+  list.forEach(c => {
+    const r = el("div", "row");
+    const top = el("div", "top");
+    top.appendChild(el("span", "nm", c.label));
+    const b = el("span", "badge"); b.textContent = c.kind_label;
+    b.style.borderColor = c.kind === "crm" ? "var(--crm)" : "var(--erp)";
+    top.appendChild(b);
+    top.appendChild(el("span", "badge k", c.status_label));
+    if (c.region) top.appendChild(el("span", "badge k", c.region));
+    if (c.currency) top.appendChild(el("span", "badge k", c.currency));
+    r.appendChild(top);
+    r.appendChild(el("div", "why", c.live.length
+      ? "Supplies " + c.live.length + " business thing" + (c.live.length === 1 ? "" : "s") +
+        (c.planned.length ? ", " + c.planned.length + " more planned" : "")
+      : (c.planned.length ? c.planned.length + " planned, none live yet" : "Nothing mapped yet")));
+    const track = el("div", "bar-track"), fill = el("div", "bar-fill");
+    fill.style.width = (100 * c.live.length / max) + "%";
+    track.appendChild(fill); r.appendChild(track);
+    rows.appendChild(r);
+  });
+  root.appendChild(rows);
+  if (!list.length) root.appendChild(el("p", "sub", "Nothing matches that search."));
+}
+
+function renderGaps(root) {
+  const list = D.gaps.filter(g => !q ||
+    (g.label + " " + g.concept + " " + g.reason).toLowerCase().includes(q));
+  $("#count").textContent = list.length + " of " + D.gaps.length + " flagged";
+  root.appendChild(el("p", "sub",
+    "A business thing only one system supplies cannot be compared across systems yet. " +
+    "That is a gap in the model, not necessarily a problem with the data."));
+
+  /* The registry and the dbt project disagreeing is a different, sharper problem than a
+     single-supplier concept, so it gets its own block rather than being folded in. */
+  if (D.unbacked && D.unbacked.length) {
+    const h = el("div", "family");
+    h.appendChild(el("h3", null, "Declared, but no dbt model found"));
+    h.appendChild(el("span", "c", D.unbacked.length + " link" + (D.unbacked.length === 1 ? "" : "s")));
+    root.appendChild(h);
+    root.appendChild(el("p", "sub",
+      "The connector registry says these are implemented; no model in the dbt project " +
+      "realises them. One of the two is out of date."));
+    const ur = el("div", "rows");
+    D.unbacked.forEach(u => {
+      const r = el("div", "row"), top = el("div", "top");
+      top.appendChild(el("span", "nm", u.system + " → " + u.label));
+      const b = el("span", "badge"); b.textContent = "no model";
+      b.style.borderColor = "var(--crit)"; b.style.color = "var(--crit)";
+      top.appendChild(b);
+      r.appendChild(top);
+      r.appendChild(el("div", "why", "Registry marks " + u.connector +
+        " as implementing " + u.concept + ", but no dbt model was found for the pair."));
+      ur.appendChild(r);
+    });
+    root.appendChild(ur);
+    root.appendChild(el("div", "family"));
+  }
+
+  const rows = el("div", "rows");
+  list.forEach(g => {
+    const r = el("div", "row"), top = el("div", "top");
+    top.appendChild(el("span", "nm", g.label));
+    top.appendChild(el("span", "badge k", g.reason || "flagged"));
+    r.appendChild(top);
+    r.appendChild(el("div", "why", g.live.length
+      ? "Supplied by " + g.live.map(nameOf).join(", ") +
+        (g.planned.length ? " · planned in " + g.planned.map(nameOf).join(", ") : "")
+      : (g.planned.length ? "Only planned: " + g.planned.map(nameOf).join(", ")
+                          : "No system supplies this yet")));
+    rows.appendChild(r);
+  });
+  root.appendChild(rows);
+}
+
+function render() {
+  const root = $("#view"); root.textContent = "";
+  document.querySelectorAll(".tab").forEach(t =>
+    t.setAttribute("aria-selected", t.dataset.v === view ? "true" : "false"));
+  ({ map: renderMap, matrix: renderMatrix, systems: renderSystems, gaps: renderGaps })[view](root);
+}
+
+document.querySelectorAll(".tab").forEach(t =>
+  t.addEventListener("click", () => { view = t.dataset.v; picked = null; render(); }));
+$("#q").addEventListener("input", e => { q = e.target.value.trim().toLowerCase(); render(); });
+render();
+</script>
+</body>
+</html>
