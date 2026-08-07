@@ -1,0 +1,1124 @@
+{
+  "catalog": "wren",
+  "schema": "public",
+  "models": [
+    {
+      "name": "dim_customers",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "marts",
+        "table": "dim_customers"
+      },
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Primary key.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "customer_email",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Contact email. PII — masked outside prod."
+          }
+        },
+        {
+          "name": "country_code",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "ISO-3166 alpha-2, lowercased."
+          }
+        },
+        {
+          "name": "region",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Sales region derived from the customer's country code by the mapping owned by Finance\nAnalytics: EMEA, AMER, or OTHER.\n\n`OTHER` is the deliberate catch-all for an unmapped country. It is never null, so a new\nmarket shows up as an `accepted_values` failure on this column rather than as a\n`not_null` failure three models downstream.\n\nGuest checkouts have no customer and therefore no region. Those rows carry a null region\nand are still counted in revenue — see `fct_orders.customer_id`.",
+            "acceptedValues": [
+              "EMEA",
+              "AMER",
+              "OTHER"
+            ],
+            "dbtTests": "accepted_values",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "first_seen_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Timestamp of the customer's first Shopify record."
+          }
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per customer, current state. Region is derived from the Shopify country_code; customers with an unmapped country fall into 'OTHER'.",
+        "dbtLayer": "mart",
+        "dbtUniqueId": "model.analytics.dim_customers",
+        "dbtResourceType": "model"
+      },
+      "primaryKey": "customer_id"
+    },
+    {
+      "name": "fct_orders",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "marts",
+        "table": "fct_orders"
+      },
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Primary key. Shopify order id.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "customer_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "FK to dim_customers. Null for guest checkouts (~3% of orders).",
+            "dbtTests": "relationships",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "region",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Sales region derived from the customer's country code by the mapping owned by Finance\nAnalytics: EMEA, AMER, or OTHER.\n\n`OTHER` is the deliberate catch-all for an unmapped country. It is never null, so a new\nmarket shows up as an `accepted_values` failure on this column rather than as a\n`not_null` failure three models downstream.\n\nGuest checkouts have no customer and therefore no region. Those rows carry a null region\nand are still counted in revenue — see `fct_orders.customer_id`.\nAS-IS, NOT AS-WAS. This is the customer's region at the time this model last built, denormalized from dim_customers so a dashboard need not join. Because dim_customers is SCD Type 1 (overwrite), a customer who moves has ALL of their historical orders re-attributed to the new region on the next run.\nFinance accepted that: they report on where a customer is now. If you need revenue attributed to the region the customer was in when the order was placed, join fct_orders to customers_snapshot on the half-open dbt_valid_from / dbt_valid_to interval instead — that is what the snapshot exists for."
+          }
+        },
+        {
+          "name": "order_status",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "The order's business status, normalized from Shopify's `financial_status`.\n\nPrecedence: a refund overrides any fulfillment state. An order that shipped and was then\nrefunded reports `refunded`, because the finance question this mart answers is \"what did\nwe keep\", not \"what left the warehouse\".\n\nA status Shopify introduces that we have not mapped falls through to `unknown` rather\nthan null. Shopify has added enum values twice; `unknown` turns that into a loud\n`accepted_values` failure instead of silent nulls.\n\nValues: `pending`, `paid`, `fulfilled`, `refunded`, `cancelled`, `unknown`.",
+            "acceptedValues": [
+              "pending",
+              "paid",
+              "fulfilled",
+              "refunded",
+              "cancelled",
+              "unknown"
+            ],
+            "dbtTests": "accepted_values,not_null",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "line_item_count",
+          "type": "INT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Number of line items. Zero for orders with no lines (data defect upstream)."
+          }
+        },
+        {
+          "name": "order_amount_usd",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Gross order amount in USD, before refunds. Includes tax and shipping.",
+            "dbtTests": "accepted_range,not_null",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "net_line_amount_usd",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Sum of line amounts less discounts, USD. Excludes tax and shipping."
+          }
+        },
+        {
+          "name": "ordered_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Order creation timestamp, UTC.",
+            "dbtTests": "not_null",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "ordered_date",
+          "type": "DATE",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Order creation date, UTC. Clustering key."
+          }
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per order at its current status. Excludes internal test accounts (`is_test_order`). Amounts are USD at the order-date rate. Guest checkouts have a null `customer_id` and a null `region` — they are included in revenue.",
+        "dbtLayer": "mart",
+        "dbtUniqueId": "model.analytics.fct_orders",
+        "dbtResourceType": "model"
+      },
+      "primaryKey": "order_id"
+    },
+    {
+      "name": "metricflow_time_spine",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "marts",
+        "table": "metricflow_time_spine"
+      },
+      "columns": [
+        {
+          "name": "date_day",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Calendar date. One row per day, no gaps.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "Daily calendar spine, 2019-01-01 through two years ahead of the current date. Required by cumulative metrics, offset_window, and join_to_timespine.",
+        "dbtLayer": "mart",
+        "dbtUniqueId": "model.analytics.metricflow_time_spine",
+        "dbtResourceType": "model"
+      },
+      "primaryKey": "date_day"
+    },
+    {
+      "name": "raw_customers",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "raw",
+        "table": "raw_demopos_customers"
+      },
+      "columns": [
+        {
+          "name": "customer_ref",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Till customer reference. Primary key.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "email_address",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "country",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "signed_up_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "exported_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per customer registered at the till, full snapshot per export. The columns declared here are the connector's source contract: exactly what staging reads, not everything the till could export.",
+        "dbtLayer": "raw",
+        "dbtUniqueId": "source.analytics.demopos.customers",
+        "dbtResourceType": "source"
+      },
+      "primaryKey": "customer_ref"
+    },
+    {
+      "name": "raw_order_lines",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "raw",
+        "table": "raw_order_lines"
+      },
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "order_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "product_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "quantity",
+          "type": "INT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "price",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "discount",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "_fivetran_synced",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "_fivetran_deleted",
+          "type": "BOOLEAN",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per line item on an order.",
+        "dbtLayer": "raw",
+        "dbtUniqueId": "source.analytics.shopify.order_lines",
+        "dbtResourceType": "source"
+      },
+      "primaryKey": "id"
+    },
+    {
+      "name": "raw_orders",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "raw",
+        "table": "raw_orders"
+      },
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Shopify order id. Primary key.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "customer_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "financial_status",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "currency",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "total_price",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "test",
+          "type": "BOOLEAN",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "_fivetran_synced",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "_fivetran_deleted",
+          "type": "BOOLEAN",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per order. `_fivetran_deleted = true` marks soft deletes.",
+        "dbtLayer": "raw",
+        "dbtUniqueId": "source.analytics.shopify.orders",
+        "dbtResourceType": "source"
+      },
+      "primaryKey": "id"
+    },
+    {
+      "name": "raw_receipts",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "raw",
+        "table": "raw_demopos_receipts"
+      },
+      "columns": [
+        {
+          "name": "receipt_ref",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Receipt number. Primary key.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "customer_ref",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "status",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "currency",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "total_amount",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "sold_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "register_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "exported_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per printed receipt. Walk-in sales carry no customer_ref.",
+        "dbtLayer": "raw",
+        "dbtUniqueId": "source.analytics.demopos.receipts",
+        "dbtResourceType": "source"
+      },
+      "primaryKey": "receipt_ref"
+    },
+    {
+      "name": "raw_shopify_customers",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "raw",
+        "table": "raw_customers"
+      },
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "email",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "country_code",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "_fivetran_synced",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "_fivetran_deleted",
+          "type": "BOOLEAN",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per customer, current state. Mutable — snapshotted separately.",
+        "dbtLayer": "raw",
+        "dbtUniqueId": "source.analytics.shopify.customers",
+        "dbtResourceType": "source"
+      },
+      "primaryKey": "id"
+    },
+    {
+      "name": "stg_demopos__customers",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "staging",
+        "table": "stg_demopos__customers"
+      },
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Primary key. Till customer reference (`pc_…` — a different id namespace from Shopify's `c_…`; the two are deliberately not conformed until a consumer asks for a cross-channel customer dimension).",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "customer_email",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Contact email. PII — masked outside prod."
+          }
+        },
+        {
+          "name": "country_code",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "ISO-3166 alpha-2, lowercased and trimmed."
+          }
+        },
+        {
+          "name": "first_seen_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Timestamp the customer was first registered at the till."
+          }
+        },
+        {
+          "name": "_loaded_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per customer registered at the in-store till, renamed and cast. The source is a nightly full snapshot with no delete flag, so unlike stg_shopify__customers there is nothing to filter here — a customer removed upstream stops appearing.",
+        "dbtLayer": "staging",
+        "dbtUniqueId": "model.analytics.stg_demopos__customers",
+        "dbtResourceType": "model"
+      },
+      "primaryKey": "customer_id"
+    },
+    {
+      "name": "stg_demopos__receipts",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "staging",
+        "table": "stg_demopos__receipts"
+      },
+      "columns": [
+        {
+          "name": "receipt_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Primary key. Receipt number from the till.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "customer_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "FK to stg_demopos__customers. Null for walk-in sales.",
+            "dbtTests": "relationships",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "register_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Which till printed the receipt (reg_01–reg_03)."
+          }
+        },
+        {
+          "name": "receipt_status",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Till status, lowercased and trimmed.",
+            "acceptedValues": [
+              "paid",
+              "refunded",
+              "void"
+            ],
+            "dbtTests": "accepted_values",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "currency_code",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "receipt_amount",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Receipt total in the receipt's own currency.",
+            "dbtTests": "not_null",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "sold_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Time of sale at the register, UTC.",
+            "dbtTests": "not_null",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "_loaded_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per printed receipt. Walk-in cash sales have no customer (~25% of rows) — the nullable-FK case. Voided receipts are kept, with receipt_status = 'void': whether a void counts as a sale is a business decision that belongs downstream, not in staging.",
+        "dbtLayer": "staging",
+        "dbtUniqueId": "model.analytics.stg_demopos__receipts",
+        "dbtResourceType": "model"
+      },
+      "primaryKey": "receipt_id"
+    },
+    {
+      "name": "stg_shopify__customers",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "staging",
+        "table": "stg_shopify__customers"
+      },
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Primary key.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "customer_email",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Contact email. PII — masked outside prod."
+          }
+        },
+        {
+          "name": "country_code",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "ISO-3166 alpha-2, lowercased."
+          }
+        },
+        {
+          "name": "first_seen_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Timestamp of the customer's first Shopify record."
+          }
+        },
+        {
+          "name": "_loaded_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per customer, current state. The source is mutable — plan tier and country overwrite in place — so history is captured separately in `shopify_orders_snapshot` rather than being recoverable from here.",
+        "dbtLayer": "staging",
+        "dbtUniqueId": "model.analytics.stg_shopify__customers",
+        "dbtResourceType": "model"
+      },
+      "primaryKey": "customer_id"
+    },
+    {
+      "name": "stg_shopify__order_lines",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "staging",
+        "table": "stg_shopify__order_lines"
+      },
+      "columns": [
+        {
+          "name": "order_line_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Primary key.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "order_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "FK to stg_shopify__orders.",
+            "dbtTests": "not_null,relationships",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "product_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "quantity",
+          "type": "INT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "line_amount",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Line total before discount, order currency."
+          }
+        },
+        {
+          "name": "discount_amount",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Discount applied to this line. Always positive."
+          }
+        },
+        {
+          "name": "_loaded_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per line item on an order. Roughly 0.3% of orders have no lines — a known upstream defect, which is why the intermediate model coalesces line totals to zero rather than assuming a match.",
+        "dbtLayer": "staging",
+        "dbtUniqueId": "model.analytics.stg_shopify__order_lines",
+        "dbtResourceType": "model"
+      },
+      "primaryKey": "order_line_id"
+    },
+    {
+      "name": "stg_shopify__orders",
+      "tableReference": {
+        "catalog": "dev",
+        "schema": "staging",
+        "table": "stg_shopify__orders"
+      },
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Primary key. Shopify order id.",
+            "dbtTests": "not_null,unique",
+            "dbtTestStatus": "verified"
+          },
+          "isPrimaryKey": true
+        },
+        {
+          "name": "customer_id",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "FK to stg_shopify__customers. Null for guest checkouts (~3%).",
+            "dbtTests": "not_null_proportion",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "payment_status",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Shopify `financial_status`, lowercased and trimmed."
+          }
+        },
+        {
+          "name": "currency_code",
+          "type": "TEXT",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {}
+        },
+        {
+          "name": "order_amount",
+          "type": "DECIMAL(28, 6)",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Gross order total in the order's own currency, before conversion.",
+            "dbtTests": "not_null",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "is_test_order",
+          "type": "BOOLEAN",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "True for Shopify test orders. Filtered out in intermediate.",
+            "dbtTests": "not_null",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "ordered_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": true,
+          "properties": {
+            "description": "Order creation timestamp, UTC.",
+            "dbtTests": "not_null",
+            "dbtTestStatus": "verified"
+          }
+        },
+        {
+          "name": "_loaded_at",
+          "type": "TIMESTAMPNTZ",
+          "isCalculated": false,
+          "notNull": false,
+          "properties": {
+            "description": "Fivetran sync timestamp. Used for freshness and arrival-lag measurement."
+          }
+        }
+      ],
+      "cached": false,
+      "properties": {
+        "description": "One row per Shopify order, renamed and cast. Soft-deleted rows are excluded here; test orders are NOT — they carry `is_test_order` and are filtered in the intermediate layer, because a downstream QA model legitimately needs them.",
+        "dbtLayer": "staging",
+        "dbtUniqueId": "model.analytics.stg_shopify__orders",
+        "dbtResourceType": "model"
+      },
+      "primaryKey": "order_id"
+    }
+  ],
+  "relationships": [
+    {
+      "name": "fct_orders_to_dim_customers",
+      "models": [
+        "fct_orders",
+        "dim_customers"
+      ],
+      "joinType": "MANY_TO_ONE",
+      "condition": "fct_orders.customer_id = dim_customers.customer_id",
+      "properties": {
+        "source": "dbt_test"
+      }
+    },
+    {
+      "name": "stg_demopos__receipts_to_stg_demopos__customers",
+      "models": [
+        "stg_demopos__receipts",
+        "stg_demopos__customers"
+      ],
+      "joinType": "MANY_TO_ONE",
+      "condition": "stg_demopos__receipts.customer_id = stg_demopos__customers.customer_id",
+      "properties": {
+        "source": "dbt_test"
+      }
+    },
+    {
+      "name": "stg_shopify__order_lines_to_stg_shopify__orders",
+      "models": [
+        "stg_shopify__order_lines",
+        "stg_shopify__orders"
+      ],
+      "joinType": "MANY_TO_ONE",
+      "condition": "stg_shopify__order_lines.order_id = stg_shopify__orders.order_id",
+      "properties": {
+        "source": "dbt_test"
+      }
+    }
+  ],
+  "views": [
+    {
+      "name": "average_order_value",
+      "statement": "WITH num AS (\n  SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,\n         SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS num\n  FROM fct_orders\n  WHERE (fct_orders.order_status != 'cancelled')\n  GROUP BY 1\n),\nden AS (\n  SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,\n         COUNT(fct_orders.order_id) AS den\n  FROM fct_orders\n  WHERE (fct_orders.order_status != 'cancelled')\n  GROUP BY 1\n)\nSELECT den.metric_time AS metric_time,\n       CAST(COALESCE(num.num, 0) AS DOUBLE) / NULLIF(CAST(den.den AS DOUBLE), 0) AS average_order_value\nFROM den LEFT JOIN num ON num.metric_time IS NOT DISTINCT FROM den.metric_time\n",
+      "properties": {
+        "description": "Revenue divided by order count, both excluding cancelled orders.",
+        "source": "dbt_metric",
+        "metricType": "ratio",
+        "grain": "day"
+      }
+    },
+    {
+      "name": "emea_revenue_share",
+      "statement": "WITH num AS (\n  SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,\n         SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS num\n  FROM fct_orders\n    LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id\n  WHERE (fct_orders.order_status != 'cancelled')\n    AND (dim_customers.region = 'EMEA')\n  GROUP BY 1\n),\nden AS (\n  SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,\n         SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS den\n  FROM fct_orders\n  WHERE (fct_orders.order_status != 'cancelled')\n  GROUP BY 1\n)\nSELECT den.metric_time AS metric_time,\n       CAST(COALESCE(num.num, 0) AS DOUBLE) / NULLIF(CAST(den.den AS DOUBLE), 0) AS emea_revenue_share\nFROM den LEFT JOIN num ON num.metric_time IS NOT DISTINCT FROM den.metric_time\n",
+      "properties": {
+        "description": "Share of revenue from EMEA customers. Guest checkouts have no region and are excluded from the numerator but included in the denominator.",
+        "source": "dbt_metric",
+        "metricType": "ratio",
+        "grain": "day"
+      }
+    },
+    {
+      "name": "order_count",
+      "statement": "SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,\n       COUNT(fct_orders.order_id) AS order_count\nFROM fct_orders\nWHERE (fct_orders.order_status != 'cancelled')\nGROUP BY 1\n",
+      "properties": {
+        "description": "Count of non-cancelled orders, excluding internal test accounts.",
+        "source": "dbt_metric",
+        "metricType": "simple",
+        "grain": "day"
+      }
+    },
+    {
+      "name": "revenue",
+      "statement": "WITH base AS (\n  SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,\n         SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS revenue\n  FROM fct_orders\n  WHERE (fct_orders.order_status != 'cancelled')\n  GROUP BY 1\n),\nspine AS (\n  SELECT DISTINCT date_trunc('day', CAST(date_day AS TIMESTAMP)) AS metric_time\n  FROM metricflow_time_spine\n)\nSELECT spine.metric_time, COALESCE(base.revenue, 0) AS revenue\nFROM spine LEFT JOIN base ON base.metric_time = spine.metric_time\nWHERE spine.metric_time BETWEEN (SELECT MIN(metric_time) FROM base)\n                            AND (SELECT MAX(metric_time) FROM base)\n",
+      "properties": {
+        "description": "Gross order revenue in USD, excluding cancelled orders and internal test accounts. Verified against the NetSuite ledger for 2026-06 (0.02% variance). NOT net of refunds — use net_revenue for that.",
+        "source": "dbt_metric",
+        "metricType": "simple",
+        "grain": "day"
+      }
+    },
+    {
+      "name": "revenue_growth_mom",
+      "statement": "WITH revenue AS (\n  SELECT date_trunc('month', fct_orders.ordered_at) AS metric_time,\n         SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS revenue\n  FROM fct_orders\n  WHERE (fct_orders.order_status != 'cancelled')\n  GROUP BY 1\n),\nrevenue_prev_month AS (\n  SELECT metric_time + INTERVAL '1 month' AS metric_time, revenue_prev_month\n  FROM (\n    SELECT date_trunc('month', fct_orders.ordered_at) AS metric_time,\n           SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS revenue_prev_month\n    FROM fct_orders\n    WHERE (fct_orders.order_status != 'cancelled')\n    GROUP BY 1\n  ) t\n)\nSELECT revenue.metric_time,\n       ((revenue - revenue_prev_month) * 100.0 / nullif(revenue_prev_month, 0)) AS revenue_growth_mom\nFROM revenue\n  LEFT JOIN revenue_prev_month ON revenue_prev_month.metric_time = revenue.metric_time\n",
+      "properties": {
+        "description": "Month-over-month revenue growth, percent. Null for the first month in the series.",
+        "source": "dbt_metric",
+        "metricType": "derived",
+        "grain": "month"
+      }
+    },
+    {
+      "name": "revenue_mtd",
+      "statement": "WITH daily AS (\n  SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,\n         SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS v\n  FROM fct_orders\n  GROUP BY 1\n),\nspine AS (\n  SELECT DISTINCT CAST(date_day AS TIMESTAMP) AS metric_time\n  FROM metricflow_time_spine\n)\nSELECT spine.metric_time, SUM(daily.v) AS revenue_mtd\nFROM spine LEFT JOIN daily\n  ON daily.metric_time >= date_trunc('month', spine.metric_time)\n  AND daily.metric_time <= spine.metric_time\nWHERE spine.metric_time BETWEEN (SELECT MIN(metric_time) FROM daily)\n                            AND (SELECT MAX(metric_time) FROM daily)\nGROUP BY 1\n",
+      "properties": {
+        "description": "Revenue accumulated from the start of the calendar month.",
+        "source": "dbt_metric",
+        "metricType": "cumulative",
+        "grain": "day"
+      }
+    },
+    {
+      "name": "revenue_trailing_28d",
+      "statement": "WITH daily AS (\n  SELECT date_trunc('day', fct_orders.ordered_at) AS metric_time,\n         SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS v\n  FROM fct_orders\n  GROUP BY 1\n),\nspine AS (\n  SELECT DISTINCT CAST(date_day AS TIMESTAMP) AS metric_time\n  FROM metricflow_time_spine\n)\nSELECT spine.metric_time, SUM(daily.v) AS revenue_trailing_28d\nFROM spine LEFT JOIN daily\n  ON daily.metric_time > spine.metric_time - INTERVAL '28 day'\n  AND daily.metric_time <= spine.metric_time\nWHERE spine.metric_time BETWEEN (SELECT MIN(metric_time) FROM daily)\n                            AND (SELECT MAX(metric_time) FROM daily)\nGROUP BY 1\n",
+      "properties": {
+        "description": "Rolling 28-day revenue. Requires the metricflow_time_spine model.",
+        "source": "dbt_metric",
+        "metricType": "cumulative",
+        "grain": "day"
+      }
+    },
+    {
+      "name": "weekly_revenue_by_region",
+      "statement": "WITH revenue AS (\n  SELECT date_trunc('week', fct_orders.ordered_at) AS metric_time,\n         dim_customers.region AS region,\n         SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS revenue\n  FROM fct_orders\n    LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id\n  WHERE (fct_orders.order_status != 'cancelled')\n    AND (dim_customers.region is not null)\n  GROUP BY 1, 2\n),\norder_count AS (\n  SELECT date_trunc('week', fct_orders.ordered_at) AS metric_time,\n         dim_customers.region AS region,\n         COUNT(fct_orders.order_id) AS order_count\n  FROM fct_orders\n    LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id\n  WHERE (fct_orders.order_status != 'cancelled')\n    AND (dim_customers.region is not null)\n  GROUP BY 1, 2\n),\naverage_order_value AS (\n  WITH num AS (\n    SELECT date_trunc('week', fct_orders.ordered_at) AS metric_time,\n           dim_customers.region AS region,\n           SUM(CAST(fct_orders.order_amount_usd AS DECIMAL(28,6))) AS num\n    FROM fct_orders\n      LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id\n    WHERE (fct_orders.order_status != 'cancelled')\n      AND (dim_customers.region is not null)\n    GROUP BY 1, 2\n  ),\n  den AS (\n    SELECT date_trunc('week', fct_orders.ordered_at) AS metric_time,\n           dim_customers.region AS region,\n           COUNT(fct_orders.order_id) AS den\n    FROM fct_orders\n      LEFT JOIN dim_customers ON fct_orders.customer_id = dim_customers.customer_id\n    WHERE (fct_orders.order_status != 'cancelled')\n      AND (dim_customers.region is not null)\n    GROUP BY 1, 2\n  )\n  SELECT den.metric_time AS metric_time,\n         den.region AS region,\n         CAST(COALESCE(num.num, 0) AS DOUBLE) / NULLIF(CAST(den.den AS DOUBLE), 0) AS average_order_value\n  FROM den LEFT JOIN num ON num.metric_time IS NOT DISTINCT FROM den.metric_time AND num.region IS NOT DISTINCT FROM den.region\n)\nSELECT revenue.metric_time AS metric_time,\n       revenue.region AS region,\n       revenue.revenue AS revenue,\n       order_count.order_count AS order_count,\n       average_order_value.average_order_value AS average_order_value\nFROM revenue\n  LEFT JOIN order_count ON order_count.metric_time IS NOT DISTINCT FROM revenue.metric_time AND order_count.region IS NOT DISTINCT FROM revenue.region\n  LEFT JOIN average_order_value ON average_order_value.metric_time IS NOT DISTINCT FROM revenue.metric_time AND average_order_value.region IS NOT DISTINCT FROM revenue.region\n",
+      "properties": {
+        "description": "Feeds the executive revenue dashboard. Exported to bi_marts on dbt Core, since the hosted Semantic Layer API is dbt Cloud only.",
+        "source": "dbt_metric",
+        "metricType": "saved_query",
+        "grain": "week"
+      }
+    }
+  ],
+  "cubes": [],
+  "dataSource": "duckdb",
+  "layoutVersion": 3
+}
