@@ -2,7 +2,7 @@
 
 - dbt project: `enhanza_erp_bi`
 - dbt profile/target: `enhanza_sample.dev`
-- imported models: 95
+- imported models: 96
 - imported sources: 100
 - imported relationships: 101
 
@@ -377,3 +377,5 @@ Structural metadata comes from `manifest.json` and `catalog.json`. The sections 
 - logic_bi_fact_vouchers.ReferenceNumber: not_null unknown
 - logic_bi_fact_vouchers.SupplierId: not_null unknown
 - logic_bi_fact_vouchers.VoucherSeriesId: not_null unknown
+- metricflow_time_spine.date_day: not_null unknown
+- metricflow_time_spine.date_day: unique unknown

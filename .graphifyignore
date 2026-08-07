@@ -18,3 +18,5 @@ external/
 # graphify's own output, including the converted sidecars it writes for PDFs and
 # images. Re-extracting them feeds the graph its own tail.
 graphify-out/
+
+scratchpad.txt

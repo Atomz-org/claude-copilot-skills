@@ -420,6 +420,19 @@ _DBT_STUB = (
     "print(json.dumps({'models': 3, 'edges': 5, 'coverage_pct': 100}))\n"
     "print('merged: 10 nodes, 12 edges')\n"
 )
+_SEMANTIC_STUB_OK = (
+    "import json\n"
+    "print(json.dumps({'status': 'ok', 'joins': 4, 'metrics': 2}))\n"
+)
+_SEMANTIC_STUB_SKIP = (
+    "import json\n"
+    "print(json.dumps({'status': 'skip', 'reason': 'no semantic layer'}))\n"
+)
+_SEMANTIC_STUB_FAIL = (
+    "import sys\n"
+    "print('  fragment endpoint resolves to no graph node', file=sys.stderr)\n"
+    "sys.exit(1)\n"
+)
 _ONTO_STUB_OK = (
     "print('merged: 11 nodes, 13 edges')\n"
     "print('fragment: 7 nodes, 9 edges -> /somewhere/.graphify_ontology_topology.json')\n"
@@ -436,13 +449,17 @@ _ONTO_STUB_SENTINEL = (
 )
 
 
-def _graph_stage_tree(tmp_path: Path, onto_stub: str) -> Path:
+def _graph_stage_tree(tmp_path: Path, onto_stub: str,
+                      semantic_stub: str = _SEMANTIC_STUB_SKIP) -> Path:
     (tmp_path / "graphify-out").mkdir(parents=True)
     (tmp_path / "graphify-out/graph.json").write_text("{}", encoding="utf-8")
     scripts = tmp_path / "scripts"
     scripts.mkdir()
     (scripts / "dbt_manifest_to_graphify.py").write_text(_DBT_STUB, encoding="utf-8")
     (scripts / "ontology_generator.py").write_text(onto_stub, encoding="utf-8")
+    # Fragment C runs unconditionally when not --check; fragment D is gated on
+    # ontology/column-memory.json, which this tree deliberately lacks.
+    (scripts / "semantic_layer_to_graphify.py").write_text(semantic_stub, encoding="utf-8")
     use_case = tmp_path / "skill-packs/dbt-skills/use-cases/uc"
     (use_case / "ontology").mkdir(parents=True)
     (use_case / "ontology/connectors.yml").write_text("connectors: []\n", encoding="utf-8")
@@ -476,6 +493,39 @@ def test_a_failing_topology_merge_fails_the_graph_stage(monkeypatch, tmp_path: P
     assert stage.status == sync.FAIL
     assert stage.detail.startswith("ontology topology:")
     assert "connectors.yml" in stage.detail
+
+
+def test_the_graph_stage_reports_the_semantic_fragment(monkeypatch, tmp_path: Path) -> None:
+    """When the semantic-layer emitter reports ok, its join/metric counts reach the
+    stage detail; a skip payload stays silent rather than reporting empty counts."""
+    use_case = _graph_stage_tree(tmp_path, _ONTO_STUB_OK, _SEMANTIC_STUB_OK)
+    monkeypatch.setattr(sync, "REPO", tmp_path)
+    stage = sync.stage_graph(
+        use_case, use_case / "dbt_project/target/manifest.json", check=False
+    )
+    assert stage.status == sync.OK, stage.detail
+    assert "semantic: 4 joins, 2 metrics" in stage.detail
+
+    skip_case = _graph_stage_tree(tmp_path / "skip", _ONTO_STUB_OK, _SEMANTIC_STUB_SKIP)
+    monkeypatch.setattr(sync, "REPO", tmp_path / "skip")
+    stage = sync.stage_graph(
+        skip_case, skip_case / "dbt_project/target/manifest.json", check=False
+    )
+    assert stage.status == sync.OK, stage.detail
+    assert "semantic:" not in stage.detail
+
+
+def test_a_failing_semantic_merge_fails_the_graph_stage(monkeypatch, tmp_path: Path) -> None:
+    """Same refusal contract as the topology: nonzero exit → FAIL with the last line
+    named, never a green stage over a half-merged graph."""
+    use_case = _graph_stage_tree(tmp_path, _ONTO_STUB_OK, _SEMANTIC_STUB_FAIL)
+    monkeypatch.setattr(sync, "REPO", tmp_path)
+    stage = sync.stage_graph(
+        use_case, use_case / "dbt_project/target/manifest.json", check=False
+    )
+    assert stage.status == sync.FAIL
+    assert stage.detail.startswith("semantic layer:")
+    assert "endpoint" in stage.detail
 
 
 def test_a_dry_run_never_reaches_the_topology_merge(monkeypatch, tmp_path: Path) -> None:

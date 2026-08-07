@@ -36,7 +36,10 @@ Use this index to find the right playbook fast.
 
 - `github-actions-docs-grounded` skill
 - `documentation-writer-diataxis` skill
+- `architecture-page` skill — hand-drawn architecture pages under `public/`, figures pinned
+  to committed artifacts
 - `write-docs.md` command
+- `architecture.md` command
 
 ## Conflicts intent
 

@@ -148,6 +148,11 @@ Fortnox — a mapping no column name anywhere in the project reveals.
 
 Under the Graphify-first rule the same facts are in the code graph, so `graphify query
 "column contract <concept>"` finds them during orientation without running anything.
+The graph also carries the join topology and the metric surface: every dbt
+`relationships` test is a `joins_to` edge (with the FK columns and cardinality on the
+edge), and semantic models/metrics are nodes edged to the marts they sit on — so
+"what joins to `dim_customers`, and which metrics would a new supplier affect" is one
+scoped query, not a read of `relationships.yml` plus `_metrics.yml`.
 
 Regenerating is automatic: a `PostToolUse` hook rebuilds the store when you edit a `.sql`
 under a `dbt_project/`, incrementally, re-parsing only what changed.

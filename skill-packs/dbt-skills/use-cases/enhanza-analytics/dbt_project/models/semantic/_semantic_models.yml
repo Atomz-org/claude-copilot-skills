@@ -1,0 +1,273 @@
+version: 2
+
+# The one definition of every entity, dimension, and measure this project serves.
+# Everything downstream — MetricFlow metrics, WrenAI metric views, BI dashboards,
+# agent answers — projects from here and authors nothing (analytics rule 42).
+#
+# Grounding rules, enforced by scripts/metric_additivity_check.py:
+#   - every measure sits on a column declared in models/logic_bi/schema.yml
+#   - a column annotated non_additive in ontology/column-annotations.json is never
+#     a sum measure; semi_additive requires a non_additive_dimension window
+#   - a column with no additivity annotation is withheld, not assumed additive
+#   - direct-PII columns never appear as dimensions or measures (rule 17)
+#
+# Entity-prefix cheat sheet for metric filters:
+#   sales_line__*, invoice__*, gl_line__*, counterparty__*, article__*, organisation__*
+#
+# Each semantic model carries the SAME enablement as the dbt model it sits on:
+# `is_erp_enabled and any(is_<source>_enabled)`, mirroring any_source_enabled()
+# in macros/enablement/model_enablement.sql — custom macros are not callable in
+# YAML config, so the disjunction is spelled out per model. A semantic model whose
+# gate is wider than its model's fails `dbt parse` with "depends on a disabled node";
+# one that is narrower silently drops metrics for enabled tenants.
+
+semantic_models:
+  # ------------------------------------------------------------------- sales
+  - name: sales
+    description: >
+      One row per sales document line — one article row on one opportunity, quote,
+      order, or invoice (document_type says which). Amounts are in the tenant's
+      DefaultCurrency; filter or group by default_currency before comparing tenants.
+      Grain inferred from the line-level columns; the fact declares no primary key.
+      [NEEDS INPUT: confirm grain and add a surrogate key + unique test]
+    model: ref('logic_bi_fact_sales')
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_upsales_enabled', false) or var('is_favrit_enabled', false)) }}"
+    defaults:
+      agg_time_dimension: sales_date
+    primary_entity: sales_line
+    entities:
+      - name: counterparty
+        type: foreign
+        expr: CustomerId
+      - name: organisation
+        type: foreign
+        expr: OrgId
+      - name: article
+        type: foreign
+        expr: ArticleId
+    dimensions:
+      - name: sales_date
+        type: time
+        expr: Date
+        type_params:
+          time_granularity: day
+      - name: document_type          # 'Invoice' | 'Quote' | 'Order' | 'Opportunity'
+        type: categorical
+        expr: DocumentType
+      - name: is_new_customer
+        type: categorical
+        expr: isNewCustomer
+      - name: data_source
+        type: categorical
+        expr: DataSource
+      - name: default_currency
+        type: categorical
+        expr: DefaultCurrency
+    measures:
+      - name: sales_value            # annotated: additive, currency
+        description: Sales value of the line, tenant currency.
+        agg: sum
+        expr: SalesValue
+      - name: contribution_value     # annotated: additive, currency
+        description: Sold value minus estimated item cost for the line.
+        agg: sum
+        expr: ContributionValue
+      - name: quantity_sold          # annotated: additive, quantity
+        description: Units on the line.
+        agg: sum
+        expr: Quantity
+      - name: sales_line_count
+        description: Number of document lines.
+        agg: count
+        expr: DocumentId
+      - name: distinct_customers
+        description: Distinct customers appearing on lines.
+        agg: count_distinct
+        expr: CustomerId
+      # PriceAfterDiscount is annotated non_additive (a per-unit price) and
+      # PriceBeforeDiscount carries no annotation: neither is a measure here.
+
+  # ---------------------------------------------------------------- invoices
+  - name: invoices
+    description: >
+      One row per invoice document; customer and supplier invoices unioned
+      (invoice_type = 'Customer' | 'Supplier' — the SQL emits 'Customer';
+      schema.yml's description saying 'Sales' is stale).
+      [NEEDS INPUT: is InvoiceId unique across the union? No unique test declared]
+    model: ref('logic_bi_fact_invoices')
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_tripletex_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_visma_economic_enabled', false)) }}"
+    defaults:
+      agg_time_dimension: invoice_date
+    entities:
+      - name: invoice
+        type: primary
+        expr: InvoiceId
+      - name: counterparty
+        type: foreign
+        expr: TargetId
+      - name: organisation
+        type: foreign
+        expr: OrgId
+    dimensions:
+      - name: invoice_date
+        type: time
+        expr: InvoiceDate
+        type_params:
+          time_granularity: day
+      - name: due_date
+        type: time
+        expr: DueDate
+        type_params:
+          time_granularity: day
+      - name: invoice_type           # 'Customer' | 'Supplier'
+        type: categorical
+        expr: InvoiceType
+      - name: due                    # 'isDue' | 'NotDue'
+        type: categorical
+        expr: Due
+      - name: due_status
+        type: categorical
+        expr: DueStatus
+      - name: invoice_data_source
+        type: categorical
+        expr: DataSource
+      - name: invoice_currency
+        type: categorical
+        expr: DefaultCurrency
+    measures:
+      - name: invoice_net            # annotated: additive, currency
+        description: Net invoice amount, tenant currency.
+        agg: sum
+        expr: Net
+      - name: invoice_count
+        description: Number of invoice documents.
+        agg: count
+        expr: InvoiceId
+      - name: invoice_open_balance   # annotated: semi_additive, currency
+        description: >
+          Open balance. Semi-additive — meaningful summed across invoices at one
+          point in time, not across time; the window pins the latest invoice_date.
+        agg: sum
+        expr: Balance
+        non_additive_dimension:
+          name: invoice_date
+          window_choice: max
+      # TotalToPay, TotalVAT, Freight, AdministrationFee carry no additivity
+      # annotation: withheld until someone annotates them.
+
+  # ----------------------------------------------------------- profit & loss
+  - name: gl_transactions
+    description: >
+      One row per general-ledger voucher row on P&L accounts, with the monthly
+      budget joined per account and department. Grain inferred; no declared key.
+      [NEEDS INPUT: sign convention of Amount before naming any result metric]
+    model: ref('logic_bi_fact_profit_loss')
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_tripletex_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_visma_economic_enabled', false)) }}"
+    defaults:
+      agg_time_dimension: transaction_date
+    primary_entity: gl_line
+    entities:
+      - name: organisation
+        type: foreign
+        expr: OrgId
+    dimensions:
+      - name: transaction_date
+        type: time
+        expr: TransactionDate
+        type_params:
+          time_granularity: day
+      - name: gl_data_source
+        type: categorical
+        expr: DataSource
+    measures:
+      - name: gl_amount              # annotated (ontology 'Amount'): additive, currency
+        description: Voucher-row amount, tenant currency.
+        agg: sum
+        expr: Amount
+      # BudgetAmount carries no additivity annotation: withheld.
+
+  # ------------------------------------------------------------------- dims
+  - name: counterparties
+    description: One row per customer or supplier (TargetId; target_type says which).
+    model: ref('logic_bi_dim_customers_suppliers')
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_tripletex_enabled', false) or var('is_upsales_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_visma_economic_enabled', false)) }}"
+    defaults:
+      agg_time_dimension: first_invoice_date
+    entities:
+      - name: counterparty
+        type: primary
+        expr: TargetId
+    dimensions:
+      - name: target_type            # 'Customer' | 'Supplier'
+        type: categorical
+        expr: TargetType
+      - name: city
+        type: categorical
+        expr: City
+      - name: country
+        type: categorical
+        expr: Country
+      - name: is_active
+        type: categorical
+        expr: isActive
+      - name: first_invoice_date
+        type: time
+        expr: FirstInvoiceDate
+        type_params:
+          time_granularity: day
+    measures:
+      - name: counterparty_count
+        description: Number of counterparties.
+        agg: count
+        expr: TargetId
+
+  - name: articles
+    description: One row per article. No date column, so no measures live here.
+    model: ref('logic_bi_dim_articles')
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_upsales_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_visma_economic_enabled', false)) }}"
+    entities:
+      - name: article
+        type: primary
+        expr: ArticleId
+    dimensions:
+      - name: article_group
+        type: categorical
+        expr: ArticleGroup
+      - name: manufacturer
+        type: categorical
+        expr: Manufacturer
+      - name: article_is_active
+        type: categorical
+        expr: isActive
+      # ArticlePurchasePrice is annotated non_additive (ontology PurchasePrice):
+      # not a measure, and a dimension made of a price helps nobody.
+
+  - name: organisations
+    description: One row per organisation (legal entity) in the tenant workspace.
+    model: ref('logic_bi_dim_organisations')
+    config:
+      enabled: "{{ var('is_erp_enabled', false) and (var('is_fortnox_enabled', false) or var('is_seventime_enabled', false) or var('is_tripletex_enabled', false) or var('is_upsales_enabled', false) or var('is_visma_eaccounting_enabled', false) or var('is_visma_economic_enabled', false)) }}"
+    entities:
+      - name: organisation
+        type: primary
+        expr: OrgId
+    dimensions:
+      - name: organisation_name
+        type: categorical
+        expr: OrganisationName
+      - name: org_data_source
+        type: categorical
+        expr: DataSource
+
+# Deliberately absent, each for a stated reason rather than an oversight:
+#   - logic_bi_dim_employees — PersonalIdentityNumber and ClearingNo have no PII
+#     classification yet (rule 17). [NEEDS INPUT: classify, then expose]
+#   - logic_bi_fact_salaries — TotalSalary carries no additivity annotation, and
+#     AmountPerUnit is non_additive. Annotate first, then model.
+#   - a `suppliers` role-play of dim_customers_suppliers — v2, once a metric needs
+#     supplier-side joins from fact_sales.SupplierId.

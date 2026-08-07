@@ -41,6 +41,12 @@ Work in this order. Skipping ahead is how models get rebuilt.
    and every test still passes.
 2. **Sources.** Every raw table gets a `sources.yml` entry with `loaded_at_field` and a
    `freshness:` block. Never `select` from a hardcoded table name.
+   For an adapter feeding a conformed union, read the contract **before** writing the
+   SQL: `python3 scripts/dbt_column_memory.py --use-case <slug> --concept <name>` gives
+   the column list in order, which connectors carry each column, and the raw source
+   column every existing adapter mapped — so the adapter is mechanical instead of
+   reverse-engineered from a peer's SQL. `scripts/new_connector.py` embeds the same
+   contract into the adapter stub when `ontology/column-memory.json` holds one.
 3. **Layer assignment.** For each piece of logic, decide where it belongs:
 
    | Layer | Contains | Never contains |

@@ -574,14 +574,9 @@ def lineage_from_sql(model_name: str, raw_code: str, dialect: str) -> Tuple[List
 
 
 def _dedupe(edges: Iterable[ColumnEdge]) -> List[ColumnEdge]:
-    seen: Set[ColumnEdge] = set()
-    out: List[ColumnEdge] = []
-    for edge in edges:
-        if edge in seen:
-            continue
-        seen.add(edge)
-        out.append(edge)
-    return out
+    # dict.fromkeys preserves insertion order for Python 3.7+. Since ColumnEdge is a
+    # frozen dataclass, it is hashable and can be used as a dict key.
+    return list(dict.fromkeys(edges))
 
 
 # ---------------------------------------------------------------------------------------

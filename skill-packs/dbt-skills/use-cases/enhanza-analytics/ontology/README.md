@@ -125,6 +125,7 @@ backs it. A tool whose backing key disappeared would then break a test rather th
 | `locate_model` | `models` | the dbt model and source tables behind a (connector, concept) pair |
 | `resolve_column` | `mappings` | which source column realises a conformed property, per connector, and how |
 | `coverage_gaps` | `gaps` | concepts with a single supplier, and planned concepts nothing supplies |
+| `describe_column` | `column_semantics` | what one conformed column means: role, additivity, PII class, unit, closed domain |
 
 `provenance` is what keeps a served answer honest: it records whether column lineage was
 available and how many models parsed, were macro-only, or failed. A server that reports
@@ -140,8 +141,12 @@ test — an MCP server is a long-running process against a file it does not cont
 - **Regeneration is deterministic.** Same manifest, byte-identical output — an ETag or a
   content hash over `index.json` means the data changed, never that the generator ran again.
 
-Nothing here builds a server. What it does is make one a thin read of one file, with no dbt,
-no warehouse, and no RDF stack in the request path.
+The server exists: `scripts/ontology_mcp_server.py` serves exactly this table over MCP
+stdio, deriving its `tools/list` from `mcp_tools` at startup so the generator and the
+server cannot disagree. It is a thin read of this one file — no dbt, no warehouse, and no
+RDF stack in the request path — registered in the repository's `.mcp.json` and pinned by
+`tests/test_ontology_mcp_server.py`. An unknown column comes back as an explicit
+abstention ("additivity and PII UNKNOWN, not none"), never as silence.
 
 ## Down one level — `column-memory.json`
 

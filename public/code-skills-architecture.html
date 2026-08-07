@@ -287,11 +287,12 @@ footer {
        are snapshots, and the footer names the command that re-derives each. -->
   <div class="stats">
     <div class="stat"><b data-metric="connectors">19</b><span>connectors</span></div>
-    <div class="stat"><b data-metric="dbt_models">378</b><span>dbt models</span></div>
+    <div class="stat"><b data-metric="dbt_models">379</b><span>dbt models</span></div>
     <div class="stat"><b data-metric="concepts">58</b><span>conformed concepts</span></div>
     <div class="stat"><b data-metric="bindings">1,024</b><span>column bindings</span></div>
     <div class="stat"><b data-metric="annotated_columns">89</b><span>annotated columns</span></div>
     <div class="stat"><b data-metric="coverage_gaps">42</b><span>coverage gaps</span></div>
+    <div class="stat"><b data-metric="metrics">8</b><span>metric definitions</span></div>
   </div>
 </header>
 
@@ -381,6 +382,20 @@ footer {
       ontology artifact. The business layer is then generated back <em>from</em> that meaning,
       which is what closes the loop the middle lane exists to hold.
     </p>
+    <p>
+      The middle lane ends at the <strong>semantic layer</strong>: every number this project
+      serves is defined once, in MetricFlow, and gated against the annotations beside it —
+      a <code>sum</code> measure must sit on a column annotated additive, a semi-additive
+      column needs a point-in-time window, and a sum over an unannotated column is a named
+      warning, never silence (<code>scripts/metric_additivity_check.py</code>). Each metric
+      compiles into a WrenAI MDL view of the same name, so
+      <code>SELECT&nbsp;*&nbsp;FROM&nbsp;invoiced_sales</code> through the engine <em>is</em>
+      the metric — for BI, for agents, and for the equivalence test that holds the two to the
+      same rows. The ontology's six MCP tools, declared in <code>index.json</code> since the
+      index existed, are now served by <code>scripts/ontology_mcp_server.py</code> — a thin
+      read of that one file, whose tool list is derived from the artifact at startup so the
+      generator and the server cannot disagree.
+    </p>
   </div>
 
   <ul class="legend" style="margin-top:24px">
@@ -395,8 +410,10 @@ footer {
       <title id="df-title">Data flow across the warehouse, meaning, and serving lanes</title>
       <desc id="df-desc">Raw source APIs flow through sources.yml, staging, connector BI adapters,
       erp_bi unions and logic_bi business models. The dbt manifest feeds a meaning lane of source
-      contracts, column memory, annotations and the ontology, which in turn generates the logic_bi
-      models and is projected into the WrenAI serving lane feeding BI, MCP tools and agents.</desc>
+      contracts, column memory, annotations, the ontology, and the MetricFlow semantic layer whose
+      measures the marts declare. The ontology generates the logic_bi models back, and the meaning
+      lane is projected into the WrenAI serving lane feeding BI, the ontology MCP server, and
+      agents.</desc>
 
       <defs>
         <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -456,37 +473,45 @@ footer {
 
       <!-- lane 2: meaning -->
       <g>
-        <rect class="box mean" x="104" y="238" width="230" height="64"/>
+        <rect class="box mean" x="104" y="238" width="192" height="64"/>
         <text class="t-title" x="118" y="264">source contracts</text>
         <text class="t-sub"   x="118" y="282">what we depend on,</text>
-        <text class="t-sub"   x="118" y="296">not what the API returns</text>
+        <text class="t-sub"   x="118" y="296">not the API's forty</text>
 
-        <rect class="box mean" x="358" y="238" width="230" height="64"/>
-        <text class="t-title" x="372" y="264">column-memory.json</text>
-        <text class="t-sub"   x="372" y="282">29 contracts · 1,024 bindings</text>
-        <text class="t-sub"   x="372" y="296">sqlglot column lineage</text>
+        <rect class="box mean" x="320" y="238" width="192" height="64"/>
+        <text class="t-title" x="334" y="264">column-memory</text>
+        <text class="t-sub"   x="334" y="282" data-metric="bindings">1,024 bindings</text>
+        <text class="t-sub"   x="334" y="296" data-metric="contracts">29 contracts · sqlglot</text>
 
-        <rect class="box mean" x="612" y="238" width="230" height="64"/>
-        <text class="t-title" x="626" y="264">column-annotations</text>
-        <text class="t-sub"   x="626" y="282">role · additivity · PII</text>
-        <text class="t-sub"   x="626" y="296">89 of 272 conformed</text>
+        <rect class="box mean" x="536" y="238" width="192" height="64"/>
+        <text class="t-title" x="550" y="264">column-annotations</text>
+        <text class="t-sub"   x="550" y="282">role · additivity · PII</text>
+        <text class="t-sub"   x="550" y="296">89 of 272 conformed</text>
 
-        <rect class="box mean" x="866" y="238" width="274" height="64"/>
-        <text class="t-title" x="880" y="264">ontology</text>
-        <text class="t-sub"   x="880" y="282">24 Turtle files · index.json</text>
-        <text class="t-sub"   x="880" y="296">58 concepts · 42 gaps</text>
+        <rect class="box mean" x="752" y="238" width="192" height="64"/>
+        <text class="t-title" x="766" y="264">ontology</text>
+        <text class="t-sub"   x="766" y="282" data-metric="ttl_files">24 Turtle files</text>
+        <text class="t-sub"   x="766" y="296" data-metric="concepts">58 concepts · 42 gaps</text>
 
-        <path class="edge" marker-end="url(#ah)" d="M 334 270 H 354"/>
-        <path class="edge" marker-end="url(#ah)" d="M 588 270 H 608"/>
-        <path class="edge" marker-end="url(#ah)" d="M 842 270 H 862"/>
+        <rect class="box mean" x="968" y="238" width="192" height="64"/>
+        <text class="t-title" x="982" y="264">semantic layer</text>
+        <text class="t-sub"   x="982" y="282" data-metric="semantic_models">6 semantic models</text>
+        <text class="t-sub"   x="982" y="296" data-metric="metrics">8 metrics · MetricFlow</text>
+
+        <path class="edge" marker-end="url(#ah)" d="M 296 270 H 316"/>
+        <path class="edge" marker-end="url(#ah)" d="M 512 270 H 532"/>
+        <path class="edge" marker-end="url(#ah)" d="M 728 270 H 748"/>
+        <!-- no ontology → semantic-layer arrow: the semantic layer reads the marts
+             and the annotations, not the ontology. A chain arrow here would be a
+             false edge drawn for symmetry. -->
       </g>
 
       <!-- lane 3: serving -->
       <g>
         <rect class="box out" x="104" y="420" width="222" height="64"/>
         <text class="t-title" x="118" y="446">WrenAI MDL</text>
-        <text class="t-sub"   x="118" y="464">221 models · relationships</text>
-        <text class="t-sub"   x="118" y="478">metric views</text>
+        <text class="t-sub"   x="118" y="464">one MDL per use-case</text>
+        <text class="t-sub"   x="118" y="478">views = compiled metrics</text>
 
         <rect class="box out" x="350" y="420" width="200" height="64"/>
         <text class="t-title" x="364" y="446">knowledge/</text>
@@ -499,9 +524,9 @@ footer {
         <text class="t-sub"   x="588" y="478">gsheets export</text>
 
         <rect class="box out" x="774" y="420" width="176" height="64"/>
-        <text class="t-title" x="788" y="446">MCP tools</text>
-        <text class="t-sub"   x="788" y="464">6 tools, ontology-backed</text>
-        <text class="t-sub"   x="788" y="478">describe_column …</text>
+        <text class="t-title" x="788" y="446">MCP server</text>
+        <text class="t-sub"   x="788" y="464">ontology_mcp_server</text>
+        <text class="t-sub"   x="788" y="478">6 tools · stdio</text>
 
         <rect class="box out" x="974" y="420" width="166" height="64"/>
         <text class="t-title" x="988" y="446">agents</text>
@@ -519,9 +544,13 @@ footer {
       <text class="t-edge" x="482" y="166">manifest.json — dbt already</text>
       <text class="t-edge" x="482" y="182">computed the DAG</text>
 
-      <path class="edge accent" marker-end="url(#ah-a)" d="M 1030 234 V 124"/>
-      <text class="t-edge" x="880" y="180" text-anchor="end">ontology_to_dbt.py generates</text>
-      <text class="t-edge" x="880" y="196" text-anchor="end">the models nobody built</text>
+      <path class="edge accent" marker-end="url(#ah-a)" d="M 848 234 V 160 H 1030 V 124"/>
+      <text class="t-edge" x="840" y="170" text-anchor="end">ontology_to_dbt.py generates</text>
+      <text class="t-edge" x="840" y="186" text-anchor="end">the models nobody built</text>
+
+      <path class="edge" marker-end="url(#ah)" d="M 1100 124 V 234"/>
+      <text class="t-edge" x="1092" y="200" text-anchor="end">marts declare</text>
+      <text class="t-edge" x="1092" y="216" text-anchor="end">the measures</text>
 
       <path class="edge" marker-end="url(#ah)" d="M 215 306 V 416"/>
       <text class="t-edge" x="228" y="348">index.json · column-memory</text>
@@ -702,6 +731,11 @@ footer {
           <td class="mono">wren <span class="pill gate">skips + counts</span></td>
           <td>A metric with no faithful SQL compilation is skipped and counted in the payload.</td>
           <td>An approximated definition is a wrong contract that plans successfully.</td>
+        </tr>
+        <tr>
+          <td class="mono">additivity <span class="pill gate">gates</span></td>
+          <td>A <code>sum</code> measure over a column annotated non-additive is an error; over an unannotated one, a named warning.</td>
+          <td><code>sum(PriceAfterDiscount)</code> parses, validates, plots, and means nothing — only the annotation layer knows, and before this gate nothing asked it.</td>
         </tr>
       </tbody>
     </table>

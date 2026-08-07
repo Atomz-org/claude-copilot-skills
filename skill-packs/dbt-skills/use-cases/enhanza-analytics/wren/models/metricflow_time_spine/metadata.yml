@@ -1,0 +1,25 @@
+name: metricflow_time_spine
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: metricflow_time_spine
+columns:
+- name: date_day
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Calendar day, one row each.
+    dbt_tests: not_null,unique
+    dbt_test_status: unknown
+  is_primary_key: true
+cached: false
+properties:
+  description: Daily calendar spine, 2019-01-01 through two years ahead of the current
+    date. Required by cumulative metrics, offset windows, and join_to_timespine. The
+    wren sync reads the spine only from this time_spine declaration, never from a
+    name convention.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.metricflow_time_spine
+  dbt_resource_type: model
+primary_key: date_day

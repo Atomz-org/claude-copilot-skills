@@ -1,4 +1,6 @@
 packages:
+  - package: dbt-labs/dbt_utils
+    version: 1.4.1
   - local: packages/core
   - local: packages/favrit
   - local: packages/fortnox
@@ -10,4 +12,4 @@ packages:
   - local: packages/visma_eaccounting
   - local: packages/visma_economic
   - local: packages/xledger
-sha1_hash: 4a94027e1c02c96f60a5bd004977aa462d6972de
+sha1_hash: c2f10c4d7621330c9902c9869518d2ffa9937c5d

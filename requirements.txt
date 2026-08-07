@@ -38,6 +38,21 @@ wrenai[mcp]==0.13.2
 # dies on import (fix staged at external/patches/wrenai-mcp-extra-upper-bound.patch).
 mcp<3
 
+# --- MetricFlow (installs into the DBT venv, not this one) --------------------
+#
+# Rule 45's validator and local query loop for the semantic layer. NOT listed as
+# an installable line because it would drag dbt-core into this venv; the dbt
+# environment is managed separately (see artifacts/refresh.sh's DBT_BIN ladder).
+# Install it beside dbt:
+#
+#   .venv-dbt/bin/pip install "dbt-metricflow[dbt-duckdb]==0.8.2" "dbt-core==1.9.9"
+#
+# Measured on install (2026-08-06): resolves metricflow 0.207.3, keeps dbt-core
+# at 1.9.9, and moves dbt-duckdb 1.10.1 → 1.9.6 (the 1.9-series adapter pairing);
+# the full suite passes on the downgraded adapter. Without mf, the agreement gate
+# (tests/test_metricflow_wren_agreement.py) skips with the install command named —
+# serving never needs mf, because Wren executes the compiled views.
+
 # --- tests --------------------------------------------------------------------
 
 # The suite itself. CI installs this separately; listed here so one command gives
