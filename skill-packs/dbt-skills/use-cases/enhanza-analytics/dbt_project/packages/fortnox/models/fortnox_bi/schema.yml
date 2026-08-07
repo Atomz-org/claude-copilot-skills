@@ -2,51 +2,100 @@ version: 2
 
 models:
   - name: fortnox_bi_dim_accounts
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_financial_years
+          sql_on: ${fortnox_bi_dim_accounts.FinancialYearId} = ${fortnox_bi_dim_financial_years.FinancialYearId}
+          type: left
+          relationship: many-to-one
+      primary_key: AccountId
     description: 'List of BAS accounts used in Fortnox, only Active'
     columns:
       - name: Number
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "BAS account number, consists of four digits, e.g., 1234"
         data_type: INTEGER
         description: 'BAS account number, consists of four digits, e.g., 1234'
       - name: AccountName
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "The name of the account in the chart of accounts"
         data_type: STRING
         description: 'The name of the account in the chart of accounts'
       - name: BalanceBroughtForward
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Balance sheet at the beginning of the financial year Additivity: semi_additive \u2014 do not SUM without checking the aggregation contract."
         data_type: FLOAT
         description: 'Balance sheet at the beginning of the financial year'
       - name: BalanceCarriedForward
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Final current balance for the financial year Additivity: semi_additive \u2014 do not SUM without checking the aggregation contract."
         data_type: FLOAT
         description: 'Final current balance for the financial year'
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
         data_type: STRING
         description: 'Foreign key to dim_cost_centers'
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
         data_type: STRING
         description: 'Foreign key to dim_projects'
       - name: AccountClassId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "First account digit, e.g., 1xxx"
         data_type: STRING
         description: "First account digit, e.g., 1xxx"
       - name: AccountClass
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "BAS account class defined by first account digit"
         data_type: STRING
         description: "BAS account class defined by the first account digit"
       - name: MainAccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "First two digits, e.g., 12xx"
         data_type: STRING
         description: 'First two digits, e.g., 12xx'
       - name: MainAccount
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "BAS main account defined by first two account digits"
         data_type: STRING
         description: 'BAS main account defined by first two account digits'
       - name: SubAccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "First three digits, e.g., 123x"
         data_type: STRING
         description: 'First three digits, e.g., 123x'
       - name: SubAccount
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "BAS sub-account defined by first three account digits"
         data_type: STRING
         description: 'BAS sub-account defined by first three account digits'
       - name: AccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Account identifier used as a primary key"
         data_type: STRING
         description: 'Unique Account identifier used as a primary key'
         data_tests:
           - unique
           - not_null
       - name: FinancialYearId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_financial_years"
         data_type: STRING
         description: 'Foreign key to dim_financial_years'
         data_tests:
@@ -54,25 +103,48 @@ models:
               to: ref('fortnox_bi_dim_financial_years')
               field: FinancialYearId
   - name: fortnox_bi_dim_articles
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_dim_articles.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+      primary_key: ArticleId
     description: "Datailed information on sold articles (items)"
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         description: 'Unique Article identifier for the workspace'
         data_tests:
           - unique
           - not_null
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: QuantityInStock
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Current amount in stock from fortnox_bi.fact_stockbalance Additivity: semi_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Current amount in stock from fortnox_bi.fact_stockbalance"
       - name: ReservedQuantity
         description: "Difference between total amount in stock and available stock"
       - name: isBundleSubItem
         description: "TRUE if the article is part of a bundle"
   - name: fortnox_bi_dim_assets_types
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_dim_assets_types.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+      primary_key: AssetTypeId
     description: "Detailed information on assets types"
     columns:
       - name: AssetTypeId
@@ -103,23 +175,41 @@ models:
       - name: AssetTypeUrl
         description: "A link to additional documentation or reference related to this asset type"
       - name: Description
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Text description of the asset type"
         description: "Text description of the asset type"
       - name: InUse
         description: "Boolean indicating whether this asset type is actively used in the system"
       - name: Notes
         description: "Additional notes for internal reference"
       - name: Number
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "BAS account number, consists of four digits, e.g., 1234"
         description: "BAS account number"
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         description: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
   - name: fortnox_bi_dim_bundle_articles
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_dim_bundle_articles.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
     description: "Information on bundle (parent) articles"
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         description: "Unique identifier of bundle sub items, link to fortnox_bi.dim_articles"
         data_tests:
           - relationships:
@@ -130,9 +220,14 @@ models:
         data_tests:
           - not_null
   - name: fortnox_bi_dim_company
+    meta:  # generated: lightdash_context_sync
+      primary_key: OrgId
     description: "Detailed information about connected organisations"
     columns:
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         description: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - unique
@@ -148,34 +243,69 @@ models:
           - unique
           - not_null
   - name: fortnox_bi_dim_customers
+    meta:  # generated: lightdash_context_sync
+      primary_key: CustomerId
     description: "Detailed information on customers, default pricelists and delivery details"
     columns:
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         description: "Unique identifyer of a customer in your workspace"
         data_tests:
           - unique
           - not_null
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: PriceListId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Customer's default price list ID, no relationship since it's a deprecated dimension"
         description: "Customer's default price list ID, no relationship since it's a deprecated dimension"
       - name: DefaultTemplate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Customer's default invoice template"
         description: "Customer's default invoice template"
       - name: Address
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Address1 field in Fortnox"
         description: "Address1 field in Fortnox"
       - name: TemplateReference
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Address2 field in Fortnox"
         description: "Address2 field in Fortnox"
       - name: DefaultDeliveryType
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Customer's default invoice delivery type"
         description: "Customer's default invoice delivery type"
       - name: AdditionalPhone
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            hidden: true
+            ai_hint: "Phone2 field in Fortnox"
         description: "Phone2 field in Fortnox"
       - name: Website
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "WWW field in Fortnox"
         description: "WWW field in Fortnox"
       - name: DefaultVATType
         description: "VATType field in Fortnox"
   - name: fortnox_bi_dim_employees
+    meta:  # generated: lightdash_context_sync
+      primary_key: EmployeeId
     description: "Detailed information on registered employees"
     columns:
       - name: EmployeeId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique employee identifier in your workspace"
         description: "Unique employee identifier in your workspace"
         data_tests:
           - unique
@@ -191,6 +321,9 @@ models:
       - name: CurrentHourlyPay
         description: "Hourly payment valid at the last sync date"
       - name: Address
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Address1 field in Fortnox"
         description: "Address1 field in Fortnox"
       - name: Phone
         description: "Phone1 or Phone2 field in Fortnox depending on availability"
@@ -199,19 +332,34 @@ models:
       - name: ScheduleChangeDate
         description: "Date when current schedule came into force"
   - name: fortnox_bi_dim_expenses
+    meta:  # generated: lightdash_context_sync
+      primary_key: ExpenseId
     columns:
       - name: ExpenseId
         data_tests:
           - unique
           - not_null
   - name: fortnox_bi_dim_financial_years
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_dim_financial_years.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+      primary_key: FinancialYearId
     description: "Detailed information on pre-selected financial years"
     columns:
       - name: FinancialYearId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_financial_years"
         data_tests:
           - unique
           - not_null
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
@@ -236,10 +384,22 @@ models:
           - unique
           - not_null
   - name: fortnox_bi_dim_prices
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_dim_prices.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
     columns:
       - name: PriceListId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Customer's default price list ID, no relationship since it's a deprecated dimension"
         description: "Unique price list identifier, no reference since it's a deprecated dimension"
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
@@ -253,14 +413,25 @@ models:
           - unique
           - not_null
   - name: fortnox_bi_dim_stockpoints
+    meta:  # generated: lightdash_context_sync
+      primary_key: StockPointId
     description: "Detailed information on stock points (warehouses)"
     columns:
       - name: StockPointId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique warehouse (stock point) identifyier for youe workspace"
         description: "Unique warehouse (stock point) identifyier for youe workspace"
         data_tests:
           - unique
           - not_null
   - name: fortnox_bi_dim_supplier_invoice_files
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_fact_supplier_invoices
+          sql_on: ${fortnox_bi_dim_supplier_invoice_files.SupplierInvoiceId} = ${fortnox_bi_fact_supplier_invoices.SupplierInvoiceId}
+          type: left
+          relationship: many-to-one
     description: "Links to PDF documents associated with supplier invoices"
     columns:
       - name: SupplierInvoiceId
@@ -270,14 +441,30 @@ models:
               to: ref('fortnox_bi_fact_supplier_invoices')
               field: SupplierInvoiceId
   - name: fortnox_bi_dim_supplier_items
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_dim_supplier_items.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_suppliers
+          sql_on: ${fortnox_bi_dim_supplier_items.SupplierId} = ${fortnox_bi_dim_suppliers.SupplierId}
+          type: left
+          relationship: many-to-one
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         description: "Article id based on article number assigned by your organisation"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: SupplierId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Supplier identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_suppliers')
@@ -285,11 +472,22 @@ models:
       - name: SupplierArticleNo
         description: "Article number assigned by supplier"
   - name: fortnox_bi_dim_suppliers
+    meta:  # generated: lightdash_context_sync
+      primary_key: SupplierId
     description: "Detailed information on suppliers"
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: SupplierId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Supplier identifier used as a primary key"
         description: "Unique supplier's identifiyer for your workspace"
         data_tests:
           - unique
@@ -302,38 +500,93 @@ models:
           - unique
           - not_null
   - name: fortnox_bi_fact_absence_transactions
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_absence_transactions.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_employees
+          sql_on: ${fortnox_bi_fact_absence_transactions.EmployeeId} = ${fortnox_bi_dim_employees.EmployeeId}
+          type: left
+          relationship: many-to-one
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: EmployeeId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique employee identifier in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_employees')
               field: EmployeeId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
   - name: fortnox_bi_fact_asset_rows
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_asset_rows.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_financial_years
+          sql_on: ${fortnox_bi_fact_asset_rows.FinancialYearId} = ${fortnox_bi_dim_financial_years.FinancialYearId}
+          type: left
+          relationship: many-to-one
     columns:
       - name: AssetId
         description: "Unique asset's identifiyer for your workspace"
         data_tests:
           - not_null
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: FinancialYearId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_financial_years"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_financial_years')
               field: FinancialYearId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
   - name: fortnox_bi_fact_assets
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_assets_types
+          sql_on: ${fortnox_bi_fact_assets.AssetTypeId} = ${fortnox_bi_dim_assets_types.AssetTypeId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_assets.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+      primary_key: AssetId
     columns:
       - name: AssetId
         description: "Unique asset's identifier for your workspace"
@@ -347,71 +600,173 @@ models:
               to: ref('fortnox_bi_dim_assets_types')
               field: AssetTypeId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
   - name: fortnox_bi_fact_attendance_transactions
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_attendance_transactions.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_employees
+          sql_on: ${fortnox_bi_fact_attendance_transactions.EmployeeId} = ${fortnox_bi_dim_employees.EmployeeId}
+          type: left
+          relationship: many-to-one
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: EmployeeId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique employee identifier in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_employees')
               field: EmployeeId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
   - name: fortnox_bi_fact_budgets
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_accounts
+          sql_on: ${fortnox_bi_fact_budgets.AccountId} = ${fortnox_bi_dim_accounts.AccountId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_budgets.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_financial_years
+          sql_on: ${fortnox_bi_fact_budgets.FinancialYearId} = ${fortnox_bi_dim_financial_years.FinancialYearId}
+          type: left
+          relationship: many-to-one
     description: "Budget is calculated and presented on monthly based"
     columns:
       - name: AccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Account identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_accounts')
               field: AccountId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: FinancialYearId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_financial_years"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_financial_years')
               field: FinancialYearId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: BudgetDate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Month is represented by its last calendar day"
         description: "Month is represented by its last calendar day"
   - name: fortnox_bi_fact_contracts
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_contracts.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_contracts.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
     description: "Contract transaction details, document level"
     columns:
       - name: ContractId
         data_tests:
           - not_null
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
               field: CustomerId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: PriceListId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Customer's default price list ID, no relationship since it's a deprecated dimension"
         description: "Unique price list identifier, no relationship since it's a deprecated dimension"
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
   - name: fortnox_bi_fact_contract_rows
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_contract_rows.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_contract_rows.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_contract_rows.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
     description: "Contract transaction details, article level. Only rows with specified Price included"
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
@@ -420,36 +775,76 @@ models:
         data_tests:
           - not_null
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
               field: CustomerId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: Currency
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Original transaction currency used in Fortnox"
         description: "Original transaction currency used in Fortnox"
       - name: SalesValue
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "The total value of the selected document type line in SEK after discounts"
         description: "Net value in SEK, discounts applied"
   - name: fortnox_bi_fact_employee_schedules
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_employee_schedules.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_employees
+          sql_on: ${fortnox_bi_fact_employee_schedules.EmployeeId} = ${fortnox_bi_dim_employees.EmployeeId}
+          type: left
+          relationship: many-to-one
     description: "Historical records of employee work schedules"
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: EmployeeId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique employee identifier in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_employees')
               field: EmployeeId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: ScheduleId
         data_tests:
           - not_null
@@ -458,37 +853,95 @@ models:
       - name: ScheduleChangeDate
         description: "Date on which the schedule comes into force"
   - name: fortnox_bi_fact_employee_wages
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_employee_wages.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_employees
+          sql_on: ${fortnox_bi_fact_employee_wages.EmployeeId} = ${fortnox_bi_dim_employees.EmployeeId}
+          type: left
+          relationship: many-to-one
     description: "Historical records of employee payment amounts"
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: EmployeeId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique employee identifier in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_employees')
               field: EmployeeId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: WageChangeDate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Date on which this payment amount came into force"
         description: "Date on which this payment amount came into force"
   - name: fortnox_bi_fact_incoming_goods
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_incoming_goods.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_incoming_goods.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_stockpoints
+          sql_on: ${fortnox_bi_fact_incoming_goods.stockPointId} = ${fortnox_bi_dim_stockpoints.StockPointId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_suppliers
+          sql_on: ${fortnox_bi_fact_incoming_goods.SupplierId} = ${fortnox_bi_dim_suppliers.SupplierId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_fact_purchase_orders
+          sql_on: ${fortnox_bi_fact_incoming_goods.purchaseOrderId} = ${fortnox_bi_fact_purchase_orders.purchaseOrderId}
+          type: left
     description: "Items received to the warehouse"
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: purchaseOrderId
         data_tests:
           - relationships:
@@ -500,14 +953,30 @@ models:
               to: ref('fortnox_bi_dim_stockpoints')
               field: StockPointId
       - name: SupplierId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Supplier identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_suppliers')
               field: SupplierId
   - name: fortnox_bi_fact_invoice_accruals
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_invoice_accruals.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_fact_invoices
+          sql_on: ${fortnox_bi_fact_invoice_accruals.InvoiceId} = ${fortnox_bi_fact_invoices.InvoiceId}
+          type: left
+          relationship: many-to-one
     description: "Net in SEK"
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: InvoiceId
         data_tests:
           - not_null
@@ -515,30 +984,84 @@ models:
               to: ref('fortnox_bi_fact_invoices')
               field: InvoiceId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
   - name: fortnox_bi_fact_invoice_payments
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_invoice_payments.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_invoice_payments.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
     description: "Net in SEK"
     columns:
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
               field: CustomerId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: VoucherSeriesId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique voucher series identifyer based on financial year"
         description: "Unique identifier of Voucher series, , no reference since it's a deprecated dimension"
   - name: fortnox_bi_fact_invoice_rows
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_accounts
+          sql_on: ${fortnox_bi_fact_invoice_rows.AccountId} = ${fortnox_bi_dim_accounts.AccountId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_invoice_rows.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_invoice_rows.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_invoice_rows.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_financial_years
+          sql_on: ${fortnox_bi_fact_invoice_rows.FinancialYearId} = ${fortnox_bi_dim_financial_years.FinancialYearId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_fact_invoices
+          sql_on: ${fortnox_bi_fact_invoice_rows.InvoiceId} = ${fortnox_bi_fact_invoices.InvoiceId}
+          type: left
+          relationship: many-to-one
     description: "Invoice detailed to sold articles, all values in SEK, only not cancelled and with article details. See Document-level info in fortnox_bi.fact_invocies"
     columns:
       - name: AccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Account identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_accounts')
@@ -546,17 +1069,29 @@ models:
               config:
                 where: "InvoiceDate >= '2017-05-01'"
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
               field: CustomerId
       - name: FinancialYearId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_financial_years"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_financial_years')
@@ -567,31 +1102,73 @@ models:
               to: ref('fortnox_bi_fact_invoices')
               field: InvoiceId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: Currency
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Original transaction currency used in Fortnox"
         description: "Original currency used in Fortnox"
       - name: CurrencyRate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Exchange rate from Fortnox, used to convert all values to SEK Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Exchange rate from Fortnox, used to convert all values to SEK"
       - name: DiscountType
         description: "PERCENT or AMOUNT"
       - name: PriceAfterDiscount
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "NET price in SEK after all discounts applied Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "NET price in SEK after all discounts applied"
       - name: SalesValue
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "The total value of the selected document type line in SEK after discounts"
         description: "NET value in SEK, discounts applied"
   - name: fortnox_bi_fact_invoices
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_invoices.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_invoices.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_financial_years
+          sql_on: ${fortnox_bi_fact_invoices.FinancialYearId} = ${fortnox_bi_dim_financial_years.FinancialYearId}
+          type: left
+          relationship: many-to-one
+      primary_key: InvoiceId
     description: "Invoice detailed to individual documents, all values in SEK, only not cancelled. See Article-level info in fortnox_bi.fact_invoice_rows"
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
               field: CustomerId
       - name: FinancialYearId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_financial_years"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_financial_years')
@@ -601,37 +1178,93 @@ models:
           - unique
           - not_null
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: IsDue
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "TRUE if invoice balance is not 0 and due date has already passed"
         description: "TRUE if invoice balance is not 0 and due date has already passed"
       - name: DueStatus
         description: "Calculated field, shows how many days the invoice is overdue if applicable"
       - name: Currency
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Original transaction currency used in Fortnox"
         description: "Original currency used in Fortnox"
       - name: CurrencyRate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Exchange rate from Fortnox, used to convert all values to SEK Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Exchange rate from Fortnox, used to convert all values to SEK"
       - name: RecipientEmail
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            hidden: true
+            ai_hint: "Additional email details, EmailAddressTo"
         description: "Additional email details, EmailAddressTo"
       - name: RecipientPhone
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            hidden: true
+            ai_hint: "Phone1 field in Fortnox"
         description: "Phone1 field in Fortnox"
       - name: Labels
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels"
         description: "Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels"
   - name: fortnox_bi_fact_locked_period
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_locked_period.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
     description: "Date before which all financial transactions are locked"
     columns:
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
   - name: fortnox_bi_fact_offer_rows
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_accounts
+          sql_on: ${fortnox_bi_fact_offer_rows.AccountId} = ${fortnox_bi_dim_accounts.AccountId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_offer_rows.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_offer_rows.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_offer_rows.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
     description: "Offer detailed to sold articles, all values in SEK, only not cancelled and with article details. See Document-level info in fortnox_bi.fact_offers"
     columns:
       - name: AccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Account identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_accounts')
@@ -640,76 +1273,178 @@ models:
                 where: "OfferDate >= '2017-05-01'"
                 # needs to be deleted after the bug ED-1441 (https://enhanza.atlassian.net/browse/ED-1441) is fixed
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
               field: CustomerId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: Currency
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Original transaction currency used in Fortnox"
         description: "Original currency used in Fortnox"
       - name: CurrencyRate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Exchange rate from Fortnox, used to convert all values to SEK Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Exchange rate from Fortnox, used to convert all values to SEK"
       - name: isVATIncluded
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "TRUE is VAT is originally included in article price. Already used in calculations"
         description: "TRUE is VAT is originally included in article price. Already used in calculations"
       - name: DiscountType
         description: "PERCENT or AMOUNT"
       - name: PriceAfterDiscount
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "NET price in SEK after all discounts applied Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "NET price in SEK after all discounts applied"
       - name: SalesValue
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "The total value of the selected document type line in SEK after discounts"
         description: "NET value in SEK, discounts applied"
   - name: fortnox_bi_fact_offers
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_offers.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_offers.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
     description: "Offer detailed to individual documents, all values in SEK, only not cancelled. See Article-level info in fortnox_bi.fact_offer_rows"
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
               field: CustomerId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: Currency
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Original transaction currency used in Fortnox"
         description: "Original currency used in Fortnox"
       - name: CurrencyRate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Exchange rate from Fortnox, used to convert all values to SEK Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Exchange rate from Fortnox, used to convert all values to SEK"
       - name: RecipientEmail
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            hidden: true
+            ai_hint: "Additional email details, EmailAddressTo"
         description: "Additional email details, EmailAddressTo"
       - name: RecipientPhone
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            hidden: true
+            ai_hint: "Phone1 field in Fortnox"
         description: "Phone1 field in Fortnox"
       - name: Labels
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels"
         description: "Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels"
       - name: OrderReference
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "0 if no order is created for this offer yet"
         description: "0 if no order is created for this offer yet"
   - name: fortnox_bi_fact_order_rows
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_accounts
+          sql_on: ${fortnox_bi_fact_order_rows.AccountId} = ${fortnox_bi_dim_accounts.AccountId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_order_rows.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_order_rows.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_order_rows.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
     description: "Order detailed to sold articles, all values in SEK, only not cancelled. See Document-level info in fortnox_bi.fact_orders"
     columns:
       - name: AccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Account identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_accounts')
               field: AccountId
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
@@ -718,31 +1453,75 @@ models:
         data_tests:
           - not_null
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: Currency
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Original transaction currency used in Fortnox"
         description: "Original currency used in Fortnox"
       - name: CurrencyRate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Exchange rate from Fortnox, used to convert all values to SEK Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Exchange rate from Fortnox, used to convert all values to SEK"
       - name: isVATIncluded
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "TRUE is VAT is originally included in article price. Already used in calculations"
         description: "TRUE is VAT is originally included in article price. Already used in calculations"
       - name: DiscountType
         description: "PERCENT or AMOUNT"
       - name: PriceAfterDiscount
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "NET price in SEK after all discounts applied Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "NET price in SEK after all discounts applied"
       - name: SalesValue
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "The total value of the selected document type line in SEK after discounts"
         description: "NET value in SEK, discounts applied"
       - name: OrderedValue
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Potential NET value in SEK, discounts applied of the total ordered quantity"
         description: "Potential NET value in SEK, discounts applied of the total ordered quantity"
       - name: InvoiceReference
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "0 if no invoice is created for this order yet"
         description: "0 if no invoice is created for this order yet"
   - name: fortnox_bi_fact_orders
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_orders.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_orders.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_stockpoints
+          sql_on: ${fortnox_bi_fact_orders.StockPointId} = ${fortnox_bi_dim_stockpoints.StockPointId}
+          type: left
+          relationship: many-to-one
     description: "Order detailed to individual documents, all values in SEK, only not cancelled. See Article-level info in fortnox_bi.fact_order_rows"
     columns:
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
@@ -751,37 +1530,86 @@ models:
         data_tests:
           - not_null
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: StockPointId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique warehouse (stock point) identifyier for youe workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_stockpoints')
               field: StockPointId
       - name: Currency
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Original transaction currency used in Fortnox"
         description: "Original currency used in Fortnox"
       - name: CurrencyRate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Exchange rate from Fortnox, used to convert all values to SEK Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Exchange rate from Fortnox, used to convert all values to SEK"
       - name: RecipientEmail
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            hidden: true
+            ai_hint: "Additional email details, EmailAddressTo"
         description: "Additional email details, EmailAddressTo"
       - name: RecipientPhone
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            hidden: true
+            ai_hint: "Phone1 field in Fortnox"
         description: "Phone1 field in Fortnox"
       - name: Labels
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels"
         description: "Order label, only one label per document is supported. For more details, use fortnox_bi.dim_labels"
       - name: InvoiceReference
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "0 if no invoice is created for this order yet"
         description: "0 if no invoice is created for this order yet"
   - name: fortnox_bi_fact_production_orders
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_production_orders.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_production_orders.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_stockpoints
+          sql_on: ${fortnox_bi_fact_production_orders.StockPointId} = ${fortnox_bi_dim_stockpoints.StockPointId}
+          type: left
+          relationship: many-to-one
     description: "Details on orders sent to manufacturing, only completed or without document status"
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
@@ -790,31 +1618,74 @@ models:
         data_tests:
           - not_null
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: StockPointId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique warehouse (stock point) identifyier for youe workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_stockpoints')
               field: stockPointId
   - name: fortnox_bi_fact_purchase_orders
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_purchase_orders.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_purchase_orders.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_fact_purchase_orders.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_stockpoints
+          sql_on: ${fortnox_bi_fact_purchase_orders.stockPointId} = ${fortnox_bi_dim_stockpoints.StockPointId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_suppliers
+          sql_on: ${fortnox_bi_fact_purchase_orders.SupplierId} = ${fortnox_bi_dim_suppliers.SupplierId}
+          type: left
+          relationship: many-to-one
     description: "Details on orders sent to suppliers"
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
               field: CustomerId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: purchaseOrderId
         data_tests:
           - not_null
@@ -824,20 +1695,50 @@ models:
               to: ref('fortnox_bi_dim_stockpoints')
               field: stockPointId
       - name: SupplierId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Supplier identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_suppliers')
               field: SupplierId
   - name: fortnox_bi_fact_salary_transactions
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_accounts
+          sql_on: ${fortnox_bi_fact_salary_transactions.AccountId} = ${fortnox_bi_dim_accounts.AccountId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_salary_transactions.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_employees
+          sql_on: ${fortnox_bi_fact_salary_transactions.EmployeeId} = ${fortnox_bi_dim_employees.EmployeeId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_expenses
+          sql_on: ${fortnox_bi_fact_salary_transactions.ExpenseId} = ${fortnox_bi_dim_expenses.ExpenseId}
+          type: left
+          relationship: many-to-one
     description: "Details on salry transactions per employee"
     columns:
       - name: AccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Account identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_accounts')
               field: AccountId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: EmployeeId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique employee identifier in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_employees')
@@ -848,20 +1749,46 @@ models:
               to: ref('fortnox_bi_dim_expenses')
               field: ExpenseId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
   - name: fortnox_bi_fact_stockbalance
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_stockbalance.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_stockbalance.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_stockpoints
+          sql_on: ${fortnox_bi_fact_stockbalance.stockPointId} = ${fortnox_bi_dim_stockpoints.StockPointId}
+          type: left
+          relationship: many-to-one
     description: "Balance of article stock, valid at the date of latest sync. Articles with 0 in stock will not appear in Fortnox API"
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
@@ -872,21 +1799,51 @@ models:
               to: ref('fortnox_bi_dim_stockpoints')
               field: stockPointId
   - name: fortnox_bi_fact_stocktakings
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_stocktakings.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_stocktakings.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_stockpoints
+          sql_on: ${fortnox_bi_fact_stocktakings.StockPointId} = ${fortnox_bi_dim_stockpoints.StockPointId}
+          type: left
+          relationship: many-to-one
+      primary_key: StockTakingId
     description: "Adjustments to stock balance per request"
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: StockPointId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique warehouse (stock point) identifyier for youe workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_stockpoints')
@@ -896,61 +1853,147 @@ models:
           - not_null
           - unique
   - name: fortnox_bi_fact_supplier_invoice_accruals
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_supplier_invoice_accruals.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: SupplierInvoiceId
         data_tests:
           - not_null
   - name: fortnox_bi_fact_supplier_invoice_rows
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_accounts
+          sql_on: ${fortnox_bi_fact_supplier_invoice_rows.AccountId} = ${fortnox_bi_dim_accounts.AccountId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_fact_supplier_invoice_rows.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_supplier_invoice_rows.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_suppliers
+          sql_on: ${fortnox_bi_fact_supplier_invoice_rows.SupplierId} = ${fortnox_bi_dim_suppliers.SupplierId}
+          type: left
+          relationship: many-to-one
     description: "Supplier invoice detailed to purchased articles, all values in SEK. See Document-level info in fortnox_bi.fact_supplier_invoices"
     columns:
       - name: AccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Account identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_accounts')
               field: AccountId
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: SupplierId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Supplier identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_suppliers')
               field: SupplierId
       - name: Currency
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Original transaction currency used in Fortnox"
         description: "Original currency used in Fortnox"
       - name: CurrencyRate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Exchange rate from Fortnox, used to convert all values to SEK Additivity: non_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Exchange rate from Fortnox, used to convert all values to SEK"
       - name: SupplierInvoiceNo
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "GivenNumber field in Fortnox"
         description: "GivenNumber field in Fortnox"
       - name: Balance
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Calculated field from difference between Credit and Debit Additivity: semi_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Calculated field from difference between Credit and Debit"
   - name: fortnox_bi_fact_supplier_invoices
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_supplier_invoices.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_suppliers
+          sql_on: ${fortnox_bi_fact_supplier_invoices.SupplierId} = ${fortnox_bi_dim_suppliers.SupplierId}
+          type: left
+          relationship: many-to-one
+      primary_key: SupplierInvoiceId
     description: "Supplier invoice detailed to individual documents, all values in SEK, only not cancelled. See Article-level info in fortnox_bi.fact_supplier_invoice_rows"
     columns:
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: SupplierId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Supplier identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_suppliers')
@@ -962,72 +2005,167 @@ models:
       - name: DueStatus
         description: "Calculated field, shows how many days the invoice is overdue if applicable"
       - name: SupplierInvoiceNo
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "GivenNumber field in Fortnox"
         description: "GivenNumber field in Fortnox"
       - name: Currency
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Original transaction currency used in Fortnox"
         description: "Original currency used in Fortnox"
   - name: fortnox_bi_time_reporting_registrations
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_articles
+          sql_on: ${fortnox_bi_time_reporting_registrations.ArticleId} = ${fortnox_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_time_reporting_registrations.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_customers
+          sql_on: ${fortnox_bi_time_reporting_registrations.CustomerId} = ${fortnox_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
     description: "Reporting time spent in Fortnox"
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         description: "Service to which time registration is linked"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_articles')
               field: ArticleId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_customers')
               field: CustomerId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: UserNo
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "UserId available in Fortnox UI only"
         description: "UserId available in Fortnox UI only"
   - name: fortnox_bi_fact_vouchers
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_accounts
+          sql_on: ${fortnox_bi_fact_vouchers.AccountId} = ${fortnox_bi_dim_accounts.AccountId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_vouchers.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_financial_years
+          sql_on: ${fortnox_bi_fact_vouchers.FinancialYearId} = ${fortnox_bi_dim_financial_years.FinancialYearId}
+          type: left
+          relationship: many-to-one
     description: "Financial voucher information, all values in SEK, daily basis"
     columns:
       - name: AccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Account identifier used as a primary key"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_accounts')
               field: AccountId
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"
       - name: FinancialYearId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_financial_years"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_financial_years')
               field: FinancialYearId
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: ProjectId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_projects"
       - name: VoucherSeriesId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique voucher series identifyer based on financial year"
         description: "Unique identifier of Voucher series, no reference since it's a deprecated dimension"
       - name: Balance
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Calculated field from difference between Credit and Debit Additivity: semi_additive \u2014 do not SUM without checking the aggregation contract."
         description: "Calculated field from difference between Credit and Debit"
   - name: fortnox_bi_fact_rolling_sum
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: fortnox_bi_dim_company
+          sql_on: ${fortnox_bi_fact_rolling_sum.OrgId} = ${fortnox_bi_dim_company.OrgId}
+          type: left
+          relationship: many-to-one
+        - join: fortnox_bi_dim_financial_years
+          sql_on: ${fortnox_bi_fact_rolling_sum.FinancialYearId} = ${fortnox_bi_dim_financial_years.FinancialYearId}
+          type: left
+          relationship: many-to-one
     columns:
       - name: OrgId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifier of your organisation that can be found in the Enhanza app"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_company')
               field: OrgId
       - name: FinancialYearId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_financial_years"
         data_tests:
           - relationships:
               to: ref('fortnox_bi_dim_financial_years')
               field: FinancialYearId
       - name: AccountId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Account identifier used as a primary key"
 #        data_tests:
 #          - relationships:
 #              to: ref('fortnox_bi_dim_accounts')
 #              field: AccountId
 #      rolling_sum takes into account 11 months that may cover several financial years that created discrepancy with dim_accounts
       - name: CostCenterId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Foreign key to dim_cost_centers"

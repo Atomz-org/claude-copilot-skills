@@ -657,3 +657,24 @@ def test_offline_compile_gate_passes_on_the_example() -> None:
         pytest.skip("example manifest not built (dbt parse writes it)")
     verdict = mod.run_compile(cli, project, meta_models={"fct_orders", "dim_customers"})
     assert verdict["status"] == "ok", verdict
+
+
+# ---------------------------------------------------------------------------------------
+# The real artifacts stay current
+# ---------------------------------------------------------------------------------------
+
+
+def test_the_committed_lightdash_projection_is_current() -> None:
+    """The committed meta blocks and knowledge files are what a fresh sync produces.
+
+    Runs the emitter in --check over the real example use-case; skips where the
+    locally-built manifest is absent (CI has no dbt), like the wren currency test."""
+    manifest_path = (
+        REPO / "skill-packs/dbt-skills/use-cases/example-order-revenue-mart/"
+        "dbt_project/target/manifest.json"
+    )
+    if not manifest_path.exists():
+        pytest.skip("example manifest not built (dbt parse writes it)")
+    payload = mod.sync("example-order-revenue-mart", None, check=True)
+    assert payload["status"] == "synced"
+    assert payload["changed"] == [], payload["changed"]

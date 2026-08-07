@@ -5,6 +5,8 @@ models:
   # Staging — quarantines shopify_api. One model per raw table, columns enumerated.
   # ---------------------------------------------------------------------------------
   - name: shopify_bi_dim_customers_staging
+    meta:  # generated: lightdash_context_sync
+      primary_key: CustomerId
     description: >
       One row per Shopify customer. Keys are the raw Shopify `id` with no OrgId prefix —
       Shopify has no organisation concept and `id` is unique within a shop. Cross-source
@@ -12,16 +14,33 @@ models:
       Carries the customer's `default_address` as both the postal and the delivery address.
     columns:
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         description: Shopify customer id, cast to string. Primary key.
         data_tests:
           - unique
           - not_null
       - name: Email
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            hidden: true
+            ai_hint: "Customer email. Nullable \u2014 Shopify permits phone-only customers."
         description: Customer email. Nullable — Shopify permits phone-only customers.
       - name: isActive
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Indicates whether the article is currently active"
         description: True when Shopify customer `state` is 'enabled'.
 
   - name: shopify_bi_fact_orders_staging
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: shopify_bi_dim_customers_staging
+          sql_on: ${shopify_bi_fact_orders_staging.CustomerId} = ${shopify_bi_dim_customers_staging.CustomerId}
+          type: left
+          relationship: many-to-one
+      primary_key: OrderId
     description: >
       One row per Shopify order, excluding orders cancelled in Shopify (`cancelled_at` set)
       and orders older than five years. The five-year window mirrors the same filter in
@@ -29,11 +48,17 @@ models:
       conversion is applied.
     columns:
       - name: OrderId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Shopify order id. Primary key."
         description: Shopify order id, cast to string. Primary key.
         data_tests:
           - unique
           - not_null
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         description: >
           Owning customer. Nullable — Shopify guest checkout produces orders with no
           customer. The relationships test ignores nulls by design.
@@ -42,6 +67,9 @@ models:
               to: ref('shopify_bi_dim_customers_staging')
               field: CustomerId
       - name: OrderDate
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Order creation date, from `created_at`."
         description: Order creation date, from `created_at`.
         data_tests:
           - not_null
@@ -59,6 +87,21 @@ models:
                 - voided
 
   - name: shopify_bi_fact_order_rows_staging
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: shopify_bi_dim_articles_staging
+          sql_on: ${shopify_bi_fact_order_rows_staging.ArticleId} = ${shopify_bi_dim_articles_staging.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: shopify_bi_dim_customers_staging
+          sql_on: ${shopify_bi_fact_order_rows_staging.CustomerId} = ${shopify_bi_dim_customers_staging.CustomerId}
+          type: left
+          relationship: many-to-one
+        - join: shopify_bi_fact_orders_staging
+          sql_on: ${shopify_bi_fact_order_rows_staging.OrderId} = ${shopify_bi_fact_orders_staging.OrderId}
+          type: left
+          relationship: many-to-one
+      primary_key: OrderRowId
     description: >
       One row per line item on a non-cancelled Shopify order. Joins back to
       shopify_api.orders for order-level context, the same way the Fortnox equivalent joins
@@ -71,6 +114,9 @@ models:
           - unique
           - not_null
       - name: OrderId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Shopify order id. Primary key."
         description: Parent order.
         data_tests:
           - not_null
@@ -78,6 +124,9 @@ models:
               to: ref('shopify_bi_fact_orders_staging')
               field: OrderId
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         description: >
           Shopify variant id. Nullable — a custom line item carries no variant. The
           relationships test ignores nulls by design.
@@ -86,30 +135,47 @@ models:
               to: ref('shopify_bi_dim_articles_staging')
               field: ArticleId
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         description: Owning customer, carried from the order. Nullable for guest checkout.
         data_tests:
           - relationships:
               to: ref('shopify_bi_dim_customers_staging')
               field: CustomerId
       - name: OrderedQuantity
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Line quantity ordered."
         description: Line quantity ordered.
         data_tests:
           - not_null
 
   - name: shopify_bi_dim_articles_staging
+    meta:  # generated: lightdash_context_sync
+      primary_key: ArticleId
     description: >
       One row per Shopify product variant. Variant grain, not product grain, because an
       order line references a variant — a product-grain dimension would fan out when joined
       to fact_order_rows. Product attributes repeat across a product's variants.
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         description: Shopify variant id, cast to string. Primary key.
         data_tests:
           - unique
           - not_null
       - name: ArticleNumber
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "The article number indicated on the line where applicable"
         description: Variant SKU. Nullable — Shopify does not require one.
       - name: Active
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Whether the article in Fortnox is marked as active or inactive"
         description: True when the parent product `status` is 'active'.
 
   # ---------------------------------------------------------------------------------

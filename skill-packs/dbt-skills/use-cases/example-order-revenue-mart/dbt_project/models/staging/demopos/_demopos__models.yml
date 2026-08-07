@@ -2,6 +2,8 @@ version: 2
 
 models:
   - name: stg_demopos__customers
+    meta:  # generated: lightdash_context_sync
+      primary_key: customer_id
     description: >
       One row per customer registered at the in-store till, renamed and cast. The source
       is a nightly full snapshot with no delete flag, so unlike stg_shopify__customers
@@ -21,6 +23,13 @@ models:
         description: Timestamp the customer was first registered at the till.
 
   - name: stg_demopos__receipts
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: stg_demopos__customers
+          sql_on: ${stg_demopos__receipts.customer_id} = ${stg_demopos__customers.customer_id}
+          type: left
+          relationship: many-to-one
+      primary_key: receipt_id
     description: >
       One row per printed receipt. Walk-in cash sales have no customer (~25% of rows) —
       the nullable-FK case. Voided receipts are kept, with receipt_status = 'void':

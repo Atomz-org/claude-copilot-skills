@@ -2,6 +2,13 @@ version: 2
 
 models:
   - name: fct_orders
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: dim_customers
+          sql_on: ${fct_orders.customer_id} = ${dim_customers.customer_id}
+          type: left
+          relationship: many-to-one
+      primary_key: order_id
     description: >
       One row per order at its current status. Excludes internal test accounts
       (`is_test_order`). Amounts are USD at the order-date rate. Guest checkouts have a
@@ -87,6 +94,8 @@ models:
             severity: warn
 
   - name: dim_customers
+    meta:  # generated: lightdash_context_sync
+      primary_key: customer_id
     description: >
       One row per customer, current state. Region is derived from the Shopify
       country_code; customers with an unmapped country fall into 'OTHER'.

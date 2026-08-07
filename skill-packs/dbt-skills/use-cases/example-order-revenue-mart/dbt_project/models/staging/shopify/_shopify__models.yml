@@ -2,6 +2,8 @@ version: 2
 
 models:
   - name: stg_shopify__orders
+    meta:  # generated: lightdash_context_sync
+      primary_key: order_id
     description: >
       One row per Shopify order, renamed and cast. Soft-deleted rows are excluded here;
       test orders are NOT — they carry `is_test_order` and are filtered in the
@@ -30,6 +32,13 @@ models:
         description: Fivetran sync timestamp. Used for freshness and arrival-lag measurement.
 
   - name: stg_shopify__order_lines
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: stg_shopify__orders
+          sql_on: ${stg_shopify__order_lines.order_id} = ${stg_shopify__orders.order_id}
+          type: left
+          relationship: many-to-one
+      primary_key: order_line_id
     description: >
       One row per line item on an order. Roughly 0.3% of orders have no lines — a known
       upstream defect, which is why the intermediate model coalesces line totals to zero
