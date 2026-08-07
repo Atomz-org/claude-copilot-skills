@@ -15,11 +15,13 @@ So the stages are one command, in dependency order, and each reports what it did
     annotations ontology/column-annotations.json   <- annotations.yml + the conformed columns
     ontology   connectors/*.ttl + topology/*.ttl   <- registry, manifest, lineage, annotations
     index      index.json                          <- same pass as the Turtle
+    semantic   models/semantic/*.yml (MetricFlow)  <- index.json + the project's unique tests
     seeds      seeds/sample/*.csv                  <- manifest + parsed source columns
     graphify   the code graph, rebuilt             <- opt-in; must precede the merge
     graph      dbt lineage + ontology topology, merged  <- manifest
     alignment  the verdict                         <- project files + manifest
     wren       wren/ WrenAI semantic-layer project <- manifest + catalog + ontology artifacts
+               ...and its joins + metric views back into the graph
 
 **A stage that cannot run says so and does not fail.** A fresh use-case has no manifest, and
 half of these need one; a checkout without sqlglot cannot parse columns. Reporting `skip`
@@ -309,6 +311,45 @@ def stage_annotations(use_case: Path, slug: str, check: bool) -> Stage:
     return Stage("annotations", CHANGED if changed else OK, detail, changed)
 
 
+def stage_semantic(use_case: Path, slug: str, manifest: Optional[Path], check: bool) -> Stage:
+    """`models/semantic/` — the MetricFlow layer the annotations support.
+
+    After `ontology`, because it reads `index.json`'s `column_semantics`; before `wren`,
+    because the Wren stage compiles each MetricFlow metric into an MDL view and can only
+    compile the metrics the manifest holds. That second dependency is the one worth
+    stating: this stage writes into the dbt project, so the manifest is stale the moment it
+    changes anything, and the metrics reach the serving tier only after the next parse.
+    Reporting `changed` with the remedy named beats silently enriching from the previous
+    generation — the same reason `wren` is sequenced last.
+    """
+    if not manifest:
+        return Stage("semantic", SKIP, "no manifest — run artifacts/refresh.sh")
+    cmd = [sys.executable, str(REPO / "scripts/ontology_to_semantic.py"),
+           "--use-case", slug, "--manifest", str(manifest), "--format", "json"]
+    cmd.append("--check" if check else "--write")
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=600)
+    payload = _first_json_line(proc.stdout)
+    if payload is None:
+        tail = (proc.stderr or proc.stdout).strip().splitlines()
+        return Stage("semantic", FAIL, tail[-1] if tail else f"exit {proc.returncode}")
+    if payload.get("status") == "skip":
+        return Stage("semantic", SKIP, str(payload.get("reason", "")))
+
+    changed = payload.get("changed") or []
+    refused = payload.get("refused") or {}
+    detail = (
+        f"{payload.get('semantic_models', 0)} semantic model(s), "
+        f"{payload.get('entities', 0)} entities, {payload.get('dimensions', 0)} dimensions, "
+        f"{payload.get('metrics', 0)} metric(s)"
+    )
+    blocked = refused.get("no-unique-test", 0)
+    if blocked:
+        detail += f"; {blocked} concept(s) blocked on a `unique` test (rule 21)"
+    if changed:
+        detail += "; manifest now stale for `wren` — run artifacts/refresh.sh"
+    return Stage("semantic", CHANGED if changed else OK, detail, changed)
+
+
 def stage_seeds(use_case: Path, slug: str, manifest: Optional[Path], check: bool) -> Stage:
     if not manifest:
         return Stage("seeds", SKIP, "no manifest — run artifacts/refresh.sh")
@@ -510,7 +551,39 @@ def stage_wren(use_case: Path, slug: str, manifest: Optional[Path], check: bool)
     stale = payload.get("stale", [])
     if stale:
         detail += f"; {len(stale)} hand-authored file(s) left alone"
+
+    # The loop closes here: the joins and metric views the serving tier holds go back into
+    # the code graph an agent orients with. Inside this stage rather than beside it because
+    # the never-update-after rule binds it to the same ordering as every other merge, and
+    # `graphify` is already sequenced ahead of it. A dry run stops before the merge —
+    # mutating the graph under --check is not checking.
+    if not check:
+        merged = _merge_wren_into_graph(slug, manifest)
+        if merged:
+            detail += f"; {merged}"
     return Stage("wren", CHANGED if changed else OK, detail, changed)
+
+
+def _merge_wren_into_graph(slug: str, manifest: Optional[Path]) -> str:
+    """`wren_context_sync.py --merge-graphify`, reported rather than raised.
+
+    A graph that cannot be merged into is not a reason to fail the wren stage: the wren
+    project is written and correct either way, and the graph is rebuildable in one command.
+    """
+    if not (REPO / "graphify-out" / "graph.json").exists():
+        return ""
+    cmd = [sys.executable, str(REPO / "scripts/wren_context_sync.py"),
+           "--use-case", slug, "--merge-graphify", "--format", "json"]
+    if manifest:
+        cmd += ["--manifest", str(manifest)]
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=600)
+    payload = _first_json_line(proc.stdout)
+    if proc.returncode != 0 or payload is None or payload.get("status") == "skip":
+        return "graph merge skipped"
+    dropped = payload.get("dropped_total", 0)
+    note = f", {dropped} dropped" if dropped else ""
+    return (f"graph +{payload.get('nodes', 0)} metric node(s) "
+            f"+{payload.get('edges', 0)} edge(s){note}")
 
 
 # ---------------------------------------------------------------------------------------
@@ -652,6 +725,8 @@ def sync(slug: str, check: bool, manifest_arg: Optional[str],
     run("columns", lambda: stage_columns(use_case, slug, manifest, check))
     run("annotations", lambda: stage_annotations(use_case, slug, check))
     run("ontology", lambda: stage_ontology(use_case, slug, manifest, check))
+    # After the index it reads, before the wren stage that compiles its metrics.
+    run("semantic", lambda: stage_semantic(use_case, slug, manifest, check))
     run("seeds", lambda: stage_seeds(use_case, slug, manifest, check))
     # Order-critical: the rebuild drops every .sql node, so the merge has to follow it.
     if graphify_update:
@@ -685,8 +760,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--init", metavar="SLUG", help="scaffold a new use-case's ontology skeleton")
     p.add_argument("--pack", default="dbt-skills", help="pack that owns a new use-case")
     p.add_argument("--manifest", help="manifest.json (default: <project>/target/manifest.json)")
-    p.add_argument("--stage", action="append",
-                   choices=("taxonomy", "columns", "annotations", "ontology", "seeds",
+    p.add_argument("--stage", action="append", metavar="STAGE",
+                   choices=("taxonomy", "columns", "annotations", "ontology", "semantic",
+                            "seeds",
                             "graphify", "graph", "alignment", "wren"),
                    help="run only this stage (repeatable)")
     p.add_argument("--graphify-update", action="store_true",
