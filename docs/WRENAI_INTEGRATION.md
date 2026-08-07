@@ -75,6 +75,10 @@ python3 scripts/use_case_sync.py --use-case example-order-revenue-mart --stage w
 # the end-to-end demo: dbt build -> import+enrich -> validate/build -> governed query
 # cross-checked for exact row equality against DuckDB directly. Local, no Docker, no keys.
 ./skill-packs/wren-skills/demo/run_wren_demo.sh
+
+# the same two assertions, inside a container, offline (--network=none).
+# exits 3 and names the remedy when podman is unavailable.
+./skill-packs/wren-skills/demo/run_wren_podman_demo.sh
 ```
 
 Measured on `example-order-revenue-mart`: 13 models (8 dbt + 5 raw sources), 3
@@ -93,6 +97,39 @@ counted, not invented), and the whole project served over MCP (`list_models`: 17
 Regenerate its catalog with the full connector var set:
 `dbt docs generate --target demo --vars <all is_*_enabled> --exclude "*meta_data*"`
 (the meta models run BigQuery SQL through `run_query()` at compile time).
+
+### In a container, with podman
+
+`run_wren_podman_demo.sh` makes the same two exact assertions as the local demo, inside
+a container, with no network. podman rather than Docker: rootless, daemonless, no
+Desktop licence. The commands are CLI-compatible so `docker` works, but `Containerfile`
+is podman's native filename and podman is what this was verified against.
+
+The image is the **serving tier** — dbt plus the wren CLI — not the WrenAI application.
+There is no compose stack to bring up: the pinned submodule ships no docker assets
+because upstream is CLI-first on the 0.13.x line.
+
+Three things cost a build each to learn, all on Apple Silicon:
+
+| Symptom | Cause |
+|---|---|
+| `error: linker 'cc' not found` | `wren-core-py` publishes **x86_64-only** Linux wheels — no aarch64 manylinux build through 0.7.3 — so pip silently falls back to compiling the Rust core |
+| `qemu: uncaught target signal 11` at `wren --version` | the x86_64 wheel does not survive `--platform=linux/amd64` emulation; the image builds in ~3.5 min and dies only when run |
+| `statfs <path>: operation not permitted` | podman cannot bind-mount `~/Documents` (TCC), and its `statfs` does not resolve the `/tmp` → `/private/tmp` symlink |
+| `signal: 9, SIGKILL` against a random crate | cargo runs one rustc per core and a stock `podman machine` has 2 GiB; the compile is OOM-killed. `CARGO_BUILD_JOBS` bounds it, the preflight checks `MemTotal` |
+| `workdir "/work" does not exist on container` | podman 5.8.5, for a directory that does exist. `WORKDIR` in the image already sets it — the `--workdir` flag is redundant and removing it is the fix |
+
+So the Containerfile is a multi-stage build that compiles the core natively for the host
+and discards the Rust toolchain (slow once, cached after), and the runner stages the
+use-case with `mktemp -d` + `pwd -P` and mounts it read-only. Staging is one code path on
+every OS, and it is what makes the read-only guarantee real — the container never
+receives the working tree, so nothing it does can dirty it. The runner asserts that
+afterwards.
+
+`tests/test_wren_podman_demo.py` pins the contract without building anything: the
+image's pins may not drift from `requirements.txt`, `--no-index` keeps an unsatisfiable
+pin loud instead of silently resolving from PyPI, and an absent podman exits **3** per
+rule 7 — matching `scripts/skill_map_scan.py` where Node is absent.
 
 ## Day-to-day agent workflow
 
