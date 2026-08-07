@@ -1,0 +1,13 @@
+amount,closedate,createdate,dealname,dealstage,hs_lastmodifieddate,hs_object_id,pipeline
+137.50,2026-01-05,2026-01-05,dealname_value_1,dealstage_value_1,2026-01-05,HS_OBJ-001,pipeline_value_1
+275.00,2026-01-12,2026-01-12,dealname_value_2,dealstage_value_2,2026-01-12,HS_OBJ-002,pipeline_value_2
+412.50,2026-01-19,2026-01-19,dealname_value_3,dealstage_value_3,2026-01-19,HS_OBJ-003,pipeline_value_3
+550.00,2026-01-26,2026-01-26,dealname_value_4,dealstage_value_4,2026-01-26,HS_OBJ-004,pipeline_value_4
+687.50,2026-02-02,2026-02-02,dealname_value_5,dealstage_value_5,2026-02-02,HS_OBJ-005,pipeline_value_5
+825.00,2026-02-09,2026-02-09,dealname_value_6,dealstage_value_6,2026-02-09,HS_OBJ-006,pipeline_value_6
+962.50,2026-02-16,2026-02-16,dealname_value_7,dealstage_value_7,2026-02-16,HS_OBJ-007,pipeline_value_7
+1100.00,2026-02-23,2026-02-23,dealname_value_8,dealstage_value_8,2026-02-23,HS_OBJ-008,pipeline_value_8
+1237.50,2026-03-02,2026-03-02,dealname_value_9,dealstage_value_9,2026-03-02,HS_OBJ-009,pipeline_value_9
+1375.00,2026-03-09,2026-03-09,dealname_value_10,dealstage_value_10,2026-03-09,HS_OBJ-010,pipeline_value_10
+1512.50,2026-03-16,2026-03-16,dealname_value_11,dealstage_value_11,2026-03-16,HS_OBJ-011,pipeline_value_11
+1650.00,2026-03-23,2026-03-23,dealname_value_12,dealstage_value_12,2026-03-23,HS_OBJ-012,pipeline_value_12

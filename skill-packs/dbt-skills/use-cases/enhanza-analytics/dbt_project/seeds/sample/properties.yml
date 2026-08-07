@@ -1056,6 +1056,58 @@ seeds:
         Name1: varchar
         Name2: varchar
         Name3: varchar
+  - name: hubspot_api__companies
+    config:
+      enabled: "{{ target.name == 'demo' }}"
+      alias: companies
+      schema: hubspot_api
+      column_types:
+        createdate: varchar
+        domain: varchar
+        hs_lastmodifieddate: varchar
+        hs_object_id: varchar
+        name: varchar
+  - name: hubspot_api__contacts
+    config:
+      enabled: "{{ target.name == 'demo' }}"
+      alias: contacts
+      schema: hubspot_api
+      column_types:
+        createdate: varchar
+        email: varchar
+        firstname: varchar
+        hs_object_id: varchar
+        lastmodifieddate: varchar
+        lastname: varchar
+  - name: hubspot_api__deals
+    config:
+      enabled: "{{ target.name == 'demo' }}"
+      alias: deals
+      schema: hubspot_api
+      column_types:
+        amount: varchar
+        closedate: varchar
+        createdate: varchar
+        dealname: varchar
+        dealstage: varchar
+        hs_lastmodifieddate: varchar
+        hs_object_id: varchar
+        pipeline: varchar
+  - name: hubspot_api__tickets
+    config:
+      enabled: "{{ target.name == 'demo' }}"
+      alias: tickets
+      schema: hubspot_api
+      column_types:
+        content: varchar
+        createdate: varchar
+        hs_lastmodifieddate: varchar
+        hs_object_id: varchar
+        hs_pipeline: varchar
+        hs_pipeline_stage: varchar
+        hs_ticket_category: varchar
+        hs_ticket_priority: varchar
+        subject: varchar
   - name: public__bas_account_chart
     config:
       enabled: "{{ target.name == 'demo' }}"
@@ -1093,7 +1145,6 @@ seeds:
         Extent: varchar
         HolidayEntitling: varchar
         Hours: varchar
-        is: varchar
   - name: public__country_codes
     config:
       enabled: "{{ target.name == 'demo' }}"

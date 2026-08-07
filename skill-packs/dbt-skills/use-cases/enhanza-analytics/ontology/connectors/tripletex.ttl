@@ -23,6 +23,7 @@ tripletex:connector a conn:ERPConnector ;
 
 tripletex:Account a owl:Class ;
     rdfs:subClassOf erp:Account ;
+    rdfs:label "Tripletex Account"@en ;
     conn:conformsTo erp:Account ;
     conn:providedBy tripletex:connector ;
     conn:dbtModel "tripletex_erp_bi_dim_accounts" ;
@@ -31,6 +32,7 @@ tripletex:Account a owl:Class ;
 
 tripletex:Company a owl:Class ;
     rdfs:subClassOf erp:Organisation ;
+    rdfs:label "Tripletex Company"@en ;
     conn:conformsTo erp:Organisation ;
     conn:providedBy tripletex:connector ;
     conn:dbtModel "tripletex_erp_bi_dim_company" ;
@@ -49,6 +51,7 @@ tripletex:Company-partyName-name a conn:Mapping ;
 
 tripletex:CostCenter a owl:Class ;
     rdfs:subClassOf erp:CostCenter ;
+    rdfs:label "Tripletex Cost Center"@en ;
     conn:conformsTo erp:CostCenter ;
     conn:providedBy tripletex:connector ;
     conn:dbtModel "tripletex_erp_bi_dim_cost_centers" ;
@@ -57,6 +60,7 @@ tripletex:CostCenter a owl:Class ;
 
 tripletex:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Tripletex Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy tripletex:connector ;
     conn:dbtModel "tripletex_erp_bi_dim_customers" ;
@@ -65,6 +69,7 @@ tripletex:Customer a owl:Class ;
 
 tripletex:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "Tripletex Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy tripletex:connector ;
     conn:dbtModel "tripletex_erp_bi_dim_financial_years" ;
@@ -78,6 +83,7 @@ tripletex:FinancialYear-orgId-OrgId a conn:Mapping ;
 
 tripletex:Project a owl:Class ;
     rdfs:subClassOf erp:Project ;
+    rdfs:label "Tripletex Project"@en ;
     conn:conformsTo erp:Project ;
     conn:providedBy tripletex:connector ;
     conn:dbtModel "tripletex_erp_bi_dim_projects" ;
@@ -86,6 +92,7 @@ tripletex:Project a owl:Class ;
 
 tripletex:Supplier a owl:Class ;
     rdfs:subClassOf erp:Supplier ;
+    rdfs:label "Tripletex Supplier"@en ;
     conn:conformsTo erp:Supplier ;
     conn:providedBy tripletex:connector ;
     conn:dbtModel "tripletex_erp_bi_dim_suppliers" ;
@@ -94,11 +101,13 @@ tripletex:Supplier a owl:Class ;
 
 tripletex:VoucherSerie a owl:Class ;
     rdfs:subClassOf erp:VoucherSeries ;
+    rdfs:label "Tripletex Voucher Serie"@en ;
     conn:conformsTo erp:VoucherSeries ;
     conn:providedBy tripletex:connector .
 
 tripletex:Invoice a owl:Class ;
     rdfs:subClassOf erp:Invoice ;
+    rdfs:label "Tripletex Invoice"@en ;
     conn:conformsTo erp:Invoice ;
     conn:providedBy tripletex:connector ;
     conn:dbtModel "tripletex_erp_bi_fact_invoices" ;
@@ -107,6 +116,7 @@ tripletex:Invoice a owl:Class ;
 
 tripletex:Voucher a owl:Class ;
     rdfs:subClassOf erp:Voucher ;
+    rdfs:label "Tripletex Voucher"@en ;
     conn:conformsTo erp:Voucher ;
     conn:providedBy tripletex:connector ;
     conn:dbtModel "tripletex_erp_bi_fact_vouchers" ;

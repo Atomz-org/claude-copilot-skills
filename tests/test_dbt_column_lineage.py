@@ -438,3 +438,65 @@ def test_the_real_project_has_no_parse_failures():
     result = lineage.build_lineage(Manifest.load(str(manifest)))
 
     assert result["parse_failed"] == 0, [f["model"] for f in result["failures"]]
+
+
+# ---------------------------------------------------------------------------------------
+# Ambiguity: a binding that is one of N guesses, and the reads a projection never sees
+# ---------------------------------------------------------------------------------------
+
+
+def test_an_unqualified_column_with_several_tables_in_scope_is_marked_ambiguous():
+    """`select Amount from st, fy, e, a, ee` resolves against all five, and exactly one is
+    right. Lineage keeps every candidate — that is the honest reading — but each edge has to
+    say it is a guess, or a contract built from them asserts five facts to gain one."""
+    if lineage.sqlglot is None:
+        pytest.skip("needs sqlglot")
+    sql = ("select cast(Amount as float64) AmountPerUnit from st_table st "
+           "left join acct_table a on a.OrgId = st.OrgId")
+
+    edges, error = lineage.lineage_from_sql("m", sql, "bigquery")
+
+    assert error is None
+    amount = [e for e in edges if e.column == "AmountPerUnit"]
+    assert len(amount) == 2, "one per table in scope"
+    assert all(e.ambiguous for e in amount)
+
+
+def test_a_qualified_column_is_never_ambiguous():
+    """The discipline is qualification, not table count: `st.Amount` names its table even
+    with four others in scope."""
+    if lineage.sqlglot is None:
+        pytest.skip("needs sqlglot")
+    sql = ("select cast(st.Amount as float64) AmountPerUnit from st_table st "
+           "left join acct_table a on a.OrgId = st.OrgId")
+
+    edges, _ = lineage.lineage_from_sql("m", sql, "bigquery")
+
+    amount = [e for e in edges if e.column == "AmountPerUnit"]
+    assert len(amount) == 1 and not amount[0].ambiguous
+    assert amount[0].upstream_model == "st_table"
+
+
+def test_a_single_table_in_scope_is_not_ambiguous():
+    """Nothing to be ambiguous between — the common case must stay clean, or every contract
+    in a one-source staging model would be thrown away."""
+    if lineage.sqlglot is None:
+        pytest.skip("needs sqlglot")
+    edges, _ = lineage.lineage_from_sql("m", "select Amount from only_table", "bigquery")
+    assert edges and not any(e.ambiguous for e in edges)
+
+
+def test_qualified_reads_recover_columns_no_projection_mentions():
+    """A contract answers "what do we read", not "what fed an output column". `a.OrgId` and
+    `a.Year` appear only in a JOIN condition, so lineage never sees them and the contract
+    for `accounts` came out with one column when its own SQL reads three."""
+    if lineage.sqlglot is None:
+        pytest.skip("needs sqlglot")
+    sql = ("select st.OrgId, Date from st_table st "
+           "left join acct_table a on a.OrgId = st.OrgId and a.Year = 1")
+
+    reads = lineage.qualified_source_reads(sql, "bigquery")
+
+    assert ("acct_table", "OrgId") in reads
+    assert ("acct_table", "Year") in reads
+    assert not any(col == "Date" for _table, col in reads), "unqualified names no table"

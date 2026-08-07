@@ -14,8 +14,12 @@ this repository already derives.
     relationships.yml (dbt tests)              <- ontology/index.json
     knowledge/rules/general.md               knowledge/rules/column-contracts.md
     knowledge/sql/*.md seed pairs              <- ontology/column-memory.json
-    wren_project.yml, AGENTS.md              knowledge/caveats/adapter-drift.md
+    wren_project.yml, AGENTS.md              knowledge/rules/column-semantics.md
+                                               <- ontology/column-annotations.json
+                                             knowledge/caveats/adapter-drift.md
                                                <- column-memory drift findings
+                                             knowledge/caveats/pii.md
+                                               <- column-annotations, PII class
                                              knowledge/rules/semantic-metrics.md
                                                <- manifest metrics (MetricFlow)
                                              views/<name>/metadata.yml
@@ -228,20 +232,43 @@ def concepts_markdown(index: Dict[str, Any], slug: str) -> Optional[str]:
     return "\n".join(lines) + "\n"
 
 
-def contracts_markdown(memory: Dict[str, Any], slug: str) -> Optional[str]:
+def contracts_markdown(memory: Dict[str, Any], slug: str,
+                       index: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    """Conformed column lists per concept, with each supplier's status attached.
+
+    The supplier list comes from the adapter models the manifest holds, and a connector
+    has those before its ingestion job has ever run — so a flat list states that a
+    connector supplies a concept when it has landed no rows. That is the defect CLAUDE.md
+    records for graph edges ("naive traversal once answered 'ten connectors supply
+    Account' when five were catalogue expectations") reproduced in the file an agent reads
+    *before writing SQL*: filtering by such a supplier returns zero rows and no error.
+
+    Keyed on `ingestion`, not `status`. `status: planned` is tested to mean nothing at all
+    is known about a connector, so it never has adapter models to appear here in the first
+    place; the connector this distinction exists for is the opposite case — adapters
+    written and registered, raw dataset not yet landed.
+    """
     contracts = memory.get("contracts") or []
     if not contracts:
         return None
+    pending_connectors = {
+        str(c.get("key")) for c in ((index or {}).get("connectors") or [])
+        if c.get("ingestion") == "pending"
+    }
     lines = [GENERATED_HEADER.format(slug=slug), "", "# Column contracts", ""]
     lines += [
         "Conformed column lists per concept, derived from parsed column lineage across",
         "every connector's adapter model. When writing SQL against a conformed concept,",
         "these are the column names that exist on every supplier.", "",
+        "This file says which columns *exist*. What they *mean* — whether SUM() over one",
+        "is meaningful, what unit it carries, whether it is personal data — is in",
+        "`column-semantics.md` and `../caveats/pii.md`.", "",
     ]
     for c in sorted(contracts, key=lambda x: x.get("concept", "")):
         adapters = c.get("adapters") or {}
         supplier_note = ", ".join(
-            f"{k} ({v})" for k, v in sorted(adapters.items())
+            f"{k} ({v})" + (" [no data yet — ingestion pending]" if k in pending_connectors else "")
+            for k, v in sorted(adapters.items())
         )
         lines.append(f"## {c.get('concept')}")
         lines.append("")
@@ -258,6 +285,120 @@ def contracts_markdown(memory: Dict[str, Any], slug: str) -> Optional[str]:
             )
         lines.append("")
     return "\n".join(lines) + "\n"
+
+
+def semantics_markdown(annotations: Dict[str, Any], slug: str) -> Optional[str]:
+    """The aggregation contract: which columns may be summed, and across what.
+
+    `column-contracts.md` says which columns exist. This says what they mean, and it leads
+    with the prohibitions because they are the ones an agent cannot infer: a name gives no
+    hint that `Price` is per unit and `QuantityInStock` is a level, so both look summable
+    and both produce a plausible wrong number. Definitions follow, because a correct
+    aggregation of the wrong column is still wrong.
+    """
+    columns = annotations.get("columns") or []
+    if not columns:
+        return None
+    non_additive = [c for c in columns if c.get("additivity") == "non_additive"]
+    semi_additive = [c for c in columns if c.get("additivity") == "semi_additive"]
+    additive = [c for c in columns if c.get("additivity") == "additive"]
+    domains = [c for c in columns if c.get("domain")]
+
+    lines = [GENERATED_HEADER.format(slug=slug), "", "# Column semantics", ""]
+    lines += [
+        "What each conformed column *means*, from the ontology's annotations. Facets are",
+        "independent: a column has a role, and separately an additivity, a unit, and a PII",
+        "class.", "",
+        "## Never SUM these", "",
+    ]
+    if non_additive:
+        lines += [
+            "Non-additive. Summing one across rows produces a number with no referent —",
+            "average or ratio it instead, or sum the additive column named in its",
+            "definition.", "",
+        ]
+        for c in sorted(non_additive, key=lambda x: x["column"]):
+            lines.append(f"- **{c['column']}** ({c.get('unit') or 'no unit'}) — "
+                         f"{c.get('definition', '')}")
+    else:
+        lines.append("None annotated.")
+    lines += ["", "## Never SUM these across time", ""]
+    if semi_additive:
+        lines += [
+            "Semi-additive: a level, not a flow. It sums across every dimension except",
+            "time — two month-end balances added together is not a two-month balance.", "",
+        ]
+        for c in sorted(semi_additive, key=lambda x: x["column"]):
+            lines.append(f"- **{c['column']}** ({c.get('unit') or 'no unit'}) — "
+                         f"{c.get('definition', '')}")
+    else:
+        lines.append("None annotated.")
+    lines += ["", "## Additive measures", ""]
+    if additive:
+        lines.append(", ".join(f"`{c['column']}`"
+                               for c in sorted(additive, key=lambda x: x["column"])))
+    else:
+        lines.append("None annotated.")
+    if domains:
+        lines += ["", "## Closed domains", "",
+                  "These columns take only the values listed. A filter on any other value",
+                  "returns nothing, and that is a bug in the query, not empty data.", ""]
+        for c in sorted(domains, key=lambda x: x["column"]):
+            values = ", ".join(f"`{v}`" for v in (c["domain"].get("values") or []))
+            lines.append(f"- **{c['column']}**: {values}")
+            lines.append(f"  - source: {c['domain'].get('source', '')}")
+    lines += ["", "## Definitions", "",
+              "| Column | Role | Unit | Carried by | Means |", "|---|---|---|---|---|"]
+    for c in sorted(columns, key=lambda x: x["column"]):
+        definition = str(c.get("definition") or "").replace("|", "\\|")
+        lines.append(
+            f"| `{c['column']}` | {c.get('role', '')} | {c.get('unit') or '-'} | "
+            f"{c.get('carried_by_count', 0)} | {definition} |"
+        )
+    unannotated = annotations.get("provenance", {}).get("unannotated")
+    if unannotated:
+        lines += ["",
+                  f"{unannotated} further conformed column(s) are not annotated yet. A "
+                  f"column absent from this file has no recorded meaning — treat its "
+                  f"additivity and PII class as unknown rather than assuming defaults."]
+    return "\n".join(lines) + "\n"
+
+
+def pii_markdown(annotations: Dict[str, Any], slug: str) -> Optional[str]:
+    """Which columns carry personal data, by class, because the remedies differ.
+
+    A caveat rather than a rule: it does not tell an agent how to write SQL, it tells it
+    what must not leave the warehouse in a chart somebody shares.
+    """
+    columns = [c for c in (annotations.get("columns") or []) if c.get("pii") not in (None, "none")]
+    if not columns:
+        return None
+    remedy = {
+        "direct": "identifies a person on its own — never select it into a shared "
+                  "dashboard, an export, or a sample; hash or drop it",
+        "quasi": "re-identifies in combination with other columns — safe only aggregated, "
+                 "never row-level beside a name, a date of birth, or a postcode",
+        "indirect": "identifies through a join — check what the joined table carries "
+                    "before it reaches a consumer",
+    }
+    lines = [GENERATED_HEADER.format(slug=slug), "", "# Personal data", ""]
+    lines += [
+        "Conformed columns carrying personal data, from the ontology's annotations",
+        "(rule 17). The class decides the remedy, which is why it is recorded as a class",
+        "and not as a flag.", "",
+    ]
+    for cls in ("direct", "quasi", "indirect"):
+        rows = [c for c in columns if c.get("pii") == cls]
+        if not rows:
+            continue
+        lines += [f"## {cls.title()} identifiers", "", remedy[cls], ""]
+        for c in sorted(rows, key=lambda x: x["column"]):
+            carried = ", ".join(sorted(c.get("connectors") or [])) or "-"
+            lines.append(f"- **{c['column']}** — carried by: {carried}")
+            if c.get("definition"):
+                lines.append(f"  - {c['definition']}")
+        lines.append("")
+    return "\n".join(lines).rstrip("\n") + "\n"
 
 
 def drift_markdown(memory: Dict[str, Any], slug: str) -> Optional[str]:
@@ -1140,9 +1281,14 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
         ("knowledge/rules/ontology-concepts.md",
          concepts_markdown(_optional_json(use_case / "ontology/index.json"), slug)),
         ("knowledge/rules/column-contracts.md",
-         contracts_markdown(_optional_json(use_case / "ontology/column-memory.json"), slug)),
+         contracts_markdown(_optional_json(use_case / "ontology/column-memory.json"), slug,
+                            _optional_json(use_case / "ontology/index.json"))),
+        ("knowledge/rules/column-semantics.md",
+         semantics_markdown(_optional_json(use_case / "ontology/column-annotations.json"), slug)),
         ("knowledge/caveats/adapter-drift.md",
          drift_markdown(_optional_json(use_case / "ontology/column-memory.json"), slug)),
+        ("knowledge/caveats/pii.md",
+         pii_markdown(_optional_json(use_case / "ontology/column-annotations.json"), slug)),
         ("knowledge/rules/semantic-metrics.md", metrics_markdown(man, slug)),
     ):
         if content is None:
@@ -1406,6 +1552,206 @@ def sync(slug: str, manifest_arg: Optional[str], check: bool) -> Dict[str, Any]:
     return payload
 
 
+# ---------------------------------------------------------------------------------------
+# Back into the graph
+# ---------------------------------------------------------------------------------------
+
+
+def wren_model_names(man: Manifest) -> Dict[str, str]:
+    """wren model name -> dbt unique_id.
+
+    The importer names a model by its alias, and `_unique_wren_names` escalates the ones
+    that collide — so reproducing "alias or name" alone would mis-attribute exactly the
+    models that needed renaming. Reusing that function is what keeps the two in agreement.
+    """
+    models = {uid: n for uid, n in man.models().items()
+              if str((n.get("config") or {}).get("materialized", "")).lower() != "ephemeral"}
+    renames = _unique_wren_names(models)
+    out: Dict[str, str] = {}
+    for uid, node in models.items():
+        name = renames.get(uid) or node.get("alias") or node.get("name") or ""
+        if name:
+            out[name] = uid
+    return out
+
+
+def build_graphify_fragment(
+    use_case: Path, manifest_path: Path
+) -> Dict[str, Any]:
+    """The Wren semantic layer's *facets*, as a graphify extraction fragment.
+
+    Scope was measured, not assumed, and the first version of this claimed far too much.
+    graphify parses YAML, so it already walks the whole `wren/` tree unaided — **8 view
+    nodes, 191 model nodes, 334 knowledge nodes**, and it already derives the join edges
+    from the project's own `relationships` tests in `schema.yml`. That is the opposite of
+    the `.ttl` case the ontology fragment exists for, where graphify's detector puts the
+    file in no category at all and the topology is invisible without a merge.
+
+    So this fragment **upgrades nodes and edges that already exist**; it does not discover
+    them. What it adds is the part a YAML walk cannot read:
+
+    - `metric_type` and `metric_grain` on the view nodes. graphify has them as documents
+      labelled `revenue`; the merge makes "which metrics exist, and at what grain" a
+      property of the node rather than something to open the file for.
+    - `join_condition` and Wren's cardinality on the join edges. graphify carries
+      `dbt_fk_column` from the test; the predicate itself is what an agent writes.
+    - `measures` edges from a view to the models its statement reads. graphify has no SQL
+      parser, so the link it derives runs the other way and by name.
+
+    `file_type` is deliberately left as graphify classified it. Emitting `code` for a
+    `metadata.yml` reclassified 8 nodes the detector had right, which is a regression
+    dressed as enrichment.
+
+    Read from the committed `wren/` tree rather than from this module's in-memory
+    generation, so the fragment rebuilds in a clone with no `wren` CLI — the same split as
+    the dbt fragment being committed while the manifest is not.
+
+    Endpoints resolve through `dbt_manifest_to_graphify.node_id()`, so every edge lands on
+    a model node the dbt merge already upgraded. A relationship naming a model the manifest
+    does not have is **dropped and counted**, never merged: `build_merge` would mint a bare
+    stub node for the missing endpoint, and a stub is indistinguishable from a real model
+    to anything reading the graph afterwards.
+
+    The same ordering rule as every other fragment here: a `graphify update` after this
+    merge deletes everything it added.
+    """
+    import dbt_manifest_to_graphify as emitter
+    import _miniyaml
+
+    wren = use_case / "wren"
+    man = Manifest.load(str(manifest_path))
+
+    project_root = _paths.project_root_of(manifest_path, use_case) or use_case / "dbt_project"
+    prefixes = emitter.package_prefixes(man, project_root)
+    project_rel = emitter._rel(project_root)
+
+    by_wren_name = wren_model_names(man)
+    gid_of: Dict[str, str] = {}
+    for name, uid in by_wren_name.items():
+        node = man.nodes.get(uid) or {}
+        path = emitter.model_source_file(node, man, project_rel, prefixes)
+        gid_of[name] = emitter.node_id(path)
+
+    nodes: List[Dict[str, Any]] = []
+    edges: List[Dict[str, Any]] = []
+    dropped: List[str] = []
+    blank = {
+        "source_location": None, "source_url": None, "captured_at": None,
+        "author": None, "contributor": None,
+    }
+
+    def edge(source: str, target: str, relation: str, **extra: Any) -> None:
+        edges.append({
+            "source": source, "target": target, "relation": relation,
+            "confidence": "EXTRACTED", "confidence_score": 1.0,
+            "source_file": None, "source_location": None, "weight": 1.0, **extra,
+        })
+
+    rel_file = wren / "relationships.yml"
+    rel_rel = emitter._rel(rel_file)
+    if rel_file.exists():
+        doc = _miniyaml.load(rel_file.read_text(encoding="utf-8")) or {}
+        for relationship in doc.get("relationships") or []:
+            members = relationship.get("models") or []
+            if len(members) != 2:
+                dropped.append(f"{relationship.get('name')}: {len(members)} models")
+                continue
+            left, right = (gid_of.get(m) for m in members)
+            if not left or not right:
+                dropped.append(f"{relationship.get('name')}: endpoint not in the manifest")
+                continue
+            edge(left, right, "joins_on",
+                 source_file=rel_rel,
+                 join_type=relationship.get("join_type"),
+                 join_condition=relationship.get("condition"))
+
+    views_dir = wren / "views"
+    for metadata in sorted(views_dir.glob("*/metadata.yml")) if views_dir.exists() else []:
+        doc = _miniyaml.load(metadata.read_text(encoding="utf-8")) or {}
+        name = doc.get("name") or metadata.parent.name
+        props = doc.get("properties") or {}
+        view_rel = emitter._rel(metadata)
+        vid = emitter.node_id(view_rel, name)
+        nodes.append({
+            "id": vid,
+            "label": f"metric: {name}",
+            # Not `code`. graphify's detector classifies this metadata.yml as a document
+            # and is right; overriding it reclassified 8 nodes to add two attributes.
+            "file_type": "document",
+            "source_file": view_rel,
+            **blank,
+            "dbt_resource_type": "wren_metric_view",
+            "metric_name": name,
+            "metric_type": props.get("metric_type"),
+            "metric_grain": props.get("grain"),
+            "description": props.get("description"),
+        })
+        # Which models the metric reads, matched against the known model names rather than
+        # parsed out of the SQL: a regex for "the token after FROM" also collects CTE names
+        # and time-spine aliases, and every one of those would become an edge to a node
+        # that does not exist.
+        statement = str(doc.get("statement") or "")
+        for model_name in sorted(gid_of):
+            if re.search(rf"\b{re.escape(model_name)}\b", statement):
+                edge(vid, gid_of[model_name], "measures", source_file=view_rel)
+
+    return {"nodes": nodes, "edges": edges, "hyperedges": [],
+            "dropped": dropped, "input_tokens": 0, "output_tokens": 0}
+
+
+def _emit_fragment(args: Any) -> int:
+    """`--graphify-fragment` / `--merge-graphify`: the loop back into the code graph."""
+    import dbt_manifest_to_graphify as emitter
+
+    use_case = use_case_dir(args.use_case)
+    if use_case is None:
+        die(f"unknown use-case {args.use_case}")
+    manifest_path = Path(args.manifest) if args.manifest else _paths.default_manifest(use_case)
+    if not manifest_path or not manifest_path.exists():
+        # Unavailable is not failed (wren rule 7): a clone with no manifest still has the
+        # committed wren/ tree, but the endpoints it would edge to are unresolvable.
+        payload = {"status": "skip", "reason": "no manifest — run artifacts/refresh.sh"}
+        print(json.dumps(payload) if args.format == "json" else f"skip: {payload['reason']}")
+        return 0
+    if not (use_case / "wren" / "relationships.yml").exists():
+        payload = {"status": "skip", "reason": "no wren/ project — run the wren stage"}
+        print(json.dumps(payload) if args.format == "json" else f"skip: {payload['reason']}")
+        return 0
+
+    fragment = build_graphify_fragment(use_case, manifest_path)
+    dropped = fragment.pop("dropped", [])
+    target = (
+        Path(args.graphify_fragment) if args.graphify_fragment
+        else REPO / "graphify-out" / ".graphify_wren_semantics.json"
+    )
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(fragment, indent=2, ensure_ascii=False) + "\n",
+                      encoding="utf-8")
+
+    merge_rc = 0
+    if args.merge_graphify:
+        merge_rc = emitter.merge_into_graph(
+            target, _paths.project_root_of(manifest_path, use_case) or use_case / "dbt_project")
+
+    if args.format == "json":
+        print(json.dumps({
+            "status": "ok", "use_case": args.use_case, "fragment": str(target),
+            "nodes": len(fragment["nodes"]), "edges": len(fragment["edges"]),
+            "dropped": dropped[:20], "dropped_total": len(dropped),
+            "merged": bool(args.merge_graphify and merge_rc == 0),
+        }, ensure_ascii=False))
+    else:
+        print(f"fragment: {len(fragment['nodes'])} nodes, {len(fragment['edges'])} edges "
+              f"-> {target}")
+        # Silent truncation reads as "covered everything". A dropped relationship is a
+        # model the semantic layer knows and the manifest does not.
+        for reason in dropped[:10]:
+            print(f"  dropped  {reason}")
+        if len(dropped) > 10:
+            print(f"  ... and {len(dropped) - 10} more")
+    return merge_rc
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     p = argparse.ArgumentParser(
         description="Generate the WrenAI semantic-layer project for a use-case: "
@@ -1415,8 +1761,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--manifest", help="manifest.json (default: <project>/target/manifest.json)")
     p.add_argument("--check", action="store_true",
                    help="write nothing; report what would change")
+    p.add_argument("--graphify-fragment", metavar="PATH",
+                   help="write the joins/metric-views fragment and stop")
+    p.add_argument("--merge-graphify", action="store_true",
+                   help="merge that fragment into graphify-out/graph.json")
     p.add_argument("--format", choices=("text", "json"), default="text")
     args = p.parse_args(argv)
+
+    if args.graphify_fragment or args.merge_graphify:
+        if args.check:
+            p.error("--check does not combine with --graphify-fragment/--merge-graphify")
+        return _emit_fragment(args)
 
     payload = sync(args.use_case, args.manifest, args.check)
 

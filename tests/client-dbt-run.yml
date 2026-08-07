@@ -1,0 +1,123 @@
+name: Scheduled Client dbt Run
+
+on:
+  schedule:
+    # Example: Run daily at 00:00 UTC.
+    # For multiple clients, you would typically have a separate workflow dispatch this one
+    # for each client, or use a matrix strategy if the client list is static and small.
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      client_id:
+        description: 'Client ID (e.g., client_a, client_b). Required for manual runs.'
+        required: true
+        type: string
+      models:
+        description: 'dbt models to run (e.g., +fct_orders, staging.*). Default: state:modified+'
+        required: false
+        type: string
+        default: 'state:modified+'
+      full_refresh:
+        description: 'Perform a full refresh (true/false). Default: false'
+        required: false
+        type: boolean
+        default: false
+      target:
+        description: 'dbt target to use (e.g., production, dev). Default: production'
+        required: false
+        type: string
+        default: 'production'
+
+jobs:
+  run_dbt_for_client:
+    runs-on: ubuntu-latest
+    # Concurrency ensures that only one run for a specific client (or a unique scheduled run)
+    # is active at a time. This prevents resource contention and potential data corruption.
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.inputs.client_id || github.run_id }}
+      cancel-in-progress: true
+
+    # Permissions for GITHUB_TOKEN - scope to least privilege
+    permissions:
+      contents: read
+      # Add pull-requests: write if you intend to post comments or status updates to PRs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9' # Or your project's required Python version
+
+      - name: Install dbt dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r .github/requirements/ci.txt # Assumes dbt and its adapter are listed here
+          # If dbt is installed in a submodule, adjust the path accordingly, e.g.:
+          # pip install -r external/WrenAI/requirements.txt
+
+      - name: Configure dbt profiles.yml
+        # This step dynamically creates a profiles.yml using environment variables for credentials.
+        # This is a secure way to handle sensitive information via GitHub Secrets.
+        run: |
+          mkdir -p ~/.dbt
+          cat <<EOF > ~/.dbt/profiles.yml
+          your_project_name: # Replace with your actual dbt project name from dbt_project.yml
+            target: ${{ inputs.target }}
+            outputs:
+              production: # This output name should match your default target or inputs.target
+                type: bigquery # Replace with your database type (e.g., snowflake, postgres)
+                project: ${{ secrets.DBT_PROJECT_ID }}
+                dataset: dbt_analytics_${{ inputs.client_id }} # Dynamically sets dataset per client
+                method: service-account
+                keyfile: ${{ secrets.DBT_SERVICE_ACCOUNT_KEY }}
+                threads: 4
+                timeout_seconds: 300
+                # Add other client-specific configurations here as needed
+          EOF
+        env:
+          # These secrets must be configured in your GitHub repository settings
+          DBT_PROJECT_ID: ${{ secrets.DBT_PROJECT_ID }}
+          DBT_SERVICE_ACCOUNT_KEY: ${{ secrets.DBT_SERVICE_ACCOUNT_KEY }}
+
+      - name: Run dbt for client ${{ inputs.client_id }}
+        id: dbt_run
+        # The dbt project is assumed to be at the root of the repository.
+        # Adjust `working-directory` if your dbt project is in a subdirectory.
+        working-directory: ./dbt_project
+        run: |
+          source ../.venv/bin/activate # Activate venv from parent directory
+          DBT_COMMAND="dbt build --target ${{ inputs.target }} --vars '{\"uid\": \"${{ inputs.client_id }}\"}'"
+
+          if [[ -n "${{ inputs.models }}" ]]; then
+            DBT_COMMAND+=" --select ${{ inputs.models }}"
+          fi
+
+          if [[ "${{ inputs.full_refresh }}" == "true" ]]; then
+            DBT_COMMAND+=" --full-refresh"
+          fi
+
+          echo "Running dbt command: $DBT_COMMAND"
+          $DBT_COMMAND
+
+      - name: Analyze dbt run results
+        if: always() # This step runs even if the dbt_run step fails
+        working-directory: ./dbt_project
+        run: |
+          source ../.venv/bin/activate
+          python ../scripts/run_results_analyzer.py \
+            --run-results target/run_results.json \
+            --manifest target/manifest.json \
+            --top 10
+
+      - name: Upload dbt artifacts
+        uses: actions/upload-artifact@v4
+        if: always() # Upload artifacts even if previous steps fail
+        with:
+          name: dbt-artifacts-${{ inputs.client_id }}-${{ github.run_id }}
+          path: |
+            ./dbt_project/target/
+            ./dbt_project/logs/

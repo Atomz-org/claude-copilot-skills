@@ -4,36 +4,6 @@ table_reference:
   schema: fortnox_api_canonical
   table: v2_invoices
 columns:
-- name: AdministrationFee
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: AdministrationFeeVAT
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Balance
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: BasisTaxReduction
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Booked
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Cancelled
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: ContributionPercent
   type: TEXT
   is_calculated: false
@@ -44,37 +14,7 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: Currency
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: CurrencyRate
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: CurrencyUnit
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: DocumentNumber
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Freight
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: FreightVAT
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Gross
   type: TEXT
   is_calculated: false
   not_null: false
@@ -84,82 +24,7 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: InvoiceType
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Net
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: NotCompleted
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Reminders
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: RoundOff
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Sent
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: TaxReduction
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: TaxReductionType
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: Total
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: TotalToPay
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: TotalVAT
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VATIncluded
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VoucherNumber
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VoucherSeries
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VoucherYear
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: WarehouseReady
   type: TEXT
   is_calculated: false
   not_null: false

@@ -96,6 +96,8 @@ def _render(tmp_path, lines=None, impact=None, **kw):
         kw.get("pr_title", "feat: sample"),
         kw.get("head_ref", "feat/no-ticket-sample"),
         impact,
+        kw.get("skill_map"),
+        kw.get("changed_files"),
     )
 
 

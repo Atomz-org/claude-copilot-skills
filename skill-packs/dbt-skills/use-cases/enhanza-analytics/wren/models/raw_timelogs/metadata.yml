@@ -14,66 +14,6 @@ columns:
   is_calculated: false
   not_null: false
   properties: {}
-- name: categoryName
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: cost
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: endTimestamp
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: invoiceableTime
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: isAbsence
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: isInvoiceable
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: isWorkTime
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: pricePerHour
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: time
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: timestamp
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: user
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: userName
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 cached: false
 properties:
   dbt_layer: raw

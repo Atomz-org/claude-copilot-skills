@@ -1,0 +1,106 @@
+# WrenAI semantic layer, containerised — built and run with podman (rootless, daemonless).
+#
+# Named `Containerfile` rather than `Dockerfile` because that is podman's native
+# filename. `podman build` reads either; Docker reads only the latter, so this name
+# states which tool the file is for without breaking anyone who points docker at it
+# explicitly.
+#
+# What this image is NOT: the WrenAI *application* stack (UI, vector store, LLM
+# gateway). The pinned submodule at external/WrenAI carries no compose file — upstream
+# is CLI-first as of the 0.13.x line — and this repository's integration is the
+# semantic-layer serving tier, not the chat UI. So the image carries exactly the two
+# toolchains that tier needs and nothing else.
+#
+# The use-case is staged and bind-mounted read-only at run time, then copied to a
+# scratch path inside the container before anything writes. Nothing this image does can
+# modify the host tree, which matters because `dbt build` and `wren context build` both
+# write derived state (dev.duckdb, target/) next to the sources they read.
+#
+#
+# Why this builds the Rust core instead of installing a wheel
+# -----------------------------------------------------------
+# WrenAI's query engine is Rust, shipped as the `wren-core-py` extension module, and
+# that project publishes exactly one Linux wheel per release:
+#
+#     wren_core_py-<v>-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#
+# There is no aarch64 manylinux wheel at any version through 0.7.3. Two approaches were
+# measured on an Apple Silicon host, and only the third works:
+#
+#   1. Native arm64, no toolchain. pip falls through to building from source and fails
+#      with `error: linker 'cc' not found` — an error about a C compiler that says
+#      nothing about the actual cause, a missing wheel.
+#   2. `--platform=linux/amd64`, taking the published wheel under qemu emulation. The
+#      image builds in ~3.5 minutes and then `wren --version` dies with
+#      `qemu: uncaught target signal 11 (Segmentation fault)`. The Rust core does not
+#      survive qemu-user, so this looks like a working image right up until it runs.
+#   3. Build the extension from source for the host architecture. What this file does.
+#
+# The cost is a slow first build (the core pulls in DataFusion) and it is paid once —
+# podman caches the layer, and the builder stage is discarded so the toolchain never
+# reaches the final image.
+
+
+# ---------------------------------------------------------------------------- builder
+FROM python:3.11-slim AS builder
+
+# Rust for wren-core-py, a C toolchain for its linker, git for source deps.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential curl git pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# `--profile minimal` skips docs and clippy; nothing here needs them.
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | sh -s -- -y --profile minimal --default-toolchain stable
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Peak memory, not total, is what fails this build. cargo defaults to one rustc per core,
+# and on a stock `podman machine` (2 GiB) six concurrent rustc processes compiling
+# sqlparser at opt-level=3 get OOM-killed — surfacing as `signal: 9, SIGKILL` against a
+# random crate, which reads like a compiler bug rather than a memory limit.
+#
+# Two jobs keeps the peak inside a small VM while still using more than one core. The
+# runner checks the machine has enough memory and names `podman machine set --memory`
+# as the remedy, because bounding jobs alone cannot rescue a 2 GiB VM.
+ENV CARGO_BUILD_JOBS=2
+
+# Build wheels for the whole pinned set. Anything with a wheel for this architecture is
+# downloaded; only wren-core-py is actually compiled.
+RUN pip wheel --wheel-dir /wheels \
+        "dbt-core==1.9.9" \
+        "dbt-duckdb==1.9.4" \
+        "sqlglot>=30.14.0,<31" \
+        "wrenai[mcp]==0.13.2" \
+        "mcp<2"
+
+
+# ------------------------------------------------------------------------------ final
+FROM python:3.11-slim
+
+# dbt shells out to git for package resolution. The Rust and C toolchains stay in the
+# builder stage — the compiled wheel is all that crosses.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /wheels /wheels
+
+# Versions match requirements.txt exactly, for the reasons documented there: sqlglot
+# 30.x renamed the `from` argument and moving major versions silently returns
+# `unresolved` for every edge; wrenai 0.13.2 imports mcp.server.fastmcp, which mcp 2.0
+# removed, and its extra declares no upper bound. A container that drifts from the host
+# pins is a container that tests something else.
+#
+# `--no-index` guarantees that: if a pin were unsatisfiable from the wheels built above,
+# this fails loudly instead of quietly resolving a different version from PyPI.
+RUN pip install --no-cache-dir --no-index --find-links=/wheels \
+        "dbt-core==1.9.9" \
+        "dbt-duckdb==1.9.4" \
+        "sqlglot>=30.14.0,<31" \
+        "wrenai[mcp]==0.13.2" \
+        "mcp<2" \
+    && rm -rf /wheels
+
+WORKDIR /work
+ENTRYPOINT ["/bin/bash"]

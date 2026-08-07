@@ -3,6 +3,12 @@
 # merge-decision gate results. The same document lands in the step summary,
 # which also renders Mermaid.
 #
+# A third section projected the changed paths onto the architecture layer stack.
+# It was removed: only the highlighting varied between PRs, and most PRs lit the
+# same two layers, so it restated the Files-changed tab. $RUNNER_TEMP/changed.txt
+# is still collected and still passed as --changed — the impact subgraph and the
+# harness subgraph both read it.
+#
 # The diagram is built by mapping the PR's changed line ranges onto nodes in a
 # graphify graph rebuilt from the PR's tree, then walking one hop of cross-file
 # edges. It is therefore PR-specific — an earlier version drew the fixed gate
@@ -136,7 +142,7 @@ jobs:
       # Node is set up rather than assumed so the runner resolves `npx`; when the
       # scan is unavailable anyway the wrapper exits 3, the gate records a skip,
       # and the subgraph is simply not drawn.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 

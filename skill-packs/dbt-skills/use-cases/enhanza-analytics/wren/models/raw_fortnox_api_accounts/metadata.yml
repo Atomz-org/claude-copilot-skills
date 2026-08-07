@@ -4,47 +4,12 @@ table_reference:
   schema: fortnox_api_canonical
   table: accounts
 columns:
-- name: Amount
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: BalanceBroughtForward
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Date
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Description
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
 - name: Number
   type: TEXT
   is_calculated: false
   not_null: false
   properties: {}
 - name: OrgId
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: SalaryCode
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: Total
-  type: TEXT
-  is_calculated: false
-  not_null: false
-  properties: {}
-- name: VAT
   type: TEXT
   is_calculated: false
   not_null: false

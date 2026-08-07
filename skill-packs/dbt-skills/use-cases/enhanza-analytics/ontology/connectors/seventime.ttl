@@ -23,6 +23,7 @@ seventime:connector a conn:ERPConnector ;
 
 seventime:Article a owl:Class ;
     rdfs:subClassOf erp:Article ;
+    rdfs:label "SevenTime Article"@en ;
     conn:conformsTo erp:Article ;
     conn:providedBy seventime:connector ;
     conn:dbtModel "seventime_erp_bi_dim_articles" ;
@@ -41,6 +42,7 @@ seventime:Article-resourceNumber-articleNumber a conn:Mapping ;
 
 seventime:Company a owl:Class ;
     rdfs:subClassOf erp:Organisation ;
+    rdfs:label "SevenTime Company"@en ;
     conn:conformsTo erp:Organisation ;
     conn:providedBy seventime:connector ;
     conn:dbtModel "seventime_erp_bi_dim_company" ;
@@ -59,6 +61,7 @@ seventime:Company-partyName-companyName a conn:Mapping ;
 
 seventime:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "SevenTime Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy seventime:connector ;
     conn:dbtModel "seventime_erp_bi_dim_customers" ;
@@ -67,6 +70,7 @@ seventime:Customer a owl:Class ;
 
 seventime:FinancialYear a owl:Class ;
     rdfs:subClassOf erp:FinancialYear ;
+    rdfs:label "SevenTime Financial Year"@en ;
     conn:conformsTo erp:FinancialYear ;
     conn:providedBy seventime:connector ;
     conn:dbtModel "seventime_erp_bi_dim_financial_years" ;
@@ -80,6 +84,7 @@ seventime:FinancialYear-orgId-OrgId a conn:Mapping ;
 
 seventime:InvoiceRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "SevenTime Invoice Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy seventime:connector ;
     conn:dbtModel "seventime_erp_bi_fact_invoice_rows" ;
@@ -98,6 +103,7 @@ seventime:InvoiceRow-orgId-OrgId a conn:Mapping ;
 
 seventime:Invoice a owl:Class ;
     rdfs:subClassOf erp:Invoice ;
+    rdfs:label "SevenTime Invoice"@en ;
     conn:conformsTo erp:Invoice ;
     conn:providedBy seventime:connector ;
     conn:dbtModel "seventime_erp_bi_fact_invoices" ;
@@ -106,6 +112,7 @@ seventime:Invoice a owl:Class ;
 
 seventime:Offer a owl:Class ;
     rdfs:subClassOf erp:Offer ;
+    rdfs:label "SevenTime Offer"@en ;
     conn:conformsTo erp:Offer ;
     conn:providedBy seventime:connector ;
     conn:dbtModel "seventime_erp_bi_fact_offers" ;
@@ -114,6 +121,7 @@ seventime:Offer a owl:Class ;
 
 seventime:TimeReportingRegistration a owl:Class ;
     rdfs:subClassOf erp:TimeReportingRegistration ;
+    rdfs:label "SevenTime Time Reporting Registration"@en ;
     conn:conformsTo erp:TimeReportingRegistration ;
     conn:providedBy seventime:connector ;
     conn:dbtModel "seventime_erp_bi_fact_time_reporting_registrations" ;
@@ -122,5 +130,6 @@ seventime:TimeReportingRegistration a owl:Class ;
 
 seventime:WorkOrder a owl:Class ;
     rdfs:subClassOf erp:Document ;
+    rdfs:label "SevenTime Work Order"@en ;
     conn:conformsTo erp:Document ;
     conn:providedBy seventime:connector .

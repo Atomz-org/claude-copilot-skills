@@ -223,6 +223,10 @@ class OntologyConfig:
     def connector_ns(self, key: str) -> str:
         return f"{self.namespace}connector/{key.replace('_', '-')}#"
 
+    @property
+    def col(self) -> str:
+        return f"{self.namespace}column#"
+
 
 def read_config(ontology: Path, slug: str) -> OntologyConfig:
     path = ontology / "ontology.yml"
@@ -251,6 +255,15 @@ class ConnectorSpec:
     name: str
     kind: str
     status: str
+    # Whether the raw dataset this connector reads actually exists yet. A *different*
+    # fact from `status`, and conflating them is a defect: `status` says the connector is
+    # wired into the dbt registry (`test_catalogue_and_registry_agree` pins it to
+    # `global_configs.sql`), and `planned` is tested to mean nothing is known at all — no
+    # source tables, no models, no mappings. A connector whose adapters are written and
+    # whose ingestion job has not run is in neither state, and forcing it into `planned`
+    # asserts its models do not exist while they sit in the manifest. `landed` is the
+    # default because it is the state every connector here was in before one was not.
+    ingestion: str = "landed"
     region: Optional[str] = None
     expected_concepts: List[str] = field(default_factory=list)
     # filled from the project, never from the catalogue
@@ -276,6 +289,7 @@ def read_catalogue(path: Path) -> List[ConnectorSpec]:
                 name=row.get("name", row["key"]),
                 kind=row.get("kind", "erp"),
                 status=row.get("status", "planned"),
+                ingestion=str(row.get("ingestion", "landed")),
                 region=row.get("region"),
                 expected_concepts=list(row.get("expected_concepts", []) or []),
             )
@@ -474,6 +488,16 @@ def _local(concept: str) -> str:
     return name[:-1] if name.endswith("s") and not name.endswith("ss") else name
 
 
+def _words(local: str) -> str:
+    """`InvoiceRow` -> `Invoice Row`; the class name spelled the way core/*.ttl spells it.
+
+    A rendering of the identifier, not a lookup of the core class's label. Reading
+    `core/*.ttl` would need an RDF parser, and rdflib is optional here — so the generator
+    would acquire a dependency to restate a fact it already holds.
+    """
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", local)
+
+
 def _esc(text: str) -> str:
     return text.replace("\\", "\\\\").replace('"', '\\"')
 
@@ -530,9 +554,14 @@ def render_connector(spec: ConnectorSpec, cfg: Optional[OntologyConfig] = None) 
         if not core:
             unclassified.append(concept)
             continue
-        cls = f"{spec.key}:{_local(concept)}"
+        local = _local(concept)
+        cls = f"{spec.key}:{local}"
         lines.append(f"{cls} a owl:Class ;")
         lines.append(f"    rdfs:subClassOf {core} ;")
+        # Qualified by the connector, because these classes collide by design: ten
+        # connectors each declare an `Account`, and ten classes labelled "Account" tell a
+        # reader — or a BI picker — less than no label at all.
+        lines.append(f'    rdfs:label "{_esc(spec.name)} {_words(local)}"@en ;')
         lines.append(f"    conn:conformsTo {core} ;")
         lines.append(f"    conn:providedBy {spec.key}:connector ;")
         model = spec.models.get(concept)
@@ -621,6 +650,107 @@ def render_topology(specs: List[ConnectorSpec], cfg: Optional[OntologyConfig] = 
     return "\n".join(lines)
 
 
+def read_annotations(ontology: Path) -> List[Dict[str, Any]]:
+    """The column annotations, if a use-case has any.
+
+    Absent is the normal state for a fresh use-case, and it is not an error: the ontology
+    still describes every concept and connector. What it loses is the layer that says what
+    a column *means*, which is the layer BI and an MCP client need most.
+    """
+    path = ontology / "column-annotations.json"
+    if not path.exists():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    return list(data.get("columns") or [])
+
+
+def render_column_semantics(annotations: List[Dict[str, Any]], cfg: OntologyConfig) -> str:
+    """What each conformed column means, as assertions rather than as a table.
+
+    `concept-coverage.ttl` says which connectors supply a concept; this says what the
+    columns of those concepts *are* — the facet set an agent needs before it writes
+    `SUM(...)` over one of them. Unlike the rest of the ontology it is not derived from the
+    manifest: additivity and PII are decisions, so the source is the hand-authored
+    `annotations.yml` and this file is its RDF projection.
+
+    The vocabulary is declared inline rather than assumed, because a consumer that meets
+    `conn:additivity` for the first time has no other place to look it up.
+    """
+    lines: List[str] = [
+        f"@prefix col:  <{cfg.col}> .",
+        f"@prefix conn: <{cfg.conn}> .",
+        f"@prefix topo: <{cfg.topo}> .",
+        "@prefix owl:  <http://www.w3.org/2002/07/owl#> .",
+        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
+        "@prefix skos: <http://www.w3.org/2004/02/skos/core#> .",
+        "@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .",
+        "",
+        "# GENERATED by scripts/ontology_generator.py from ontology/annotations.yml — do not edit.",
+        "",
+        f"<{cfg.col}> a owl:Ontology ;",
+        '    rdfs:comment """What each conformed column means. A column carries independent',
+        "facets — role, additivity, PII class, unit, closed domain — because it is several",
+        "things at once and no single hierarchy can hold all of them. Additivity and PII are",
+        "decisions recorded by a human, not derivations: a measure summed at the wrong grain",
+        'double-counts while every test passes."""@en .',
+        "",
+        "conn:ConformedColumn a owl:Class ;",
+        '    rdfs:label "Conformed column"@en ;',
+        '    rdfs:comment "A column whose meaning is the same in every connector that '
+        'supplies it."@en .',
+        "",
+    ]
+    for prop, label, comment in (
+        ("role", "role", "identifier, measure, dimension, timestamp, flag, or text"),
+        ("additivity", "additivity",
+         "additive, semi-additive, or non-additive — whether SUM() over this column is "
+         "meaningful, and across which dimensions"),
+        ("pii", "PII class",
+         "none, direct, quasi, or indirect — the remedies differ, so the class is recorded "
+         "rather than a boolean"),
+        ("unit", "unit", "what the number counts: currency, quantity, percent, duration"),
+        ("domainValue", "closed-domain value", "one permitted value of a closed domain"),
+        ("domainSource", "closed-domain source",
+         "where the permitted values were read from; an enum nobody can cite is invented"),
+        ("carriedBy", "carried by", "how many connectors supply this column"),
+    ):
+        kind = "owl:DatatypeProperty"
+        lines.append(f"conn:{prop} a {kind} ;")
+        lines.append(f'    rdfs:label "{label}"@en ;')
+        lines.append(f'    rdfs:comment "{_esc(comment)}"@en ;')
+        lines.append("    rdfs:domain conn:ConformedColumn .")
+        lines.append("")
+
+    for row in sorted(annotations, key=lambda r: str(r.get("column", ""))):
+        name = str(row.get("column", ""))
+        if not name:
+            continue
+        lines.append(f"col:{name} a conn:ConformedColumn ;")
+        lines.append(f'    rdfs:label "{_esc(name)}"@en ;')
+        lines.append(f'    conn:role "{_esc(str(row.get("role") or ""))}" ;')
+        if row.get("additivity"):
+            lines.append(f'    conn:additivity "{_esc(str(row["additivity"]))}" ;')
+        if row.get("unit"):
+            lines.append(f'    conn:unit "{_esc(str(row["unit"]))}" ;')
+        lines.append(f'    conn:pii "{_esc(str(row.get("pii") or "none"))}" ;')
+        for concept in sorted(row.get("concepts") or []):
+            lines.append(f"    conn:realises topo:{_local(concept)} ;")
+        domain = row.get("domain") or None
+        if domain:
+            for value in domain.get("values") or []:
+                lines.append(f'    conn:domainValue "{_esc(str(value))}" ;')
+            lines.append(f'    conn:domainSource "{_esc(str(domain.get("source") or ""))}" ;')
+        lines.append(
+            f'    conn:carriedBy "{int(row.get("carried_by_count") or 0)}"^^xsd:integer ;')
+        lines.append(f'    skos:definition "{_esc(str(row.get("definition") or ""))}"@en ;')
+        lines[-1] = lines[-1].rstrip(" ;") + " ."
+        lines.append("")
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------------------
 # The machine-facing projection
 # ---------------------------------------------------------------------------------------
@@ -639,11 +769,15 @@ MCP_TOOLS: Tuple[Tuple[str, str, str], ...] = (
      "Which source column realises a conformed property, per connector, and how."),
     ("coverage_gaps", "gaps",
      "Concepts with a single supplier, and planned concepts nothing supplies yet."),
+    ("describe_column", "column_semantics",
+     "What one conformed column means: its role, whether SUM() over it is meaningful, "
+     "its PII class, its unit, and its closed domain if it has one."),
 )
 
 
 def render_index(specs: List[ConnectorSpec], cfg: OntologyConfig, slug: str,
-                 lineage: Dict[str, Any]) -> Dict[str, Any]:
+                 lineage: Dict[str, Any],
+                 annotations: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
     """A flat JSON projection of the same facts the Turtle asserts.
 
     The Turtle is normative; this is a read-optimised view of it. Both come out of one pass
@@ -654,7 +788,7 @@ def render_index(specs: List[ConnectorSpec], cfg: OntologyConfig, slug: str,
     and every one of the competency questions is a lookup in a list of like-shaped records.
     Serving those from Turtle means shipping an RDF parser and a query engine to answer what
     a dict answers directly — and `rdflib` is optional in this repository, so an MCP server
-    built on it would fail to start wherever the parser is absent. Four uniform record lists
+    built on it would fail to start wherever the parser is absent. Five uniform record lists
     also serialise straight to TOON, which is what carries them into a model's context.
 
     Deliberately *not* JSON-LD. A `@context` that covered these keys honestly would have to
@@ -674,6 +808,7 @@ def render_index(specs: List[ConnectorSpec], cfg: OntologyConfig, slug: str,
             "label": spec.name,
             "kind": spec.kind,
             "status": spec.status,
+            "ingestion": spec.ingestion,
             "region": spec.region,
             "enable_var": f"is_{spec.key}_enabled",
             "default_currency": spec.default_currency,
@@ -724,6 +859,25 @@ def render_index(specs: List[ConnectorSpec], cfg: OntologyConfig, slug: str,
             "supplier_count": len(entry["implemented_by"]),
         })
 
+    # The same facets the column-semantics Turtle asserts, flattened into the record list an
+    # MCP tool answers from. `id` is the IRI, so a client that wants the RDF can follow it.
+    semantics = [
+        {
+            "column": row.get("column"),
+            "id": f"{cfg.col}{row.get('column')}",
+            "role": row.get("role"),
+            "additivity": row.get("additivity"),
+            "unit": row.get("unit"),
+            "pii": row.get("pii"),
+            "definition": row.get("definition"),
+            "domain": row.get("domain"),
+            "concepts": list(row.get("concepts") or []),
+            "connectors": list(row.get("connectors") or []),
+            "carried_by_count": row.get("carried_by_count"),
+        }
+        for row in sorted(annotations or [], key=lambda r: str(r.get("column", "")))
+    ]
+
     # A concept one connector supplies is not conformed yet — a number drawn from it cannot
     # be compared across tenants, which is the whole reason the conformed layer exists. The
     # index states that rather than leaving every consumer to recompute it.
@@ -751,6 +905,7 @@ def render_index(specs: List[ConnectorSpec], cfg: OntologyConfig, slug: str,
             "models_parsed": lineage.get("models_parsed"),
             "models_macro_only": lineage.get("models_macro_only"),
             "models_parse_failed": lineage.get("models_parse_failed"),
+            "annotated_columns": len(semantics),
         },
         "mcp_tools": [
             {"tool": tool, "backed_by": key, "answers": doc} for tool, key, doc in MCP_TOOLS
@@ -760,7 +915,139 @@ def render_index(specs: List[ConnectorSpec], cfg: OntologyConfig, slug: str,
         "models": models,
         "mappings": mappings,
         "gaps": gaps,
+        "column_semantics": semantics,
     }
+
+
+# ---------------------------------------------------------------------------------------
+# Graphify fragment
+# ---------------------------------------------------------------------------------------
+
+
+def build_graphify_fragment(
+    specs: List[ConnectorSpec],
+    cfg: OntologyConfig,
+    use_case: Path,
+    manifest_path: Optional[Path],
+) -> Dict[str, Any]:
+    """The connector/concept topology as a graphify extraction fragment.
+
+    Built from the same in-memory specs that render the Turtle and `index.json`, never by
+    re-parsing the Turtle: rdflib is optional in this repository, and a parser dependency
+    to restate facts the generator already holds is the trade `index.json` exists to
+    avoid. graphify itself never sees these facts either way — its detector puts `.ttl`
+    in no category at all, so without this fragment the topology is invisible to the
+    graph the Graphify-first rule makes agents orient with.
+
+    Node ids reuse `dbt_manifest_to_graphify.node_id()`, so `implements` edges land on
+    the model nodes the dbt merge already upgraded — and the same ordering rule follows:
+    a `graphify update` after this merge deletes everything it added.
+
+    Deliberately absent: edges to the column-contract nodes `dbt_column_memory.py`
+    merges. An edge whose endpoint is missing would make `build_merge` mint a bare stub
+    node silently, and both node families already edge the same adapter models, so the
+    contract sits two hops away without asserting anything new.
+    """
+    import dbt_manifest_to_graphify as emitter
+
+    ontology = use_case / "ontology"
+    topo_rel = emitter._rel(ontology / "topology" / "concept-coverage.ttl")
+
+    nodes: List[Dict[str, Any]] = []
+    edges: List[Dict[str, Any]] = []
+    blank = {
+        "source_location": None, "source_url": None, "captured_at": None,
+        "author": None, "contributor": None,
+    }
+
+    def edge(source: str, target: str, relation: str) -> None:
+        edges.append({
+            "source": source,
+            "target": target,
+            "relation": relation,
+            "confidence": "EXTRACTED",
+            "confidence_score": 1.0,
+            "source_file": None,
+            "source_location": None,
+            "weight": 1.0,
+        })
+
+    # Model name -> the graph's own node id, through the dbt emitter's path map. Resolved
+    # from the manifest rather than from a naming rule so a packages/ model cannot land on
+    # a root-model id — the exact drift `package_prefixes` exists to prevent.
+    model_gid: Dict[str, str] = {}
+    if manifest_path and manifest_path.exists():
+        man = Manifest.load(str(manifest_path))
+        project_root = use_case / "dbt_project"
+        for parent in manifest_path.resolve().parents:
+            if (parent / "dbt_project.yml").exists():
+                project_root = parent
+                break
+        prefixes = emitter.package_prefixes(man, project_root)
+        project_rel = emitter._rel(project_root)
+        for mnode in man.nodes.values():
+            if mnode.get("resource_type") != "model":
+                continue
+            path = emitter.model_source_file(mnode, man, project_rel, prefixes)
+            model_gid[mnode.get("name", "")] = emitter.node_id(path)
+
+    # One node per conformed concept, keyed to the topology file that asserts it —
+    # the entity form node_id() gives symbols that live inside a shared file.
+    by_concept: Dict[str, Dict[str, List[str]]] = {}
+    for spec in specs:
+        bucket = "implemented_by" if spec.status == "implemented" else "planned_by"
+        for concept in (spec.concepts if spec.status == "implemented" else spec.expected_concepts):
+            by_concept.setdefault(concept, {"implemented_by": [], "planned_by": []})
+            by_concept[concept][bucket].append(spec.key)
+
+    concept_ids: Dict[str, str] = {}
+    for concept in sorted(by_concept):
+        entry = by_concept[concept]
+        cid = emitter.node_id(topo_rel, concept)
+        concept_ids[concept] = cid
+        nodes.append({
+            "id": cid,
+            "label": f"concept: {concept}",
+            "file_type": "code",
+            "source_file": topo_rel,
+            **blank,
+            "dbt_resource_type": "ontology_concept",
+            "ontology_id": f"{cfg.topo}{_local(concept)}",
+            "ontology_class": cfg.concept_class.get(concept),
+            "implemented_by": sorted(entry["implemented_by"]),
+            "planned_by": sorted(entry["planned_by"]),
+            "supplier_count": len(entry["implemented_by"]),
+        })
+
+    for spec in sorted(specs, key=lambda s: s.key):
+        ttl_rel = emitter._rel(ontology / "connectors" / f"{spec.key}.ttl")
+        gid = emitter.node_id(ttl_rel)
+        nodes.append({
+            "id": gid,
+            "label": f"connector: {spec.name}",
+            "file_type": "code",
+            "source_file": ttl_rel,
+            **blank,
+            "dbt_resource_type": "ontology_connector",
+            "ontology_id": f"{cfg.connector_ns(spec.key)}connector",
+            "connector_key": spec.key,
+            "connector_kind": spec.kind,
+            "connector_status": spec.status,
+            "enable_var": f"is_{spec.key}_enabled",
+        })
+        # The relation carries the epistemic status, because a flat edge loses it: naive
+        # traversal already conflated planned with implemented once ("10 connectors
+        # supply Account" — 5 of them were expectations from the catalogue).
+        relation = "supplies" if spec.status == "implemented" else "plans_to_supply"
+        for concept in (spec.concepts if spec.status == "implemented" else spec.expected_concepts):
+            edge(gid, concept_ids[concept], relation)
+            model = spec.models.get(concept)
+            target = model_gid.get(model) if model else None
+            if target:
+                edge(target, concept_ids[concept], "implements")
+
+    return {"nodes": nodes, "edges": edges, "hyperedges": [],
+            "input_tokens": 0, "output_tokens": 0}
 
 
 # ---------------------------------------------------------------------------------------
@@ -786,12 +1073,21 @@ def generate(
     manifest_path = Path(manifest) if manifest else (project / "target/manifest.json")
     problems, lineage_stats = enrich_from_project(specs, project, manifest_path, cfg)
 
+    # Read, never derived: additivity and PII are decisions, so this stage projects the
+    # annotations a human wrote and cannot regenerate them. A use-case with none still gets
+    # a complete ontology, minus the layer that says what its columns mean.
+    annotations = read_annotations(ontology)
+
     files: Dict[Path, str] = {}
     for spec in specs:
         files[ontology / "connectors" / f"{spec.key}.ttl"] = render_connector(spec, cfg)
     files[ontology / "topology" / "concept-coverage.ttl"] = render_topology(specs, cfg)
+    if annotations:
+        files[ontology / "topology" / "column-semantics.ttl"] = render_column_semantics(
+            annotations, cfg)
     files[ontology / "index.json"] = (
-        json.dumps(render_index(specs, cfg, slug, lineage_stats), indent=2, ensure_ascii=False)
+        json.dumps(render_index(specs, cfg, slug, lineage_stats, annotations),
+                   indent=2, ensure_ascii=False)
         + "\n"
     )
 
@@ -810,6 +1106,11 @@ def generate(
         "problems": problems,
         "unclassified": unclassified,
         "lineage": lineage_stats,
+        # The resolved inputs, so a caller building the graphify fragment resolves them
+        # zero more times (two resolutions of one path is one more than stays in
+        # agreement — same rule as the use_case parameter above).
+        "use_case": use_case,
+        "manifest_path": manifest_path,
     }
 
 
@@ -820,11 +1121,85 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--check", action="store_true", help="exit 1 if regeneration would change anything")
     p.add_argument("--force", action="store_true", help="rewrite even when column mappings would be lost")
     p.add_argument("--format", choices=("text", "json"), default="text")
+    p.add_argument("--graphify-fragment", metavar="PATH",
+                   help="write the connector/concept topology as a graphify extraction "
+                        "fragment to PATH and exit — the ontology files are not rewritten")
+    p.add_argument("--merge-graphify", action="store_true",
+                   help="write the fragment and merge it into graphify-out/graph.json "
+                        "(never run graphify update after)")
     args = p.parse_args(argv)
 
     result = generate(args.use_case, args.manifest)
     specs: List[ConnectorSpec] = result["specs"]
     files: Dict[Path, str] = result["files"]
+
+    # A separate mode, not a side effect of generation: the `ontology` stage owns the
+    # files, this mode owns the graph. Running it must not rewrite Turtle, and therefore
+    # cannot hit the sqlglot downgrade refusal — the fragment carries models, not column
+    # mappings, so it is the same with or without the parser.
+    if args.graphify_fragment or args.merge_graphify:
+        if args.check:
+            p.error("--check does not combine with --graphify-fragment/--merge-graphify")
+        import dbt_manifest_to_graphify as emitter
+
+        # An implemented connector's topology built without the manifest would assert
+        # `implemented_by` on every concept while carrying zero `implements` edges —
+        # incomplete carried through as silence, the bug class the column-memory rules
+        # name. The dbt emitter makes --manifest required for the same input; a
+        # planned-only catalogue has nothing to implement and passes freely.
+        manifest_path = result["manifest_path"]
+        if any(s.status == "implemented" for s in specs) and not (
+            manifest_path and manifest_path.exists()
+        ):
+            die(
+                f"no manifest at {manifest_path} — run artifacts/refresh.sh. An "
+                f"implemented connector's topology without it asserts implemented_by "
+                f"with no implements edges."
+            )
+
+        fragment = build_graphify_fragment(
+            specs, result["config"], result["use_case"], manifest_path
+        )
+        target = (
+            Path(args.graphify_fragment)
+            if args.graphify_fragment
+            else REPO / "graphify-out" / ".graphify_ontology_topology.json"
+        )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(
+            json.dumps(fragment, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+
+        # The same contract as every other mode: problems are printed and fail the run.
+        # Here they also refuse the merge — a detector that mutates the graph while
+        # staying quiet is the one people read, and a fragment encoding the very drift
+        # the problems describe must not become the graph agents orient with.
+        if result["problems"]:
+            for problem in result["problems"]:
+                print(f"  {problem}", file=sys.stderr)
+            print(
+                f"REFUSED to merge: {len(result['problems'])} problem(s) above. The "
+                f"fragment is at {target}; fix the drift and re-run.",
+                file=sys.stderr,
+            )
+        merge_rc = 0
+        if args.merge_graphify and not result["problems"]:
+            merge_rc = emitter.merge_into_graph(target, result["use_case"] / "dbt_project")
+        if args.format == "json":
+            print(json.dumps({
+                "use_case": args.use_case,
+                "fragment": str(target),
+                "nodes": len(fragment["nodes"]),
+                "edges": len(fragment["edges"]),
+                "merged": bool(
+                    args.merge_graphify and merge_rc == 0 and not result["problems"]
+                ),
+                "problems": result["problems"],
+            }, ensure_ascii=False))
+        else:
+            print(f"fragment: {len(fragment['nodes'])} nodes, "
+                  f"{len(fragment['edges'])} edges -> {target}")
+        return merge_rc or (1 if result["problems"] else 0)
 
     changed: List[str] = []
     downgrades: List[str] = []

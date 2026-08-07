@@ -851,3 +851,76 @@ def test_the_hook_rebuilds_the_store_when_a_model_actually_changes(tmp_path: Pat
 
 # ---------------------------------------------------------------------------------------
 # 9. source column contracts
+
+
+# ---------------------------------------------------------------------------------------
+# 10. pruning a contract the resolver no longer stands behind
+# ---------------------------------------------------------------------------------------
+
+BANNER_BLOCK = """version: 2
+sources:
+  - name: fortnox_api
+    tables:
+      - name: accounts
+        # Columns this project consumes from this table. Derived by scripts/dbt_column_memory.py
+        # from the staging SQL that reads them, so this is a statement of what we depend on and
+        # not an inventory of what the API returns. Removing one upstream is a breaking change.
+        columns:
+          - name: Number
+          - name: OrgId
+          - name: VAT
+      - name: handwritten
+        description: somebody typed this
+        columns:
+          - name: Keep
+          - name: AlsoKeep
+"""
+
+
+def test_pruning_removes_only_what_the_resolver_dropped():
+    import dbt_column_memory as ccm
+
+    updated, removed = ccm.prune_source_columns(
+        BANNER_BLOCK, {("fortnox_api", "accounts"): ["Number", "OrgId"]})
+
+    assert removed == {"accounts": ["VAT"]}
+    assert "- name: Number" in updated and "- name: OrgId" in updated
+    assert "- name: VAT" not in updated
+
+
+def test_pruning_never_touches_a_hand_authored_block():
+    """The banner is the ownership marker, exactly as `source: dbt_metric` is in wren. A
+    generator that rewrites whatever it finds is not a generator, it is a hazard."""
+    import dbt_column_memory as ccm
+
+    updated, removed = ccm.prune_source_columns(
+        BANNER_BLOCK, {("fortnox_api", "handwritten"): ["Keep"]})
+
+    assert removed == {} and updated == BANNER_BLOCK
+    assert "- name: AlsoKeep" in updated
+
+
+def test_pruning_never_adds_a_column():
+    """A column that should be there and is not is a different defect, and one the alignment
+    gate reports. Adding it here would hide the drift the contract exists to expose."""
+    import dbt_column_memory as ccm
+
+    updated, _ = ccm.prune_source_columns(
+        BANNER_BLOCK, {("fortnox_api", "accounts"): ["Number", "OrgId", "VAT", "Invented"]})
+
+    assert "Invented" not in updated
+
+
+def test_pruning_every_column_withdraws_the_block_rather_than_emptying_it():
+    """`columns:` with nothing under it is not a thinner contract, it is a broken one: dbt
+    refuses to parse the project. Found by running the prune for real — one table in
+    seventime lost all twelve columns and the whole parse failed."""
+    import dbt_column_memory as ccm
+
+    updated, removed = ccm.prune_source_columns(
+        BANNER_BLOCK, {("fortnox_api", "accounts"): []})
+
+    assert removed["accounts"] == ["Number", "OrgId", "VAT"]
+    assert "columns:" not in updated.split("- name: handwritten")[0].split("accounts")[1]
+    assert "Derived by scripts/dbt_column_memory.py" not in updated
+    assert "- name: Keep" in updated, "the hand-authored block is untouched"

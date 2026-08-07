@@ -1,0 +1,110 @@
+name: logic_bi_fact_orders
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_orders
+columns:
+- name: Comments
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 'Salary: Comments to the salary transactions if any'
+- name: ContributionValue
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Sold value minus estimated price of the item. The item row value
+      is used
+- name: Country
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Customer and Supplier's address, country
+- name: Currency
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Original transaction currency used in Fortnox
+- name: CurrencyRate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Exchange rate from Fortnox, used to convert all values to SEK
+- name: CustomerId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifyer of a customer in your workspace
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: InvoiceReference
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: 0 if no invoice is created for this order yet
+- name: Labels
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Invoice label, only one label per document is supported. For more
+      details, use fortnox_bi.dim_labels
+- name: Net
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Sales value of delivered items excluding VAT
+- name: OrderDate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Order creation date, from `created_at`.
+- name: OrderId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Shopify order id. Primary key.
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: StockPointId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique warehouse (stock point) identifyier for youe workspace
+    dbt_tests: not_null
+    dbt_test_status: unknown
+cached: false
+properties:
+  description: The conformed `fact_orders`, one row per row of the union across its
+    suppliers (fortnox, shopify, upsales, visma_economic). Carries the 13 column(s)
+    whose meaning is recorded; 34 conformed column(s) are not annotated yet and 2
+    direct-PII column(s) are withheld (rule 17).
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_orders
+  dbt_resource_type: model

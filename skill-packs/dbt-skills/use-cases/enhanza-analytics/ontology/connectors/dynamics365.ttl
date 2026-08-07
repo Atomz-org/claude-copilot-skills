@@ -22,42 +22,49 @@ dynamics365:connector a conn:CRMConnector ;
 
 dynamics365:Customer a owl:Class ;
     rdfs:subClassOf erp:Customer ;
+    rdfs:label "Microsoft Dynamics 365 Customer"@en ;
     conn:conformsTo erp:Customer ;
     conn:providedBy dynamics365:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 dynamics365:Employee a owl:Class ;
     rdfs:subClassOf erp:Employee ;
+    rdfs:label "Microsoft Dynamics 365 Employee"@en ;
     conn:conformsTo erp:Employee ;
     conn:providedBy dynamics365:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 dynamics365:Article a owl:Class ;
     rdfs:subClassOf erp:Article ;
+    rdfs:label "Microsoft Dynamics 365 Article"@en ;
     conn:conformsTo erp:Article ;
     conn:providedBy dynamics365:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 dynamics365:Opportunitie a owl:Class ;
     rdfs:subClassOf crm:Opportunity ;
+    rdfs:label "Microsoft Dynamics 365 Opportunitie"@en ;
     conn:conformsTo crm:Opportunity ;
     conn:providedBy dynamics365:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 dynamics365:Activitie a owl:Class ;
     rdfs:subClassOf crm:Activity ;
+    rdfs:label "Microsoft Dynamics 365 Activitie"@en ;
     conn:conformsTo crm:Activity ;
     conn:providedBy dynamics365:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 dynamics365:Order a owl:Class ;
     rdfs:subClassOf erp:Order ;
+    rdfs:label "Microsoft Dynamics 365 Order"@en ;
     conn:conformsTo erp:Order ;
     conn:providedBy dynamics365:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .
 
 dynamics365:OrderRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
+    rdfs:label "Microsoft Dynamics 365 Order Row"@en ;
     conn:conformsTo erp:LineItem ;
     conn:providedBy dynamics365:connector ;
     rdfs:comment "[NEEDS INPUT] source table unknown"@en .

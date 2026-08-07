@@ -32,15 +32,15 @@
     "sqlglot": "30.14.0",
     "dialect": "bigquery",
     "freshness": {
-      "digest": "d93efa8942c2a3b5e7aceaf84cc654f391cb6adb6dad4b29ed207775a2e36572",
-      "models": 359,
-      "fresh": 359,
+      "digest": "b0083ff988c0c2b24a3b6bf188d21a151c8c7dc946cdc4123b5506c81b7cca57",
+      "models": 396,
+      "fresh": 396,
       "changed": 0,
       "missing": 0,
       "untracked_sql": 0
     },
-    "models_parsed": 225,
-    "models_macro_only": 134,
+    "models_parsed": 254,
+    "models_macro_only": 142,
     "models_parse_failed": 0,
     "models_no_parser": 0,
     "stale_models": [],
@@ -414,6 +414,7 @@
       "core_class": "erp:Organisation",
       "suppliers": [
         "fortnox",
+        "hubspot",
         "seventime",
         "tripletex",
         "upsales",
@@ -422,13 +423,14 @@
       ],
       "adapters": {
         "fortnox": "fortnox_erp_bi_dim_company",
+        "hubspot": "hubspot_erp_bi_dim_company",
         "seventime": "seventime_erp_bi_dim_company",
         "tripletex": "tripletex_erp_bi_dim_company",
         "upsales": "upsales_erp_bi_dim_company",
         "visma_eaccounting": "visma_eaccounting_erp_bi_dim_company",
         "visma_economic": "visma_economic_erp_bi_dim_company"
       },
-      "supplier_count": 6,
+      "supplier_count": 7,
       "column_count": 3,
       "conformed": [
         "OrgId",
@@ -444,6 +446,7 @@
           "property": "erp:orgId",
           "carried_by": [
             "fortnox",
+            "hubspot",
             "seventime",
             "tripletex",
             "upsales",
@@ -458,6 +461,7 @@
           "property": "erp:partyName",
           "carried_by": [
             "fortnox",
+            "hubspot",
             "seventime",
             "tripletex",
             "upsales",
@@ -472,6 +476,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "seventime",
             "tripletex",
             "upsales",
@@ -559,13 +564,15 @@
       "core_class": "erp:Customer",
       "suppliers": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
       "adapters": {
         "fortnox": "fortnox_erp_bi_dim_customers",
+        "hubspot": "hubspot_erp_bi_dim_customers",
         "shopify": "shopify_erp_bi_dim_customers"
       },
-      "supplier_count": 2,
+      "supplier_count": 3,
       "column_count": 44,
       "conformed": [
         "CustomerId",
@@ -615,6 +622,7 @@
       ],
       "partial_for": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
       "columns": [
@@ -623,6 +631,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -633,6 +642,7 @@
           "property": "erp:partyNumber",
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -643,6 +653,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -653,6 +664,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -663,6 +675,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -673,6 +686,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -683,6 +697,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -693,6 +708,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -703,6 +719,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -713,6 +730,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -723,6 +741,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -733,6 +752,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -743,6 +763,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -753,6 +774,7 @@
           "property": "erp:isActive",
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -763,6 +785,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -773,6 +796,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -783,6 +807,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -793,6 +818,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -803,6 +829,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -813,6 +840,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -823,6 +851,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -833,6 +862,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -843,6 +873,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -853,6 +884,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -863,6 +895,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -873,6 +906,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -883,6 +917,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -893,6 +928,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -903,6 +939,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -913,6 +950,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -923,6 +961,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -933,6 +972,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -943,6 +983,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -953,6 +994,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -963,6 +1005,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -973,6 +1016,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -983,6 +1027,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -993,6 +1038,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -1003,6 +1049,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -1013,6 +1060,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -1023,6 +1071,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -1033,6 +1082,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -1043,6 +1093,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -1053,6 +1104,7 @@
           "property": null,
           "carried_by": [
             "fortnox",
+            "hubspot",
             "shopify"
           ],
           "missing_from": [],
@@ -7274,6 +7326,33 @@
     },
     {
       "concept": "dim_company",
+      "connector": "hubspot",
+      "column": "City",
+      "source_model": "hubspot_api__account_details",
+      "source_column": "City",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_company",
+      "connector": "hubspot",
+      "column": "OrgId",
+      "source_model": "hubspot_api__account_details",
+      "source_column": "OrgId",
+      "transform": "derived",
+      "hops": 2
+    },
+    {
+      "concept": "dim_company",
+      "connector": "hubspot",
+      "column": "OrgName",
+      "source_model": "hubspot_api__account_details",
+      "source_column": "PortalName",
+      "transform": "renamed",
+      "hops": 2
+    },
+    {
+      "concept": "dim_company",
       "connector": "seventime",
       "column": "City",
       "source_model": "seventime_api__companyinformation",
@@ -7864,6 +7943,114 @@
       "source_model": "fortnox_api__customers",
       "source_column": "Active",
       "transform": "renamed",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "Address",
+      "source_model": "hubspot_api__companies",
+      "source_column": "Address",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "City",
+      "source_model": "hubspot_api__companies",
+      "source_column": "City",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "Country",
+      "source_model": "hubspot_api__companies",
+      "source_column": "Country",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "CustomerId",
+      "source_model": "hubspot_api__companies",
+      "source_column": "CustomerId",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "CustomerNumber",
+      "source_model": "hubspot_api__companies",
+      "source_column": "CustomerNumber",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "Name",
+      "source_model": "hubspot_api__companies",
+      "source_column": "Name",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "OurReference",
+      "source_model": "hubspot_api__companies",
+      "source_column": "OurReference",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "Phone",
+      "source_model": "hubspot_api__companies",
+      "source_column": "Phone",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "Type",
+      "source_model": "hubspot_api__companies",
+      "source_column": "Type",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "Website",
+      "source_model": "hubspot_api__companies",
+      "source_column": "Website",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "ZipCode",
+      "source_model": "hubspot_api__companies",
+      "source_column": "ZipCode",
+      "transform": "direct",
+      "hops": 2
+    },
+    {
+      "concept": "dim_customers",
+      "connector": "hubspot",
+      "column": "isActive",
+      "source_model": "hubspot_api__companies",
+      "source_column": "isActive",
+      "transform": "direct",
       "hops": 2
     },
     {

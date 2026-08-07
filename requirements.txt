@@ -18,12 +18,12 @@
 # `from_`; a resolver reading only the old key returns `unresolved` for every edge
 # without erroring, which is the failure mode tests/test_dbt_column_lineage.py
 # exists to catch. Moving major versions means re-running that suite first.
-sqlglot>=30,<31
+sqlglot>=30.14.0,<31
 
 # JSON accelerator for reading dbt artifacts (scripts/_manifest.py). manifest.json
 # is ~3 MB and is parsed by most analyzers; absence is the normal case and costs
 # only time.
-orjson>=3.9
+orjson>=3.11.9
 
 # WrenAI semantic layer CLI (scripts/wren_context_sync.py and the `wren` stage of
 # scripts/use_case_sync.py). Source is pinned as a submodule at external/WrenAI;
@@ -42,16 +42,16 @@ mcp<2
 
 # The suite itself. CI installs this separately; listed here so one command gives
 # a working development environment.
-pytest>=8
+pytest>=9.1.1
 
 # Parallel test execution. The suite is subprocess-bound — nearly every test shells
 # out to a script in scripts/ — so it ran 97s at 70% CPU on a 10-core machine.
 # With this installed it runs in 34s; without it, serially, and nothing fails.
 # `_pytest_parallel.py` (named from pytest.ini's addopts) turns it on only when the
 # import succeeds, so this stays a genuine accelerator rather than a hard dependency.
-pytest-xdist>=3
+pytest-xdist>=3.8.0
 
 # Parses the generated Turtle in tests/test_ontology_generator.py to assert the
 # .ttl and index.json projections agree. Test-only: nothing in scripts/ imports it,
 # and the generator is deliberately written not to need a parser at runtime.
-rdflib>=7
+rdflib>=7.6.0

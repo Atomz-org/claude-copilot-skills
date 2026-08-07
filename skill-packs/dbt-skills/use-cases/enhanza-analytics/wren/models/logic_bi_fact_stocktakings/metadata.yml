@@ -1,0 +1,73 @@
+name: logic_bi_fact_stocktakings
+table_reference:
+  catalog: enhanza_sample
+  schema: logic_bi_demo
+  table: fact_stocktakings
+columns:
+- name: ArticleId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique Article identifier used as a primary key
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: CostCenterId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_cost_centers
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: DataSource
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Which connector supplied the row.
+- name: Date
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Transaction date, i.e. 2024-03-25
+- name: Name
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties:
+    description: Full customer/supplier name and number
+- name: OrgId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique identifier of your organisation that can be found in the Enhanza
+      app
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: ProjectId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Foreign key to dim_projects
+    dbt_tests: not_null
+    dbt_test_status: unknown
+- name: StockPointId
+  type: TEXT
+  is_calculated: false
+  not_null: true
+  properties:
+    description: Unique warehouse (stock point) identifyier for youe workspace
+    dbt_tests: not_null
+    dbt_test_status: unknown
+cached: false
+properties:
+  description: The conformed `fact_stocktakings`, one row per row of the union across
+    its suppliers (fortnox). Carries the 7 column(s) whose meaning is recorded; 6
+    conformed column(s) are not annotated yet and none is withheld.
+  dbt_layer: model
+  dbt_unique_id: model.enhanza_erp_bi.logic_bi_fact_stocktakings
+  dbt_resource_type: model
