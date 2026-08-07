@@ -245,12 +245,78 @@ This command:
 Use:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills
 ```
 
 This layers shared GitHub skills first, then overlays the selected domain pack.
 
-## 8. Portability checks
+## 8. OpenMetadata discovery tier
+
+OpenMetadata is the human-facing catalog over this repository's dbt use-cases. The
+architecture, the measurements, and what each sibling upstream repository contributed
+are in [OPENMETADATA_INTEGRATION.md](OPENMETADATA_INTEGRATION.md); this section is the
+operating surface.
+
+**It is a push, and only a push.** Git is the source of truth; nothing reads the server
+and writes back here. A description edited in the OpenMetadata UI is not merged into
+the repository, and where the two disagree the artifact is right and the push is stale.
+
+### The two phases
+
+```bash
+# emit — offline, deterministic, part of every sync; writes <use-case>/openmetadata/
+python3 scripts/use_case_sync.py --use-case <slug> --stage openmetadata
+
+# the gate — the bundle is committed, so this is a byte comparison
+python3 scripts/use_case_sync.py --all --stage openmetadata --check
+
+# push — data egress; never automatic, never under --check
+python3 scripts/openmetadata_sync.py --use-case <slug> --push --dry-run   # count first
+python3 scripts/openmetadata_sync.py --use-case <slug> --push             # then confirm
+```
+
+The mechanical layer — tables, descriptions, dbt tests, model-level lineage — is
+upstream's dbt connector, not this bridge. Run it first, from the generated config:
+
+```bash
+pip install 'openmetadata-ingestion[dbt]==1.13.3.0'   # must match the server version
+metadata ingest -c skill-packs/dbt-skills/use-cases/<slug>/openmetadata/ingestion/dbt.yaml
+```
+
+### One hand-authored input
+
+`<use-case>/openmetadata.yml`. Everything under `<use-case>/openmetadata/` is generated
+from it plus the ontology artifacts. Its one required key is `service`, naming the
+OpenMetadata Database Service the warehouse is registered under — a fact about the
+server that no dbt artifact holds, so it is declared rather than derived, and a
+use-case without one skips. `OPENMETADATA_DB_SERVICE` overrides it per deployment.
+
+### Environment
+
+| Variable | Used by |
+| --- | --- |
+| `OPENMETADATA_SERVER_URL` | `--push`, the generated `ingestion/dbt.yaml`, the MCP registration |
+| `OPENMETADATA_AUTH_TOKEN` | the same three |
+| `OPENMETADATA_DB_SERVICE` | overrides `service:` in `openmetadata.yml` |
+
+Environment only. No generator, config file, or MCP registration writes a token to
+disk, and `tests/test_openmetadata_sync.py` asserts it over every generated file.
+
+### Accessing the UI
+
+`skill-packs/openmetadata-skills/deploy/README.md` runs upstream's own compose at the
+pinned release (server `1.13.3-release`) under podman; the UI is `http://localhost:8585`
+and the API `http://localhost:8585/api`. Create the Database Service under **exactly**
+the name in `openmetadata.yml` before pushing — otherwise every FQN in the bundle
+resolves to nothing.
+
+For agents: `/query-catalog`, the `openmetadata-catalog` skill, and the per-use-case
+MCP registration in `<use-case>/openmetadata/knowledge/mcp.md`. The skill's first
+instruction is to answer from the artifacts where the artifacts hold the answer —
+meaning, additivity, PII class, and raw-source lineage all live in `ontology/` and need
+no server at all.
+
+## 9. Portability checks
 
 Use:
 

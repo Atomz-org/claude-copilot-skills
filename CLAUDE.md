@@ -372,21 +372,28 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 | `alignment` | the convention-drift verdict | a dbt project |
 | `wren` | `wren/` — the WrenAI semantic-layer project | manifest, catalog.json, wrenai CLI |
 | `lightdash` | Lightdash `meta` tags in the project's schema YAML + `lightdash/knowledge/` | manifest; annotations and @lightdash/cli optional |
+| `openmetadata` | `openmetadata/` — the catalog bundle: glossary, tags, deep column lineage | `openmetadata.yml`; manifest; openmetadata-ingestion optional |
 
-The two serving stages are sequenced last on purpose: each projects the artifacts the
+The three serving stages are sequenced last on purpose: each projects the artifacts the
 earlier stages just refreshed (`index.json`, `column-memory.json`,
-`column-annotations.json`), so running either earlier would enrich from the previous
-generation. `lightdash` follows `wren` and, uniquely, writes back into the dbt project
-itself (marker-owned `meta:` blocks) — after it reports changed meta, re-run
+`column-annotations.json`), so running any of them earlier would enrich from the
+previous generation. `lightdash` follows `wren` and, uniquely, writes back into the dbt
+project itself (marker-owned `meta:` blocks) — after it reports changed meta, re-run
 `artifacts/refresh.sh` so the manifest carries what Lightdash will actually read.
+`openmetadata` is last because it projects the widest set of all three, and it is the
+only one whose output is meant to leave the machine — so it **emits and pushes
+nothing**. The bundle is committed, `--check` compares it byte for byte, and egress is
+a separate confirmed act (`openmetadata_sync.py --push`).
 
 `columns → annotations → ontology` is one chain, and it is the whole path from raw data to
 a served semantic layer:
 
 ```
-raw layer ─ taxonomy ─┐
-                      ├─ columns ─ annotations ─ ontology ─ wren ─ BI / MCP
-dbt models ───────────┘             (decisions)   (RDF+index)  (knowledge)
+                                                          ┌─ wren ────────── governed SQL / MCP
+raw layer ─ taxonomy ─┐                                   │
+                      ├─ columns ─ annotations ─ ontology ─┼─ lightdash ───── explores / AI analyst
+dbt models ───────────┘             (decisions)  (RDF+index)│
+                                                          └─ openmetadata ── catalog / discovery
 ```
 
 Each link reads the one before it. Annotations are keyed on the conformed columns
@@ -844,6 +851,72 @@ Three rules decide whether a change here is correct:
 per-deploy confirmation (`lightdash-rules.md` rule 9), and credentials live in
 environment variables only, never on disk.
 
+## OpenMetadata discovery tier
+
+OpenMetadata is the human-facing catalog over the same dbt use-cases Wren and Lightdash
+serve: search, glossary, governance tags, and clickable lineage. Source is **eight
+shallow submodules** under `external/` (`OpenMetadata` at tag `1.13.3-release`,
+`OpenMetadataStandards`, and six reference repos), runtime is
+`openmetadata-ingestion[dbt]==1.13.3.0` (optional, must match the server), agent surface
+is `skill-packs/openmetadata-skills/` (skill `openmetadata-catalog`, command
+`/query-catalog`), bridge is `scripts/openmetadata_sync.py`, run as the `openmetadata`
+stage. Full architecture: `docs/OPENMETADATA_INTEGRATION.md`; binding rules:
+`.claude/rules/openmetadata-rules.md`.
+
+**Two of the eight are load-bearing and the rest are references.**
+`external/OpenMetadata` supplies the JSON schemas that `check_against_pinned_spec`
+validates every emitted payload against; `external/OpenMetadataStandards` supplies the
+OWL ontology that `check_vocabulary` validates every `om:` term in the RDF alignment
+against. Both gates exist because writing the alignment from documentation got two
+things wrong that no test could catch: the ontology namespace (`.../schema/`, actually
+`.../ontology/`) and the asset-to-term relation (`om:glossaryTerm`, which does not
+exist — `dcat:theme` is the real one, since `om:Table rdfs:subClassOf dcat:Dataset`).
+`scripts/sync_submodules.py --check` holds the pins together: it fails if
+`SERVER_PIN` in the bridge and the `external/OpenMetadata` tag disagree. Its cost is
+stated rather than discovered — **OpenMetadata is 403 MB even shallow**.
+
+Four rules decide whether a change here is correct:
+
+- **The pipeline is one way and the catalog never wins.** Git is the source of truth;
+  nothing reads the server and writes into this repository. Where they disagree the
+  artifact is right and the push is stale. Which also means nothing may be clobbered:
+  the generated `ingestion/dbt.yaml` sets `dbtUpdateDescriptions: false`, and the push
+  writes a column description only where the server has none.
+- **The bridge never creates a Table.** `openmetadata-ingestion[dbt]` owns tables,
+  descriptions, dbt tests, and model-level lineage — configured by the generated
+  `openmetadata/ingestion/dbt.yaml`, run as `metadata ingest -c`. This bridge owns only
+  what dbt cannot say: deep column lineage, the glossary, facet tags, dlt provenance.
+  A missing table means the connector has not run; pushing the bundle will not create
+  it. Same disjoint-generators rule as Wren.
+- **Emit is gated; push is never implicit.** The bundle is a committed artifact, so
+  `--check` compares bytes and the stage is a real CI gate. `--push` is a separate
+  command needing both env vars and explicit per-push confirmation (rule 16), and there
+  is no delete path at all — a generator that can delete a catalog entity from a bad
+  artifact read is one regression away from emptying a production catalog.
+- **Nothing is invented, and the refusals are counted.** The service name is declared in
+  `openmetadata.yml` or the stage skips (an FQN is `service.database.schema.table`, and
+  nothing in the manifest knows `service`). `PII.None` is never written because
+  OpenMetadata defines no such tag. An unannotated column gets no tag, and
+  `knowledge/catalog.md` states the uncovered count — absence of a
+  `ColumnAdditivity` tag means nobody decided, not `Additive`.
+
+Measured on enhanza-analytics: **1024 bindings → 844 column-level lineage edges across
+110 table pairs** (93 columns with several upstream sources, expressed as one
+`ColumnLineage` with several `fromColumns`), 147 glossary terms, 22 tags in 5
+classifications, 436 column tag applications, **5 binding endpoints dropped** as SQL
+parse artifacts (`NULL` alone accounts for 66 bindings), 183 conformed columns left
+untagged and said so. A `--push --dry-run` plans 399 requests.
+
+The dlt load columns (`_dlt_id`, `_dlt_load_id`, `_dlt_parent_id`, `_dlt_list_idx`,
+`_dlt_root_id`, and the three `_dlt_*` bookkeeping tables) get definitions, provenance
+tags, an `identifier` role so no BI tool offers `SUM()`, and glossary terms. The
+definitions are a closed documented set and always emit; the *applications* need
+evidence, from the dbt project's declared columns (free, committed) or from a dlt
+DuckDB warehouse behind `--with-warehouse` — off by default, because a warehouse is
+gitignored and rebuildable, and a committed bundle that read one would differ between a
+machine that had built it and a fresh clone. Measured against this repo's own
+`agent-costs-demo` pipeline: 3 system tables tagged, 4 dlt columns across 2 data tables.
+
 ## Harness cartography — skill-map
 
 `graphify` maps the **code**; `skill-map` maps the **harness** — skills, commands,
@@ -948,7 +1021,7 @@ Exceptions maintained directly at repository level, because no pack owns them:
 After changing any pack asset:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills && git status --short
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills && git status --short
 ```
 
 Unexpected modifications in that output mean an edit landed in a generated path.

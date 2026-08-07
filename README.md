@@ -85,6 +85,7 @@ filtered MetricFlow definition, not the raw measure.
 | VS Code & GitHub Codespaces | `.devcontainer/devcontainer.json` |
 | Any MCP client | per-use-case server config at `wren/mcp.json`, emitted by the `wren` sync stage |
 | Lightdash | explore joins, PII hiding, and AI hints generated into dbt `meta` tags by the `lightdash` sync stage; local instance via `skill-packs/lightdash-skills/deploy/` |
+| OpenMetadata | glossary, governance tags, and column-level lineage emitted by the `openmetadata` sync stage into a committed bundle, pushed one way on explicit confirmation |
 
 ## How it fits together
 
@@ -93,8 +94,9 @@ self-contained architecture page — data flow, the derivation stages and what e
 refuses to do, and the deployment surface. [docs/index.mdx](docs/index.mdx) is the same
 positioning as a docs-site overview. The shape in one sentence: raw sources are declared
 under contracts, ontology artifacts (taxonomy, column contracts, annotations, RDF index)
-are derived from the dbt project's own `manifest.json`, and the WrenAI tier serves that
-meaning to BI tools and agents as governed SQL.
+are derived from the dbt project's own `manifest.json`, and three serving tiers project
+that meaning outward — WrenAI as governed SQL, Lightdash as explores and an AI analyst,
+and OpenMetadata as a searchable catalog with column-level lineage.
 
 ## Verifying a change
 
@@ -114,7 +116,7 @@ directly in one of them works until the next activation silently reverts it. Edi
 pack, then re-run:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills
 ```
 
 ## Slash commands
@@ -142,7 +144,8 @@ why both copies must exist: it resolves inside the pack *and* after activation.
 
 Current packs: `skill-packs/github-skills/` (shared base), `skill-packs/dbt-skills/`
 (analytics domain), `skill-packs/wren-skills/` (semantic serving),
-`skill-packs/lightdash-skills/` (BI serving). Each carries a
+`skill-packs/lightdash-skills/` (BI serving), `skill-packs/openmetadata-skills/`
+(catalog and discovery). Each carries a
 `.claude-plugin/plugin.json` manifest, validated by
 `scripts/marketplace_portability_check.sh`. The canonical dbt entrypoint is `dbt-skill`
 (`skill-packs/dbt-skills/.claude/skills/dbt-skill/SKILL.md`); `senior-analytics-engineer`
@@ -158,6 +161,9 @@ is its compatibility alias.
 
 - [docs/WAY_OF_WORKING.md](docs/WAY_OF_WORKING.md) — the delivery contract
 - [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) — RTK, Graphify, TOON, and AgentMemory
+- [docs/OPENMETADATA_INTEGRATION.md](docs/OPENMETADATA_INTEGRATION.md) — the discovery
+  tier: what the catalog bundle carries, what it refuses to publish, and how to push it
+- [docs/OPENMETADATA_INTEGRATION.md](docs/OPENMETADATA_INTEGRATION.md) — the discovery tier
   (the wrappers live in `src/ai-core/`)
 - [docs/BRANCHING_STRATEGY.md](docs/BRANCHING_STRATEGY.md) — trunk, stacks, and conflict
   prevention
