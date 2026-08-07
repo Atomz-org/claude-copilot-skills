@@ -472,6 +472,29 @@ def _quote(text: str) -> str:
     return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def measure_id(model: "SemanticModel", measure: Dict[str, Any]) -> str:
+    """`<semantic model>__<measure>` — the name MetricFlow sees.
+
+    A measure is named for its conformed column, and a conformed column is by definition
+    shared: measured on this project, **7 of 17 columns annotated `measure` belong to more
+    than one concept** — `ContributionValue` to five, `Net` to four, both additive. Each of
+    those concepts that earns a semantic model would declare a measure `contribution_value`
+    and a metric of the same name, and MetricFlow requires both to be unique across the
+    whole manifest. It does not happen today only because those concepts still owe the
+    `unique` test this generator refuses to invent.
+
+    Qualified, not deduplicated. `fact_orders.ContributionValue` and
+    `fact_invoices.ContributionValue` are the same *column definition* and two different
+    *numbers*; keeping one and pointing the metric at it publishes a value for orders under
+    a name a consumer will read as invoices — rule 42's failure mode, arrived at by tidying.
+
+    Qualified unconditionally, too. Qualifying only on collision makes a published metric's
+    name depend on which *other* concepts exist, so adding one renames a metric that BI is
+    already bound to.
+    """
+    return f"{model.name}__{measure['name']}"
+
+
 def render(slug: str, models: List[SemanticModel]) -> str:
     """The semantic models and their metrics, as one generated dbt YAML file."""
     out: List[str] = [
@@ -534,7 +557,7 @@ def render(slug: str, models: List[SemanticModel]) -> str:
             out.append("")
             out.append("    measures:")
             for measure in model.measures:
-                out.append(f"      - name: {measure['name']}")
+                out.append(f"      - name: {measure_id(model, measure)}")
                 out.append(f"        agg: {measure['agg']}")
                 out.append(f"        expr: {measure['expr']}")
                 out.append(f"        description: {_quote(measure['description'])}")
@@ -544,12 +567,15 @@ def render(slug: str, models: List[SemanticModel]) -> str:
     if metrics:
         out.append("metrics:")
         for model, measure in metrics:
-            out.append(f"  - name: {measure['name']}")
+            # The label stays the humanised *column* name — two concepts measuring
+            # `ContributionValue` genuinely share a label, and it is the name that has to
+            # tell them apart.
+            out.append(f"  - name: {measure_id(model, measure)}")
             out.append(f"    label: {_quote(measure['name'].replace('_', ' ').title())}")
             out.append(f"    description: {_quote(measure['description'])}")
             out.append("    type: simple")
             out.append("    type_params:")
-            out.append(f"      measure: {measure['name']}")
+            out.append(f"      measure: {measure_id(model, measure)}")
             out.append("")
     return "\n".join(out).rstrip() + "\n"
 

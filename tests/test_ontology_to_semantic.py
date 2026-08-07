@@ -316,3 +316,81 @@ def test_a_metric_exists_only_where_a_measure_does() -> None:
     measures = {m["name"] for s in doc["semantic_models"] for m in s.get("measures") or []}
     for metric in doc.get("metrics") or []:
         assert metric["type_params"]["measure"] in measures
+
+
+# ---------------------------------------------------------------------------------------
+# One name, one number
+# ---------------------------------------------------------------------------------------
+#
+# A measure is named for its conformed column, and a conformed column is by definition
+# shared: 7 of this project's 17 `measure` columns belong to more than one concept —
+# `ContributionValue` to five, `Net` to four, both additive. MetricFlow requires measure
+# and metric names unique across the whole manifest, so every one of those is a duplicate
+# waiting on the `unique` test its concept still owes.
+
+
+def _two_models_sharing_a_measure():
+    shared = {"role": "measure", "additivity": "additive", "unit": "currency",
+              "definition": "Contribution value."}
+    out = []
+    for concept, key in (("fact_orders", "OrderId"), ("fact_invoices", "InvoiceId")):
+        refusals: list = []
+        model = ots.derive_model(
+            concept, f"{ots.LOGIC_PREFIX}{concept}", key,
+            [key, "ContributionValue", "OrderDate"],
+            {key: {"column": key, "role": "identifier"},
+             "ContributionValue": {"column": "ContributionValue", **shared},
+             "OrderDate": {"column": "OrderDate", "role": "timestamp", "unit": "date"}},
+            {}, refusals)
+        out.append(model)
+    assert all(m.agg_time_dimension for m in out), "fixture must emit measures"
+    return out
+
+
+def test_two_concepts_measuring_the_same_column_do_not_collide() -> None:
+    """Qualified, not deduplicated. `fact_orders.ContributionValue` and
+    `fact_invoices.ContributionValue` are one column definition and two different numbers;
+    keeping one publishes the orders value under a name a consumer reads as invoices."""
+    yaml = pytest.importorskip("yaml")
+    doc = yaml.safe_load(ots.render("toy", _two_models_sharing_a_measure()))
+
+    names = [m["name"] for s in doc["semantic_models"] for m in s.get("measures") or []]
+    assert len(names) == len(set(names)), f"duplicate measure name: {names}"
+    metrics = [m["name"] for m in doc.get("metrics") or []]
+    assert len(metrics) == len(set(metrics)), f"duplicate metric name: {metrics}"
+
+    # Both survive — neither concept was dropped to make the names fit.
+    assert sum("contribution_value" in n for n in metrics) == 2
+    assert {"fact_orders__contribution_value",
+            "fact_invoices__contribution_value"} <= set(metrics)
+
+
+def test_every_metric_still_resolves_to_its_own_models_measure() -> None:
+    """Uniqueness is worthless if the reference broke getting there."""
+    yaml = pytest.importorskip("yaml")
+    doc = yaml.safe_load(ots.render("toy", _two_models_sharing_a_measure()))
+    by_model = {s["name"]: {m["name"] for m in s.get("measures") or []}
+                for s in doc["semantic_models"]}
+    for metric in doc["metrics"]:
+        owner = metric["name"].split("__", 1)[0]
+        assert metric["type_params"]["measure"] in by_model[owner], metric["name"]
+
+
+def test_a_metric_name_does_not_depend_on_which_other_concepts_exist() -> None:
+    """Qualifying only on collision would rename a published metric when an unrelated
+    concept earns its `unique` test — and BI is bound to the name."""
+    yaml = pytest.importorskip("yaml")
+    both = _two_models_sharing_a_measure()
+    alone = yaml.safe_load(ots.render("toy", both[:1]))
+    together = yaml.safe_load(ots.render("toy", both))
+    assert [m["name"] for m in alone["metrics"]] == [
+        m["name"] for m in together["metrics"] if m["name"].startswith("fact_orders__")]
+
+
+def test_the_label_stays_the_human_name_of_the_column() -> None:
+    """The name disambiguates; the label is what a person reads, and two concepts
+    measuring `ContributionValue` genuinely share one."""
+    yaml = pytest.importorskip("yaml")
+    doc = yaml.safe_load(ots.render("toy", _two_models_sharing_a_measure()))
+    labels = {m["label"] for m in doc["metrics"] if "contribution_value" in m["name"]}
+    assert labels == {"Contribution Value"}
