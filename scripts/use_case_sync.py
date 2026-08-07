@@ -409,7 +409,8 @@ def stage_graphify_update(check: bool) -> Stage:
     return Stage("graphify", OK, rebuilt)
 
 
-def stage_graph(use_case: Path, manifest: Optional[Path], check: bool) -> Stage:
+def stage_graph(use_case: Path, manifest: Optional[Path], check: bool,
+                with_column_lineage: bool = False) -> Stage:
     if not manifest:
         return Stage("graph", SKIP, "no manifest — run artifacts/refresh.sh")
     if not (REPO / "graphify-out" / "graph.json").exists():
@@ -420,6 +421,10 @@ def stage_graph(use_case: Path, manifest: Optional[Path], check: bool) -> Stage:
         "--manifest", str(manifest), "--format", "json",
         "--dry-run" if check else "--merge",
     ]
+    # Opt-in, because it roughly doubles the graph (3058 -> 6382 nodes here): worth it to
+    # trace a column across layers, useless if you only ever ask about models.
+    if with_column_lineage:
+        cmd.append("--with-columns")
     proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=600)
     if proc.returncode != 0:
         tail = (proc.stderr or proc.stdout).strip().splitlines()
@@ -683,7 +688,8 @@ def scaffold(slug: str, pack: str, check: bool) -> List[Stage]:
 
 
 def sync(slug: str, check: bool, manifest_arg: Optional[str],
-         only: Optional[List[str]] = None, graphify_update: bool = False) -> Dict[str, Any]:
+         only: Optional[List[str]] = None, graphify_update: bool = False,
+         with_column_lineage: bool = False) -> Dict[str, Any]:
     use_case = use_case_dir(slug)
     if not use_case:
         return {
@@ -731,7 +737,7 @@ def sync(slug: str, check: bool, manifest_arg: Optional[str],
     # Order-critical: the rebuild drops every .sql node, so the merge has to follow it.
     if graphify_update:
         run("graphify", lambda: stage_graphify_update(check))
-    run("graph", lambda: stage_graph(use_case, manifest, check))
+    run("graph", lambda: stage_graph(use_case, manifest, check, with_column_lineage))
     run("alignment", lambda: stage_alignment(use_case, slug, manifest))
     # Last on purpose: it projects the artifacts the earlier stages just refreshed
     # (index.json, column-memory.json) into the Wren project, so running it earlier
@@ -768,6 +774,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--graphify-update", action="store_true",
                    help="rebuild the code graph before merging dbt lineage into it; never "
                         "run `graphify update` after a merge, it drops every .sql node")
+    p.add_argument("--with-column-lineage", action="store_true",
+                   help="merge column-level lineage too; roughly doubles the graph")
     p.add_argument("--check", action="store_true",
                    help="write nothing; exit 1 if anything would change or has failed")
     p.add_argument("--format", choices=("text", "json"), default="text")
@@ -789,10 +797,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         results = []
         for i, slug in enumerate(all_use_cases()):
             results.append(sync(slug, args.check, None, args.stage,
-                                graphify_update=args.graphify_update and i == 0))
+                                graphify_update=args.graphify_update and i == 0,
+                                with_column_lineage=args.with_column_lineage))
     elif args.use_case:
         results = [sync(args.use_case, args.check, args.manifest, args.stage,
-                        graphify_update=args.graphify_update)]
+                        graphify_update=args.graphify_update,
+                        with_column_lineage=args.with_column_lineage)]
     else:
         p.error("one of --use-case, --all, or --init is required")
 

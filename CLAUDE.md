@@ -356,6 +356,7 @@ ones. `scripts/use_case_sync.py` runs every stage in dependency order and report
 ```bash
 python3 scripts/use_case_sync.py --init <slug>                       # scaffold a use-case
 python3 scripts/use_case_sync.py --use-case <slug> --graphify-update # regenerate everything
+python3 scripts/use_case_sync.py --use-case <slug> --with-column-lineage  # + column edges
 python3 scripts/use_case_sync.py --all --check                       # the CI gate form
 ```
 
