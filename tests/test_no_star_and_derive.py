@@ -26,6 +26,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
 
+import expand_star_models as esm  # noqa: E402
 import no_star_check as ns  # noqa: E402
 import source_schema_derive as ssd  # noqa: E402
 
@@ -259,3 +260,92 @@ def test_the_promoted_contract_carries_no_foreign_naming_convention() -> None:
         "this repository lands dlt names"
     )
     assert "_fivetran_" not in text
+
+
+# ---------------------------------------------------------------------------------------
+# Expansion: which file a ref() is allowed to resolve to
+# ---------------------------------------------------------------------------------------
+#
+# `expand_star_models.resolve` reads an upstream's projection off disk to learn what a
+# `select *` over it returns. A bare `rglob("<ref>.sql")` finds dbt's *compiled* copy of
+# the same model as well as the source, and the first hit is filesystem order — so the
+# contract this tool writes into a model depended on whether somebody had run dbt.
+
+
+def _expanding_model(name: str, sql: str, path: Path):
+    return esm.Model(rel=name, path=path, name=name, sql=sql, star_count=1, star_pos=0)
+
+
+def _write(project: Path, rel: str, sql: str) -> Path:
+    path = project / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(sql, encoding="utf-8")
+    return path
+
+
+UPSTREAM = "select\n      a\n    , b\nfrom {{ source('s', 't') }}\n"
+
+
+def test_a_ref_never_resolves_to_dbts_compiled_copy(tmp_path: Path) -> None:
+    """Measured on enhanza-analytics: 394 of 707 stems duplicate, every duplicate a build
+    artifact, and `rglob` returned the compiled copy for **6 of 6** upstream reads. Both
+    `target/` trees are gitignored, so the tool answered one way on a developer machine
+    and another on a fresh clone."""
+    project = tmp_path / "dbt_project"
+    _write(project, "models/staging/up.sql", UPSTREAM)
+    _write(project, "target/compiled/pkg/models/staging/up.sql",
+           "select\n      compiled_only\nfrom x\n")
+    model = _expanding_model("down", "select * from {{ ref('up') }}", project / "down.sql")
+    model.ref = "up"
+    esm.resolve({"down": model}, {}, project)
+    assert model.reason == "", model.reason
+    assert model.star_columns == ["a", "b"], "read the compiled copy, not the source model"
+
+
+def test_the_build_dirs_excluded_here_are_a_subset_of_the_gates(tmp_path: Path) -> None:
+    """`no_star_check.EXCLUDED_DIRS` answers "where may a star live" and also drops
+    `snapshots/`, which is the right answer there and the wrong one here: `ref()` to a
+    snapshot is legal dbt. The subset relationship is the part that must not drift."""
+    assert set(esm.BUILD_DIRS) < set(ns.EXCLUDED_DIRS)
+    assert "snapshots" not in esm.BUILD_DIRS
+
+
+def test_two_real_model_files_of_one_name_are_refused_not_picked(tmp_path: Path) -> None:
+    """Zero today, which is what makes refusing cheap. Picking the first would rewrite a
+    model against the wrong contract while reading as resolved."""
+    project = tmp_path / "dbt_project"
+    _write(project, "packages/a/models/up.sql", UPSTREAM)
+    _write(project, "packages/b/models/up.sql", "select\n      c\nfrom x\n")
+    model = _expanding_model("down", "select * from {{ ref('up') }}", project / "down.sql")
+    model.ref = "up"
+    esm.resolve({"down": model}, {}, project)
+    assert model.star_columns is None
+    assert "2 model files" in model.reason and "ambiguous" in model.reason
+
+
+def test_a_ref_resolving_to_nothing_still_says_so(tmp_path: Path) -> None:
+    """The pre-existing no-model reason survives the exclusion — a project whose only copy
+    of a model is compiled output must not read as a naming ambiguity."""
+    project = tmp_path / "dbt_project"
+    _write(project, "target/compiled/pkg/models/up.sql", UPSTREAM)
+    model = _expanding_model("down", "select * from {{ ref('up') }}", project / "down.sql")
+    model.ref = "up"
+    esm.resolve({"down": model}, {}, project)
+    assert model.star_columns is None
+    assert "resolves to no model file" in model.reason
+
+
+@needs_enhanza
+def test_no_upstream_is_read_out_of_a_build_directory() -> None:
+    """The regression guard on real data: 6 of 6 reads were compiled artifacts before."""
+    project = ENHANZA / "dbt_project"
+    read: list = []
+    original = esm.output_columns_of_explicit_model
+    esm.output_columns_of_explicit_model = lambda p: (read.append(p), original(p))[1]
+    try:
+        esm.run("enhanza-analytics", write=False, only=None, exclude=None)
+    finally:
+        esm.output_columns_of_explicit_model = original
+    offenders = [str(p.relative_to(project)) for p in read
+                 if set(p.relative_to(project).parts) & set(esm.BUILD_DIRS)]
+    assert not offenders, f"upstream columns read from build output: {offenders[:5]}"

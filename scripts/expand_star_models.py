@@ -74,6 +74,20 @@ REF_CALL = re.compile(r"\bref\s*\(\s*['\"]([^'\"]+)['\"]")
 ERP_FIELDS = re.compile(r"add_erp_fields\s*\(\s*columns\s*=\s*\[([^\]]*)\]", re.S)
 STAR = re.compile(r"(\bselect\s+)(\*)", re.I)
 
+# `target/` and `target-sample/` hold dbt's compiled copy of a model that also lives under
+# `models/`, and `dbt_packages/` holds the installed copy of a local package's models — so
+# a bare `rglob("<ref>.sql")` returns the same model two or three times and the first hit
+# is filesystem order. Measured on enhanza-analytics: **394 of 707 stems duplicate, every
+# duplicate a build artifact, and rglob returned the compiled copy first.** Both trees are
+# gitignored, so the tool read a stale compiled artifact on a developer machine and the
+# source model on a fresh clone — one input, two answers, neither announced.
+#
+# A deliberate *subset* of `no_star_check.EXCLUDED_DIRS`. That list also drops `snapshots/`,
+# `macros/`, `tests/` and `analyses/`, which is right for "where may a star live" and wrong
+# for "what may a ref resolve to": `ref('<snapshot>')` is legal dbt. The subset relationship
+# is pinned by a test rather than by an assert here.
+BUILD_DIRS = ("target", "target-sample", "dbt_packages")
+
 
 def use_case_dir(slug: str) -> Path:
     return _paths.require_use_case_dir(slug, REPO)
@@ -302,9 +316,22 @@ def resolve(models: Dict[str, Model], sources: Dict[Tuple[str, str], List[str]],
                 model.star_columns = list(upstream.output_columns)
                 progressed = True
                 continue
-            candidates = list(project.rglob(f"{model.ref}.sql"))
+            candidates = sorted(
+                p for p in project.rglob(f"{model.ref}.sql")
+                if not set(p.relative_to(project).parts) & set(BUILD_DIRS))
             if not candidates:
                 model.reason = f"ref('{model.ref}') resolves to no model file"
+                continue
+            if len(candidates) > 1:
+                # Two real model files answering to one name is a project defect this tool
+                # cannot adjudicate, and picking the first is how it would rewrite a model
+                # against the wrong contract while reading as resolved. Measured: zero
+                # today, which is what makes refusing cheap.
+                where = ", ".join(str(p.relative_to(project)) for p in candidates[:3])
+                model.reason = (
+                    f"ref('{model.ref}') resolves to {len(candidates)} model files "
+                    f"({where}{', ...' if len(candidates) > 3 else ''}) — which one it "
+                    "means is ambiguous")
                 continue
             columns = output_columns_of_explicit_model(candidates[0])
             if columns is None:
