@@ -25,49 +25,49 @@ columns:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.amount
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The total value of the deal in the deal's currency.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal.amount (exact, vendor prefix stripped): The total value of the deal in the deal's currency.
     definition: "The total value of the deal in the deal's currency."
 
   closedate:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.closedate
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The day the deal is expected to close, or was closed.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal.closedate (exact, vendor prefix stripped): The day the deal is expected to close, or was closed.
     definition: "The day the deal is expected to close, or was closed."
 
   content:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.content
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): Text in body of the ticket.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.content (exact, vendor prefix stripped): Text in body of the ticket.
     definition: "Text in body of the ticket."
 
   createdate:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: company.createdate
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The date the company was added to your account.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: company.createdate (exact, vendor prefix stripped): The date the company was added to your account.
     definition: "The date the company was added to your account."
 
   dealname:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.dealname
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The name you have given this deal.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal.dealname (exact, vendor prefix stripped): The name you have given this deal.
     definition: "The name you have given this deal."
 
   description:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: product.description
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): Description of Event.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml, BARE-NAME FALLBACK — no `product` in that reference, so this may describe another entity: Description of Event.
     definition: "Description of Event."
 
   email:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.email
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The contact's email.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact.email (exact, vendor prefix stripped): The contact's email.
     # evidence: pii=direct: an email address identifies a person directly
     pii: direct
     definition: "The contact's email."
@@ -76,64 +76,64 @@ columns:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.firstname
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The contact's first name.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact.firstname (exact, vendor prefix stripped): The contact's first name.
     definition: "The contact's first name."
 
   hs_createdate:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: quote.hs_createdate
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): >
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml, BARE-NAME FALLBACK — no `quote` in that reference, so this may describe another entity: >
     definition: ">"
 
   hs_pipeline:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_pipeline
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The ID of the ticket's pipeline.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.hs_pipeline (exact, vendor prefix stripped): The ID of the ticket's pipeline.
     definition: "The ID of the ticket's pipeline."
 
   hs_pipeline_stage:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_pipeline_stage
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The ID of the ticket's pipeline stage.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.hs_pipeline_stage (exact, vendor prefix stripped): The ID of the ticket's pipeline stage.
     definition: "The ID of the ticket's pipeline stage."
 
   hs_ticket_category:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_ticket_category
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The category of the ticket.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.hs_ticket_category (exact, vendor prefix stripped): The category of the ticket.
     definition: "The category of the ticket."
 
   hs_ticket_priority:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_ticket_priority
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The priority of the ticket.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.hs_ticket_priority (exact, vendor prefix stripped): The priority of the ticket.
     definition: "The priority of the ticket."
 
   lastname:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.lastname
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The contact's last name.
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact.lastname (exact, vendor prefix stripped): The contact's last name.
     definition: "The contact's last name."
 
   name:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: company.name
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): Name of Event.
-    definition: "Name of Event."
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: company.name (exact, vendor prefix stripped): The name of the company.
+    definition: "The name of the company."
 
   subject:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.subject
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml (vendor prefix stripped): The subject of the email campaign.
-    definition: "The subject of the email campaign."
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.subject (exact, vendor prefix stripped): Short summary of ticket.
+    definition: "Short summary of ticket."
 
 # Abstained — no description and no readable name shape. Honestly
 # unannotated rather than guessed:

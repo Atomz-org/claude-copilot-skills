@@ -128,6 +128,78 @@ def test_a_columns_own_description_is_not_overwritten_by_a_borrowed_one() -> Non
 
 
 # ---------------------------------------------------------------------------------------
+# A column name means something only inside its table
+# ---------------------------------------------------------------------------------------
+
+
+def test_a_description_is_taken_from_the_matching_table_not_the_first_one_seen() -> None:
+    """`name`, `createdate` and `description` sit on a dozen HubSpot objects with a dozen
+    meanings. Measured on the committed reference: 39 of 164 bare names carry more than one
+    distinct description, and the flat index handed `company.name` the text "Name of
+    Event." — the same class of wrong-entity match `ssd.match_table` refuses by rejecting
+    prefix matches."""
+    reference = _tables(
+        event=[("name", "Name of Event.")],
+        company=[("property_name", "The name of the company.")],
+    )
+    annotations, _ = csd.derive_annotations(
+        _tables(company=[("name", "")]), "cite",
+        descriptions=csd.description_index(reference),
+        description_citation="ref",
+        scoped=csd.scoped_description_index(reference),
+    )
+    assert annotations[0].definition == "The name of the company."
+    assert annotations[0].definition_scope == "scoped"
+
+
+def test_a_singular_plural_table_still_matches() -> None:
+    """`ssd.match_table` owns the rule; this only checks it is being asked."""
+    reference = _tables(companies=[("name", "The name of the company.")])
+    annotations, _ = csd.derive_annotations(
+        _tables(company=[("name", "")]), "cite",
+        descriptions={}, description_citation="ref",
+        scoped=csd.scoped_description_index(reference))
+    assert annotations[0].definition == "The name of the company."
+
+
+def test_a_bare_name_fallback_says_it_may_describe_another_entity() -> None:
+    """`product` and `quote` appear in Fivetran's schema not at all, so their columns
+    borrow from whatever else declares the same bare name. Measured: all four such
+    definitions on the committed proposal are wrong. The evidence has to carry that,
+    because a borrowed description otherwise reads as verified."""
+    reference = _tables(event=[("name", "Name of Event.")])
+    annotations, _ = csd.derive_annotations(
+        _tables(product=[("name", "")]), "cite",
+        descriptions=csd.description_index(reference), description_citation="ref",
+        scoped=csd.scoped_description_index(reference))
+    assert annotations[0].definition_scope == "fallback"
+    marker = next(e for e in annotations[0].evidence if "FALLBACK" in e)
+    assert "`product`" in marker and "another entity" in marker
+
+
+def test_the_matching_table_wins_even_when_the_bare_index_has_an_answer() -> None:
+    """Order of preference, not availability: the flat index almost always has *an*
+    answer, which is exactly why it cannot be consulted first."""
+    reference = _tables(
+        aaa_event=[("subject", "The subject of the email campaign.")],
+        ticket=[("subject", "Short summary of ticket.")],
+    )
+    bare = csd.description_index(reference)
+    assert bare["subject"] == "The subject of the email campaign."   # first walked wins
+    annotations, _ = csd.derive_annotations(
+        _tables(ticket=[("subject", "")]), "cite",
+        descriptions=bare, description_citation="ref",
+        scoped=csd.scoped_description_index(reference))
+    assert annotations[0].definition == "Short summary of ticket."
+
+
+def test_a_doc_reference_is_excluded_from_both_indexes() -> None:
+    reference = _tables(company=[("property_name", "{{ doc('company_name') }}")])
+    assert csd.description_index(reference) == {}
+    assert csd.scoped_description_index(reference) == {}
+
+
+# ---------------------------------------------------------------------------------------
 # Topology
 # ---------------------------------------------------------------------------------------
 
@@ -177,6 +249,20 @@ def test_contracts_and_topology_read_different_references() -> None:
     richest, richest_cite, _ = csd.richest_tables("hubspot")
     assert preferred_cite != richest_cite
     assert len(richest) > len(preferred)
+
+
+@needs_cache
+def test_the_real_reference_no_longer_attributes_an_event_description_to_a_company() -> None:
+    """The concrete defect, on the data that produced it. `company.name` and
+    `ticket.subject` both had a description from a table they have nothing to do with."""
+    preferred, cite, _ = csd.preferred_tables("hubspot")
+    richest, richest_cite, _ = csd.richest_tables("hubspot")
+    annotations, _ = csd.derive_annotations(
+        preferred, cite, csd.description_index(richest), richest_cite,
+        scoped=csd.scoped_description_index(richest))
+    by_key = {(a.table, a.column): a for a in annotations}
+    assert by_key[("company", "name")].definition == "The name of the company."
+    assert by_key[("ticket", "subject")].definition == "Short summary of ticket."
 
 
 @needs_cache

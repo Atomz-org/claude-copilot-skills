@@ -164,13 +164,48 @@ class Annotation:
     definition: str
     evidence: List[str]
     confidence: str
+    # Where the definition came from: the column's own reference entry, the same table in
+    # the description reference, or a bare name that resolved against no table at all.
+    definition_scope: str = "own"
 
 
 VENDOR_PREFIX = re.compile(r"^(property|properties)_", re.I)
 
 
+def _described(columns: List[Dict[str, str]]) -> Dict[str, str]:
+    """Bare column name -> the description the vendor wrote, for one table."""
+    out: Dict[str, str] = {}
+    for column in columns:
+        description = (column.get("description") or "").strip()
+        if not description or ssd.DOC_REFERENCE.search(description):
+            continue
+        out.setdefault(VENDOR_PREFIX.sub("", column["name"]).lower(), description)
+    return out
+
+
+def scoped_description_index(
+    tables: Dict[str, List[Dict[str, str]]],
+) -> Dict[str, Dict[str, str]]:
+    """Reference table -> {bare column name -> description}. The index that is *correct*.
+
+    A column name is only unique inside its table. `name`, `createdate` and `description`
+    each appear on a dozen HubSpot objects with a dozen different meanings, so a flat
+    name -> description map answers "what does `name` mean?" with whichever table happened
+    to be walked first. Measured on the committed reference: **39 of 164 bare names carry
+    more than one distinct description**, and the flat index handed `company.name` the
+    text "Name of Event." and all three `createdate` columns "The date the company was
+    added to your account."
+
+    This is the same defect `ssd.match_table` refuses by rejecting prefix matches — a
+    pipeline is not a deal, and a product is not an event. Getting it wrong is invisible,
+    because a borrowed description reads as verified.
+    """
+    return {table: described for table, columns in tables.items()
+            if (described := _described(columns))}
+
+
 def description_index(tables: Dict[str, List[Dict[str, str]]]) -> Dict[str, str]:
-    """Column name (vendor prefix stripped) -> the description the vendor wrote.
+    """Column name (vendor prefix stripped) -> a description, ignoring which table wrote it.
 
     The preferred reference gives the right *names* and the richest one gives the
     *descriptions*, and for this vendor pair the two differ by one mechanical prefix:
@@ -178,21 +213,33 @@ def description_index(tables: Dict[str, List[Dict[str, str]]]) -> Dict[str, str]
     reach the column it describes without adopting the other tool's naming — and a
     description is the evidence `column_annotations.derive` weights above every name shape
     and cast, so without this bridge almost every facet comes back unset.
+
+    Used **only** where `scoped_description_index` has no answer, and marked as a fallback
+    in the evidence when it is: a bare name that resolved against no table may well be
+    describing another entity. Measured on the committed reference, all four fallbacks
+    are — `product` and `quote` appear in Fivetran's schema not at all, so their columns
+    borrow from whatever else declares a `name` or a `createdate`.
     """
     out: Dict[str, str] = {}
     for columns in tables.values():
-        for column in columns:
-            description = (column.get("description") or "").strip()
-            if not description or ssd.DOC_REFERENCE.search(description):
-                continue
-            out.setdefault(VENDOR_PREFIX.sub("", column["name"]).lower(), description)
+        for bare, description in _described(columns).items():
+            out.setdefault(bare, description)
     return out
 
 
 def derive_annotations(tables: Dict[str, List[Dict[str, str]]], citation: str,
                        descriptions: Optional[Dict[str, str]] = None,
-                       description_citation: str = "") -> Tuple[List[Annotation], List[str]]:
+                       description_citation: str = "",
+                       scoped: Optional[Dict[str, Dict[str, str]]] = None,
+                       ) -> Tuple[List[Annotation], List[str]]:
     """One candidate per (table, column), facets from `column_annotations.derive`.
+
+    A borrowed description is looked up **in the matching table first**. `ssd.match_table`
+    resolves our table name against the description reference's — exact or singular/plural,
+    never a prefix — and only when that finds nothing does the bare-name index answer, with
+    the evidence line saying so. A description is the highest-weighted evidence the facet
+    deriver reads, so the difference between the two lookups is the difference between
+    "the name of the company" and "Name of Event."
 
     Abstentions are kept out rather than emitted blank: a column the deriver could not
     read is honestly unannotated, and `--coverage` already exists to list those.
@@ -200,12 +247,20 @@ def derive_annotations(tables: Dict[str, List[Dict[str, str]]], citation: str,
     out: List[Annotation] = []
     abstained: List[str] = []
     for table in sorted(tables):
+        match = ssd.match_table(table, scoped) if scoped else None
+        in_table = scoped.get(match[0], {}) if (scoped and match) else {}
         for column in tables[table]:
             name = column["name"]
             description = (column.get("description") or "").strip()
+            scope = "own"
             borrowed = ""
-            if not description and descriptions:
-                borrowed = descriptions.get(VENDOR_PREFIX.sub("", name).lower(), "")
+            if not description:
+                bare = VENDOR_PREFIX.sub("", name).lower()
+                borrowed = in_table.get(bare, "")
+                scope = "scoped"
+                if not borrowed and descriptions:
+                    borrowed = descriptions.get(bare, "")
+                    scope = "fallback"
                 description = borrowed
             candidate = ca.derive(name, set(), None, description)
             facets = {
@@ -223,10 +278,18 @@ def derive_annotations(tables: Dict[str, List[Dict[str, str]]], citation: str,
                 abstained.append(f"{table}.{name}: no description and no readable name shape")
                 continue
             evidence = [f"{citation} :: {table}.{name}"]
-            if borrowed:
+            if borrowed and scope == "scoped":
                 evidence.append(
-                    f"description via {description_citation} (vendor prefix stripped): "
-                    f"{borrowed[:110]}")
+                    f"description via {description_citation} :: {match[0]}.{name} "
+                    f"({match[1]}, vendor prefix stripped): {borrowed[:100]}")
+            elif borrowed:
+                # Named, because it is the one definition here that may belong to another
+                # entity: nothing resolved `table` in the description reference, so this
+                # text is whichever table happened to declare the same bare column name.
+                evidence.append(
+                    f"description via {description_citation}, BARE-NAME FALLBACK — no "
+                    f"`{table}` in that reference, so this may describe another entity: "
+                    f"{borrowed[:90]}")
             elif description:
                 evidence.append(f"vendor description: {description[:120]}")
             for facet, value in facets.items():
@@ -237,6 +300,7 @@ def derive_annotations(tables: Dict[str, List[Dict[str, str]]], citation: str,
                 column=name, table=table, facets=facets, definition=description,
                 evidence=evidence,
                 confidence=str(candidate.get("confidence") or "low"),
+                definition_scope=scope if borrowed else "own",
             ))
     return out, abstained
 
@@ -394,7 +458,8 @@ def run(slug: str, connector: str, write: bool, check: bool) -> Dict[str, Any]:
 
     topo_tables, topo_citation, _ = richest_tables(connector)
     annotations, abstained = derive_annotations(
-        tables, citation, description_index(topo_tables), topo_citation)
+        tables, citation, description_index(topo_tables), topo_citation,
+        scoped=scoped_description_index(topo_tables))
     relationships, dangling = derive_topology(topo_tables, topo_citation)
     concepts = declared_concepts(use_case, connector)
 
@@ -426,6 +491,8 @@ def run(slug: str, connector: str, write: bool, check: bool) -> Dict[str, Any]:
         "topology_source": topo_citation,
         "annotated": len({a.column for a in annotations}),
         "abstained": len(abstained),
+        "scoped_definitions": sum(1 for a in annotations if a.definition_scope == "scoped"),
+        "fallback_definitions": sum(1 for a in annotations if a.definition_scope == "fallback"),
         "relationships": len(relationships),
         "dangling": len(dangling),
         "declared_concepts": concepts,
@@ -476,6 +543,12 @@ def main(argv: Optional[List[str]] = None) -> int:
           f"{payload['relationships']} relationship(s)")
     print(f"  cited: {payload['citation']}")
     print(f"  {payload['abstained']} column(s) abstained (no description, no name shape)")
+    if payload["scoped_definitions"] or payload["fallback_definitions"]:
+        print(f"  {payload['scoped_definitions']} definition(s) borrowed from the matching "
+              f"table, {payload['fallback_definitions']} by bare name only")
+    if payload["fallback_definitions"]:
+        print("    a bare-name definition may describe another entity — the evidence "
+              "line says so")
     if payload["dangling"]:
         print(f"  {payload['dangling']} `*_id` column(s) name no declared table — reported")
     print(f"  declared concepts: {', '.join(payload['declared_concepts']) or 'none'}")
