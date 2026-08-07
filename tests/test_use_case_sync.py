@@ -249,7 +249,7 @@ def test_the_graph_rebuild_runs_before_the_dbt_merge(monkeypatch) -> None:
     monkeypatch.setattr(sync, "stage_graphify_update",
                         lambda check: order.append("graphify") or sync.Stage("graphify", sync.OK))
     monkeypatch.setattr(sync, "stage_graph",
-                        lambda uc, m, c: order.append("graph") or sync.Stage("graph", sync.OK))
+                        lambda *a, **k: order.append("graph") or sync.Stage("graph", sync.OK))
     monkeypatch.setattr(sync, "stage_ontology", lambda *a, **k: [])
     monkeypatch.setattr(sync, "stage_seeds", lambda *a, **k: sync.Stage("seeds", sync.SKIP))
     monkeypatch.setattr(sync, "stage_alignment", lambda *a, **k: sync.Stage("alignment", sync.SKIP))
@@ -280,7 +280,7 @@ def test_all_rebuilds_once_for_the_repository(monkeypatch) -> None:
     calls: list[bool] = []
     monkeypatch.setattr(
         sync, "sync",
-        lambda slug, check, manifest, only=None, graphify_update=False: (
+        lambda slug, check, manifest, only=None, graphify_update=False, **kwargs: (
             calls.append(graphify_update) or {"use_case": slug, "stages": [],
                                               "changed_total": 0, "ok": True}
         ),

@@ -1,0 +1,43 @@
+name: raw_contacts
+table_reference:
+  catalog: enhanza_sample
+  schema: hubspot_api_canonical
+  table: contacts
+columns:
+- name: createdate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: email
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: firstname
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: hs_object_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: lastmodifieddate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: lastname
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  description: PII. Personal data of identifiable individuals. See rule 17 and the
+    [NEEDS INPUT] above.
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_hubspot.hubspot_api.contacts
+  dbt_resource_type: source

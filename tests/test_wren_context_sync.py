@@ -26,6 +26,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
 
+import _paths  # noqa: E402
 import use_case_sync as ucs  # noqa: E402
 import wren_context_sync as wcs  # noqa: E402
 from _manifest import Manifest  # noqa: E402
@@ -542,6 +543,47 @@ def test_column_contracts_points_at_the_meaning_it_does_not_carry() -> None:
     assert "column-semantics.md" in md and "pii.md" in md
 
 
+def test_a_supplier_with_no_landed_data_is_not_listed_as_a_plain_supplier() -> None:
+    """A connector has adapter models before its ingestion job has ever run.
+
+    The supplier list is read off the manifest, so a connector whose raw dataset does not
+    exist yet still appears there. Flattening that is the defect CLAUDE.md records for
+    graph edges — "naive traversal once answered 'ten connectors supply Account' when five
+    were catalogue expectations" — reproduced in the file an agent reads *before writing
+    SQL*. Filtering by such a supplier returns zero rows and no error.
+
+    Keyed on `ingestion`, not `status`: a `status: planned` connector is tested to have no
+    adapter models at all, so it never reaches this list.
+    """
+    memory = {"contracts": [{
+        "concept": "dim_customers", "conformed": ["CustomerId"],
+        "adapters": {"fortnox": "fortnox_erp_bi_dim_customers",
+                     "hubspot": "hubspot_erp_bi_dim_customers"},
+    }]}
+    index = {"connectors": [
+        {"key": "fortnox", "status": "implemented", "ingestion": "landed"},
+        {"key": "hubspot", "status": "implemented", "ingestion": "pending"},
+    ]}
+    md = wcs.contracts_markdown(memory, "toy", index)
+    supplier_line = next(ln for ln in md.splitlines() if ln.startswith("Suppliers:"))
+    assert "hubspot (hubspot_erp_bi_dim_customers) [no data yet — ingestion pending]" in supplier_line
+    assert "fortnox (fortnox_erp_bi_dim_customers)," in supplier_line
+    assert "fortnox (fortnox_erp_bi_dim_customers) [no data" not in supplier_line
+
+
+def test_the_supplier_list_renders_without_an_index() -> None:
+    """The index is optional; absent, every supplier is reported unqualified.
+
+    Unavailable is not failed — and it must not silently mark every connector pending
+    either, which would be the same false statement pointed the other way.
+    """
+    memory = {"contracts": [{"concept": "dim_customers", "conformed": ["CustomerId"],
+                             "adapters": {"fortnox": "fortnox_erp_bi_dim_customers"}}]}
+    md = wcs.contracts_markdown(memory, "toy")
+    assert "fortnox (fortnox_erp_bi_dim_customers)" in md
+    assert "ingestion pending" not in md
+
+
 def test_enrichment_files_carry_the_generated_header() -> None:
     md = wcs.metrics_markdown(Manifest({"metrics": {
         "metric.p.revenue": {"name": "revenue", "type": "simple",
@@ -891,3 +933,107 @@ def test_committed_wren_project_is_current() -> None:
         f"scripts/use_case_sync.py --use-case example-order-revenue-mart --stage wren"
     )
     assert payload["models"] > 0 and payload["views"] > 0
+
+
+# ---------------------------------------------------------------------------------------
+# The loop back into the code graph
+# ---------------------------------------------------------------------------------------
+#
+# graphify already holds every dbt model and every `ref()` edge. What it cannot hold is the
+# two things the serving tier adds, and they are the two an agent needs before it can write
+# a query rather than trace a dependency: which column joins two models, and which metrics
+# are queryable at all. The properties below are what make the merge safe to run repeatedly.
+
+
+def _fragment(use_case):
+    manifest = _paths.default_manifest(use_case)
+    if manifest is None or not (use_case / "wren" / "relationships.yml").exists():
+        pytest.skip("no manifest or no committed wren/ project")
+    return wcs.build_graphify_fragment(use_case, manifest)
+
+
+def test_a_relationship_becomes_a_join_edge_between_two_model_nodes() -> None:
+    """`ref()` says B was built from A. It does not say which column joins them, whether
+    the join fans out, or that they can be joined at all."""
+    fragment = _fragment(EXAMPLE)
+    joins = [e for e in fragment["edges"] if e["relation"] == "joins_on"]
+    assert joins
+    for edge in joins:
+        assert edge["join_condition"] and edge["join_type"]
+        assert edge["source"] != edge["target"]
+
+
+def test_a_metric_view_becomes_a_node_carrying_its_type_and_grain() -> None:
+    """Until it is a node, `graphify query "revenue"` finds the models and not the metric."""
+    fragment = _fragment(EXAMPLE)
+    views = [n for n in fragment["nodes"] if n["dbt_resource_type"] == "wren_metric_view"]
+    assert views
+    assert {v["metric_name"] for v in views} >= {"revenue"}
+    assert all(v["metric_type"] for v in views)
+
+
+def test_every_edge_endpoint_is_a_node_the_dbt_merge_already_minted() -> None:
+    """An endpoint the manifest does not have makes graphify's `build_merge` mint a bare
+    stub, and a stub is indistinguishable from a real model to everything downstream. So a
+    relationship naming an unknown model is dropped and counted, never merged."""
+    import dbt_manifest_to_graphify as emitter
+
+    manifest = _paths.default_manifest(EXAMPLE)
+    if manifest is None:
+        pytest.skip("no manifest")
+    fragment = _fragment(EXAMPLE)
+    man = wcs.Manifest.load(str(manifest))
+    project_root = _paths.project_root_of(manifest, EXAMPLE)
+    prefixes = emitter.package_prefixes(man, project_root)
+    project_rel = emitter._rel(project_root)
+    known = {
+        emitter.node_id(emitter.model_source_file(n, man, project_rel, prefixes))
+        for n in man.nodes.values() if n.get("resource_type") == "model"
+    }
+    known |= {n["id"] for n in fragment["nodes"]}
+    for edge in fragment["edges"]:
+        assert edge["source"] in known, edge["source"]
+        assert edge["target"] in known, edge["target"]
+
+
+def test_a_metric_edges_only_to_models_it_actually_reads() -> None:
+    """Matched against the known model names rather than parsed out of the SQL: a regex for
+    "the token after FROM" also collects CTE names and time-spine aliases, and every one of
+    those would become an edge to a node that does not exist."""
+    fragment = _fragment(EXAMPLE)
+    views = {n["id"]: n for n in fragment["nodes"]}
+    measures = [e for e in fragment["edges"] if e["relation"] == "measures"]
+    assert measures
+    assert all(e["source"] in views for e in measures)
+
+
+def test_the_fragment_is_deterministic() -> None:
+    """It is written to a path a merge reads; two identical runs producing two different
+    files would make every re-run look like a change."""
+    first = _fragment(EXAMPLE)
+    second = _fragment(EXAMPLE)
+    assert json.dumps(first, sort_keys=True) == json.dumps(second, sort_keys=True)
+
+
+def test_a_wren_name_resolves_through_the_importers_own_alias_rule() -> None:
+    """Reproducing "alias or name" by hand would mis-attribute exactly the models
+    `_unique_wren_names` had to rename — the ones whose alias collided."""
+    manifest = _paths.default_manifest(EXAMPLE)
+    if manifest is None:
+        pytest.skip("no manifest")
+    man = wcs.Manifest.load(str(manifest))
+    names = wcs.wren_model_names(man)
+    assert names
+    assert len(names) == len(set(names)), "a wren model name must identify one dbt model"
+
+
+def test_the_merge_does_not_reclassify_a_node_graphify_already_typed() -> None:
+    """graphify parses YAML, so it already walks the whole wren/ tree — measured: 8 view
+    nodes, 191 model nodes, 334 knowledge nodes, plus the join edges from the project's own
+    `relationships` tests. This fragment upgrades what is there; emitting `file_type: code`
+    for a metadata.yml reclassified 8 nodes the detector had right, which is a regression
+    dressed as enrichment."""
+    fragment = _fragment(EXAMPLE)
+    views = [n for n in fragment["nodes"] if n["dbt_resource_type"] == "wren_metric_view"]
+    assert views
+    assert all(n["file_type"] == "document" for n in views)

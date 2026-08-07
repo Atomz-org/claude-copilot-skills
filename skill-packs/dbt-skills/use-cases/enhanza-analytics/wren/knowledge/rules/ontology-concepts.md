@@ -11,9 +11,9 @@ implement it per connector are listed in `column-contracts.md`.
 - **dim_articles** (erp:Article) — implemented by: fortnox, seventime, shopify, upsales, visma_eaccounting, visma_economic; planned: dynamics365, quickbooks, xero
 - **dim_assets_types** (erp:Asset) — implemented by: fortnox
 - **dim_bundle_articles** (erp:BundleArticle) — implemented by: fortnox
-- **dim_company** (erp:Organisation) — implemented by: fortnox, seventime, tripletex, upsales, visma_eaccounting, visma_economic
+- **dim_company** (erp:Organisation) — implemented by: fortnox, hubspot, seventime, tripletex, upsales, visma_eaccounting, visma_economic
 - **dim_cost_centers** (erp:CostCenter) — implemented by: fortnox, tripletex, visma_eaccounting, xledger; planned: visma_net
-- **dim_customers** (erp:Customer) — implemented by: fortnox, seventime, shopify, tripletex, upsales, visma_eaccounting, visma_economic; planned: dynamics365, hogia_your_landlord, hubspot, poweroffice, quickbooks, salesforce, serviceprotokoll, visma_net, xero
+- **dim_customers** (erp:Customer) — implemented by: fortnox, hubspot, seventime, shopify, tripletex, upsales, visma_eaccounting, visma_economic; planned: dynamics365, hogia_your_landlord, poweroffice, quickbooks, salesforce, serviceprotokoll, visma_net, xero
 - **dim_employees** (erp:Employee) — implemented by: fortnox; planned: dynamics365, salesforce, serviceprotokoll
 - **dim_expenses** (erp:Classifier) — implemented by: fortnox
 - **dim_financial_years** (erp:FinancialYear) — implemented by: fortnox, seventime, tripletex, upsales, visma_eaccounting, visma_economic, xledger; planned: poweroffice, quickbooks, visma_net, xero
@@ -30,8 +30,8 @@ implement it per connector are listed in `column-contracts.md`.
 - **dim_user_locations** (erp:Organisation) — implemented by: favrit
 - **dim_voucher_series** (erp:VoucherSeries) — implemented by: fortnox, tripletex
 - **fact_absence_transactions** (erp:AbsenceTransaction) — implemented by: fortnox
-- **fact_activities** (crm:Activity) — implemented by: upsales; planned: dynamics365, hubspot, salesforce
-- **fact_appointments** (crm:Appointment) — implemented by: upsales; planned: hubspot, salesforce
+- **fact_activities** (crm:Activity) — implemented by: upsales; planned: dynamics365, salesforce
+- **fact_appointments** (crm:Appointment) — implemented by: upsales; planned: salesforce
 - **fact_asset_rows** (erp:LineItem) — implemented by: fortnox
 - **fact_assets** (erp:Asset) — implemented by: fortnox
 - **fact_attendance_transactions** (erp:AttendanceTransaction) — implemented by: fortnox
@@ -48,8 +48,8 @@ implement it per connector are listed in `column-contracts.md`.
 - **fact_locked_period** (erp:LockedPeriod) — implemented by: fortnox
 - **fact_offer_rows** (erp:LineItem) — implemented by: fortnox
 - **fact_offers** (erp:Offer) — implemented by: fortnox, seventime
-- **fact_opportunities** (crm:Opportunity) — implemented by: upsales; planned: dynamics365, hubspot, salesforce
-- **fact_opportunity_rows** (crm:OpportunityLine) — implemented by: upsales; planned: hubspot, salesforce
+- **fact_opportunities** (crm:Opportunity) — implemented by: upsales; planned: dynamics365, salesforce
+- **fact_opportunity_rows** (crm:OpportunityLine) — implemented by: upsales; planned: salesforce
 - **fact_order_rows** (erp:LineItem) — implemented by: favrit, fortnox, shopify, upsales; planned: dynamics365
 - **fact_orders** (erp:Order) — implemented by: fortnox, shopify, upsales, visma_economic; planned: dynamics365
 - **fact_production_orders** (erp:ProductionOrder) — implemented by: fortnox

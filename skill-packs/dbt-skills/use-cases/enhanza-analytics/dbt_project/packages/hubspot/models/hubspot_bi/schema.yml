@@ -1,0 +1,39 @@
+version: 2
+
+# [NEEDS INPUT] — every model below is a scaffold. No `hubspot_api_<uid>` dataset exists
+# yet (see ../sources.yml), so the grain and the primary key of each entity are unknown.
+#
+# There is no `columns:` block here, deliberately. A `[NEEDS INPUT] primary key` column
+# carrying `unique` and `not_null` is not a placeholder — it is an assertion that a column
+# by that literal name exists, and dbt runs it: the moment `is_hubspot_enabled` is true
+# every one of these tests fails on a column no model outputs. It also leaves the
+# repository, because `wren_context_sync.py` reads the tested key out of the manifest and
+# publishes it as the model's `primary_key`, so an agent joining on it gets a name that
+# resolves to nothing.
+#
+# Rule 5 forbids inventing the real names, and rule 28 forbids merging a model without
+# tests on its key. Both are satisfied by the connector being `planned` in
+# ontology/connectors.yml rather than by a test that cannot pass: the unknown stays
+# unknown, in prose, where nothing executes it.
+#
+# To finish a model: state its grain in `description`, then add the real key column with
+# `tests: [unique, not_null]` — and promote the connector to `implemented` once every
+# model here has one.
+
+models:
+  - name: hubspot_bi_dim_customers
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name. No key column is declared until hubspot_api.companies is observed.'
+  - name: hubspot_bi_dim_company
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name. No key column is declared until hubspot_api.account_details is observed.'
+  - name: hubspot_bi_fact_deals
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name. No key column is declared until hubspot_api.deals is observed.'
+  - name: hubspot_bi_dim_pipelines
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name. No key column is declared until hubspot_api.deal_pipelines is observed.'
+  - name: hubspot_bi_dim_deal_stages
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name. No key column is declared until hubspot_api.deal_stages is observed.'
+  - name: hubspot_bi_dim_contacts
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name. Personal data — see rule 17 and the contacts gate in dbt_project.yml. No key column is declared until hubspot_api.contacts is observed.'
+  - name: hubspot_bi_fact_tickets
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name. No key column is declared until hubspot_api.tickets is observed.'
+  - name: hubspot_bi_fact_engagements
+    description: '[NEEDS INPUT] one row per <entity>. State the grain, not the model name. No key column is declared until hubspot_api.engagements is observed.'

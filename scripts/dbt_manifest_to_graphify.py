@@ -521,10 +521,16 @@ def build_fragment(
         if len(members) >= 3
     ]
 
+    # Sorted, because this fragment is committed. Node order follows the manifest's dict
+    # order, which follows dbt's parse order, which differs between a partial parse and a
+    # full one — so re-running `artifacts/refresh.sh` produced a 1.1 MB diff with zero
+    # content change: same 757 nodes, same 1383 edges, none added, none removed, none
+    # altered. A reviewer cannot tell that diff from a real one, and graphify's
+    # `build_merge` reads both as sets, so order carries no meaning to lose.
     return {
-        "nodes": nodes,
-        "edges": edges,
-        "hyperedges": hyperedges,
+        "nodes": sorted(nodes, key=lambda n: n["id"]),
+        "edges": sorted(edges, key=lambda e: (e["source"], e["target"], e["relation"])),
+        "hyperedges": sorted(hyperedges, key=lambda h: h["id"]),
         "input_tokens": 0,
         "output_tokens": 0,
     }

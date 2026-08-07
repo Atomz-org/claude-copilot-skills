@@ -11,8 +11,8 @@
   },
   "provenance": {
     "column_lineage_available": true,
-    "models_parsed": 244,
-    "models_macro_only": 134,
+    "models_parsed": 254,
+    "models_macro_only": 142,
     "models_parse_failed": 0,
     "annotated_columns": 89
   },
@@ -55,6 +55,7 @@
       "label": "Microsoft Dynamics 365",
       "kind": "crm",
       "status": "planned",
+      "ingestion": "landed",
       "region": null,
       "enable_var": "is_dynamics365_enabled",
       "default_currency": null,
@@ -74,6 +75,7 @@
       "label": "Favrit",
       "kind": "commerce",
       "status": "implemented",
+      "ingestion": "landed",
       "region": "NO",
       "enable_var": "is_favrit_enabled",
       "default_currency": null,
@@ -90,6 +92,7 @@
       "label": "Fortnox",
       "kind": "erp",
       "status": "implemented",
+      "ingestion": "landed",
       "region": "SE",
       "enable_var": "is_fortnox_enabled",
       "default_currency": "SEK",
@@ -152,6 +155,7 @@
       "label": "Hogia Your Landlord",
       "kind": "erp",
       "status": "planned",
+      "ingestion": "landed",
       "region": "SE",
       "enable_var": "is_hogia_your_landlord_enabled",
       "default_currency": null,
@@ -167,16 +171,14 @@
       "id": "https://w3id.org/enhanza/connector/hubspot#connector",
       "label": "HubSpot",
       "kind": "crm",
-      "status": "planned",
+      "status": "implemented",
+      "ingestion": "pending",
       "region": null,
       "enable_var": "is_hubspot_enabled",
       "default_currency": null,
       "concepts": [
-        "dim_customers",
-        "fact_opportunities",
-        "fact_opportunity_rows",
-        "fact_activities",
-        "fact_appointments"
+        "dim_company",
+        "dim_customers"
       ]
     },
     {
@@ -185,6 +187,7 @@
       "label": "PowerOffice",
       "kind": "erp",
       "status": "planned",
+      "ingestion": "landed",
       "region": "NO",
       "enable_var": "is_poweroffice_enabled",
       "default_currency": null,
@@ -204,6 +207,7 @@
       "label": "QuickBooks",
       "kind": "erp",
       "status": "planned",
+      "ingestion": "landed",
       "region": null,
       "enable_var": "is_quickbooks_enabled",
       "default_currency": null,
@@ -224,6 +228,7 @@
       "label": "Salesforce",
       "kind": "crm",
       "status": "planned",
+      "ingestion": "landed",
       "region": null,
       "enable_var": "is_salesforce_enabled",
       "default_currency": null,
@@ -242,6 +247,7 @@
       "label": "Serviceprotokoll",
       "kind": "erp",
       "status": "planned",
+      "ingestion": "landed",
       "region": "SE",
       "enable_var": "is_serviceprotokoll_enabled",
       "default_currency": null,
@@ -258,6 +264,7 @@
       "label": "SevenTime",
       "kind": "erp",
       "status": "implemented",
+      "ingestion": "landed",
       "region": "SE",
       "enable_var": "is_seventime_enabled",
       "default_currency": "SEK",
@@ -279,6 +286,7 @@
       "label": "Shopify",
       "kind": "commerce",
       "status": "implemented",
+      "ingestion": "landed",
       "region": null,
       "enable_var": "is_shopify_enabled",
       "default_currency": "SEK",
@@ -295,6 +303,7 @@
       "label": "Tempo",
       "kind": "erp",
       "status": "implemented",
+      "ingestion": "landed",
       "region": null,
       "enable_var": "is_tempo_enabled",
       "default_currency": null,
@@ -308,6 +317,7 @@
       "label": "Tripletex",
       "kind": "erp",
       "status": "implemented",
+      "ingestion": "landed",
       "region": "NO",
       "enable_var": "is_tripletex_enabled",
       "default_currency": "NOK",
@@ -330,6 +340,7 @@
       "label": "Upsales",
       "kind": "crm",
       "status": "implemented",
+      "ingestion": "landed",
       "region": "SE",
       "enable_var": "is_upsales_enabled",
       "default_currency": "SEK",
@@ -352,6 +363,7 @@
       "label": "Visma eAccounting",
       "kind": "erp",
       "status": "implemented",
+      "ingestion": "landed",
       "region": "SE",
       "enable_var": "is_visma_eaccounting_enabled",
       "default_currency": "SEK",
@@ -374,6 +386,7 @@
       "label": "Visma e-conomic",
       "kind": "erp",
       "status": "implemented",
+      "ingestion": "landed",
       "region": "DK",
       "enable_var": "is_visma_economic_enabled",
       "default_currency": "DKK",
@@ -396,6 +409,7 @@
       "label": "Visma.net",
       "kind": "erp",
       "status": "planned",
+      "ingestion": "landed",
       "region": "NO",
       "enable_var": "is_visma_net_enabled",
       "default_currency": null,
@@ -416,6 +430,7 @@
       "label": "Xero",
       "kind": "erp",
       "status": "planned",
+      "ingestion": "landed",
       "region": null,
       "enable_var": "is_xero_enabled",
       "default_currency": null,
@@ -436,6 +451,7 @@
       "label": "Xledger",
       "kind": "erp",
       "status": "implemented",
+      "ingestion": "landed",
       "region": "NO",
       "enable_var": "is_xledger_enabled",
       "default_currency": "NOK",
@@ -523,6 +539,7 @@
       "core_class": "erp:Organisation",
       "implemented_by": [
         "fortnox",
+        "hubspot",
         "seventime",
         "tripletex",
         "upsales",
@@ -530,7 +547,7 @@
         "visma_economic"
       ],
       "planned_by": [],
-      "supplier_count": 6
+      "supplier_count": 7
     },
     {
       "concept": "dim_cost_centers",
@@ -553,6 +570,7 @@
       "core_class": "erp:Customer",
       "implemented_by": [
         "fortnox",
+        "hubspot",
         "seventime",
         "shopify",
         "tripletex",
@@ -563,7 +581,6 @@
       "planned_by": [
         "dynamics365",
         "hogia_your_landlord",
-        "hubspot",
         "poweroffice",
         "quickbooks",
         "salesforce",
@@ -571,7 +588,7 @@
         "visma_net",
         "xero"
       ],
-      "supplier_count": 7
+      "supplier_count": 8
     },
     {
       "concept": "dim_employees",
@@ -771,7 +788,6 @@
       ],
       "planned_by": [
         "dynamics365",
-        "hubspot",
         "salesforce"
       ],
       "supplier_count": 1
@@ -784,7 +800,6 @@
         "upsales"
       ],
       "planned_by": [
-        "hubspot",
         "salesforce"
       ],
       "supplier_count": 1
@@ -976,7 +991,6 @@
       ],
       "planned_by": [
         "dynamics365",
-        "hubspot",
         "salesforce"
       ],
       "supplier_count": 1
@@ -989,7 +1003,6 @@
         "upsales"
       ],
       "planned_by": [
-        "hubspot",
         "salesforce"
       ],
       "supplier_count": 1
@@ -1590,6 +1603,22 @@
       "core_class": "erp:Voucher",
       "class": "https://w3id.org/enhanza/connector/fortnox#Voucher",
       "dbt_model": "fortnox_erp_bi_fact_vouchers",
+      "source_tables": []
+    },
+    {
+      "connector": "hubspot",
+      "concept": "dim_company",
+      "core_class": "erp:Organisation",
+      "class": "https://w3id.org/enhanza/connector/hubspot#Company",
+      "dbt_model": "hubspot_erp_bi_dim_company",
+      "source_tables": []
+    },
+    {
+      "connector": "hubspot",
+      "concept": "dim_customers",
+      "core_class": "erp:Customer",
+      "class": "https://w3id.org/enhanza/connector/hubspot#Customer",
+      "dbt_model": "hubspot_erp_bi_dim_customers",
       "source_tables": []
     },
     {
@@ -2280,6 +2309,14 @@
     },
     {
       "connector": "fortnox",
+      "concept": "dim_supplier_invoice_files",
+      "core_class": "erp:Classifier",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
       "concept": "dim_suppliers",
       "core_class": "erp:Supplier",
       "property": "erp:currency",
@@ -2300,6 +2337,22 @@
       "core_class": "erp:Supplier",
       "property": "erp:partyNumber",
       "source_column": "SupplierNumber",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_absence_transactions",
+      "core_class": "erp:AbsenceTransaction",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_attendance_transactions",
+      "core_class": "erp:AttendanceTransaction",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
       "transform": "direct"
     },
     {
@@ -2440,6 +2493,38 @@
     },
     {
       "connector": "fortnox",
+      "concept": "fact_salary_transactions",
+      "core_class": "erp:SalaryTransaction",
+      "property": "erp:amount",
+      "source_column": "Total",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_salary_transactions",
+      "core_class": "erp:SalaryTransaction",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_stockbalance",
+      "core_class": "erp:StockBalance",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_stocktakings",
+      "core_class": "erp:Stocktaking",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
       "concept": "fact_supplier_invoice_rows",
       "core_class": "erp:LineItem",
       "property": "erp:amount",
@@ -2540,6 +2625,38 @@
       "core_class": "erp:Voucher",
       "property": "erp:orgId",
       "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "hubspot",
+      "concept": "dim_company",
+      "core_class": "erp:Organisation",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "derived"
+    },
+    {
+      "connector": "hubspot",
+      "concept": "dim_company",
+      "core_class": "erp:Organisation",
+      "property": "erp:partyName",
+      "source_column": "PortalName",
+      "transform": "renamed"
+    },
+    {
+      "connector": "hubspot",
+      "concept": "dim_customers",
+      "core_class": "erp:Customer",
+      "property": "erp:isActive",
+      "source_column": "isActive",
+      "transform": "direct"
+    },
+    {
+      "connector": "hubspot",
+      "concept": "dim_customers",
+      "core_class": "erp:Customer",
+      "property": "erp:partyNumber",
+      "source_column": "CustomerNumber",
       "transform": "direct"
     },
     {
@@ -3060,7 +3177,6 @@
       ],
       "planned_by": [
         "dynamics365",
-        "hubspot",
         "salesforce"
       ]
     },
@@ -3071,7 +3187,6 @@
         "upsales"
       ],
       "planned_by": [
-        "hubspot",
         "salesforce"
       ]
     },
@@ -3187,7 +3302,6 @@
       ],
       "planned_by": [
         "dynamics365",
-        "hubspot",
         "salesforce"
       ]
     },
@@ -3198,7 +3312,6 @@
         "upsales"
       ],
       "planned_by": [
-        "hubspot",
         "salesforce"
       ]
     },
@@ -3440,9 +3553,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Address",
@@ -3458,9 +3572,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Amount",
@@ -3703,11 +3818,12 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify",
         "tripletex",
         "xledger"
       ],
-      "carried_by_count": 4
+      "carried_by_count": 5
     },
     {
       "column": "ContributionValue",
@@ -3767,10 +3883,11 @@
       "connectors": [
         "favrit",
         "fortnox",
+        "hubspot",
         "shopify",
         "visma_economic"
       ],
-      "carried_by_count": 4
+      "carried_by_count": 5
     },
     {
       "column": "Country",
@@ -3790,9 +3907,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Currency",
@@ -3865,10 +3983,11 @@
       "connectors": [
         "favrit",
         "fortnox",
+        "hubspot",
         "shopify",
         "visma_economic"
       ],
-      "carried_by_count": 4
+      "carried_by_count": 5
     },
     {
       "column": "Date",
@@ -3905,9 +4024,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "DefaultTemplate",
@@ -3923,9 +4043,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Description",
@@ -4005,9 +4126,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "EmployeeId",
@@ -4107,9 +4229,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "InvoiceDate",
@@ -4285,9 +4408,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Net",
@@ -4493,6 +4617,7 @@
       "connectors": [
         "favrit",
         "fortnox",
+        "hubspot",
         "seventime",
         "shopify",
         "tripletex",
@@ -4501,7 +4626,7 @@
         "visma_economic",
         "xledger"
       ],
-      "carried_by_count": 9
+      "carried_by_count": 10
     },
     {
       "column": "OrgName",
@@ -4517,13 +4642,14 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "seventime",
         "tripletex",
         "upsales",
         "visma_eaccounting",
         "visma_economic"
       ],
-      "carried_by_count": 6
+      "carried_by_count": 7
     },
     {
       "column": "OrganisationNumber",
@@ -4540,9 +4666,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Price",
@@ -4598,9 +4725,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "ProjectId",
@@ -4633,12 +4761,13 @@
       "connectors": [
         "favrit",
         "fortnox",
+        "hubspot",
         "shopify",
         "tripletex",
         "visma_economic",
         "xledger"
       ],
-      "carried_by_count": 6
+      "carried_by_count": 7
     },
     {
       "column": "PurchasePrice",
@@ -4969,9 +5098,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "TransactionDate",
@@ -5079,9 +5209,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "isActive",
@@ -5099,9 +5230,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "isVATIncluded",

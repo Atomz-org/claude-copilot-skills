@@ -10,9 +10,9 @@ and not as a flag.
 
 identifies a person on its own — never select it into a shared dashboard, an export, or a sample; hash or drop it
 
-- **AdditionalPhone** — carried by: fortnox, shopify
+- **AdditionalPhone** — carried by: fortnox, hubspot, shopify
   - Phone2 field in Fortnox
-- **Email** — carried by: fortnox, shopify
+- **Email** — carried by: fortnox, hubspot, shopify
   - Customer email. Nullable — Shopify permits phone-only customers.
 - **RecipientEmail** — carried by: fortnox, shopify
   - Additional email details, EmailAddressTo
@@ -23,5 +23,5 @@ identifies a person on its own — never select it into a shared dashboard, an e
 
 re-identifies in combination with other columns — safe only aggregated, never row-level beside a name, a date of birth, or a postcode
 
-- **Address** — carried by: fortnox, shopify
+- **Address** — carried by: fortnox, hubspot, shopify
   - Address1 field in Fortnox

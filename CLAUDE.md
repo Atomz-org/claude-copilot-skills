@@ -356,6 +356,7 @@ ones. `scripts/use_case_sync.py` runs every stage in dependency order and report
 ```bash
 python3 scripts/use_case_sync.py --init <slug>                       # scaffold a use-case
 python3 scripts/use_case_sync.py --use-case <slug> --graphify-update # regenerate everything
+python3 scripts/use_case_sync.py --use-case <slug> --with-column-lineage  # + column edges
 python3 scripts/use_case_sync.py --all --check                       # the CI gate form
 ```
 
@@ -366,28 +367,32 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 | `annotations` | `ontology/column-annotations.json` — what each column *means* | `annotations.yml`, column-memory |
 | `ontology` | `ontology/connectors/*.ttl`, `topology/*.ttl` | `connectors.yml`, annotations |
 | `index` | `ontology/index.json` — the machine-facing projection | same generator pass |
+| `semantic` | `dbt_project/models/semantic/*.yml` — the MetricFlow layer | `index.json`, the project's `unique` tests |
 | `seeds` | `dbt_project/seeds/sample/*.csv` | manifest, sqlglot, reference data |
 | `graphify` | the code graph, rebuilt | `--graphify-update` |
 | `graph` | dbt lineage + connector/concept topology merged into `graphify-out/graph.json` | manifest |
 | `alignment` | the convention-drift verdict | a dbt project |
-| `wren` | `wren/` — the WrenAI semantic-layer project | manifest, catalog.json, wrenai CLI |
+| `wren` | `wren/` — the WrenAI project, and its joins + metric views back into the graph | manifest, catalog.json, wrenai CLI |
 
 The `wren` stage is sequenced last on purpose: it projects the artifacts the earlier
 stages just refreshed (`index.json`, `column-memory.json`), so running it earlier would
 enrich from the previous generation.
 
-`columns → annotations → ontology` is one chain, and it is the whole path from raw data to
-a served semantic layer:
+`columns → annotations → ontology → semantic` is one chain, and it is the whole path from
+raw data to a served semantic layer and back into the graph agents orient with:
 
 ```
 raw layer ─ taxonomy ─┐
-                      ├─ columns ─ annotations ─ ontology ─ wren ─ BI / MCP
-dbt models ───────────┘             (decisions)   (RDF+index)  (knowledge)
+                      ├─ columns ─ annotations ─ ontology ─ semantic ─ wren ─ BI / MCP
+dbt models ───────────┘             (decisions)   (RDF+index) (MetricFlow) (knowledge)
+                                                                             │
+                       graphify ◄──── joins + metric views ──────────────────┘
 ```
 
 Each link reads the one before it. Annotations are keyed on the conformed columns
 `columns` derives; the ontology projects them into `topology/column-semantics.ttl` and
-`index.json`'s `column_semantics`; the `wren` stage turns that into
+`index.json`'s `column_semantics`; `semantic` turns those facets into MetricFlow entities,
+dimensions, and measures; the `wren` stage compiles each metric to an MDL view and writes
 `knowledge/rules/column-semantics.md` and `knowledge/caveats/pii.md`. Run `ontology` first
 — where it used to sit — and every artifact still regenerates, every stage still reports
 `ok`, and the ontology describes the previous generation's columns.
@@ -751,6 +756,114 @@ cannot convey: `Price` is per unit and `QuantityInStock` is a level, so both loo
 and both produce a plausible wrong number. It also states what it does not cover — a file
 listing 89 columns and silent about the other 183 reads as complete, and an agent then
 assumes defaults for the rest.
+
+### From meaning to a metric — `scripts/ontology_to_semantic.py`
+
+The annotations say what a column *is*. MetricFlow is what turns that into something an
+agent can *ask*, and `wren_context_sync.py` already compiles every MetricFlow metric to an
+MDL view so `SELECT * FROM revenue` through the engine is the metric. The middle was empty:
+measured before this, **89 annotated conformed columns, 17 of them measures, and zero
+semantic models** — so the Wren stage projected no metric at all, and "how many customers"
+returned a table list.
+
+```bash
+python3 scripts/ontology_to_semantic.py --use-case <slug> --dry-run   # what would land
+python3 scripts/use_case_sync.py --use-case <slug> --stage semantic   # the stage
+```
+
+The mapping is mechanical, because every facet already answers a MetricFlow question —
+`identifier` → entity, `timestamp` → time dimension with the granularity `unit: date`
+carries, `dimension|text|flag` → categorical, `measure` → measure with the aggregation
+`additivity` decides, `pii: direct` → withheld (rule 17). What it will not supply is the two
+facts nobody wrote down, and both refusals are the point:
+
+- **A primary entity comes from a `unique` test, never from a name shape.** `CustomerId` is
+  a key in the model that issued it and not in a union of six systems that each issued their
+  own. A `unique` test is the project stating the grain in a form that fails when it is
+  wrong — rule 21 — so the semantic layer's coverage is a function of test discipline rather
+  than of this script's cleverness. Measured: **6 semantic models, 20 concepts blocked on a
+  test they already owe**, each named.
+- **`agg: sum` comes from a recorded additivity** (rule 11). Non-additive is not a measure at
+  all; semi-additive needs `non_additive_dimension`, which names a decision; unrecorded is
+  refused because `sum` is what a reader already assumes.
+
+The layer is the consumer layer (`logic_bi_*`), not the union and not the per-connector
+model: rule 43 puts semantic models on marts and rule 7 wants one entity defined once, so
+declaring `customer` primary in nineteen `fortnox_bi_*`/`shopify_bi_*` models would be
+nineteen definitions of one entity. `LOGIC_PREFIX` is imported from `ontology_to_dbt` rather
+than restated, so the generator that writes those models and the one that describes them
+cannot disagree about which layer they are.
+
+Three defects were found by reading the output, and one by running `dbt parse`:
+
+- **A key and its label collide.** `dim_accounts` carries `MainAccountId` *and*
+  `MainAccount`; stripping the suffix names both `main_account`, which MetricFlow rejects.
+  The stripped form is used only when nothing else in the model answers to it.
+- **A foreign entity that joins to nothing is not a join.** Resolving every `*Id` in the
+  contract gave `number` and `account_class` as entities — 9 of them reaching no primary —
+  so an agent could write a join that plans and returns nothing. Foreign entities now
+  resolve against the primaries this same generation declares, and the rest are reported.
+  Same rule `connector_semantics_derive.py` applies to a dangling `*_id`.
+- **A time dimension without a granularity is not a dimension** (rule 44), and only the
+  annotation's own `unit: date` evidences one.
+- **A semantic layer with no time spine does not degrade — it stops the project parsing.**
+  `Parsing Error: The semantic layer requires a time spine model ... none was found`, on a
+  plain `dbt parse`, with no metric involved: one `time` dimension is enough. Every stage
+  after `semantic` reads the manifest, so writing the file would have taken the ontology,
+  the seeds, the graph merge and the whole Wren project down to add one metric. The spine is
+  not derivable either — it needs `dbt_utils` in `packages.yml`, which this project does not
+  install, and a start date that is a decision (`start_years: {}` is per-org and empty). So
+  the generator **derives everything, writes nothing, and names the remedy**; `--dry-run`
+  shows exactly what lands the moment a spine exists.
+
+### The loop back — Wren's facets into graphify
+
+The Graphify-first rule makes `graphify query` the first move, so the serving tier's own
+vocabulary should be answerable there. It mostly already is, and **the first version of this
+merge claimed otherwise and was wrong** — worth recording, because the reasoning that
+justified the ontology fragment does not transfer:
+
+> graphify parses YAML. Measured on the committed tree: **8 view nodes, 191 model nodes,
+> 334 knowledge nodes**, plus the join edges, which it derives independently from the
+> project's own `relationships` tests in `schema.yml`. The `.ttl` case is the opposite —
+> graphify's detector puts Turtle in no category at all, which is why *that* topology is
+> invisible without a merge and this one is not.
+
+So this fragment **upgrades nodes and edges that already exist**; it does not discover them,
+and the honest contribution is three facets a YAML walk cannot read:
+
+| Added | graphify already had | Why it is worth a merge |
+|---|---|---|
+| `metric_type`, `metric_grain` | a document node labelled `revenue` | "which metrics exist, at what grain" becomes a node property instead of a file to open |
+| `join_condition`, Wren cardinality | `dbt_fk_column` from the test | the predicate is what an agent writes; the column is what it would have to reconstruct one from |
+| `measures` edges, view → model | `references` edges, model → view, matched by name | graphify has no SQL parser, so the direction it derives is the one the view's `statement` does not state |
+
+```bash
+python3 scripts/wren_context_sync.py --use-case <slug> --merge-graphify
+```
+
+It runs inside the `wren` stage rather than beside it, because the never-update-after rule
+binds it to the same ordering as every other merge and `graphify` is already sequenced
+ahead. Read from the **committed** `wren/` tree, not from the generation in memory, so the
+fragment rebuilds in a clone with no `wren` CLI — the same split as the dbt fragment being
+committed while the manifest is not. Endpoints resolve through
+`dbt_manifest_to_graphify.node_id()`, and a relationship naming a model the manifest does
+not have is **dropped and counted**: `build_merge` would otherwise mint a bare stub, and a
+stub is indistinguishable from a real model to everything reading the graph afterwards.
+
+Three details that were bugs first:
+
+- **`file_type` stays as graphify classified it.** Emitting `code` for a `metadata.yml`
+  reclassified 8 nodes the detector had right — a regression dressed as enrichment, and
+  pinned by `test_the_merge_does_not_reclassify_a_node_graphify_already_typed`.
+- **A wren model name is resolved through the importer's own alias rule.** Reproducing
+  "alias or name" by hand mis-attributes exactly the models `_unique_wren_names` had to
+  rename — the ones whose alias collided.
+- **The dbt fragment is now sorted.** Node order followed the manifest's dict order, which
+  follows dbt's parse order, which differs between a partial parse and a full one: re-running
+  `artifacts/refresh.sh` produced a **1.1 MB diff with zero content change** — same 757
+  nodes, same 1383 edges, none added, removed, or altered. A reviewer cannot tell that from a
+  real diff, and `build_merge` reads both as sets, so order carried no meaning to lose.
 
 ### Serving it later — `index.json`
 
