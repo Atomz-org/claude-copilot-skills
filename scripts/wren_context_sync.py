@@ -232,10 +232,29 @@ def concepts_markdown(index: Dict[str, Any], slug: str) -> Optional[str]:
     return "\n".join(lines) + "\n"
 
 
-def contracts_markdown(memory: Dict[str, Any], slug: str) -> Optional[str]:
+def contracts_markdown(memory: Dict[str, Any], slug: str,
+                       index: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    """Conformed column lists per concept, with each supplier's status attached.
+
+    The supplier list comes from the adapter models the manifest holds, and a connector
+    has those before its ingestion job has ever run — so a flat list states that a
+    connector supplies a concept when it has landed no rows. That is the defect CLAUDE.md
+    records for graph edges ("naive traversal once answered 'ten connectors supply
+    Account' when five were catalogue expectations") reproduced in the file an agent reads
+    *before writing SQL*: filtering by such a supplier returns zero rows and no error.
+
+    Keyed on `ingestion`, not `status`. `status: planned` is tested to mean nothing at all
+    is known about a connector, so it never has adapter models to appear here in the first
+    place; the connector this distinction exists for is the opposite case — adapters
+    written and registered, raw dataset not yet landed.
+    """
     contracts = memory.get("contracts") or []
     if not contracts:
         return None
+    pending_connectors = {
+        str(c.get("key")) for c in ((index or {}).get("connectors") or [])
+        if c.get("ingestion") == "pending"
+    }
     lines = [GENERATED_HEADER.format(slug=slug), "", "# Column contracts", ""]
     lines += [
         "Conformed column lists per concept, derived from parsed column lineage across",
@@ -248,7 +267,8 @@ def contracts_markdown(memory: Dict[str, Any], slug: str) -> Optional[str]:
     for c in sorted(contracts, key=lambda x: x.get("concept", "")):
         adapters = c.get("adapters") or {}
         supplier_note = ", ".join(
-            f"{k} ({v})" for k, v in sorted(adapters.items())
+            f"{k} ({v})" + (" [no data yet — ingestion pending]" if k in pending_connectors else "")
+            for k, v in sorted(adapters.items())
         )
         lines.append(f"## {c.get('concept')}")
         lines.append("")
@@ -1261,7 +1281,8 @@ def generate(cli: str, use_case: Path, slug: str, manifest_path: Path,
         ("knowledge/rules/ontology-concepts.md",
          concepts_markdown(_optional_json(use_case / "ontology/index.json"), slug)),
         ("knowledge/rules/column-contracts.md",
-         contracts_markdown(_optional_json(use_case / "ontology/column-memory.json"), slug)),
+         contracts_markdown(_optional_json(use_case / "ontology/column-memory.json"), slug,
+                            _optional_json(use_case / "ontology/index.json"))),
         ("knowledge/rules/column-semantics.md",
          semantics_markdown(_optional_json(use_case / "ontology/column-annotations.json"), slug)),
         ("knowledge/caveats/adapter-drift.md",

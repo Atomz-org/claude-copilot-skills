@@ -542,6 +542,47 @@ def test_column_contracts_points_at_the_meaning_it_does_not_carry() -> None:
     assert "column-semantics.md" in md and "pii.md" in md
 
 
+def test_a_supplier_with_no_landed_data_is_not_listed_as_a_plain_supplier() -> None:
+    """A connector has adapter models before its ingestion job has ever run.
+
+    The supplier list is read off the manifest, so a connector whose raw dataset does not
+    exist yet still appears there. Flattening that is the defect CLAUDE.md records for
+    graph edges — "naive traversal once answered 'ten connectors supply Account' when five
+    were catalogue expectations" — reproduced in the file an agent reads *before writing
+    SQL*. Filtering by such a supplier returns zero rows and no error.
+
+    Keyed on `ingestion`, not `status`: a `status: planned` connector is tested to have no
+    adapter models at all, so it never reaches this list.
+    """
+    memory = {"contracts": [{
+        "concept": "dim_customers", "conformed": ["CustomerId"],
+        "adapters": {"fortnox": "fortnox_erp_bi_dim_customers",
+                     "hubspot": "hubspot_erp_bi_dim_customers"},
+    }]}
+    index = {"connectors": [
+        {"key": "fortnox", "status": "implemented", "ingestion": "landed"},
+        {"key": "hubspot", "status": "implemented", "ingestion": "pending"},
+    ]}
+    md = wcs.contracts_markdown(memory, "toy", index)
+    supplier_line = next(ln for ln in md.splitlines() if ln.startswith("Suppliers:"))
+    assert "hubspot (hubspot_erp_bi_dim_customers) [no data yet — ingestion pending]" in supplier_line
+    assert "fortnox (fortnox_erp_bi_dim_customers)," in supplier_line
+    assert "fortnox (fortnox_erp_bi_dim_customers) [no data" not in supplier_line
+
+
+def test_the_supplier_list_renders_without_an_index() -> None:
+    """The index is optional; absent, every supplier is reported unqualified.
+
+    Unavailable is not failed — and it must not silently mark every connector pending
+    either, which would be the same false statement pointed the other way.
+    """
+    memory = {"contracts": [{"concept": "dim_customers", "conformed": ["CustomerId"],
+                             "adapters": {"fortnox": "fortnox_erp_bi_dim_customers"}}]}
+    md = wcs.contracts_markdown(memory, "toy")
+    assert "fortnox (fortnox_erp_bi_dim_customers)" in md
+    assert "ingestion pending" not in md
+
+
 def test_enrichment_files_carry_the_generated_header() -> None:
     md = wcs.metrics_markdown(Manifest({"metrics": {
         "metric.p.revenue": {"name": "revenue", "type": "simple",

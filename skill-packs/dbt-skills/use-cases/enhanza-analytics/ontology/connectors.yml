@@ -76,10 +76,25 @@ connectors:
   # erp_bi_<concept> union model, and claiming a concept with no union model is what left
   # upsales asserting four facts with nothing behind them. See global_configs.sql.
   # No region: HubSpot is not sold per-market and the branch declared none — rule 5.
+  #
+  # `ingestion: pending` — the adapters exist and are registered, and the raw dataset does
+  # not: models/sources.yml states there is no `hubspot_api_<uid>` yet and that every table
+  # name in it is a specification for the ingestion job, not an observed schema. That is a
+  # different fact from `status`, which is why it is a different field. `status: planned`
+  # is tested to mean *nothing* is known — no source tables, no models, no mappings — so
+  # demoting HubSpot to it would assert its adapter models do not exist while they sit in
+  # the manifest, and `implemented` alone reads as "you can query this".
+  #
+  # What it changes: index.json carries it, and column-contracts.md — the file an agent
+  # reads before writing SQL — marks HubSpot's supplier entries `[planned — no data yet]`
+  # instead of listing it flat beside Fortnox. Filtering by a supplier that has landed no
+  # rows returns zero rows and no error, which is the failure this makes visible.
+  # Remove the field when the ingestion job runs and the staging models enumerate columns.
   - key: hubspot
     name: HubSpot
     kind: crm
     status: implemented
+    ingestion: pending
 
   # ---- implemented: commerce / POS ----------------------------------------------------
   - key: shopify

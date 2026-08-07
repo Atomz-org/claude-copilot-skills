@@ -2,7 +2,7 @@
 
 - dbt project: `enhanza_erp_bi`
 - dbt profile/target: `enhanza_sample.dev`
-- imported models: 103
+- imported models: 95
 - imported sources: 100
 - imported relationships: 101
 
@@ -377,19 +377,3 @@ Structural metadata comes from `manifest.json` and `catalog.json`. The sections 
 - logic_bi_fact_vouchers.ReferenceNumber: not_null unknown
 - logic_bi_fact_vouchers.SupplierId: not_null unknown
 - logic_bi_fact_vouchers.VoucherSeriesId: not_null unknown
-- hubspot_bi_dim_company.[NEEDS INPUT] primary key: not_null unknown
-- dim_contacts.[NEEDS INPUT] primary key: not_null unknown
-- hubspot_bi_dim_customers.[NEEDS INPUT] primary key: not_null unknown
-- dim_deal_stages.[NEEDS INPUT] primary key: not_null unknown
-- dim_pipelines.[NEEDS INPUT] primary key: not_null unknown
-- fact_deals.[NEEDS INPUT] primary key: not_null unknown
-- fact_engagements.[NEEDS INPUT] primary key: not_null unknown
-- fact_tickets.[NEEDS INPUT] primary key: not_null unknown
-- hubspot_bi_dim_company.[NEEDS INPUT] primary key: unique unknown
-- dim_contacts.[NEEDS INPUT] primary key: unique unknown
-- hubspot_bi_dim_customers.[NEEDS INPUT] primary key: unique unknown
-- dim_deal_stages.[NEEDS INPUT] primary key: unique unknown
-- dim_pipelines.[NEEDS INPUT] primary key: unique unknown
-- fact_deals.[NEEDS INPUT] primary key: unique unknown
-- fact_engagements.[NEEDS INPUT] primary key: unique unknown
-- fact_tickets.[NEEDS INPUT] primary key: unique unknown
