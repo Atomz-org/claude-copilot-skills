@@ -1,3 +1,7 @@
 [submodule "external/WrenAI"]
 	path = external/WrenAI
 	url = https://github.com/PackMaaan/WrenAI
+[submodule "external/lightdash"]
+	path = external/lightdash
+	url = https://github.com/PackMaaan/lightdash
+	shallow = true

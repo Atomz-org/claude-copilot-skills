@@ -8,6 +8,14 @@
 # `sm init` writes a default copy only when none exists and never overwrites
 # this one, so re-running init is safe.
 
+# --- Pinned upstream submodules --------------------------------------------
+# A submodule's .claude/ and skills/ are upstream's harness, not this repository's:
+# rule 6 (fix the pack, never the mirror) has no pack to fix for files we do not
+# own, and rule 10 scopes this scan to the harness this repo ships. Found the hard
+# way: external/lightdash ships a SKILL.md whose frontmatter does not parse, which
+# put an upstream defect inside this repository's gate budget.
+external/
+
 # --- Version control, dependencies, OS noise (upstream defaults) -------------
 .git/
 node_modules/
