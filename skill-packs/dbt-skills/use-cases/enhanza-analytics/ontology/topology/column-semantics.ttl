@@ -123,7 +123,7 @@ col:AdditionalPhone a conn:ConformedColumn ;
     conn:role "dimension" ;
     conn:pii "direct" ;
     conn:realises topo:Customer ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Phone2 field in Fortnox"@en .
 
 col:Address a conn:ConformedColumn ;
@@ -131,7 +131,7 @@ col:Address a conn:ConformedColumn ;
     conn:role "dimension" ;
     conn:pii "quasi" ;
     conn:realises topo:Customer ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Address1 field in Fortnox"@en .
 
 col:Amount a conn:ConformedColumn ;
@@ -260,7 +260,7 @@ col:Comments a conn:ConformedColumn ;
     conn:realises topo:Offer ;
     conn:realises topo:Order ;
     conn:realises topo:SalaryTransaction ;
-    conn:carriedBy "4"^^xsd:integer ;
+    conn:carriedBy "5"^^xsd:integer ;
     skos:definition "Salary: Comments to the salary transactions if any"@en .
 
 col:ContributionValue a conn:ConformedColumn ;
@@ -299,7 +299,7 @@ col:CostCenterId a conn:ConformedColumn ;
     conn:realises topo:SupplierInvoiceRow ;
     conn:realises topo:SupplierInvoice ;
     conn:realises topo:Voucher ;
-    conn:carriedBy "4"^^xsd:integer ;
+    conn:carriedBy "5"^^xsd:integer ;
     skos:definition "Foreign key to dim_cost_centers"@en .
 
 col:Country a conn:ConformedColumn ;
@@ -311,7 +311,7 @@ col:Country a conn:ConformedColumn ;
     conn:realises topo:Invoice ;
     conn:realises topo:Offer ;
     conn:realises topo:Order ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Customer and Supplier's address, country"@en .
 
 col:Currency a conn:ConformedColumn ;
@@ -356,7 +356,7 @@ col:CustomerId a conn:ConformedColumn ;
     conn:realises topo:Order ;
     conn:realises topo:PurchaseOrder ;
     conn:realises topo:Voucher ;
-    conn:carriedBy "4"^^xsd:integer ;
+    conn:carriedBy "5"^^xsd:integer ;
     skos:definition "Unique identifyer of a customer in your workspace"@en .
 
 col:Date a conn:ConformedColumn ;
@@ -377,7 +377,7 @@ col:DefaultDeliveryType a conn:ConformedColumn ;
     conn:role "dimension" ;
     conn:pii "none" ;
     conn:realises topo:Customer ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Customer's default invoice delivery type"@en .
 
 col:DefaultTemplate a conn:ConformedColumn ;
@@ -385,7 +385,7 @@ col:DefaultTemplate a conn:ConformedColumn ;
     conn:role "dimension" ;
     conn:pii "none" ;
     conn:realises topo:Customer ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Customer's default invoice template"@en .
 
 col:Description a conn:ConformedColumn ;
@@ -424,7 +424,7 @@ col:Email a conn:ConformedColumn ;
     conn:pii "direct" ;
     conn:realises topo:Customer ;
     conn:realises topo:Supplier ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Customer email. Nullable — Shopify permits phone-only customers."@en .
 
 col:EmployeeId a conn:ConformedColumn ;
@@ -476,7 +476,7 @@ col:FirstInvoiceDate a conn:ConformedColumn ;
     conn:pii "none" ;
     conn:realises topo:Customer ;
     conn:realises topo:Supplier ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "The earliest invoice date for the customer / supplier available in your synced data"@en .
 
 col:InvoiceDate a conn:ConformedColumn ;
@@ -561,7 +561,7 @@ col:Name a conn:ConformedColumn ;
     conn:realises topo:Stockpoint ;
     conn:realises topo:Supplier ;
     conn:realises topo:Stocktaking ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Full customer/supplier name and number"@en .
 
 col:Net a conn:ConformedColumn ;
@@ -677,7 +677,7 @@ col:OrgId a conn:ConformedColumn ;
     conn:realises topo:SupplierInvoiceRow ;
     conn:realises topo:SupplierInvoice ;
     conn:realises topo:Voucher ;
-    conn:carriedBy "9"^^xsd:integer ;
+    conn:carriedBy "10"^^xsd:integer ;
     skos:definition "Unique identifier of your organisation that can be found in the Enhanza app"@en .
 
 col:OrgName a conn:ConformedColumn ;
@@ -685,7 +685,7 @@ col:OrgName a conn:ConformedColumn ;
     conn:role "text" ;
     conn:pii "none" ;
     conn:realises topo:Company ;
-    conn:carriedBy "6"^^xsd:integer ;
+    conn:carriedBy "7"^^xsd:integer ;
     skos:definition "Your company(s) in Fortnox"@en .
 
 col:OrganisationNumber a conn:ConformedColumn ;
@@ -694,7 +694,7 @@ col:OrganisationNumber a conn:ConformedColumn ;
     conn:pii "none" ;
     conn:realises topo:Customer ;
     conn:realises topo:Supplier ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Organisation ID of your company(s) used as a primary key"@en .
 
 col:Price a conn:ConformedColumn ;
@@ -723,7 +723,7 @@ col:PriceListId a conn:ConformedColumn ;
     conn:role "identifier" ;
     conn:pii "none" ;
     conn:realises topo:Customer ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Customer's default price list ID, no relationship since it's a deprecated dimension"@en .
 
 col:ProjectId a conn:ConformedColumn ;
@@ -747,7 +747,7 @@ col:ProjectId a conn:ConformedColumn ;
     conn:realises topo:SupplierInvoiceRow ;
     conn:realises topo:SupplierInvoice ;
     conn:realises topo:Voucher ;
-    conn:carriedBy "6"^^xsd:integer ;
+    conn:carriedBy "7"^^xsd:integer ;
     skos:definition "Foreign key to dim_projects"@en .
 
 col:PurchasePrice a conn:ConformedColumn ;
@@ -907,7 +907,7 @@ col:TemplateReference a conn:ConformedColumn ;
     conn:role "dimension" ;
     conn:pii "none" ;
     conn:realises topo:Customer ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Address2 field in Fortnox"@en .
 
 col:TransactionDate a conn:ConformedColumn ;
@@ -958,7 +958,7 @@ col:Website a conn:ConformedColumn ;
     conn:role "dimension" ;
     conn:pii "none" ;
     conn:realises topo:Customer ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "WWW field in Fortnox"@en .
 
 col:isActive a conn:ConformedColumn ;
@@ -968,7 +968,7 @@ col:isActive a conn:ConformedColumn ;
     conn:realises topo:Customer ;
     conn:realises topo:Stockpoint ;
     conn:realises topo:Supplier ;
-    conn:carriedBy "2"^^xsd:integer ;
+    conn:carriedBy "3"^^xsd:integer ;
     skos:definition "Indicates whether the article is currently active"@en .
 
 col:isVATIncluded a conn:ConformedColumn ;

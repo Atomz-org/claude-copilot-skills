@@ -1,0 +1,33 @@
+# enhanza_hubspot — the HubSpot connector as a dbt package.
+#
+# Installed by one `- local: packages/hubspot` line in the root packages.yml; enabled
+# per tenant by the root-level `is_hubspot_enabled` var. Mechanism macros (model_alias,
+# auto_config, add_erp_fields, erp_union) resolve from the ROOT project — dbt Core never
+# searches sibling packages for unqualified macros — so this package declares no macro
+# dependency and carries only what it owns: its models, its sources, and any macro used
+# solely here.
+#
+# The first CRM connector in this project. Only `companies` and `account_details` reach
+# the unified layer, via the two hubspot_erp_bi_* adapters in staging/; deal, ticket,
+# pipeline, and engagement models are source-aligned by decision, so a CRM concept with
+# no erp_bi_<concept> union model is never claimed in the registry.
+name: 'enhanza_hubspot'
+version: '1.0.0'
+config-version: 2
+require-dbt-version: [">=1.9.0", "<2.0.0"]
+
+model-paths: ["models"]
+
+models:
+  enhanza_hubspot:
+    +materialized: view
+    +tags: ['hubspot']
+    # +enabled lives in the ROOT dbt_project.yml under `enhanza_hubspot:` — dbt
+    # renders CLI vars fully only in the root project yml; declared here, the
+    # gate read its default and silently disabled the whole package.
+    staging:
+      +schema: hubspot_staging
+      +tags: ['staging']
+    hubspot_bi:
+      +schema: hubspot_bi
+      +tags: ['bi']

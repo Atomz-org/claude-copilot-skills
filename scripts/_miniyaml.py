@@ -182,7 +182,25 @@ def _parse_mapping(lines: List[Tuple[int, str, int]], index: int,
         if rest in (">", "|", ">-", "|-", ">+", "|+"):
             value, index = _block_scalar(lines, index, cur_indent, rest)
         elif rest == "":
-            value, index = _parse_block(lines, index, cur_indent)
+            # A block sequence may sit at the SAME indentation as the key it belongs to:
+            #
+            #     relationships:
+            #     - name: fct_orders_to_dim_customers
+            #
+            # which is what `wren context import dbt` emits, and legal YAML everywhere.
+            # `_parse_block` requires a deeper indent, so without this the key took the
+            # value None and the sequence was left for the caller to choke on — the error
+            # surfaced as `unexpected content '- name: ...'` from `parse()`, three frames
+            # away from the key that actually owned it.
+            #
+            # Narrow on purpose: only when the very next line *is* a sequence item at
+            # exactly this indent. `a:\nb: 1` must still read as {a: None, b: 1}.
+            if index < len(lines) and lines[index][0] == cur_indent and (
+                lines[index][1] == "-" or lines[index][1].startswith("- ")
+            ):
+                value, index = _parse_sequence(lines, index, cur_indent)
+            else:
+                value, index = _parse_block(lines, index, cur_indent)
         else:
             # A plain scalar may fold across following, more-indented lines that are
             # not themselves mapping keys or sequence items. This is common in dbt
@@ -195,8 +213,10 @@ def _parse_mapping(lines: List[Tuple[int, str, int]], index: int,
 
 def _fold_plain(lines: List[Tuple[int, str, int]], index: int, indent: int,
                 first: str) -> Tuple[str, int]:
-    if _is_flow(first) or (first and first[0] in ("'", '"')):
+    if _is_flow(first):
         return first, index
+    if first and first[0] in ("'", '"'):
+        return _fold_quoted(lines, index, indent, first)
     parts = [first]
     while index < len(lines):
         nxt_indent, nxt_content, _ = lines[index]
@@ -212,6 +232,57 @@ def _fold_plain(lines: List[Tuple[int, str, int]], index: int, indent: int,
     return " ".join(parts), index
 
 
+def _fold_quoted(lines: List[Tuple[int, str, int]], index: int, indent: int,
+                 first: str) -> Tuple[str, int]:
+    """A quoted scalar whose closing quote is on a later line.
+
+    `wren context import dbt` writes column descriptions this way, and stopping at the
+    opening line left the continuation to be read as mapping content — `line 30:
+    unexpected indentation in mapping`, on a file PyYAML reads without complaint. That is
+    the worst failure mode for a fallback parser: not a wrong value, no value at all.
+
+    Folded with spaces, like `_fold_plain`. Exact agreement with PyYAML is out of reach
+    here because the lexer drops blank lines, and a blank line inside a quoted scalar is a
+    literal newline — so the two agree on the text and can differ in its whitespace, which
+    `tests/test_miniyaml.py` states as the contract rather than leaving it to be discovered.
+    """
+    quote = first[0]
+    parts = [first]
+    if _quote_closed(first, quote):
+        return first, index
+    while index < len(lines):
+        nxt_indent, nxt_content, _ = lines[index]
+        if nxt_indent <= indent:
+            break
+        parts.append(nxt_content)
+        index += 1
+        if _quote_closed(nxt_content, quote):
+            break
+    return " ".join(parts), index
+
+
+def _quote_closed(text: str, quote: str) -> bool:
+    """Whether `text` closes a scalar opened with `quote`.
+
+    A doubled quote is an escaped one in YAML's single-quoted style (`customer''s`), and
+    a backslash escapes in the double-quoted style; both must not read as the close.
+    """
+    body = text[1:] if text.startswith(quote) else text
+    i = 0
+    while i < len(body):
+        ch = body[i]
+        if ch == quote:
+            if quote == "'" and i + 1 < len(body) and body[i + 1] == "'":
+                i += 2
+                continue
+            return True
+        if ch == "\\" and quote == '"':
+            i += 2
+            continue
+        i += 1
+    return False
+
+
 def _block_scalar(lines: List[Tuple[int, str, int]], index: int, indent: int,
                   header: str) -> Tuple[str, int]:
     """Block scalar. `>` folds newlines to spaces, `|` keeps them. The chomping
@@ -219,8 +290,16 @@ def _block_scalar(lines: List[Tuple[int, str, int]], index: int, indent: int,
     `+` keeps all — matching PyYAML so the two parsers agree."""
     style, chomp = header[0], (header[1:] or "")
     parts: List[str] = []
+    # The lexer strips indentation, so a body line's own indent has to be put back
+    # relative to the block's first line. Without this every `|` block came back
+    # left-aligned — which reads fine and silently reformats SQL, and the wren metric
+    # views are exactly that: a `statement: |` holding a whole query.
+    base: Optional[int] = None
     while index < len(lines) and lines[index][0] > indent:
-        parts.append(lines[index][1])
+        line_indent, content, _ = lines[index]
+        if base is None:
+            base = line_indent
+        parts.append(" " * max(0, line_indent - base) + content)
         index += 1
     body = " ".join(parts) if style == ">" else "\n".join(parts)
     if chomp != "-" and body:
@@ -255,6 +334,49 @@ def _is_flow(text: str) -> bool:
 # ---------------------------------------------------------------- scalars
 
 
+_DOUBLE_ESCAPES = {
+    "n": "\n", "t": "\t", "r": "\r", "0": "\0", "a": "\a", "b": "\b",
+    "f": "\f", "v": "\v", "e": "\x1b", "\\": "\\", '"': '"', "/": "/",
+    " ": " ", "N": "\x85", "_": "\xa0",
+}
+
+
+def _unquote(quote: str, body: str) -> str:
+    """Undo YAML's quoting rules for the two quoted styles.
+
+    Returning the body verbatim was wrong in both styles and read as correct in most
+    files: a single-quoted `customer''s` came back with the doubled quote, and a
+    double-quoted `\\u2014` — which is how every YAML emitter writes an em dash — came back
+    as six literal characters. Both survive a round trip through anything that only
+    displays the string, which is why they went unnoticed until the fallback parser was
+    compared against PyYAML file by file.
+    """
+    if quote == "'":
+        return body.replace("''", "'")
+    out: List[str] = []
+    i = 0
+    while i < len(body):
+        ch = body[i]
+        if ch != "\\" or i + 1 >= len(body):
+            out.append(ch)
+            i += 1
+            continue
+        nxt = body[i + 1]
+        if nxt in ("x", "u", "U"):
+            width = {"x": 2, "u": 4, "U": 8}[nxt]
+            digits = body[i + 2:i + 2 + width]
+            if len(digits) == width:
+                try:
+                    out.append(chr(int(digits, 16)))
+                    i += 2 + width
+                    continue
+                except ValueError:
+                    pass
+        out.append(_DOUBLE_ESCAPES.get(nxt, "\\" + nxt))
+        i += 2
+    return "".join(out)
+
+
 def _scalar(text: str) -> Any:
     text = text.strip()
     if not text:
@@ -264,7 +386,7 @@ def _scalar(text: str) -> Any:
     if text.startswith("[") and text.endswith("]"):
         return _flow_sequence(text[1:-1])
     if len(text) >= 2 and text[0] == text[-1] and text[0] in ("'", '"'):
-        return text[1:-1]
+        return _unquote(text[0], text[1:-1])
     lowered = text.lower()
     if lowered in ("null", "~", ""):
         return None

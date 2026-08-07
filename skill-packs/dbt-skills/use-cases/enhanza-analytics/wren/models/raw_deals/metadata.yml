@@ -1,0 +1,51 @@
+name: raw_deals
+table_reference:
+  catalog: enhanza_sample
+  schema: hubspot_api_canonical
+  table: deals
+columns:
+- name: amount
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: closedate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: createdate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: dealname
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: dealstage
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: hs_lastmodifieddate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: hs_object_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: pipeline
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_hubspot.hubspot_api.deals
+  dbt_resource_type: source

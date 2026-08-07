@@ -73,8 +73,16 @@ def use_case_dir(slug: str) -> Path:
     return _paths.require_use_case_dir(slug, REPO)
 
 
-def proposal_path(use_case: Path, target: str) -> Path:
-    return use_case / "ontology" / "proposals" / f"{target}.lm.yml"
+def proposal_path(use_case: Path, target: str, source: str = "lm") -> Path:
+    """`annotations.lm.yml` is a model's proposal; `annotations.hubspot.yml` a derived one.
+
+    The suffix is a parameter rather than a constant because more than one thing now
+    drafts an annotation — a language model here, and `connector_semantics_derive.py`
+    from a connector vendor's published schema. Both promote through `promote()` below,
+    so the promoted artifact reads as one file with one convention and the
+    `# promoted from proposals/...` comment is what records which drafted a line.
+    """
+    return use_case / "ontology" / "proposals" / f"{target}.{source}.yml"
 
 
 # ---------------------------------------------------------------------------------------
@@ -568,7 +576,7 @@ def render_proposal(target: str, slug: str, accepted: Dict[str, Dict[str, Any]],
 
 
 def promote(use_case: Path, slug: str, target: str, min_confidence: str,
-            check: bool) -> Dict[str, Any]:
+            check: bool, source: str = "lm") -> Dict[str, Any]:
     """Merge reviewed entries into the hand-authored source file.
 
     Append-only, and it never touches an entry the file already has. The generated text is
@@ -576,12 +584,15 @@ def promote(use_case: Path, slug: str, target: str, min_confidence: str,
     after promotion the artifact reads as one file with one convention, and `git log` is
     what says which lines a model drafted.
     """
-    path = proposal_path(use_case, target)
+    path = proposal_path(use_case, target, source)
     if not path.exists():
         return {"status": "skip", "reason": f"no {path.relative_to(REPO)} — run --apply first"}
     proposal = _miniyaml.load(path.read_text(encoding="utf-8")) or {}
     key = "columns" if target == "annotations" else "entities"
     entries = proposal.get(key) or {}
+    # The file states its own provenance; the suffix only located it. Promoting under a
+    # comment claiming a model wrote it would misrecord the only trace that survives.
+    provenance = str(proposal.get("source") or source)
 
     target_name = ca.SOURCE if target == "annotations" else "taxonomy.yml"
     target_path = use_case / "ontology" / target_name
@@ -612,10 +623,10 @@ def promote(use_case: Path, slug: str, target: str, min_confidence: str,
     for name in promoted:
         entry = entries[name]
         block.append(f"  {name}:")
-        block.append(f"    # promoted from proposals/{target}.lm.yml "
-                     f"(lm, confidence {entry.get('confidence')})")
+        block.append(f"    # promoted from proposals/{target}.{source}.yml "
+                     f"({provenance}, confidence {entry.get('confidence')})")
         for field, value in entry.items():
-            if field in ("reviewed", "confidence"):
+            if field in ("reviewed", "confidence", "evidence_used"):
                 continue
             if isinstance(value, list):
                 block.append(f"    {field}:")

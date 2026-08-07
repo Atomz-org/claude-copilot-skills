@@ -69,7 +69,8 @@ topo:Company a conn:Concept ;
     conn:providedBy <https://w3id.org/enhanza/connector/visma-eaccounting#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/seventime#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/upsales#connector> ;
-    rdfs:comment "6 implemented, 0 planned" .
+    conn:providedBy <https://w3id.org/enhanza/connector/hubspot#connector> ;
+    rdfs:comment "7 implemented, 0 planned" .
 
 topo:CostCenter a conn:Concept ;
     rdfs:label "dim_cost_centers" ;
@@ -90,6 +91,7 @@ topo:Customer a conn:Concept ;
     conn:providedBy <https://w3id.org/enhanza/connector/visma-eaccounting#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/seventime#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/upsales#connector> ;
+    conn:providedBy <https://w3id.org/enhanza/connector/hubspot#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/shopify#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/quickbooks#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/xero#connector> ;
@@ -97,10 +99,9 @@ topo:Customer a conn:Concept ;
     conn:providedBy <https://w3id.org/enhanza/connector/poweroffice#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/hogia-your-landlord#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/serviceprotokoll#connector> ;
-    conn:providedBy <https://w3id.org/enhanza/connector/hubspot#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/salesforce#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/dynamics365#connector> ;
-    rdfs:comment "7 implemented, 9 planned" .
+    rdfs:comment "8 implemented, 8 planned" .
 
 topo:Employee a conn:Concept ;
     rdfs:label "dim_employees" ;
@@ -227,18 +228,16 @@ topo:Activitie a conn:Concept ;
     rdfs:label "fact_activities" ;
     conn:conformsTo crm:Activity ;
     conn:providedBy <https://w3id.org/enhanza/connector/upsales#connector> ;
-    conn:providedBy <https://w3id.org/enhanza/connector/hubspot#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/salesforce#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/dynamics365#connector> ;
-    rdfs:comment "1 implemented, 3 planned" .
+    rdfs:comment "1 implemented, 2 planned" .
 
 topo:Appointment a conn:Concept ;
     rdfs:label "fact_appointments" ;
     conn:conformsTo crm:Appointment ;
     conn:providedBy <https://w3id.org/enhanza/connector/upsales#connector> ;
-    conn:providedBy <https://w3id.org/enhanza/connector/hubspot#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/salesforce#connector> ;
-    rdfs:comment "1 implemented, 2 planned" .
+    rdfs:comment "1 implemented, 1 planned" .
 
 topo:AssetRow a conn:Concept ;
     rdfs:label "fact_asset_rows" ;
@@ -356,18 +355,16 @@ topo:Opportunitie a conn:Concept ;
     rdfs:label "fact_opportunities" ;
     conn:conformsTo crm:Opportunity ;
     conn:providedBy <https://w3id.org/enhanza/connector/upsales#connector> ;
-    conn:providedBy <https://w3id.org/enhanza/connector/hubspot#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/salesforce#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/dynamics365#connector> ;
-    rdfs:comment "1 implemented, 3 planned" .
+    rdfs:comment "1 implemented, 2 planned" .
 
 topo:OpportunityRow a conn:Concept ;
     rdfs:label "fact_opportunity_rows" ;
     conn:conformsTo crm:OpportunityLine ;
     conn:providedBy <https://w3id.org/enhanza/connector/upsales#connector> ;
-    conn:providedBy <https://w3id.org/enhanza/connector/hubspot#connector> ;
     conn:providedBy <https://w3id.org/enhanza/connector/salesforce#connector> ;
-    rdfs:comment "1 implemented, 2 planned" .
+    rdfs:comment "1 implemented, 1 planned" .
 
 topo:OrderRow a conn:Concept ;
     rdfs:label "fact_order_rows" ;
