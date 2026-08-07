@@ -30,7 +30,7 @@ If you remember a single thing from this page, make it this:
 ./scripts/check.sh
 ```
 
-It answers one question — **"would this change be accepted?"** — by running the same seven
+It answers one question — **"would this change be accepted?"** — by running the same eight
 checks that run automatically when a change is submitted for review (a *pull request*),
 in the same order. A pass on your laptop means a pass at review time. When a check
 fails, it prints what the check was protecting and the exact command that fixes it, so you
