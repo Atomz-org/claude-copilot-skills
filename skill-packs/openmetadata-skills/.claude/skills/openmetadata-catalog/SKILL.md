@@ -108,7 +108,7 @@ python3 scripts/openmetadata_sync.py --use-case <slug> --push --dry-run
 python3 scripts/openmetadata_sync.py --use-case <slug> --push
 ```
 
-**Stop and ask before step 3, every time** (rule 16). It sends this use-case's
+**Stop and ask before step 3, every time** (rule 17). It sends this use-case's
 glossary, definitions, and lineage to whatever server `OPENMETADATA_SERVER_URL`
 names. Run `--dry-run` first and show the counts.
 

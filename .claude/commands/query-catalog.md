@@ -39,4 +39,4 @@ argument-hint: "[question, e.g. \"find tables related to orders\"] [use-case slu
 
 6. **Pushing is data egress.** `--push` sends this use-case's definitions and
    lineage to the configured server. Run `--dry-run` first, show the request
-   counts, and get explicit confirmation before the real push (rule 16).
+   counts, and get explicit confirmation before the real push (rule 17).

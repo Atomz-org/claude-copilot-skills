@@ -84,13 +84,36 @@ def test_every_submodule_is_shallow() -> None:
     )
 
 
-def test_every_submodule_url_is_an_open_metadata_repository() -> None:
-    """A fork would be drift with extra steps (rule 14)."""
+def test_every_submodule_points_at_a_fork_under_the_repository_account() -> None:
+    """The pin has to survive an upstream force-push, a deleted tag, or a rename.
+
+    None of those is under this repository's control, and all three turn a pinned SHA
+    into a clone that cannot be reconstructed. Pointing at a fork is the existing
+    convention here — `external/WrenAI` and `external/lightdash` predate the
+    OpenMetadata submodules and both do it.
+    """
+    prefix = f"https://github.com/{subs.FORK_ACCOUNT}/"
     for module in subs.read_gitmodules():
-        if module.path not in OPENMETADATA_SUBMODULES:
-            continue
-        assert module.url.startswith("https://github.com/open-metadata/"), (
-            f"{module.path} points at {module.url}, not upstream"
+        assert module.url.startswith(prefix), (
+            f"{module.path} points at {module.url}, not a {subs.FORK_ACCOUNT} fork"
+        )
+
+
+def test_every_fork_records_what_it_is_a_fork_of() -> None:
+    """A fork with no recorded upstream is a fork whose drift nobody can check.
+
+    Pointing at forks buys pin stability and costs the risk the WrenAI and Lightdash
+    rules already name: a fork holding a commit upstream does not have. `UPSTREAM` is
+    what makes `--verify-upstream` able to say so.
+    """
+    for module in subs.read_gitmodules():
+        assert module.path in subs.UPSTREAM, (
+            f"{module.path} has no UPSTREAM entry — record what it is a fork of"
+        )
+        owner, _, name = subs.UPSTREAM[module.path].partition("/")
+        assert owner and name, f"{module.path}: UPSTREAM is not owner/name"
+        assert owner.lower() != subs.FORK_ACCOUNT.lower(), (
+            f"{module.path}: upstream is recorded as the fork account itself"
         )
 
 
@@ -153,6 +176,9 @@ def test_an_uninitialised_submodule_is_reported_and_not_failed(monkeypatch) -> N
     absent = subs.Submodule(path="external/does-not-exist", url="https://x/y", shallow=True)
     monkeypatch.setattr(subs, "read_gitmodules", lambda: [absent])
     monkeypatch.setattr(subs, "VERSION_PINS", ())
+    # It needs a recorded upstream like any other, or the *unrecorded-fork* failure
+    # fires and this test stops measuring the thing it is named for.
+    monkeypatch.setitem(subs.UPSTREAM, "external/does-not-exist", "someone/does-not-exist")
     payload = subs.report(check=True, do_init=False)
     assert payload["ok"] is True
     assert payload["counts"][subs.ABSENT] == 1

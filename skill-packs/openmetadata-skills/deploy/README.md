@@ -45,7 +45,7 @@ export OPENMETADATA_AUTH_TOKEN=<the JWT>
 ```
 
 Nothing in this repository writes a token to disk — not a generator, not a config, not
-an MCP registration (rule 16). Every generated file uses `${OPENMETADATA_AUTH_TOKEN}`.
+an MCP registration (rule 17). Every generated file uses `${OPENMETADATA_AUTH_TOKEN}`.
 
 ## Register the warehouse before pushing anything
 

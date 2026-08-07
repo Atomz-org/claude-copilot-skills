@@ -855,8 +855,9 @@ environment variables only, never on disk.
 
 OpenMetadata is the human-facing catalog over the same dbt use-cases Wren and Lightdash
 serve: search, glossary, governance tags, and clickable lineage. Source is **eight
-shallow submodules** under `external/` (`OpenMetadata` at tag `1.13.3-release`,
-`OpenMetadataStandards`, and six reference repos), runtime is
+shallow submodules** under `external/`, each a `PackMaaan` fork like `WrenAI` and
+`lightdash` (`OpenMetadata` at tag `1.13.3-release`, `OpenMetadataStandards`, and six
+reference repos), runtime is
 `openmetadata-ingestion[dbt]==1.13.3.0` (optional, must match the server), agent surface
 is `skill-packs/openmetadata-skills/` (skill `openmetadata-catalog`, command
 `/query-catalog`), bridge is `scripts/openmetadata_sync.py`, run as the `openmetadata`
@@ -875,6 +876,14 @@ exist — `dcat:theme` is the real one, since `om:Table rdfs:subClassOf dcat:Dat
 `SERVER_PIN` in the bridge and the `external/OpenMetadata` tag disagree. Its cost is
 stated rather than discovered — **OpenMetadata is 403 MB even shallow**.
 
+**The forks buy pin stability and cost the risk of fork drift.** An upstream
+force-push, a deleted tag, or a rename each turn a pinned SHA into a clone nobody can
+reconstruct, and none is under this repository's control — that is the only thing the
+fork is for. It may never carry a commit upstream does not have, so `UPSTREAM` in
+`sync_submodules.py` records what each fork is a fork of and `--verify-upstream`
+asserts every pinned SHA exists there. Measured: **10 of 10 present upstream, zero
+drift.** It needs the network, so it is opt-in and not part of `--check`.
+
 Four rules decide whether a change here is correct:
 
 - **The pipeline is one way and the catalog never wins.** Git is the source of truth;
@@ -890,7 +899,7 @@ Four rules decide whether a change here is correct:
   it. Same disjoint-generators rule as Wren.
 - **Emit is gated; push is never implicit.** The bundle is a committed artifact, so
   `--check` compares bytes and the stage is a real CI gate. `--push` is a separate
-  command needing both env vars and explicit per-push confirmation (rule 16), and there
+  command needing both env vars and explicit per-push confirmation (rule 17), and there
   is no delete path at all — a generator that can delete a catalog entity from a bad
   artifact read is one regression away from emptying a production catalog.
 - **Nothing is invented, and the refusals are counted.** The service name is declared in

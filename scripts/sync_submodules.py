@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Report, verify, and advance this repository's pinned upstream submodules.
+"""Report, verify, and advance this repository's pinned submodules.
 
-Ten submodules under `external/`, each pinned to a SHA that is committed here. Three
-things go wrong with a pinned submodule, and none of them announces itself:
+Ten submodules under `external/`, each pointing at a fork under this repository's own
+account and pinned to a SHA committed here. The fork is not ceremony: an upstream
+force-push, a deleted tag, or a repository rename all turn a pinned SHA into a clone
+nobody can reconstruct, and none of the three is under this repository's control.
+
+Four things go wrong with a pinned submodule, and none of them announces itself:
 
 1. **The pin and the runtime drift apart.** `openmetadata-ingestion` must match the
    OpenMetadata server version exactly, and `@lightdash/cli` must match the Lightdash
@@ -12,18 +16,25 @@ things go wrong with a pinned submodule, and none of them announces itself:
 2. **A checkout is dirty or detached somewhere unexpected**, so the SHA a developer is
    reading upstream from is not the SHA the repository records — and the next
    `git submodule update` silently reverts their reading.
-3. **The submodule was never initialised**, so a generator that reads from it degrades
+3. **The fork drifts from upstream** — it holds a commit upstream never published, so
+   this repository is building against something nobody else can see. Pointing at forks
+   buys pin stability and costs exactly this risk, which the WrenAI and Lightdash rules
+   already forbid; `UPSTREAM` records what each fork is a fork *of* so the claim is
+   checkable rather than remembered.
+4. **The submodule was never initialised**, so a generator that reads from it degrades
    to "found nothing" instead of "could not look". That is the failure mode this
    repository names everywhere else: a check that passes because it read nothing.
 
-`--check` is the CI form and it holds (1) and (2). It cannot hold (3) — an
-uninitialised submodule is the normal state of a fresh clone and of any runner that
-skipped `--recursive`, so absence is reported and never fails. Unavailable is not
-failed.
+`--check` is the CI form and it holds (1) and (2). (3) needs the network, so it is
+`--verify-upstream` and opt-in — a gate that needs GitHub reachable fails on a train.
+It cannot hold (4) at all: an uninitialised submodule is the normal state of a fresh
+clone and of any runner that skipped `--recursive`, so absence is reported and never
+fails. Unavailable is not failed.
 
-    python3 scripts/sync_submodules.py                 # the report
-    python3 scripts/sync_submodules.py --check         # the CI gate
-    python3 scripts/sync_submodules.py --init          # clone what is missing, shallow
+    python3 scripts/sync_submodules.py                    # the report
+    python3 scripts/sync_submodules.py --check            # the CI gate
+    python3 scripts/sync_submodules.py --init             # clone what is missing, shallow
+    python3 scripts/sync_submodules.py --verify-upstream  # NETWORK: fork-drift check
     python3 scripts/sync_submodules.py --format json
 """
 
@@ -74,6 +85,32 @@ VERSION_PINS: Tuple[VersionPin, ...] = (
     ),
 )
 
+# Every submodule points at a fork under this account, not at upstream. That is this
+# repository's existing convention (external/WrenAI and external/lightdash predate the
+# OpenMetadata ones) and it exists so a pin survives an upstream force-push, a deleted
+# tag, or a repository rename — none of which this repository controls.
+#
+# It also creates the failure the WrenAI and Lightdash rules already name: **fork
+# drift**. A fork is for pinning and for carrying a ready-to-send patch, never for
+# holding a commit upstream does not have. The map below records what each fork is a
+# fork *of*, so the claim is checkable rather than remembered:
+# `--verify-upstream` asserts every pinned SHA also exists in the upstream repository.
+# It needs the network, so it is opt-in and not part of `--check`.
+FORK_ACCOUNT = "PackMaaan"
+
+UPSTREAM: Dict[str, str] = {
+    "external/OpenMetadata": "open-metadata/OpenMetadata",
+    "external/OpenMetadataStandards": "open-metadata/OpenMetadataStandards",
+    "external/openmetadata-demo": "open-metadata/openmetadata-demo",
+    "external/openmetadata-ai-sdk": "open-metadata/ai-sdk",
+    "external/openmetadata-sqllineage": "open-metadata/openmetadata-sqllineage",
+    "external/openmetadata-retention": "open-metadata/openmetadata-retention",
+    "external/openmetadata-dbt-action": "open-metadata/openmetadata-dbt-action",
+    "external/collate-dbt-artifacts-parser": "open-metadata/collate-dbt-artifacts-parser",
+    "external/WrenAI": "Canner/WrenAI",
+    "external/lightdash": "lightdash/lightdash",
+}
+
 # Submodules a generator reads from at runtime, and what it reads. Recorded here so the
 # report can say what breaks when one is missing, rather than leaving a reader to guess
 # whether an absent submodule matters.
@@ -123,6 +160,7 @@ class Submodule:
             "initialised": self.initialised,
             "status": self.status,
             "consumer": CONSUMERS.get(self.path, "—"),
+            "upstream": UPSTREAM.get(self.path, "UNRECORDED"),
             "notes": self.notes,
         }
 
@@ -257,6 +295,44 @@ def check_version_pins(modules: Dict[str, Submodule]) -> List[Dict[str, Any]]:
     return results
 
 
+def verify_upstream(modules: List[Submodule]) -> List[Dict[str, Any]]:
+    """Every pinned SHA must also exist upstream — the fork-drift check.
+
+    A fork is for pinning and for carrying a ready-to-send patch. A pin resolving to a
+    commit that exists only in the fork means this repository is building against
+    something upstream never published, which is the exact drift the WrenAI and
+    Lightdash rules forbid and which nothing else here would notice.
+
+    Network, so opt-in and never part of `--check`: a gate that needs GitHub to be
+    reachable fails on a train.
+    """
+    results: List[Dict[str, Any]] = []
+    for module in modules:
+        upstream = UPSTREAM.get(module.path)
+        if not upstream or not module.recorded_sha:
+            continue
+        proc = subprocess.run(
+            ["gh", "api", f"repos/{upstream}/commits/{module.recorded_sha}", "--jq", ".sha"],
+            capture_output=True, text=True,
+        )
+        found = proc.stdout.strip()
+        record = {"path": module.path, "upstream": upstream, "sha": module.recorded_sha}
+        if proc.returncode != 0 and "gh: command not found" in proc.stderr:
+            record.update(status="skip", detail="gh CLI not installed")
+        elif found == module.recorded_sha:
+            record.update(status="ok")
+        else:
+            record.update(
+                status="fail",
+                detail=(
+                    f"{module.recorded_sha[:12]} is not in {upstream} — the fork "
+                    "carries a commit upstream does not have (fork drift)"
+                ),
+            )
+        results.append(record)
+    return results
+
+
 def init_missing(modules: List[Submodule]) -> List[str]:
     """Shallow-clone whatever is absent. Never updates what is already there."""
     done: List[str] = []
@@ -269,7 +345,7 @@ def init_missing(modules: List[Submodule]) -> List[str]:
     return done
 
 
-def report(check: bool, do_init: bool) -> Dict[str, Any]:
+def report(check: bool, do_init: bool, upstream: bool = False) -> Dict[str, Any]:
     modules = read_gitmodules()
     if do_init:
         init_results = init_missing([inspect(m) for m in modules])
@@ -278,6 +354,10 @@ def report(check: bool, do_init: bool) -> Dict[str, Any]:
     inspected = [inspect(m) for m in modules]
     by_path = {m.path: m for m in inspected}
     pins = check_version_pins(by_path)
+    drift = verify_upstream(inspected) if upstream else []
+
+    # A fork with no recorded upstream is a fork nobody can check. Offline, and cheap.
+    unrecorded = [m.path for m in inspected if m.path not in UPSTREAM]
 
     # A pin mismatch or a drifted checkout is a failure; an absent submodule is not.
     # `--check` runs where nothing is initialised (a lite CI job, a fresh clone), and a
@@ -286,10 +366,14 @@ def report(check: bool, do_init: bool) -> Dict[str, Any]:
     failures = [f"{m.path}: {'; '.join(m.notes)}"
                 for m in inspected if m.status in (DRIFT, DIRTY)]
     failures += [p["detail"] for p in pins if p["status"] == "fail"]
+    failures += [d["detail"] for d in drift if d["status"] == "fail"]
+    failures += [f"{path}: no upstream recorded in UPSTREAM — say what this is a fork of"
+                 for path in unrecorded]
 
     return {
         "submodules": [m.as_record() for m in inspected],
         "version_pins": pins,
+        "upstream_drift": drift,
         "counts": {
             status: sum(1 for m in inspected if m.status == status)
             for status in (OK, ABSENT, DRIFT, DIRTY)
@@ -307,10 +391,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                         help="exit 1 on a drifted checkout or a mismatched version pin")
     parser.add_argument("--init", action="store_true",
                         help="shallow-clone any submodule that is not initialised")
+    parser.add_argument("--verify-upstream", action="store_true",
+                        help="NETWORK: assert every pinned SHA also exists in the "
+                             "upstream repository each fork was made from")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
 
-    payload = report(args.check, args.init)
+    payload = report(args.check, args.init, args.verify_upstream)
 
     if args.format == "json":
         print(json.dumps(payload, ensure_ascii=False))
@@ -321,12 +408,16 @@ def main(argv: Optional[List[str]] = None) -> int:
         for module in payload["submodules"]:
             print(f"  {mark[module['status']]:<6}{module['path']:<38}"
                   f"{(module['release'] or (module['sha'] or '?')[:12]):<24}"
-                  f"{'shallow' if module['shallow'] else 'full':<8}")
+                  f"{'shallow' if module['shallow'] else 'full':<8}"
+                  f"fork of {module['upstream']}")
             for note in module["notes"]:
                 print(f"         {note}")
         counts = payload["counts"]
         print(f"\n  {counts[OK]} ok · {counts[ABSENT]} not initialised · "
               f"{counts[DRIFT]} drifted · {counts[DIRTY]} dirty")
+        for entry in payload["upstream_drift"]:
+            detail = entry.get("detail") or f"{entry['sha'][:12]} is in {entry['upstream']}"
+            print(f"  fork [{entry['status']}] {entry['path']}: {detail}")
         for pin in payload["version_pins"]:
             detail = pin.get("detail") or f"{pin.get('declared')} == {pin.get('release')}"
             print(f"  pin  [{pin['status']}] {pin['pin']}: {detail}")

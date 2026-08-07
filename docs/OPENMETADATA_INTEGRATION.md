@@ -32,23 +32,37 @@ ontology artifacts ──► openmetadata/ bundle ──►(explicit push)──
   server's own MCP endpoint registered from
   `<use-case>/openmetadata/knowledge/mcp.md`.
 - **Configuration** is one hand-authored file per use-case, `openmetadata.yml`.
-- **Source** is eight shallow submodules under `external/`, pinned and listed below.
-  Nothing is forked and nothing is vendored: the deployment topology, the JSON
-  schemas, and the RDF vocabulary all stay upstream's to change, and this repository
-  records which commit of each it was built against.
+- **Source** is eight shallow submodules under `external/`, each pointing at a fork
+  under this repository's own account and pinned to a SHA committed here. Nothing is
+  vendored: the deployment topology, the JSON schemas, and the RDF vocabulary all stay
+  upstream's to change.
 
 ## The submodules, and which ones are load-bearing
 
-| Submodule | Pinned at | Read by | Shallow clone |
-| --- | --- | --- | --- |
-| `external/OpenMetadata` | tag `1.13.3-release` | `check_against_pinned_spec` — validates every emitted payload against the JSON schemas | 403 MB |
-| `external/OpenMetadataStandards` | `main` | `check_vocabulary` — validates every `om:` term in the RDF alignment against the OWL ontology | 18 MB |
-| `external/openmetadata-dbt-action` | `main` | reference — the workflow shape `ingestion/dbt.yaml` reproduces | <1 MB |
-| `external/openmetadata-demo` | `main` | reference — the API-lineage and MCP patterns | 7 MB |
-| `external/openmetadata-ai-sdk` | `main` | reference — the agent-surface shape `/query-catalog` mirrors | 2 MB |
-| `external/openmetadata-sqllineage` | `master` | reference — evaluated, not adopted (see below) | 3 MB |
-| `external/openmetadata-retention` | `main` | reference — evaluated, not adopted | <1 MB |
-| `external/collate-dbt-artifacts-parser` | `main` | reference — evaluated, not adopted | 1 MB |
+Each `url` is a `PackMaaan` fork, matching `external/WrenAI` and `external/lightdash`,
+which predate these. **The fork is not ceremony.** An upstream force-push, a deleted
+tag, or a repository rename each turn a pinned SHA into a clone nobody can
+reconstruct, and none of the three is under this repository's control.
+
+It buys that stability at the cost of the failure the WrenAI and Lightdash rules
+already name — a fork holding a commit upstream never published. So
+`scripts/sync_submodules.py` records what each fork is a fork *of*, and
+`--verify-upstream` asserts every pinned SHA also exists in the upstream repository.
+Measured now: **10 of 10 pins present upstream, zero drift.**
+
+| Submodule (`PackMaaan/…`) | Fork of | Pinned at | Read by | Shallow clone |
+| --- | --- | --- | --- | --- |
+| `external/OpenMetadata` | `open-metadata/OpenMetadata` | tag `1.13.3-release` | `check_against_pinned_spec` — validates every emitted payload against the JSON schemas | 403 MB |
+| `external/OpenMetadataStandards` | `open-metadata/OpenMetadataStandards` | `main` | `check_vocabulary` — validates every `om:` term in the RDF alignment against the OWL ontology | 18 MB |
+| `external/openmetadata-dbt-action` | `open-metadata/openmetadata-dbt-action` | `main` | reference — the workflow shape `ingestion/dbt.yaml` reproduces | <1 MB |
+| `external/openmetadata-demo` | `open-metadata/openmetadata-demo` | `main` | reference — the API-lineage and MCP patterns | 7 MB |
+| `external/openmetadata-ai-sdk` | `open-metadata/ai-sdk` | `main` | reference — the agent-surface shape `/query-catalog` mirrors | 2 MB |
+| `external/openmetadata-sqllineage` | `open-metadata/openmetadata-sqllineage` | `master` | reference — evaluated, not adopted (see below) | 3 MB |
+| `external/openmetadata-retention` | `open-metadata/openmetadata-retention` | `main` | reference — evaluated, not adopted | <1 MB |
+| `external/collate-dbt-artifacts-parser` | `open-metadata/collate-dbt-artifacts-parser` | `main` | reference — evaluated, not adopted | 1 MB |
+
+The fork of `ai-sdk` is renamed `openmetadata-ai-sdk` on both sides: a bare `ai-sdk` in
+a directory listing or a fork list says nothing about whose it is.
 
 Every one is `shallow = true` in `.gitmodules`, so `actions/checkout` and
 `git submodule update --init --depth 1` fetch one commit. **OpenMetadata is 403 MB even
@@ -238,7 +252,8 @@ upstream is only checkable against the commit it was made from:
 ```bash
 # the submodules (shallow; OpenMetadata alone is 403 MB)
 python3 scripts/sync_submodules.py --init
-python3 scripts/sync_submodules.py --check     # pins agree, no drifted checkout
+python3 scripts/sync_submodules.py --check              # pins agree, no drifted checkout
+python3 scripts/sync_submodules.py --verify-upstream    # NETWORK: no fork drift
 
 # the one regeneration path (the whole bundle)
 python3 scripts/use_case_sync.py --use-case enhanza-analytics --stage openmetadata
@@ -256,7 +271,7 @@ metadata ingest -c skill-packs/dbt-skills/use-cases/<slug>/openmetadata/ingestio
 # 2. count the requests without sending any
 python3 scripts/openmetadata_sync.py --use-case <slug> --push --dry-run
 
-# 3. the enrichment layer — ONLY after explicit confirmation (rule 16)
+# 3. the enrichment layer — ONLY after explicit confirmation (rule 17)
 python3 scripts/openmetadata_sync.py --use-case <slug> --push
 ```
 

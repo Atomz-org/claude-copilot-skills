@@ -80,9 +80,16 @@ Binding rules for the OpenMetadata discovery-tier integration in this repository
     component: server `1.13.3` is wheel `1.13.3.0`).
     `scripts/sync_submodules.py --check` fails when the submodule tag and
     `SERVER_PIN` disagree, so bumping one without the other cannot merge.
-    Upstream defects get a workaround in the bridge plus a ready-to-send patch
-    under `external/patches/`, never a fork of a submodule.
-15. **Upstream's schemas and vocabulary are read, never restated.**
+15. **Every submodule is a fork, and no fork may drift.** The `url` is a
+    `PackMaaan` fork, not upstream, so a pin survives an upstream force-push, a
+    deleted tag, or a rename — none of which this repository controls. That is
+    the only thing a fork is for. It may **never** carry a commit upstream does
+    not have: `scripts/sync_submodules.py --verify-upstream` asserts every pinned
+    SHA exists in the repository it was forked from, and `UPSTREAM` in that
+    module records the pairing so the claim is checkable rather than remembered.
+    An upstream defect gets a workaround in the bridge plus a ready-to-send patch
+    under `external/patches/` — never a commit on the fork.
+16. **Upstream's schemas and vocabulary are read, never restated.**
     `check_against_pinned_spec` reads the enum members and required fields from
     `external/OpenMetadata`; `check_vocabulary` reads the `om:` terms from
     `external/OpenMetadataStandards`. Both **skip** when the submodule is not
@@ -93,13 +100,13 @@ Binding rules for the OpenMetadata discovery-tier integration in this repository
 
 ## Egress
 
-16. **`--push` is data egress and is never implicit.** The `openmetadata` sync
+17. **`--push` is data egress and is never implicit.** The `openmetadata` sync
     stage emits and pushes nothing. `scripts/openmetadata_sync.py --push` sends
     the bundle to the server named by `OPENMETADATA_SERVER_URL`: never without
     explicit, per-push user confirmation, and `--dry-run` first when the target
     is unfamiliar. `OPENMETADATA_SERVER_URL` and `OPENMETADATA_AUTH_TOKEN` live
     in the environment only — no generator, config file, or MCP registration ever
     writes a token to disk.
-17. **There is no delete path, deliberately.** The bridge only PUTs and PATCHes.
+18. **There is no delete path, deliberately.** The bridge only PUTs and PATCHes.
     A generator that can delete a catalog entity from a bad artifact read is one
     regression away from emptying a production catalog.
