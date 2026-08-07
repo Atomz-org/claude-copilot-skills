@@ -13,8 +13,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          # Resolves the external/WrenAI pin on every run, so an unpushed or
-          # rewritten submodule SHA fails here instead of on the next fresh clone.
+          # Resolves every external/ pin on every run, so an unpushed or rewritten
+          # submodule SHA fails here instead of on the next fresh clone.
+          #
+          # `recursive: false` and every submodule marked `shallow = true` in
+          # .gitmodules, because external/OpenMetadata is 403 MB at depth 1 and this
+          # job runs on every push. scripts/sync_submodules.py --check verifies the
+          # pins agree once they are here.
           submodules: true
 
       - name: Set up Python
@@ -63,7 +68,7 @@ jobs:
       - name: Sync active stack from skill packs
         run: |
           chmod +x scripts/activate_skill_stack.sh
-          ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
+          ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills
 
       # .claude/, references/, and templates/ are generated from skill-packs/. If activation
       # changes a tracked file, someone edited a generated copy instead of its pack source
@@ -71,7 +76,7 @@ jobs:
       - name: Assert activation produces no drift
         run: |
           if ! git diff --exit-code --stat; then
-            echo "::error::Activation changed tracked files. Edit the pack source under skill-packs/, then re-run ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills and commit the result."
+            echo "::error::Activation changed tracked files. Edit the pack source under skill-packs/, then re-run ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills and commit the result."
             exit 1
           fi
 

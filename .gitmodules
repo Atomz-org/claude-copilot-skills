@@ -5,3 +5,36 @@
 	path = external/lightdash
 	url = https://github.com/PackMaaan/lightdash
 	shallow = true
+[submodule "external/OpenMetadataStandards"]
+	path = external/OpenMetadataStandards
+	url = https://github.com/open-metadata/OpenMetadataStandards.git
+	shallow = true
+[submodule "external/openmetadata-demo"]
+	path = external/openmetadata-demo
+	url = https://github.com/open-metadata/openmetadata-demo.git
+	shallow = true
+[submodule "external/openmetadata-ai-sdk"]
+	path = external/openmetadata-ai-sdk
+	url = https://github.com/open-metadata/ai-sdk.git
+	shallow = true
+[submodule "external/openmetadata-sqllineage"]
+	path = external/openmetadata-sqllineage
+	url = https://github.com/open-metadata/openmetadata-sqllineage.git
+	branch = master
+	shallow = true
+[submodule "external/openmetadata-retention"]
+	path = external/openmetadata-retention
+	url = https://github.com/open-metadata/openmetadata-retention.git
+	shallow = true
+[submodule "external/openmetadata-dbt-action"]
+	path = external/openmetadata-dbt-action
+	url = https://github.com/open-metadata/openmetadata-dbt-action.git
+	shallow = true
+[submodule "external/collate-dbt-artifacts-parser"]
+	path = external/collate-dbt-artifacts-parser
+	url = https://github.com/open-metadata/collate-dbt-artifacts-parser.git
+	shallow = true
+[submodule "external/OpenMetadata"]
+	path = external/OpenMetadata
+	url = https://github.com/open-metadata/OpenMetadata.git
+	shallow = true
