@@ -1,0 +1,2199 @@
+{
+  "connector": "hubspot",
+  "generated_by": "scripts/source_schema_derive.py --refresh",
+  "note": "Published raw-layer schemas, fetched from the repositories cited below. This file is committed so derivation is offline and deterministic; refresh it deliberately, never as part of a sync stage.",
+  "sources": [
+    {
+      "cite": "dlt-hub/verified-sources@master sources/hubspot/settings.py",
+      "column_count": 41,
+      "kind": "dlt_settings_py",
+      "loader": "dlt",
+      "rank": 10,
+      "table_count": 6,
+      "tables": {
+        "company": [
+          {
+            "description": "",
+            "name": "createdate"
+          },
+          {
+            "description": "",
+            "name": "domain"
+          },
+          {
+            "description": "",
+            "name": "hs_lastmodifieddate"
+          },
+          {
+            "description": "",
+            "name": "hs_object_id"
+          },
+          {
+            "description": "",
+            "name": "name"
+          }
+        ],
+        "contact": [
+          {
+            "description": "",
+            "name": "createdate"
+          },
+          {
+            "description": "",
+            "name": "email"
+          },
+          {
+            "description": "",
+            "name": "firstname"
+          },
+          {
+            "description": "",
+            "name": "hs_object_id"
+          },
+          {
+            "description": "",
+            "name": "lastmodifieddate"
+          },
+          {
+            "description": "",
+            "name": "lastname"
+          }
+        ],
+        "deal": [
+          {
+            "description": "",
+            "name": "amount"
+          },
+          {
+            "description": "",
+            "name": "closedate"
+          },
+          {
+            "description": "",
+            "name": "createdate"
+          },
+          {
+            "description": "",
+            "name": "dealname"
+          },
+          {
+            "description": "",
+            "name": "dealstage"
+          },
+          {
+            "description": "",
+            "name": "hs_lastmodifieddate"
+          },
+          {
+            "description": "",
+            "name": "hs_object_id"
+          },
+          {
+            "description": "",
+            "name": "pipeline"
+          }
+        ],
+        "product": [
+          {
+            "description": "",
+            "name": "createdate"
+          },
+          {
+            "description": "",
+            "name": "description"
+          },
+          {
+            "description": "",
+            "name": "hs_lastmodifieddate"
+          },
+          {
+            "description": "",
+            "name": "hs_object_id"
+          },
+          {
+            "description": "",
+            "name": "name"
+          },
+          {
+            "description": "",
+            "name": "price"
+          }
+        ],
+        "quote": [
+          {
+            "description": "",
+            "name": "hs_createdate"
+          },
+          {
+            "description": "",
+            "name": "hs_expiration_date"
+          },
+          {
+            "description": "",
+            "name": "hs_lastmodifieddate"
+          },
+          {
+            "description": "",
+            "name": "hs_object_id"
+          },
+          {
+            "description": "",
+            "name": "hs_public_url_key"
+          },
+          {
+            "description": "",
+            "name": "hs_status"
+          },
+          {
+            "description": "",
+            "name": "hs_title"
+          }
+        ],
+        "ticket": [
+          {
+            "description": "",
+            "name": "createdate"
+          },
+          {
+            "description": "",
+            "name": "content"
+          },
+          {
+            "description": "",
+            "name": "hs_lastmodifieddate"
+          },
+          {
+            "description": "",
+            "name": "hs_object_id"
+          },
+          {
+            "description": "",
+            "name": "hs_pipeline"
+          },
+          {
+            "description": "",
+            "name": "hs_pipeline_stage"
+          },
+          {
+            "description": "",
+            "name": "hs_ticket_category"
+          },
+          {
+            "description": "",
+            "name": "hs_ticket_priority"
+          },
+          {
+            "description": "",
+            "name": "subject"
+          }
+        ]
+      },
+      "url": "https://raw.githubusercontent.com/dlt-hub/verified-sources/master/sources/hubspot/settings.py"
+    },
+    {
+      "cite": "fivetran/dbt_hubspot_source@main models/src_hubspot.yml",
+      "column_count": 468,
+      "kind": "fivetran_src_yml",
+      "loader": "fivetran",
+      "rank": 20,
+      "table_count": 61,
+      "tables": {
+        "calendar_event": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "URL of image associated with social media event.",
+            "name": "avatar_url"
+          },
+          {
+            "description": "Value of campaign GUID associated with Task.",
+            "name": "campaign_guid"
+          },
+          {
+            "description": "|",
+            "name": "category"
+          },
+          {
+            "description": "|",
+            "name": "category_id"
+          },
+          {
+            "description": "|",
+            "name": "content_group_id"
+          },
+          {
+            "description": "ID value of the COS content object associated with the event, null for social or if nothing associated.",
+            "name": "content_id"
+          },
+          {
+            "description": "HubSpot ID of the user that the event was created by.",
+            "name": "created_by"
+          },
+          {
+            "description": "Description of Event.",
+            "name": "description"
+          },
+          {
+            "description": "If task, When the task is set to be due, otherwise when the event is/ was scheduled for; in milliseconds since the epoch.",
+            "name": "event_date"
+          },
+          {
+            "description": "Type of calendar event; for tasks this is PUBLISHING_TASK, for COS Items, this is CONTENT, for social media events, this is SOCIAL",
+            "name": "event_type"
+          },
+          {
+            "description": "The unique ID of the task.",
+            "name": "id"
+          },
+          {
+            "description": "Whether the event is recurring.",
+            "name": "is_recurring"
+          },
+          {
+            "description": "Name of Event.",
+            "name": "name"
+          },
+          {
+            "description": "TASK - HubSpot ID of the user that the task is assigned to.",
+            "name": "owner_id"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": "Preview key of content object; used for showing previews of unpublished items.",
+            "name": "preview_key"
+          },
+          {
+            "description": "Social media full name associate with event.",
+            "name": "social_display_name"
+          },
+          {
+            "description": "Social media user name associated with event.",
+            "name": "social_username"
+          },
+          {
+            "description": "For type publishing task, value of TODO or DONE, for others, a value of SCHEDULED, PUBLISHED, PUBLISHED_OR_SCHEDULED.",
+            "name": "state"
+          },
+          {
+            "description": "The list of IDs of topics associated with the associated Blog Post, if any. Otherwise null. Only populated for single task GETs and for Blog Post Tasks.",
+            "name": "topic_ids"
+          },
+          {
+            "description": "Public URL of content item.",
+            "name": "url"
+          }
+        ],
+        "company": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the company.",
+            "name": "id"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": "{{ doc(\"is_deleted\") }}",
+            "name": "is_deleted"
+          },
+          {
+            "description": "The name of the company.",
+            "name": "property_name"
+          },
+          {
+            "description": "A short statement about the company's mission and goals.",
+            "name": "property_description"
+          },
+          {
+            "description": "The date the company was added to your account.",
+            "name": "property_createdate"
+          },
+          {
+            "description": "The type of business the company performs.",
+            "name": "property_industry"
+          },
+          {
+            "description": "The street address of the company.",
+            "name": "property_address"
+          },
+          {
+            "description": "Additional address information for the company.",
+            "name": "property_address_2"
+          },
+          {
+            "description": "The city where the company is located.",
+            "name": "property_city"
+          },
+          {
+            "description": "The state where the company is located.",
+            "name": "property_state"
+          },
+          {
+            "description": "The country where the company is located.",
+            "name": "property_country"
+          },
+          {
+            "description": "The actual or estimated annual revenue of the company.",
+            "name": "property_annualrevenue"
+          }
+        ],
+        "company_property_history": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related company record.",
+            "name": "company_id"
+          },
+          {
+            "description": "{{ doc(\"history_name\") }}",
+            "name": "name"
+          },
+          {
+            "description": "{{ doc(\"history_source\") }}",
+            "name": "source"
+          },
+          {
+            "description": "{{ doc(\"history_source_id\") }}",
+            "name": "source_id"
+          },
+          {
+            "description": "{{ doc(\"history_timestamp\") }}",
+            "name": "timestamp"
+          },
+          {
+            "description": "{{ doc(\"history_value\") }}",
+            "name": "value"
+          }
+        ],
+        "contact": [
+          {
+            "description": "{{ doc(\"_fivetran_deleted\") }}",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the contact.",
+            "name": "id"
+          },
+          {
+            "description": "The email address of the contact.",
+            "name": "property_email_1"
+          },
+          {
+            "description": "The name of the contact's company.",
+            "name": "property_company"
+          },
+          {
+            "description": "The contact's first name.",
+            "name": "property_firstname"
+          },
+          {
+            "description": "The contact's last name.",
+            "name": "property_lastname"
+          },
+          {
+            "description": "The contact's email.",
+            "name": "property_email"
+          },
+          {
+            "description": "The date that the contact was created in your HubSpot account.",
+            "name": "property_createdate"
+          },
+          {
+            "description": "The contact's job title.",
+            "name": "property_jobtitle"
+          },
+          {
+            "description": "The contact's annual company revenue.",
+            "name": "property_annualrevenue"
+          },
+          {
+            "description": ">",
+            "name": "property_hs_calculated_merged_vids"
+          }
+        ],
+        "contact_form_submission": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related contact.",
+            "name": "contact_id"
+          },
+          {
+            "description": "A Unique ID for the specific form conversion.",
+            "name": "conversion_id"
+          },
+          {
+            "description": "The GUID of the form that the submission belongs to.",
+            "name": "form_id"
+          },
+          {
+            "description": "The ID of the related page.",
+            "name": "page_id"
+          },
+          {
+            "description": "The URL that the form was submitted on, if applicable.",
+            "name": "page_url"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": "A Unix timestamp in milliseconds of the time the submission occurred.",
+            "name": "timestamp"
+          },
+          {
+            "description": "The title of the page that the form was submitted on. This will default to the name of the form if no title is provided.",
+            "name": "title"
+          }
+        ],
+        "contact_list": [
+          {
+            "description": "{{ doc(\"_fivetran_deleted\") }}",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "A timestamp of the time the list was created.",
+            "name": "created_at"
+          },
+          {
+            "description": "The ID of the contact list.",
+            "name": "id"
+          },
+          {
+            "description": "The name of the contact list.",
+            "name": "name"
+          },
+          {
+            "description": "A timestamp of the time that the list was last modified.",
+            "name": "updated_at"
+          },
+          {
+            "description": "The unique identifier of the user who created the contact list.",
+            "name": "created_by_id"
+          },
+          {
+            "description": "The ID that corresponds to the type of object stored by the list.",
+            "name": "object_type_id"
+          },
+          {
+            "description": "Indicates the current status of the list's processing, such as 'COMPLETE', 'PROCESSING', 'DONE', or 'FAILED'.",
+            "name": "processing_status"
+          },
+          {
+            "description": "Specifies the type of processing applied to the list, for example, 'STATIC' for static lists or 'DYNAMIC' for dynamic lists.",
+            "name": "processing_type"
+          },
+          {
+            "description": "Represents the version number of the list, incrementing with each modification.",
+            "name": "list_version"
+          },
+          {
+            "description": "The timestamp indicating when the list's filters were last updated.",
+            "name": "filters_updated_at"
+          },
+          {
+            "description": ">",
+            "name": "metadata_error"
+          },
+          {
+            "description": ">",
+            "name": "metadata_last_processing_state_change_at"
+          },
+          {
+            "description": ">",
+            "name": "metadata_last_size_change_at"
+          },
+          {
+            "description": ">",
+            "name": "metadata_processing"
+          },
+          {
+            "description": ">",
+            "name": "metadata_size"
+          },
+          {
+            "description": ">",
+            "name": "portal_id"
+          },
+          {
+            "description": ">",
+            "name": "deleteable"
+          },
+          {
+            "description": ">",
+            "name": "dynamic"
+          }
+        ],
+        "contact_list_member": [
+          {
+            "description": "{{ doc(\"_fivetran_deleted\") }}",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The timestamp a contact was added to a list.",
+            "name": "added_at"
+          },
+          {
+            "description": "The ID of the related contact.",
+            "name": "contact_id"
+          },
+          {
+            "description": "The ID of the related contact list.",
+            "name": "contact_list_id"
+          }
+        ],
+        "contact_merge_audit": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The contact ID of the contact which the vid_to_merge contact was merged into.",
+            "name": "canonical_vid"
+          },
+          {
+            "description": "The ID of the contact.",
+            "name": "contact_id"
+          },
+          {
+            "description": "The ID of the related entity.",
+            "name": "entity_id"
+          },
+          {
+            "description": "The contact's first name.",
+            "name": "first_name"
+          },
+          {
+            "description": "The contact's last name.",
+            "name": "last_name"
+          },
+          {
+            "description": "The number of properties which were removed from the merged contact.",
+            "name": "num_properties_moved"
+          },
+          {
+            "description": "Timestamp of when the contacts were merged.",
+            "name": "timestamp"
+          },
+          {
+            "description": "The ID of the user.",
+            "name": "user_id"
+          },
+          {
+            "description": "The ID of the contact which was merged.",
+            "name": "vid_to_merge"
+          }
+        ],
+        "contact_property_history": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related contact record.",
+            "name": "contact_id"
+          },
+          {
+            "description": "{{ doc(\"history_name\") }}",
+            "name": "name"
+          },
+          {
+            "description": "{{ doc(\"history_source\") }}",
+            "name": "source"
+          },
+          {
+            "description": "{{ doc(\"history_source_id\") }}",
+            "name": "source_id"
+          },
+          {
+            "description": "{{ doc(\"history_timestamp\") }}",
+            "name": "timestamp"
+          },
+          {
+            "description": "{{ doc(\"history_value\") }}",
+            "name": "value"
+          }
+        ],
+        "deal": [
+          {
+            "description": "The ID of the deal.",
+            "name": "deal_id"
+          },
+          {
+            "description": "Whether the record was deleted.",
+            "name": "is_deleted"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": "The ID of the deal's pipeline.",
+            "name": "deal_pipeline_id"
+          },
+          {
+            "description": "The ID of the deal's pipeline stage.",
+            "name": "deal_pipeline_stage_id"
+          },
+          {
+            "description": "The ID of the deal's owner.",
+            "name": "owner_id"
+          },
+          {
+            "description": "The name you have given this deal.",
+            "name": "property_dealname"
+          },
+          {
+            "description": "A brief description of the deal.",
+            "name": "property_description"
+          },
+          {
+            "description": "The total value of the deal in the deal's currency.",
+            "name": "property_amount"
+          },
+          {
+            "description": "The day the deal is expected to close, or was closed.",
+            "name": "property_closedate"
+          },
+          {
+            "description": "The date the deal was created. This property is set automatically by HubSpot.",
+            "name": "property_createdate"
+          }
+        ],
+        "deal_company": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the company.",
+            "name": "company_id"
+          },
+          {
+            "description": "The ID of the deal.",
+            "name": "deal_id"
+          },
+          {
+            "description": "The ID of the type.",
+            "name": "type_id"
+          },
+          {
+            "description": "The association category. Either HUBSPOT_DEFINED (default label) or USER_DEFINED (custom label).",
+            "name": "category"
+          }
+        ],
+        "deal_contact": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the contact.",
+            "name": "contact_id"
+          },
+          {
+            "description": "The ID of the deal.",
+            "name": "deal_id"
+          },
+          {
+            "description": "The ID of the type.",
+            "name": "type_id"
+          },
+          {
+            "description": "The association category. Either HUBSPOT_DEFINED (default label) or USER_DEFINED (custom label).",
+            "name": "category"
+          }
+        ],
+        "deal_pipeline": [
+          {
+            "description": "{{ doc(\"_fivetran_deleted\") }}",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "Whether the stage is currently in use.",
+            "name": "active"
+          },
+          {
+            "description": "Used to determine the order in which the pipelines appear when viewed in HubSpot.",
+            "name": "display_order"
+          },
+          {
+            "description": "The human-readable label for the pipeline. The label is used when showing the pipeline in HubSpot.",
+            "name": "label"
+          },
+          {
+            "description": "The ID of the pipeline.",
+            "name": "pipeline_id"
+          },
+          {
+            "description": "A timestamp representing when the record was created.",
+            "name": "created_at"
+          },
+          {
+            "description": "A timestamp representing when the record was updated.",
+            "name": "updated_at"
+          }
+        ],
+        "deal_pipeline_stage": [
+          {
+            "description": "{{ doc(\"_fivetran_deleted\") }}",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "Whether the pipeline stage is currently in use.",
+            "name": "active"
+          },
+          {
+            "description": ">",
+            "name": "closed_won"
+          },
+          {
+            "description": "Boolean indicating if the pipeline stage is closed.",
+            "name": "is_closed"
+          },
+          {
+            "description": "Used to determine the order in which the stages appear when viewed in HubSpot.",
+            "name": "display_order"
+          },
+          {
+            "description": "The human-readable label for the stage. The label is used when showing the stage in HubSpot.",
+            "name": "label"
+          },
+          {
+            "description": "The ID of the related pipeline.",
+            "name": "pipeline_id"
+          },
+          {
+            "description": "The probability that the deal will close. Used for the deal forecast.",
+            "name": "probability"
+          },
+          {
+            "description": "The ID of the pipeline stage.",
+            "name": "stage_id"
+          },
+          {
+            "description": "A timestamp representing when the record was created.",
+            "name": "created_at"
+          },
+          {
+            "description": "A timestamp representing when the record was updated.",
+            "name": "updated_at"
+          }
+        ],
+        "deal_property_history": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related deal record.",
+            "name": "deal_id"
+          },
+          {
+            "description": "{{ doc(\"history_name\") }}",
+            "name": "name"
+          },
+          {
+            "description": "{{ doc(\"history_source\") }}",
+            "name": "source"
+          },
+          {
+            "description": "{{ doc(\"history_source_id\") }}",
+            "name": "source_id"
+          },
+          {
+            "description": "{{ doc(\"history_timestamp\") }}",
+            "name": "timestamp"
+          },
+          {
+            "description": "{{ doc(\"history_value\") }}",
+            "name": "value"
+          }
+        ],
+        "deal_stage": [
+          {
+            "description": "Boolean indicating whether the deal stage is active.",
+            "name": "_fivetran_active"
+          },
+          {
+            "description": "The Fivetran calculated exist time of the deal stage.",
+            "name": "_fivetran_end"
+          },
+          {
+            "description": "The date the deal stage was entered.",
+            "name": "_fivetran_start"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The timestamp the deal stage was entered.",
+            "name": "date_entered"
+          },
+          {
+            "description": "Reference to the deal.",
+            "name": "deal_id"
+          },
+          {
+            "description": "The relevant source of the deal stage.",
+            "name": "source"
+          },
+          {
+            "description": "Reference to the source.",
+            "name": "source_id"
+          },
+          {
+            "description": "The value of the deal stage. Typically the name of the stage.",
+            "name": "value"
+          }
+        ],
+        "email_campaign": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The app ID.",
+            "name": "app_id"
+          },
+          {
+            "description": "The app name.",
+            "name": "app_name"
+          },
+          {
+            "description": "The ID of the content.",
+            "name": "content_id"
+          },
+          {
+            "description": "The ID of the email campaign.",
+            "name": "id"
+          },
+          {
+            "description": "The name of the email campaign.",
+            "name": "name"
+          },
+          {
+            "description": "The number of messages included as part of the email campaign.",
+            "name": "num_included"
+          },
+          {
+            "description": "The number of messages queued as part of the email campaign.",
+            "name": "num_queued"
+          },
+          {
+            "description": "The email campaign sub-type.",
+            "name": "sub_type"
+          },
+          {
+            "description": "The subject of the email campaign.",
+            "name": "subject"
+          },
+          {
+            "description": "The email campaign type.",
+            "name": "type"
+          }
+        ],
+        "email_event": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the app that sent the email.",
+            "name": "app_id"
+          },
+          {
+            "description": "The timestamp of the event that caused this event.",
+            "name": "caused_by_created"
+          },
+          {
+            "description": "The event ID which uniquely identifies the event which directly caused this event. If not applicable, this property is omitted.",
+            "name": "caused_by_id"
+          },
+          {
+            "description": "The created timestamp of the event.",
+            "name": "created"
+          },
+          {
+            "description": "The ID of the related email campaign.",
+            "name": "email_campaign_id"
+          },
+          {
+            "description": "A boolean representing whether the event has been filtered out of reporting based on customer reports settings or not.",
+            "name": "filtered_event"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "The timestamp of the event that made the current event obsolete.",
+            "name": "obsoleted_by_created"
+          },
+          {
+            "description": "The event ID which uniquely identifies the follow-on event which makes this current event obsolete. If not applicable, this property is omitted.",
+            "name": "obsoleted_by_id"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": "The email address of the contact related to the event.",
+            "name": "recipient"
+          },
+          {
+            "description": "The timestamp of the SENT event related to this event.",
+            "name": "sent_by_created"
+          },
+          {
+            "description": "The event ID which uniquely identifies the email message's SENT event. If not applicable, this property is omitted.",
+            "name": "sent_by_id"
+          },
+          {
+            "description": "The type of event.",
+            "name": "type"
+          }
+        ],
+        "email_event_bounce": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "|",
+            "name": "category"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "The full response from the recipient's email server.",
+            "name": "response"
+          },
+          {
+            "description": "The status code returned from the recipient's email server.",
+            "name": "status"
+          }
+        ],
+        "email_event_click": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "{{ doc(\"email_event_browser\") }}",
+            "name": "browser"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "{{ doc(\"email_event_ip_address\") }}",
+            "name": "ip_address"
+          },
+          {
+            "description": "{{ doc(\"email_event_location\") }}",
+            "name": "location"
+          },
+          {
+            "description": "The URL of the webpage that linked to the URL clicked. Whether this is provided, and what its value is, is determined by the recipient's email client.",
+            "name": "referer"
+          },
+          {
+            "description": "The URL within the message that the recipient clicked.",
+            "name": "url"
+          },
+          {
+            "description": "{{ doc(\"email_event_user_agent\") }}",
+            "name": "user_agent"
+          }
+        ],
+        "email_event_deferred": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The delivery attempt number.",
+            "name": "attempt"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "The full response from the recipient's email server.",
+            "name": "response"
+          }
+        ],
+        "email_event_delivered": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "The full response from the recipient's email server.",
+            "name": "response"
+          },
+          {
+            "description": "An ID attached to the message by HubSpot.",
+            "name": "smtp_id"
+          }
+        ],
+        "email_event_dropped": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The 'bcc' field of the email message.",
+            "name": "bcc"
+          },
+          {
+            "description": "The 'cc' field of the email message.",
+            "name": "cc"
+          },
+          {
+            "description": "The raw message describing why the email message was dropped. This will usually provide additional details beyond 'dropReason'.",
+            "name": "drop_message"
+          },
+          {
+            "description": "The reason why the email message was dropped. See below for the possible values.",
+            "name": "drop_reason"
+          },
+          {
+            "description": "The 'from' field of the email message.",
+            "name": "from"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "The 'reply-to' field of the email message.",
+            "name": "reply_to"
+          },
+          {
+            "description": "The subject line of the email message.",
+            "name": "subject"
+          }
+        ],
+        "email_event_forward": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "{{ doc(\"email_event_browser\") }}",
+            "name": "browser"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "{{ doc(\"email_event_ip_address\") }}",
+            "name": "ip_address"
+          },
+          {
+            "description": "{{ doc(\"email_event_location\") }}",
+            "name": "location"
+          },
+          {
+            "description": "{{ doc(\"email_event_user_agent\") }}",
+            "name": "user_agent"
+          }
+        ],
+        "email_event_open": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "{{ doc(\"email_event_browser\") }}",
+            "name": "browser"
+          },
+          {
+            "description": "If provided and nonzero, the approximate number of milliseconds the user had opened the email.",
+            "name": "duration"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "{{ doc(\"email_event_ip_address\") }}",
+            "name": "ip_address"
+          },
+          {
+            "description": "{{ doc(\"email_event_location\") }}",
+            "name": "location"
+          },
+          {
+            "description": "{{ doc(\"email_event_user_agent\") }}",
+            "name": "user_agent"
+          }
+        ],
+        "email_event_print": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "{{ doc(\"email_event_browser\") }}",
+            "name": "browser"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "{{ doc(\"email_event_ip_address\") }}",
+            "name": "ip_address"
+          },
+          {
+            "description": "{{ doc(\"email_event_location\") }}",
+            "name": "location"
+          },
+          {
+            "description": "{{ doc(\"email_event_user_agent\") }}",
+            "name": "user_agent"
+          }
+        ],
+        "email_event_sent": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The 'cc' field of the email message.",
+            "name": "bcc"
+          },
+          {
+            "description": "The 'bcc' field of the email message.",
+            "name": "cc"
+          },
+          {
+            "description": "The 'from' field of the email message.",
+            "name": "from"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "The 'reply-to' field of the email message.",
+            "name": "reply_to"
+          },
+          {
+            "description": "The subject line of the email message.",
+            "name": "subject"
+          }
+        ],
+        "email_event_spam_report": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "{{ doc(\"email_event_ip_address\") }}",
+            "name": "ip_address"
+          },
+          {
+            "description": "{{ doc(\"email_event_user_agent\") }}",
+            "name": "user_agent"
+          }
+        ],
+        "email_event_status_change": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "|",
+            "name": "bounced"
+          },
+          {
+            "description": "The ID of the event.",
+            "name": "id"
+          },
+          {
+            "description": "|",
+            "name": "portal_subscription_status"
+          },
+          {
+            "description": "The email address of the person requesting the change on behalf of the recipient. If not applicable, this property is omitted.",
+            "name": "requested_by"
+          },
+          {
+            "description": "The source of the subscription change.",
+            "name": "source"
+          },
+          {
+            "description": "|",
+            "name": "subscriptions"
+          }
+        ],
+        "email_subscription": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "Whether the subscription is active.",
+            "name": "active"
+          },
+          {
+            "description": "The description of the subscription.",
+            "name": "description"
+          },
+          {
+            "description": "The ID of the email subscription.",
+            "name": "id"
+          },
+          {
+            "description": "The name of the email subscription.",
+            "name": "name"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          }
+        ],
+        "email_subscription_change": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the event that caused the subscription change.",
+            "name": "caused_by_event_id"
+          },
+          {
+            "description": "The change which occurred. This enumeration is specific to the 'changeType'; see below for the possible values.",
+            "name": "change"
+          },
+          {
+            "description": "The type of change which occurred.",
+            "name": "change_type"
+          },
+          {
+            "description": "The ID of the related email subscription.",
+            "name": "email_subscription_id"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": "The email address of the related contact.",
+            "name": "recipient"
+          },
+          {
+            "description": "The source of the subscription change.",
+            "name": "source"
+          },
+          {
+            "description": "The timestamp when this change occurred. If 'causedByEvent' is present, this will be absent.",
+            "name": "timestamp"
+          }
+        ],
+        "engagement": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": ">",
+            "name": "active"
+          },
+          {
+            "description": ">",
+            "name": "created_at"
+          },
+          {
+            "description": "The ID of the engagement.",
+            "name": "id"
+          },
+          {
+            "description": ">",
+            "name": "owner_id"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": ">",
+            "name": "timestamp"
+          },
+          {
+            "description": "One of NOTE, EMAIL, TASK, MEETING, or CALL, the type of the engagement.",
+            "name": "type"
+          }
+        ],
+        "engagement_call": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": "Boolean to mark rows that were deleted in the source database.",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": ">",
+            "name": "property_hs_createdate"
+          },
+          {
+            "description": ">",
+            "name": "timestamp"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_owner_id"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_team_id"
+          }
+        ],
+        "engagement_communication": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_deleted\") }}",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": "ID of the engagement associated with the communication.",
+            "name": "engagement_id"
+          },
+          {
+            "description": "Timestamp indicating when the communication was created.",
+            "name": "property_hs_createdate"
+          },
+          {
+            "description": "Timestamp of the communication event linked to the engagement.",
+            "name": "property_hs_timestamp"
+          },
+          {
+            "description": "Type of communication (e.g., email, call, meeting).",
+            "name": "type"
+          }
+        ],
+        "engagement_company": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related company.",
+            "name": "company_id"
+          },
+          {
+            "description": "The ID of the related engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": "The association category. Either HUBSPOT_DEFINED (default label) or USER_DEFINED (custom label).",
+            "name": "category"
+          }
+        ],
+        "engagement_contact": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related contact.",
+            "name": "contact_id"
+          },
+          {
+            "description": "The ID of the related engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": "The association category. Either HUBSPOT_DEFINED (default label) or USER_DEFINED (custom label).",
+            "name": "category"
+          }
+        ],
+        "engagement_deal": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related contact.",
+            "name": "deal_id"
+          },
+          {
+            "description": "The ID of the related engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": "The association category. Either HUBSPOT_DEFINED (default label) or USER_DEFINED (custom label).",
+            "name": "category"
+          }
+        ],
+        "engagement_email": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": ">",
+            "name": "property_hs_createdate"
+          },
+          {
+            "description": ">",
+            "name": "timestamp"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_owner_id"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_team_id"
+          }
+        ],
+        "engagement_email_cc": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The email address of the recipient.",
+            "name": "email"
+          },
+          {
+            "description": "The ID of the related engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": "The first name of the recipient.",
+            "name": "first_name"
+          },
+          {
+            "description": "The last name of the recipient.",
+            "name": "last_name"
+          }
+        ],
+        "engagement_email_to": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The email address of the recipient.",
+            "name": "email"
+          },
+          {
+            "description": "The ID of the related engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": "The first name of the recipient.",
+            "name": "first_name"
+          },
+          {
+            "description": "The last name of the recipient.",
+            "name": "last_name"
+          }
+        ],
+        "engagement_meeting": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": ">",
+            "name": "property_hs_createdate"
+          },
+          {
+            "description": ">",
+            "name": "timestamp"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_owner_id"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_team_id"
+          }
+        ],
+        "engagement_note": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The body of the note. The body has a limit of 65536 characters.",
+            "name": "body"
+          },
+          {
+            "description": "The ID of the engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": ">",
+            "name": "property_hs_createdate"
+          },
+          {
+            "description": ">",
+            "name": "timestamp"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_owner_id"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_team_id"
+          }
+        ],
+        "engagement_task": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the engagement.",
+            "name": "engagement_id"
+          },
+          {
+            "description": ">",
+            "name": "property_hs_createdate"
+          },
+          {
+            "description": ">",
+            "name": "timestamp"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_owner_id"
+          },
+          {
+            "description": ">",
+            "name": "property_hubspot_team_id"
+          }
+        ],
+        "form": [
+          {
+            "description": "Unique identifier for the form.",
+            "name": "guid"
+          },
+          {
+            "description": "The form action type or endpoint triggered upon submission.",
+            "name": "action"
+          },
+          {
+            "description": "Timestamp when the form was created.",
+            "name": "created_at"
+          },
+          {
+            "description": "CSS class applied to the form for styling purposes.",
+            "name": "css_class"
+          },
+          {
+            "description": "ID of the follow-up action or workflow triggered by the form.",
+            "name": "follow_up_id"
+          },
+          {
+            "description": "Category of the form, such as regular, pop-up, or embedded form.",
+            "name": "form_type"
+          },
+          {
+            "description": "ID of the associated lead nurturing campaign, if applicable.",
+            "name": "lead_nurturing_campaign_id"
+          },
+          {
+            "description": "HTTP method used for form submission (typically POST).",
+            "name": "method"
+          },
+          {
+            "description": "Name of the form as defined in HubSpot.",
+            "name": "name"
+          },
+          {
+            "description": "List of email addresses that receive notifications on form submissions.",
+            "name": "notify_recipients"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": "URL users are redirected to after submitting the form.",
+            "name": "redirect"
+          },
+          {
+            "description": "Text displayed on the form's submit button.",
+            "name": "submit_text"
+          },
+          {
+            "description": "Timestamp when the form was last updated.",
+            "name": "updated_at"
+          }
+        ],
+        "merged_deal": [
+          {
+            "description": "The ID of the deal the record has been merged INTO.",
+            "name": "deal_id"
+          },
+          {
+            "description": "ID of deal that has been merged.",
+            "name": "merged_deal_id"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          }
+        ],
+        "owner": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "ID of the active user account associated with the owner. Null if owner is not an active user.",
+            "name": "active_user_id"
+          },
+          {
+            "description": "A timestamp for when the owner was created.",
+            "name": "created_at"
+          },
+          {
+            "description": "The email address of the owner.",
+            "name": "email"
+          },
+          {
+            "description": "The first name of the owner.",
+            "name": "first_name"
+          },
+          {
+            "description": "The last name of the owner.",
+            "name": "last_name"
+          },
+          {
+            "description": "The ID of the owner.",
+            "name": "owner_id"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": "The type of owner.",
+            "name": "type"
+          },
+          {
+            "description": "Timestamp the owner was updated.",
+            "name": "updated_at"
+          }
+        ],
+        "owner_team": [
+          {
+            "description": "Unique ID of the HubSpot owner (user) assigned to the team.",
+            "name": "owner_id"
+          },
+          {
+            "description": "Unique ID of the team to which the owner belongs.",
+            "name": "team_id"
+          },
+          {
+            "description": "Indicates whether the team is the owner's primary team.",
+            "name": "is_team_primary"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          }
+        ],
+        "property": [
+          {
+            "description": "Fivetran generated id. Joins to `property_id` in the `property_option` table.",
+            "name": "_fivetran_id"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "Indicates if the property is calculated by a HubSpot process",
+            "name": "calculated"
+          },
+          {
+            "description": "Timestamp representing when the property was created.",
+            "name": "created_at"
+          },
+          {
+            "description": "A description of the property.",
+            "name": "description"
+          },
+          {
+            "description": "One of textarea, text, date, file, number, select, radio, checkbox, or booleancheckbox.",
+            "name": "field_type"
+          },
+          {
+            "description": "The name of the property group that the property belongs to.",
+            "name": "group_name"
+          },
+          {
+            "description": "This will be true for default properties that are built into HubSpot.",
+            "name": "hubspot_defined"
+          },
+          {
+            "description": "If this property is related to other objects, the object will be listed here.",
+            "name": "hubspot_object"
+          },
+          {
+            "description": "A human readable label for the property.",
+            "name": "label"
+          },
+          {
+            "description": "The internal name of the property.",
+            "name": "name"
+          },
+          {
+            "description": "If true, the property will display the currency symbol set in the portal settings.",
+            "name": "show_currency_symbol"
+          },
+          {
+            "description": "One of string, number, date, datetime, or enumeration.",
+            "name": "type"
+          },
+          {
+            "description": "Timestamp representing when the property was last updated.",
+            "name": "updated_at"
+          }
+        ],
+        "property_option": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The label of the option displayed inside the HubSpot app.",
+            "name": "label"
+          },
+          {
+            "description": "The ID of the related property.",
+            "name": "property_id"
+          },
+          {
+            "description": "Order of options displayed in Hubspot, starting with the lowest positive integer value. Values of -1 will cause the option to be displayed after any positive values.",
+            "name": "display_order"
+          },
+          {
+            "description": "Boolean if the option will be displayed in HubSpot",
+            "name": "hidden"
+          },
+          {
+            "description": "The internal value of the option.",
+            "name": "value"
+          }
+        ],
+        "role": [
+          {
+            "description": "Unique ID of the role.",
+            "name": "id"
+          },
+          {
+            "description": "Name of the role.",
+            "name": "name"
+          },
+          {
+            "description": "Indicates whether the role requires billing write access.",
+            "name": "requires_billing_write"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          }
+        ],
+        "team": [
+          {
+            "description": "Unique ID of the team.",
+            "name": "id"
+          },
+          {
+            "description": "Name of the team.",
+            "name": "name"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          }
+        ],
+        "team_user": [
+          {
+            "description": "Unique ID of the user associated with the team.",
+            "name": "user_id"
+          },
+          {
+            "description": "Unique ID of the associated team.",
+            "name": "team_id"
+          },
+          {
+            "description": "Indicates whether the team is a secondary team for the user.",
+            "name": "is_secondary_user"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          }
+        ],
+        "ticket": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "ID of the ticket.",
+            "name": "id"
+          },
+          {
+            "description": "Whether the record was deleted (v2 endpoint).",
+            "name": "is_deleted"
+          },
+          {
+            "description": "Whether the record was deleted (v3 endpoint).",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": "{{ doc(\"portal_id\") }}",
+            "name": "portal_id"
+          },
+          {
+            "description": "The date the ticket was closed.",
+            "name": "property_closed_date"
+          },
+          {
+            "description": "The date the ticket was created.",
+            "name": "property_createdate"
+          },
+          {
+            "description": "the date for the first agent reply on the ticket.",
+            "name": "property_first_agent_reply_date"
+          },
+          {
+            "description": "The ID of the ticket's pipeline.",
+            "name": "property_hs_pipeline"
+          },
+          {
+            "description": "The ID of the ticket's pipeline stage.",
+            "name": "property_hs_pipeline_stage"
+          },
+          {
+            "description": "The priority of the ticket.",
+            "name": "property_hs_ticket_priority"
+          },
+          {
+            "description": "The category of the ticket.",
+            "name": "property_hs_ticket_category"
+          },
+          {
+            "description": "The ID of the deal's owner.",
+            "name": "property_hubspot_owner_id"
+          },
+          {
+            "description": "Short summary of ticket.",
+            "name": "property_subject"
+          },
+          {
+            "description": "Text in body of the ticket.",
+            "name": "property_content"
+          }
+        ],
+        "ticket_company": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related ticket.",
+            "name": "ticket_id"
+          },
+          {
+            "description": "The ID of the related company.",
+            "name": "company_id"
+          },
+          {
+            "description": "The association category. Either HUBSPOT_DEFINED (default label) or USER_DEFINED (custom label).",
+            "name": "category"
+          }
+        ],
+        "ticket_contact": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related ticket.",
+            "name": "ticket_id"
+          },
+          {
+            "description": "The ID of the related contact.",
+            "name": "contact_id"
+          },
+          {
+            "description": "The association category. Either HUBSPOT_DEFINED (default label) or USER_DEFINED (custom label).",
+            "name": "category"
+          }
+        ],
+        "ticket_deal": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related ticket.",
+            "name": "ticket_id"
+          },
+          {
+            "description": "The ID of the related deal.",
+            "name": "deal_id"
+          },
+          {
+            "description": "The association category. Either HUBSPOT_DEFINED (default label) or USER_DEFINED (custom label).",
+            "name": "category"
+          }
+        ],
+        "ticket_engagement": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "The ID of the related ticket.",
+            "name": "ticket_id"
+          },
+          {
+            "description": "The ID of the related deal.",
+            "name": "engagement_id"
+          },
+          {
+            "description": "The association category. Either HUBSPOT_DEFINED (default label) or USER_DEFINED (custom label).",
+            "name": "category"
+          }
+        ],
+        "ticket_pipeline": [
+          {
+            "description": "{{ doc(\"_fivetran_deleted\") }}",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "Boolean indicating whether the pipeline is active.",
+            "name": "active"
+          },
+          {
+            "description": "Used to determine the order in which the stages appear when viewed in HubSpot.",
+            "name": "display_order"
+          },
+          {
+            "description": "The human-readable label for the stage. The label is used when showing the stage in HubSpot.",
+            "name": "label"
+          },
+          {
+            "description": "Reference to the object type.",
+            "name": "object_type_id"
+          },
+          {
+            "description": "Reference to the pipeline.",
+            "name": "pipeline_id"
+          },
+          {
+            "description": "A timestamp representing when the record was created.",
+            "name": "created_at"
+          },
+          {
+            "description": "A timestamp representing when the record was updated.",
+            "name": "updated_at"
+          }
+        ],
+        "ticket_pipeline_stage": [
+          {
+            "description": "{{ doc(\"_fivetran_deleted\") }}",
+            "name": "_fivetran_deleted"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "Boolean indicating whether the pipeline stage is active.",
+            "name": "active"
+          },
+          {
+            "description": "Used to determine the order in which the stages appear when viewed in HubSpot.",
+            "name": "display_order"
+          },
+          {
+            "description": "Boolean indicating if the pipeline stage is closed.",
+            "name": "is_closed"
+          },
+          {
+            "description": "The human-readable label for the stage. The label is used when showing the stage in HubSpot.",
+            "name": "label"
+          },
+          {
+            "description": "The ID of the pipeline.",
+            "name": "pipeline_id"
+          },
+          {
+            "description": "The ID of the pipeline stage.",
+            "name": "stage_id"
+          },
+          {
+            "description": "State of the ticket.",
+            "name": "ticket_state"
+          },
+          {
+            "description": "A timestamp representing when the record was created.",
+            "name": "created_at"
+          },
+          {
+            "description": "A timestamp representing when the record was updated.",
+            "name": "updated_at"
+          }
+        ],
+        "ticket_property_history": [
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          },
+          {
+            "description": "{{ doc(\"history_source\") }}",
+            "name": "source"
+          },
+          {
+            "description": "{{ doc(\"history_source_id\") }}",
+            "name": "source_id"
+          },
+          {
+            "description": "{{ doc(\"history_timestamp\") }}",
+            "name": "timestamp_instant"
+          },
+          {
+            "description": "The ID of the related ticket record.",
+            "name": "ticket_id"
+          },
+          {
+            "description": "{{ doc(\"history_name\") }}",
+            "name": "name"
+          },
+          {
+            "description": "{{ doc(\"history_value\") }}",
+            "name": "value"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_start\") }}",
+            "name": "_fivetran_start"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_end\") }}",
+            "name": "_fivetran_end"
+          }
+        ],
+        "users": [
+          {
+            "description": "Unique ID of the user.",
+            "name": "id"
+          },
+          {
+            "description": "ID of the user's primary team.",
+            "name": "primary_team_id"
+          },
+          {
+            "description": "ID of the role assigned to the user.",
+            "name": "role_id"
+          },
+          {
+            "description": "Email address of the user.",
+            "name": "email"
+          },
+          {
+            "description": "First name of the user.",
+            "name": "first_name"
+          },
+          {
+            "description": "Last name of the user.",
+            "name": "last_name"
+          },
+          {
+            "description": "{{ doc(\"_fivetran_synced\") }}",
+            "name": "_fivetran_synced"
+          }
+        ]
+      },
+      "url": "https://raw.githubusercontent.com/fivetran/dbt_hubspot_source/main/models/src_hubspot.yml"
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+# Raw source columns derived for `hubspot_api`. NOT AN ARTIFACT — a proposal.
+#
+# Written by `source_schema_derive.py`. Every column below was read out of a
+# published connector schema and carries the exact file and identifier it came
+# from. Nothing here is recalled and nothing is guessed: a column the references
+# do not mention is absent rather than approximated.
+#
+# `confirmed: false` on every table. These describe what the connector vendor
+# publishes, not what this tenant's warehouse actually landed — the two differ
+# whenever the ingestion is configured with a subset, a different API version, or
+# a column-renaming transform. Confirmation is a human act against OpenMetadata
+# once the data lands; `openmetadata_feedback.py --propose` carries corrections
+# back.
+#
+# Sources consulted:
+#   - dlt-hub/verified-sources@master sources/hubspot/settings.py
+#   - fivetran/dbt_hubspot_source@main models/src_hubspot.yml
+#
+#     python3 scripts/source_schema_derive.py --use-case enhanza-analytics --source hubspot_api --promote
+
+version: 1
+source: derived
+raw_source: hubspot_api
+
+tables:
+  companies:
+    confirmed: false
+    # matched: dlt-hub/verified-sources@master sources/hubspot/settings.py -> company (singular/plural of 'company')
+    # cross-reference (NOT this project's names): fivetran/dbt_hubspot_source@main models/src_hubspot.yml -> company (singular/plural of 'company'): 13 column(s) under the fivetran convention, e.g. id, portal_id, is_deleted, property_name, property_description
+    columns:
+      - name: createdate
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: company.createdate
+      - name: domain
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: company.domain
+      - name: hs_lastmodifieddate
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: company.hs_lastmodifieddate
+      - name: hs_object_id
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: company.hs_object_id
+      - name: name
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: company.name
+
+  contacts:
+    confirmed: false
+    # matched: dlt-hub/verified-sources@master sources/hubspot/settings.py -> contact (singular/plural of 'contact')
+    # cross-reference (NOT this project's names): fivetran/dbt_hubspot_source@main models/src_hubspot.yml -> contact (singular/plural of 'contact'): 10 column(s) under the fivetran convention, e.g. id, property_email_1, property_company, property_firstname, property_lastname
+    columns:
+      - name: createdate
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.createdate
+      - name: email
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.email
+      - name: firstname
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.firstname
+      - name: hs_object_id
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.hs_object_id
+      - name: lastmodifieddate
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.lastmodifieddate
+      - name: lastname
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.lastname
+
+  deals:
+    confirmed: false
+    # matched: dlt-hub/verified-sources@master sources/hubspot/settings.py -> deal (singular/plural of 'deal')
+    # cross-reference (NOT this project's names): fivetran/dbt_hubspot_source@main models/src_hubspot.yml -> deal (singular/plural of 'deal'): 11 column(s) under the fivetran convention, e.g. deal_id, is_deleted, portal_id, deal_pipeline_id, deal_pipeline_stage_id
+    columns:
+      - name: amount
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.amount
+      - name: closedate
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.closedate
+      - name: createdate
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.createdate
+      - name: dealname
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.dealname
+      - name: dealstage
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.dealstage
+      - name: hs_lastmodifieddate
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.hs_lastmodifieddate
+      - name: hs_object_id
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.hs_object_id
+      - name: pipeline
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.pipeline
+
+  tickets:
+    confirmed: false
+    # matched: dlt-hub/verified-sources@master sources/hubspot/settings.py -> ticket (singular/plural of 'ticket')
+    # cross-reference (NOT this project's names): fivetran/dbt_hubspot_source@main models/src_hubspot.yml -> ticket (singular/plural of 'ticket'): 13 column(s) under the fivetran convention, e.g. id, is_deleted, portal_id, property_closed_date, property_createdate
+    columns:
+      - name: createdate
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.createdate
+      - name: content
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.content
+      - name: hs_lastmodifieddate
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_lastmodifieddate
+      - name: hs_object_id
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_object_id
+      - name: hs_pipeline
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_pipeline
+      - name: hs_pipeline_stage
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_pipeline_stage
+      - name: hs_ticket_category
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_ticket_category
+      - name: hs_ticket_priority
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_ticket_priority
+      - name: subject
+        # from: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.subject
+
+# Declared here but absent from every reference consulted. Not guessed —
+# these need the catalog, or a reference this tool does not yet know:
+#   account_details
+#   deal_pipelines
+#   deal_stages
+#   engagements

@@ -30,13 +30,57 @@ sources:
       # reaches the unified layer via an adapter
       - name: companies
         description: 'HubSpot company records. Adapted to erp_bi_dim_customers — organisation-shaped, unlike contacts.'
+        # generated: source_schema_derive
+        # Derived from a published connector schema; unconfirmed against
+        # this tenant's warehouse. See ontology/proposals/source-columns.derived.yml
+        columns:
+          - name: createdate
+          - name: domain
+          - name: hs_lastmodifieddate
+          - name: hs_object_id
+          - name: name
       - name: account_details
         description: 'The tenant''s own HubSpot portal/account record. Adapted to erp_bi_dim_company, which holds one row per tenant — NOT one row per HubSpot company.'
       # source-aligned only — no adapter, no registry claim
       - name: deals
+        # generated: source_schema_derive
+        # Derived from a published connector schema; unconfirmed against
+        # this tenant's warehouse. See ontology/proposals/source-columns.derived.yml
+        columns:
+          - name: amount
+          - name: closedate
+          - name: createdate
+          - name: dealname
+          - name: dealstage
+          - name: hs_lastmodifieddate
+          - name: hs_object_id
+          - name: pipeline
       - name: deal_pipelines
       - name: deal_stages
       - name: contacts
         description: 'PII. Personal data of identifiable individuals. See rule 17 and the [NEEDS INPUT] above.'
+        # generated: source_schema_derive
+        # Derived from a published connector schema; unconfirmed against
+        # this tenant's warehouse. See ontology/proposals/source-columns.derived.yml
+        columns:
+          - name: createdate
+          - name: email
+          - name: firstname
+          - name: hs_object_id
+          - name: lastmodifieddate
+          - name: lastname
       - name: tickets
+        # generated: source_schema_derive
+        # Derived from a published connector schema; unconfirmed against
+        # this tenant's warehouse. See ontology/proposals/source-columns.derived.yml
+        columns:
+          - name: createdate
+          - name: content
+          - name: hs_lastmodifieddate
+          - name: hs_object_id
+          - name: hs_pipeline
+          - name: hs_pipeline_stage
+          - name: hs_ticket_category
+          - name: hs_ticket_priority
+          - name: subject
       - name: engagements

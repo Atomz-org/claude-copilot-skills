@@ -1,0 +1,56 @@
+name: raw_tickets
+table_reference:
+  catalog: enhanza_sample
+  schema: hubspot_api_canonical
+  table: tickets
+columns:
+- name: content
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: createdate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: hs_lastmodifieddate
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: hs_object_id
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: hs_pipeline
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: hs_pipeline_stage
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: hs_ticket_category
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: hs_ticket_priority
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+- name: subject
+  type: TEXT
+  is_calculated: false
+  not_null: false
+  properties: {}
+cached: false
+properties:
+  dbt_layer: raw
+  dbt_unique_id: source.enhanza_hubspot.hubspot_api.tickets
+  dbt_resource_type: source
