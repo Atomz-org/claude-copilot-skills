@@ -605,6 +605,18 @@ def summarise(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def run(slug: str, manifest: Optional[Path], write: bool, check: bool) -> Dict[str, Any]:
+    # The three skips below carry `status` and `reason` and **no counts**, deliberately.
+    # They return before `derive()` runs, so there is no derived number to report, and
+    # `semantic_models: 0` would say "we derived and found none" where the truth is "we
+    # could not look" — the could-not-run versus would-change distinction the whole sync
+    # depends on. The *fourth* skip, the time spine, is the opposite case: the derivation
+    # completed, so it keeps the full schema and reports the work it is holding back.
+    #
+    # A reviewer periodically proposes padding these for schema stability. Nothing needs
+    # it: `use_case_sync.stage_semantic` returns on `status == "skip"` before reading a
+    # count, `report()` and that stage both use `.get`, and the one test that asserts on a
+    # count first checks the reason names the spine. Padding would let it assert `0 > 0` on
+    # a fresh clone and report a missing manifest as a time-spine failure.
     use_case = use_case_dir(slug)
     manifest = manifest or _paths.default_manifest(use_case)
     if not manifest or not manifest.exists():

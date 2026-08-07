@@ -21,6 +21,7 @@ the layer's authority, so a wrong one is believed.
 
 from __future__ import annotations
 
+import inspect
 import json
 import sys
 from pathlib import Path
@@ -270,6 +271,30 @@ def test_the_spine_refusal_reports_the_work_it_is_holding_back() -> None:
         pytest.skip(f"blocked earlier: {summary['reason']}")
     assert summary["semantic_models"] > 0
     assert summary["changed"] == []
+
+
+def test_a_skip_that_could_not_derive_reports_no_count(tmp_path) -> None:
+    """The rejected half of the test above, pinned so it is not re-proposed.
+
+    A reviewer periodically asks for `semantic_models` on every skip, for schema
+    stability. The time-spine skip already has it — the derivation completed. The
+    input-missing skips return before `derive()` runs, and `semantic_models: 0` there would
+    say "we derived and found none" where the truth is "we could not look". Padding them
+    would let the test above assert `0 > 0` on a fresh clone and report an absent manifest
+    as a time-spine failure.
+    """
+    summary = ots.run("enhanza-analytics", tmp_path / "absent.json", write=False, check=False)
+    assert summary == {"status": "skip",
+                       "reason": "no manifest — run artifacts/refresh.sh"}
+
+
+def test_no_consumer_reads_a_count_off_a_skip() -> None:
+    """What makes the padding unnecessary rather than merely undesirable."""
+    import use_case_sync  # noqa: PLC0415 - imported here to keep the module list honest
+    source = inspect.getsource(use_case_sync.stage_semantic)
+    assert 'status") == "skip"' in source, "the stage must return before reading a count"
+    assert "get('semantic_models', 0)" in source, "and must default even after that"
+    ots.report({"status": "skip", "reason": "no manifest"})  # must not raise
 
 
 # ---------------------------------------------------------------------------------------
