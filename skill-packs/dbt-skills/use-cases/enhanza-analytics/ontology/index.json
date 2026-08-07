@@ -2309,6 +2309,14 @@
     },
     {
       "connector": "fortnox",
+      "concept": "dim_supplier_invoice_files",
+      "core_class": "erp:Classifier",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
       "concept": "dim_suppliers",
       "core_class": "erp:Supplier",
       "property": "erp:currency",
@@ -2329,6 +2337,22 @@
       "core_class": "erp:Supplier",
       "property": "erp:partyNumber",
       "source_column": "SupplierNumber",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_absence_transactions",
+      "core_class": "erp:AbsenceTransaction",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_attendance_transactions",
+      "core_class": "erp:AttendanceTransaction",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
       "transform": "direct"
     },
     {
@@ -2463,6 +2487,38 @@
       "connector": "fortnox",
       "concept": "fact_orders",
       "core_class": "erp:Order",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_salary_transactions",
+      "core_class": "erp:SalaryTransaction",
+      "property": "erp:amount",
+      "source_column": "Total",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_salary_transactions",
+      "core_class": "erp:SalaryTransaction",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_stockbalance",
+      "core_class": "erp:StockBalance",
+      "property": "erp:orgId",
+      "source_column": "OrgId",
+      "transform": "direct"
+    },
+    {
+      "connector": "fortnox",
+      "concept": "fact_stocktakings",
+      "core_class": "erp:Stocktaking",
       "property": "erp:orgId",
       "source_column": "OrgId",
       "transform": "direct"

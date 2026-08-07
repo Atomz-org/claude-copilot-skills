@@ -201,6 +201,11 @@ fortnox:SupplierInvoiceFile a owl:Class ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_dim_supplier_invoice_files" ;
     conn:dbtPackage "fortnox" .
+fortnox:SupplierInvoiceFile conn:hasMapping fortnox:SupplierInvoiceFile-orgId-OrgId .
+fortnox:SupplierInvoiceFile-orgId-OrgId a conn:Mapping ;
+    conn:mapsToProperty erp:orgId ;
+    conn:sourceColumn "OrgId" ;
+    conn:transform "direct" .
 
 fortnox:SupplierItem a owl:Class ;
     rdfs:subClassOf erp:Article ;
@@ -248,6 +253,11 @@ fortnox:AbsenceTransaction a owl:Class ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_absence_transactions" ;
     conn:dbtPackage "fortnox" .
+fortnox:AbsenceTransaction conn:hasMapping fortnox:AbsenceTransaction-orgId-OrgId .
+fortnox:AbsenceTransaction-orgId-OrgId a conn:Mapping ;
+    conn:mapsToProperty erp:orgId ;
+    conn:sourceColumn "OrgId" ;
+    conn:transform "direct" .
 
 fortnox:AssetRow a owl:Class ;
     rdfs:subClassOf erp:LineItem ;
@@ -272,6 +282,11 @@ fortnox:AttendanceTransaction a owl:Class ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_attendance_transactions" ;
     conn:dbtPackage "fortnox" .
+fortnox:AttendanceTransaction conn:hasMapping fortnox:AttendanceTransaction-orgId-OrgId .
+fortnox:AttendanceTransaction-orgId-OrgId a conn:Mapping ;
+    conn:mapsToProperty erp:orgId ;
+    conn:sourceColumn "OrgId" ;
+    conn:transform "direct" .
 
 fortnox:Budget a owl:Class ;
     rdfs:subClassOf erp:Budget ;
@@ -509,6 +524,16 @@ fortnox:SalaryTransaction a owl:Class ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_salary_transactions" ;
     conn:dbtPackage "fortnox" .
+fortnox:SalaryTransaction conn:hasMapping fortnox:SalaryTransaction-amount-Total .
+fortnox:SalaryTransaction-amount-Total a conn:Mapping ;
+    conn:mapsToProperty erp:amount ;
+    conn:sourceColumn "Total" ;
+    conn:transform "direct" .
+fortnox:SalaryTransaction conn:hasMapping fortnox:SalaryTransaction-orgId-OrgId .
+fortnox:SalaryTransaction-orgId-OrgId a conn:Mapping ;
+    conn:mapsToProperty erp:orgId ;
+    conn:sourceColumn "OrgId" ;
+    conn:transform "direct" .
 
 fortnox:Stockbalance a owl:Class ;
     rdfs:subClassOf erp:StockBalance ;
@@ -517,6 +542,11 @@ fortnox:Stockbalance a owl:Class ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_stockbalance" ;
     conn:dbtPackage "fortnox" .
+fortnox:Stockbalance conn:hasMapping fortnox:Stockbalance-orgId-OrgId .
+fortnox:Stockbalance-orgId-OrgId a conn:Mapping ;
+    conn:mapsToProperty erp:orgId ;
+    conn:sourceColumn "OrgId" ;
+    conn:transform "direct" .
 
 fortnox:Stocktaking a owl:Class ;
     rdfs:subClassOf erp:Stocktaking ;
@@ -525,6 +555,11 @@ fortnox:Stocktaking a owl:Class ;
     conn:providedBy fortnox:connector ;
     conn:dbtModel "fortnox_erp_bi_fact_stocktakings" ;
     conn:dbtPackage "fortnox" .
+fortnox:Stocktaking conn:hasMapping fortnox:Stocktaking-orgId-OrgId .
+fortnox:Stocktaking-orgId-OrgId a conn:Mapping ;
+    conn:mapsToProperty erp:orgId ;
+    conn:sourceColumn "OrgId" ;
+    conn:transform "direct" .
 
 fortnox:SupplierInvoiceAccrual a owl:Class ;
     rdfs:subClassOf erp:Event ;

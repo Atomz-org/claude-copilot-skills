@@ -32,7 +32,7 @@
     "sqlglot": "30.14.0",
     "dialect": "bigquery",
     "freshness": {
-      "digest": "f20475a47ef5a0adc2ef6b877841500bf9097f8dd5e5b0bd07e02657dd75a3af",
+      "digest": "b0083ff988c0c2b24a3b6bf188d21a151c8c7dc946cdc4123b5506c81b7cca57",
       "models": 396,
       "fresh": 396,
       "changed": 0,
