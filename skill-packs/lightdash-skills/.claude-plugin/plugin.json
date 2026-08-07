@@ -1,0 +1,19 @@
+{
+  "name": "lightdash-skills",
+  "version": "1.0.0",
+  "description": "Lightdash BI and agentic-analytics serving tier: evidence-derived explore joins, PII hiding and AI hints from dbt artifacts, offline compile gate, instance MCP registration, and a pinned local deploy stack.",
+  "sourceOfTruth": "skill-packs/lightdash-skills/.claude",
+  "components": {
+    "commands": ".claude/commands",
+    "skills": ".claude/skills",
+    "rules": ".claude/rules"
+  },
+  "harnessTargets": ["claude", "copilot", "cursor", "codex", "gemini"],
+  "canonicalEntrySkill": "lightdash-bi",
+  "upstream": {
+    "repository": "https://github.com/PackMaaan/lightdash",
+    "submodule": "external/lightdash",
+    "runtime": "@lightdash/cli (npm), repo-local .lightdash-cli/, pinned 1.97.0 with the submodule SHA",
+    "license": "MIT (packages/backend/src/ee excepted — separate EE license; see external/lightdash/LICENSE)"
+  }
+}

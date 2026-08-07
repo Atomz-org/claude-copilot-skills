@@ -28,7 +28,7 @@ jobs:
       - name: Activate stack from shared packs
         run: |
           chmod +x scripts/activate_skill_stack.sh
-          ./scripts/activate_skill_stack.sh dbt-skills wren-skills
+          ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
 
       # Node is only needed so skill_map_scan.py can resolve its pinned CLI
       # (npx -y @skill-map/cli@<PINNED_VERSION>); the scan itself is

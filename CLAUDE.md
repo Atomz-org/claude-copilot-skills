@@ -371,10 +371,14 @@ python3 scripts/use_case_sync.py --all --check                       # the CI ga
 | `graph` | dbt lineage + connector/concept topology merged into `graphify-out/graph.json` | manifest |
 | `alignment` | the convention-drift verdict | a dbt project |
 | `wren` | `wren/` — the WrenAI semantic-layer project | manifest, catalog.json, wrenai CLI |
+| `lightdash` | Lightdash `meta` tags in the project's schema YAML + `lightdash/knowledge/` | manifest; annotations and @lightdash/cli optional |
 
-The `wren` stage is sequenced last on purpose: it projects the artifacts the earlier
-stages just refreshed (`index.json`, `column-memory.json`), so running it earlier would
-enrich from the previous generation.
+The two serving stages are sequenced last on purpose: each projects the artifacts the
+earlier stages just refreshed (`index.json`, `column-memory.json`,
+`column-annotations.json`), so running either earlier would enrich from the previous
+generation. `lightdash` follows `wren` and, uniquely, writes back into the dbt project
+itself (marker-owned `meta:` blocks) — after it reports changed meta, re-run
+`artifacts/refresh.sh` so the manifest carries what Lightdash will actually read.
 
 `columns → annotations → ontology` is one chain, and it is the whole path from raw data to
 a served semantic layer:
@@ -803,6 +807,43 @@ version-matched to the installed wheel, which is why the skill is a discovery st
 `wren genbi deploy` is data egress and needs explicit per-deploy user confirmation
 (`wren-rules.md` rule 9).
 
+## Lightdash BI tier
+
+Lightdash is the exploration and agentic-analytics tier over the same dbt projects:
+source pinned as a shallow fork submodule at `external/lightdash`, runtime as
+`@lightdash/cli` in the gitignored `.lightdash-cli/` (both 1.97.0, moving together),
+agent surface as `skill-packs/lightdash-skills/` (skill `lightdash-bi`, command
+`/lightdash`), deploy stack as `deploy/podman-compose.yml` in the pack. Full
+architecture and rationale: `docs/LIGHTDASH_INTEGRATION.md`; binding rules:
+`.claude/rules/lightdash-rules.md`.
+
+Three rules decide whether a change here is correct:
+
+- **The bridge never writes a metric.** The Lightdash CLI translates MetricFlow
+  metrics from the manifest natively; `scripts/lightdash_context_sync.py` writes only
+  what dbt cannot say — `meta.joins` from `relationships` tests (cardinality only
+  from `unique` tests, `type: left` like MetricFlow), `primary_key` from the one
+  unique+not_null column, `dimension.hidden` from `pii: direct` annotations, and
+  `ai_hint`s from recorded definitions. Measured: classifier and upstream translator
+  agree 7/7 on the example's metrics (3 translated, 4 skipped, identical reasons);
+  the skipped classes are served by the Wren views and named per-metric in the
+  generated `lightdash/knowledge/semantic-coverage.md`.
+- **Marker-owned blocks, one regeneration path.** Every generated `meta:` carries
+  `# generated: lightdash_context_sync`; unmarked meta is hand-authored and left
+  alone; a file headed by another generator (`schema_generated.yml`) is refused
+  whole. Regenerate with `use_case_sync.py --stage lightdash`, then re-run
+  `artifacts/refresh.sh` — Lightdash reads the manifest, not the YAML.
+- **The offline compile gate separates caused from observed.** `lightdash compile
+  --skip-dbt-compile --skip-warehouse-catalog` runs with no server and no warehouse;
+  it fails the stage only when a failing explore carries bridge meta. Measured:
+  example 8/8 explores clean; enhanza-analytics `unready` (172/267 pre-existing
+  columnless-model failures, all 42 join-bearing models compiling clean, 101 joins,
+  8 PII columns hidden, 239 ai hints). No Node → skip with the install command named.
+
+`lightdash deploy` and previews to any non-local instance are data egress — explicit
+per-deploy confirmation (`lightdash-rules.md` rule 9), and credentials live in
+environment variables only, never on disk.
+
 ## Harness cartography — skill-map
 
 `graphify` maps the **code**; `skill-map` maps the **harness** — skills, commands,
@@ -907,7 +948,7 @@ Exceptions maintained directly at repository level, because no pack owns them:
 After changing any pack asset:
 
 ```bash
-./scripts/activate_skill_stack.sh dbt-skills wren-skills && git status --short
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills && git status --short
 ```
 
 Unexpected modifications in that output mean an edit landed in a generated path.

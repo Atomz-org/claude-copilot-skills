@@ -1,0 +1,69 @@
+# A local Lightdash instance — Postgres plus the app, pinned to the same release as
+# the external/lightdash submodule and the repo-local CLI. Written for podman-compose
+# (this machine's container runtime; the podman VM needs ~8 GiB), and valid for
+# docker compose unchanged.
+#
+#   podman-compose -f skill-packs/lightdash-skills/deploy/podman-compose.yml up -d
+#   export PATH="$PWD/.lightdash-cli/node_modules/.bin:$PATH"   # repo-local CLI
+#   lightdash login http://localhost:8080
+#   cd skill-packs/dbt-skills/use-cases/<slug>/dbt_project && lightdash deploy --create
+#
+# Deliberately NO repository bind mounts: `lightdash deploy` pushes the compiled
+# project over HTTP, so the container never needs to read this checkout — which is
+# also what makes the stack work on machines where ~/Documents cannot be mounted
+# into containers. Deploying to any instance that is not this local one is data
+# egress and needs explicit per-deploy confirmation (lightdash-rules.md rule 9).
+#
+# Omitted on purpose: the headless-browser service (only scheduled deliveries and
+# image rendering need it) and any WrenAI container — this repository serves Wren
+# locally through the pinned CLI (`wren serve mcp`), no Docker involved.
+
+version: "3.8"
+
+services:
+  postgres:
+    image: docker.io/library/postgres:15-alpine
+    container_name: lightdash_pg
+    environment:
+      - POSTGRES_USER=${LIGHTDASH_PG_USER:-lightdash}
+      - POSTGRES_PASSWORD=${LIGHTDASH_PG_PASSWORD:-lightdash-local-only}
+      - POSTGRES_DB=${LIGHTDASH_PG_DB:-lightdash}
+    volumes:
+      - lightdash_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LIGHTDASH_PG_USER:-lightdash} -d ${LIGHTDASH_PG_DB:-lightdash}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lightdash-net
+
+  lightdash:
+    # Pinned, not :latest — the submodule SHA, the CLI, and this image move together.
+    image: docker.io/lightdash/lightdash:1.97.0
+    container_name: lightdash_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # Session-signing secret, local default only — set your own for anything shared.
+      - LIGHTDASH_SECRET=${LIGHTDASH_SECRET:-local-dev-secret-change-me-32chars!}
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGUSER=${LIGHTDASH_PG_USER:-lightdash}
+      - PGPASSWORD=${LIGHTDASH_PG_PASSWORD:-lightdash-local-only}
+      - PGDATABASE=${LIGHTDASH_PG_DB:-lightdash}
+      - SITE_URL=http://localhost:8080
+      - SECURE_COOKIES=false
+      - TRUST_PROXY=false
+    networks:
+      - lightdash-net
+
+volumes:
+  lightdash_pgdata:
+
+networks:
+  lightdash-net:
+    driver: bridge

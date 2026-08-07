@@ -1,0 +1,18 @@
+{
+  "name": "code-skills (Python 3.11)",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/devcontainers/features/rust:1": {},
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "postCreateCommand": "git submodule update --init && pip install -r .github/requirements/ci.txt && (./scripts/build_toon_rs.sh || true)",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "github.vscode-github-actions"
+      ]
+    }
+  }
+}

@@ -122,3 +122,10 @@ data/stream_store/
 *.duckdb.wal
 skill-packs/*/use-cases/*/warehouse.duckdb
 .dlt/
+
+
+# Lightdash: the repo-local CLI install (`npm install --prefix .lightdash-cli`) and any
+# app-local state. Same split as `.venv*/` — the 1.97.0 pin lives in the pack and docs,
+# the toolchain itself stays out of the tree and is rebuilt in one command.
+.lightdash/
+.lightdash-cli/

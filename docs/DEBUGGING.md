@@ -7,11 +7,11 @@ prints already carries the fix.
 ./scripts/check.sh
 ```
 
-It runs the same seven gates a pull request runs, in the same order, so a green result here
+It runs the same eight gates a pull request runs, in the same order, so a green result here
 means a green result there. It changes nothing you have not committed.
 
 ```
-Running the seven gates a pull request has to pass.
+Running the eight gates a pull request has to pass.
 
   ✓  branch naming            fix/no-ticket-seed-collision
   ✓  conventional commits     3 commit(s) conform
@@ -20,7 +20,7 @@ Running the seven gates a pull request has to pass.
                     skill-packs/. Editing a copy works until the next rebuild
                     silently reverts it.
      how to fix     make the same edit under skill-packs/dbt-skills/, then:
-                    ./scripts/activate_skill_stack.sh dbt-skills wren-skills
+                    ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
 ```
 
 A `—` is a gate that could not run, not a gate that failed. Rust and Node are optional here;
@@ -38,7 +38,7 @@ That is the whole setup. `dbt` is **not** needed — the committed artifacts are
 tooling reads, which is the reason they are committed. Install it only to run the worked
 example in `skill-packs/dbt-skills/use-cases/example-order-revenue-mart/`.
 
-## The seven gates, in plain words
+## The eight gates, in plain words
 
 | Gate | The mistake it catches |
 |---|---|
@@ -49,6 +49,7 @@ example in `skill-packs/dbt-skills/use-cases/example-order-revenue-mart/`.
 | toon serializer build | `rust/toon/graph_to_toon.rs` no longer compiles |
 | test suite | A test that used to pass no longer does |
 | harness integrity | Two skills or commands answering to the same name |
+| stack hygiene | A branch outside the stack grammar, or regenerated artifacts committed below the top layer of a stack |
 
 ## The three that confuse people
 
@@ -62,7 +63,7 @@ Edit the pack, then re-run activation:
 
 ```bash
 $EDITOR skill-packs/dbt-skills/.claude/skills/<name>/SKILL.md
-./scripts/activate_skill_stack.sh dbt-skills wren-skills
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
 ```
 
 Both copies must be committed. Skills link to shared files with a single relative path that
@@ -91,6 +92,7 @@ Several files in this repository are derived, not written:
 | `ontology/column-memory.json` | `scripts/dbt_column_memory.py --write` |
 | `ontology/index.json`, `ontology/*.ttl` | `scripts/use_case_sync.py` |
 | `artifacts/graphify-fragment.json` | `artifacts/refresh.sh` |
+| `lightdash/knowledge/`, marker-owned `meta:` blocks in schema YAML | `scripts/use_case_sync.py --stage lightdash` |
 | `.claude/`, `references/`, `templates/` | `scripts/activate_skill_stack.sh` |
 
 Committing them is deliberate: it is what lets a fresh clone work with no dbt and no
@@ -127,4 +129,4 @@ Two known-noisy signals, so you do not chase them:
 | `CLAUDE.md` | how this repository works, and why each rule exists |
 | `.claude/rules/` | the binding rules — analytics engineering, standards, skill-map |
 | `docs/use-cases.md` | what a use-case directory contains |
-| `.github/workflows/pr-decision-diagram.yml` | the seven gates, as CI runs them |
+| `.github/workflows/pr-decision-diagram.yml` | the eight gates, as CI runs them |

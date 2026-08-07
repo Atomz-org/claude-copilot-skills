@@ -2,28 +2,46 @@ version: 2
 
 models:
   - name: shopify_bi_dim_customers
+    meta:  # generated: lightdash_context_sync
+      primary_key: CustomerId
     description: >
       One row per Shopify customer — the source-aligned customer dimension Shopify users
       query directly. Pass-through of shopify_bi_dim_customers_staging with the column list
       enumerated so a new upstream Shopify field cannot surface here silently.
     columns:
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         description: Shopify customer id. Primary key.
         data_tests:
           - unique
           - not_null
 
   - name: shopify_bi_fact_orders
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: shopify_bi_dim_customers
+          sql_on: ${shopify_bi_fact_orders.CustomerId} = ${shopify_bi_dim_customers.CustomerId}
+          type: left
+          relationship: many-to-one
+      primary_key: OrderId
     description: >
       One row per Shopify order, cancelled orders excluded, five-year window. Amounts are
       in the shop's own currency.
     columns:
       - name: OrderId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Shopify order id. Primary key."
         description: Shopify order id. Primary key.
         data_tests:
           - unique
           - not_null
       - name: CustomerId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique identifyer of a customer in your workspace"
         description: Owning customer. Nullable for guest checkout.
         data_tests:
           - relationships:
@@ -31,6 +49,17 @@ models:
               field: CustomerId
 
   - name: shopify_bi_fact_order_rows
+    meta:  # generated: lightdash_context_sync
+      joins:
+        - join: shopify_bi_dim_articles
+          sql_on: ${shopify_bi_fact_order_rows.ArticleId} = ${shopify_bi_dim_articles.ArticleId}
+          type: left
+          relationship: many-to-one
+        - join: shopify_bi_fact_orders
+          sql_on: ${shopify_bi_fact_order_rows.OrderId} = ${shopify_bi_fact_orders.OrderId}
+          type: left
+          relationship: many-to-one
+      primary_key: OrderRowId
     description: >
       One row per line item on a non-cancelled Shopify order. Retains OrderRowId, which the
       unified erp_bi_fact_order_rows contract has no column for — this is the only layer a
@@ -42,6 +71,9 @@ models:
           - unique
           - not_null
       - name: OrderId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Shopify order id. Primary key."
         description: Parent order.
         data_tests:
           - not_null
@@ -49,6 +81,9 @@ models:
               to: ref('shopify_bi_fact_orders')
               field: OrderId
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         description: Shopify variant id. Nullable for custom line items.
         data_tests:
           - relationships:
@@ -56,11 +91,16 @@ models:
               field: ArticleId
 
   - name: shopify_bi_dim_articles
+    meta:  # generated: lightdash_context_sync
+      primary_key: ArticleId
     description: >
       One row per Shopify product variant. Variant grain so it joins to order rows without
       fanning out; product-level attributes repeat across a product's variants.
     columns:
       - name: ArticleId
+        meta:  # generated: lightdash_context_sync
+          dimension:
+            ai_hint: "Unique Article identifier used as a primary key"
         description: Shopify variant id. Primary key.
         data_tests:
           - unique

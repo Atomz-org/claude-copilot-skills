@@ -1,39 +1,51 @@
-# code-skills
+# claude-copilot-skills
+
+Agent-native analytics engineering: skills, knowledge-graph context, and a governed
+semantic layer for dbt Core — built for Claude Code and GitHub Copilot.
+
+[![Repository Baseline](https://github.com/Atomz-org/claude-copilot-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/Atomz-org/claude-copilot-skills/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+The module is also consumable as a git submodule under the name `code-skills` — that is
+the name its own docs and `CLAUDE.md` use internally.
 
 > **New here — or not a data engineer at all?** Read
 > [docs/START_HERE.md](docs/START_HERE.md): a plain-language tour of what this repository
 > is, the one command that answers "would my change be accepted?", and a working miniature
 > you can run on a laptop in about forty seconds.
 
-This repository is a merged standalone scaffold that combines:
+## What this is
 
-- Git automation and reusable workflow infrastructure from `git-skills`
-- End-to-end dbt Core analytics engineering framework from `dbt-skill` (compat alias: `senior-analytics-engineer`)
-- The WrenAI semantic layer / GenBI engine as the serving tier over dbt use-cases —
-  source pinned at `external/WrenAI`, runtime pinned in `requirements.txt`, agent surface
-  in `skill-packs/wren-skills/`. See [docs/WRENAI_INTEGRATION.md](docs/WRENAI_INTEGRATION.md)
-  and run `./skill-packs/wren-skills/demo/run_wren_demo.sh` for the local end-to-end proof.
+- **Skill packs for Claude Code and GitHub Copilot.** Agents, slash commands, skills, and
+  binding rules live under `skill-packs/` and are activated into the paths agents load.
+  Copilot gets its own guidance in `.github/copilot-instructions.md`, and CI asserts that
+  file exists — the Copilot surface is a gated artifact, not a courtesy.
+- **A dbt Core analytics method.** 47 binding rules
+  (`.claude/rules/analytics-engineering-rules.md`), artifact-driven analyzers in
+  `scripts/` that read `manifest.json` rather than the warehouse, and derived artifacts
+  (lineage fragments, column contracts, the ontology index) committed to the tree — so a
+  fresh clone works with no dbt installed and no warehouse credentials.
+- **Knowledge-graph context.** The graphify code graph is merged with dbt's own lineage,
+  so model DAGs, join topology, and column contracts are queryable during orientation
+  instead of re-read from files. Uniform record output is serialized as TOON where that
+  was measured to reduce bytes, and only there.
+- **A WrenAI semantic serving tier.** MetricFlow metric definitions compile to MDL views,
+  and `tests/test_wren_semantic_equivalence.py` holds every generated view row-for-row
+  equal to a hand-written oracle. See [docs/WRENAI_INTEGRATION.md](docs/WRENAI_INTEGRATION.md)
+  and [docs/SEMANTIC_LAYER_ALIGNMENT.md](docs/SEMANTIC_LAYER_ALIGNMENT.md).
+  Lightdash serves the exploration tier over the same projects
+  ([docs/LIGHTDASH_INTEGRATION.md](docs/LIGHTDASH_INTEGRATION.md)).
+- **A Lightdash BI tier for exploration and agentic analytics.** The `lightdash` sync
+  stage derives explore joins from `relationships` tests, PII hiding and AI hints from
+  the column annotations, and validates offline with `lightdash compile` — while
+  MetricFlow metrics reach Lightdash through its own native translation, never as a
+  second definition. See [docs/LIGHTDASH_INTEGRATION.md](docs/LIGHTDASH_INTEGRATION.md).
+- **An MCP surface for agents and BI.** The `wren` sync stage emits a per-use-case MCP
+  server config at `wren/mcp.json` (gitignored, regenerated per clone), each use-case's
+  `ontology/index.json` is a flat projection whose `mcp_tools` block names the key that
+  backs each tool, and a running Lightdash instance serves MCP at `/api/v1/mcp`.
 
-It keeps all major assets from both repositories: agents, skills, commands, rules,
-scripts, templates, references, CI workflows, and tests.
-
-## What is included
-
-- `src/ai-core/`: RTK-style registry, graph manager, and memory store wrappers.
-- `.claude/agents/`: meta-repo agents and dbt specialist agents.
-- `.claude/commands/`: backward-compatible commands plus namespaced command packs.
-- `.claude/skills/`: original analytics skills plus dbt-labs-to-Core translated skills.
-- `.claude/rules/`: both standards and analytics non-negotiables.
-- `scripts/`: artifact-driven dbt analyzers plus the stack activation and portability checks.
-- `templates/`, `references/`: analytics design kit, **generated** at the repository root by
-  `scripts/activate_skill_stack.sh` from the active pack. Edit the pack copy under
-  `skill-packs/<pack>/`, never the root mirror — activation overwrites it.
-- `use-cases/`: the directory a consuming repository fills in. Worked examples ship inside
-  the pack at `skill-packs/dbt-skills/use-cases/`.
-- `.github/`: CI and automation workflows.
-- `tests/`: tests from both source repositories, plus documentation-integrity checks.
-
-## Quick start
+## Try it in 60 seconds
 
 ```bash
 python3 -m venv .venv
@@ -41,10 +53,10 @@ python3 -m venv .venv
 ./scripts/check.sh
 ```
 
-`dbt` is not needed for any of it. The derived artifacts are committed, which is what lets a
-fresh clone work with no dbt and no warehouse.
+`dbt` is not needed for any of it. The derived artifacts are committed, which is what lets
+a fresh clone work with no dbt and no warehouse.
 
-For dbt worked example:
+For the dbt worked example:
 
 ```bash
 .venv/bin/pip install 'dbt-core~=1.9.0' 'dbt-duckdb~=1.9.0'
@@ -52,71 +64,72 @@ cd skill-packs/dbt-skills/use-cases/example-order-revenue-mart/dbt_project
 ./run_local.sh
 ```
 
+## The end-to-end demo
+
+```bash
+./skill-packs/wren-skills/demo/run_wren_demo.sh
+```
+
+No Docker, no API keys, no warehouse account — DuckDB, locally. It builds the example
+use-case with dbt, imports it into WrenAI, compiles the semantic layer, and proves two
+exact equalities: the governed join query matches the same aggregation run directly on
+DuckDB, and `SELECT sum(revenue) FROM revenue` — the compiled metric view — equals the
+filtered MetricFlow definition, not the raw measure.
+
+## Works with
+
+| Surface | How |
+| --- | --- |
+| GitHub Copilot | `.github/copilot-instructions.md` — present-checked by CI |
+| Claude Code | skills, slash commands, and agents in `.claude/`, generated from `skill-packs/` |
+| VS Code & GitHub Codespaces | `.devcontainer/devcontainer.json` |
+| Any MCP client | per-use-case server config at `wren/mcp.json`, emitted by the `wren` sync stage |
+| Lightdash | explore joins, PII hiding, and AI hints generated into dbt `meta` tags by the `lightdash` sync stage; local instance via `skill-packs/lightdash-skills/deploy/` |
+
+## How it fits together
+
+[public/code-skills-architecture.html](public/code-skills-architecture.html) is the
+self-contained architecture page — data flow, the derivation stages and what each one
+refuses to do, and the deployment surface. [docs/index.mdx](docs/index.mdx) is the same
+positioning as a docs-site overview. The shape in one sentence: raw sources are declared
+under contracts, ontology artifacts (taxonomy, column contracts, annotations, RDF index)
+are derived from the dbt project's own `manifest.json`, and the WrenAI tier serves that
+meaning to BI tools and agents as governed SQL.
+
 ## Verifying a change
 
 ```bash
 ./scripts/check.sh
 ```
 
-One command, seven gates, the same ones a pull request runs and in the same order — so green
-here means green there. Each failure prints what the gate was protecting and the exact
-command that fixes it; [docs/DEBUGGING.md](docs/DEBUGGING.md) has the longer version. It
-changes nothing you have not committed, and a gate that cannot run on your machine (no Rust,
-no Node) reports `skipped` rather than failing.
+One command, eight gates, the same ones a pull request runs and in the same order — so
+green here means green there. Each failure prints what the gate was protecting and the
+exact command that fixes it; [docs/DEBUGGING.md](docs/DEBUGGING.md) has the longer
+version. A gate that cannot run on your machine (no Rust, no Node) reports `skipped`
+rather than failing. Tests alone: `python -m pytest -q`.
 
-The gate worth understanding before you make your first edit is **activation drift**.
-`.claude/`, `references/`, and `templates/` are generated from `skill-packs/<pack>/`; an edit
-made directly in one of them works until the next activation silently reverts it. Edit the
-pack, then re-run `./scripts/activate_skill_stack.sh dbt-skills wren-skills`.
+The gate worth understanding before your first edit is **activation drift**. `.claude/`,
+`references/`, and `templates/` are generated from `skill-packs/<pack>/`; an edit made
+directly in one of them works until the next activation silently reverts it. Edit the
+pack, then re-run:
+
+```bash
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
+```
 
 ## Slash commands
 
-- dbt flow: `/new-use-case`, `/data-model`, `/dbt-model`, `/dbt-build`, `/dbt-test`,
-  `/dbt-audit`, `/dbt-debug`, `/dbt-semantic`, `/new-connector`, `/sync-context`
-- repo flow: `/review`, `/ship`, `/pr-ready`, `/pr-merge`, `/branch-plan`,
-  `/resolve-conflicts`, `/focused-fix`, `/write-docs`, `/sync-submodule`, `/skills-index`
-- setup: `/setup-git-guardrails`, `/setup-pre-commit`, `/marketplace-portability`
-- shell entrypoints: `.claude/commands/infra/git-standard.sh`, `update-memory.sh`,
-  `lint-and-graph.sh`
+| Family | Commands |
+| --- | --- |
+| dbt flow | `/new-use-case`, `/data-model`, `/dbt-model`, `/dbt-build`, `/dbt-test`, `/dbt-audit`, `/dbt-debug`, `/dbt-semantic`, `/new-connector`, `/sync-context` |
+| repo flow | `/review`, `/ship`, `/pr-ready`, `/pr-merge`, `/branch-plan`, `/resolve-conflicts`, `/focused-fix`, `/write-docs`, `/sync-submodule`, `/skills-index` |
+| setup | `/setup-git-guardrails`, `/setup-pre-commit`, `/marketplace-portability` |
 
-`/new-connector` onboards a source system into an existing use-case's dbt project by
-detecting that project's own conventions; `scripts/new_connector.py` does the scaffolding.
-
-## Command namespaces
-
-- Canonical infra command set: `.claude/commands/infra/`
-- Canonical analytics command set: `.claude/commands/analytics/`
-- Backward compatibility: original command files remain in `.claude/commands/`.
+The full inventory, indexed by intent, is [docs/skills-inventory.md](docs/skills-inventory.md).
 
 ## Skill-pack architecture
 
-Skills are now separated into reusable packs so new domains can be added cleanly:
-
-- Shared base pack: `skill-packs/github-skills/`
-- Domain pack (current): `skill-packs/dbt-skills/`
-
-The shared GitHub pack is intended to be common across all domain packs.
-
-Pack portability features (inspired by multi-harness marketplace patterns):
-
-- Plugin-style pack manifests: `skill-packs/*/.claude-plugin/plugin.json`
-- Portability validation script: `scripts/marketplace_portability_check.sh`
-- Shared portability skill and command in `skill-packs/github-skills/.claude/`
-
-Canonical dbt skill entrypoint:
-
-- `dbt-skill` in `skill-packs/dbt-skills/.claude/skills/dbt-skill/SKILL.md`
-- Backward-compatible alias: `senior-analytics-engineer`
-
-### Use-case ownership by skill pack
-
-- New use-cases must be created inside the owning pack path: `skill-packs/<pack>/use-cases/<slug>/`.
-- For dbt work and dbt agents, create use-cases in `skill-packs/dbt-skills/use-cases/<slug>/`.
-- Root `use-cases/` holds the working method only; the worked examples now live in the pack.
-
-### Where an asset lives
-
-The pack is the source of truth. Activation copies it into the paths agents actually load:
+Packs are the source of truth; activation materialises them into the paths agents load:
 
 | Asset | Source of truth | Materialised to |
 | --- | --- | --- |
@@ -124,56 +137,41 @@ The pack is the source of truth. Activation copies it into the paths agents actu
 | `references/`, `templates/` | `skill-packs/<pack>/` | repository root |
 | use-cases | `skill-packs/<pack>/use-cases/` | not copied |
 
-Skills and agents link to these with one relative path — `../../references/x.md` — which is
-why both copies must exist: it resolves inside the pack *and* after activation. Editing a
-materialised copy directly is silently reverted on the next activation.
+Skills link to shared assets with one relative path — `../../references/x.md` — which is
+why both copies must exist: it resolves inside the pack *and* after activation.
 
-To activate a stack into live `.claude/` paths:
+Current packs: `skill-packs/github-skills/` (shared base), `skill-packs/dbt-skills/`
+(analytics domain), `skill-packs/wren-skills/` (semantic serving),
+`skill-packs/lightdash-skills/` (BI serving). Each carries a
+`.claude-plugin/plugin.json` manifest, validated by
+`scripts/marketplace_portability_check.sh`. The canonical dbt entrypoint is `dbt-skill`
+(`skill-packs/dbt-skills/.claude/skills/dbt-skill/SKILL.md`); `senior-analytics-engineer`
+is its compatibility alias.
 
-```bash
-./scripts/activate_skill_stack.sh dbt-skills wren-skills
-```
+## Use-case ownership
 
-Future packs can follow the same pattern, for example:
+- New use-cases are created inside the owning pack: `skill-packs/<pack>/use-cases/<slug>/`.
+- For dbt work, that means `skill-packs/dbt-skills/use-cases/<slug>/`.
+- The worked examples live in the pack; there is no root `use-cases/` directory.
 
-- `skill-packs/senior-data-scientist/`
-- `skill-packs/principal-data-engineer-skills/`
+## More documentation
 
-## RTK, Graphify, and AgentMemory
+- [docs/WAY_OF_WORKING.md](docs/WAY_OF_WORKING.md) — the delivery contract
+- [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) — RTK, Graphify, TOON, and AgentMemory
+  (the wrappers live in `src/ai-core/`)
+- [docs/BRANCHING_STRATEGY.md](docs/BRANCHING_STRATEGY.md) — trunk, stacks, and conflict
+  prevention
+- [docs/AUTOMATION_WORKFLOW.md](docs/AUTOMATION_WORKFLOW.md) — what runs on every PR
+- [docs/use-cases.md](docs/use-cases.md) — the worked examples
+- `docs/source-manuals/` — the original manuals of the merged source repositories,
+  preserved for provenance
 
-- RTK integration layer: `src/ai-core/` and `src/ai-core/dbt-integration.ts`
-- Graph snapshots: `.claude/commands/infra/lint-and-graph.sh`
-- Project memory sync: `.claude/commands/infra/update-memory.sh` and `scripts/sync_context.sh`
-- AgentMemory setup and usage notes: `docs/INTEGRATIONS.md`
+## Contributing, security, and governance
 
-## dbt Labs skill translation
-
-The repository incorporates dbt-labs/dbt-agent-skills patterns translated to dbt Core under:
-
-- `.claude/skills/dbt-labs-core-translation/`
-- `.claude/skills/using-dbt-for-analytics-engineering-core/`
-- `.claude/skills/running-dbt-commands-core/`
-- `.claude/skills/building-dbt-semantic-layer-core/`
-- `.claude/skills/adding-dbt-unit-test-core/`
-- `.claude/skills/working-with-dbt-mesh-core/`
-- `.claude/skills/troubleshooting-dbt-job-errors-core/`
-
-## Feature provenance
-
-Original root manuals from both source repositories are preserved in:
-
-- `docs/source-manuals/README.git-skills.md`
-- `docs/source-manuals/CLAUDE.git-skills.md`
-- `docs/source-manuals/README.dbt-skills.md`
-- `docs/source-manuals/CLAUDE.dbt-skills.md`
-
-## Contributing
-
-- Keep changes scoped and documented.
-- Keep dbt rules and git rules consistent with `.claude/rules/`.
-- For architecture questions, use graph-first flow described in `CLAUDE.md`.
-
-## Governance and release
-
-- Branch protection recommendations: `.github/BRANCH_PROTECTION_RECOMMENDATIONS.md`
-- Manual release workflow: `.github/workflows/release.yml`
+- [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) ·
+  [Support](SUPPORT.md) · [Code of conduct](CODE_OF_CONDUCT.md)
+- License: [MIT](LICENSE)
+- Branch protection recommendations:
+  `.github/BRANCH_PROTECTION_RECOMMENDATIONS.md`
+- Releases: `.github/workflows/release.yml`, a manual `workflow_dispatch` run that takes a
+  version tag input
