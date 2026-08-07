@@ -224,6 +224,101 @@ def test_the_fivetran_parser_reads_tables_and_columns() -> None:
     assert [c["name"] for c in tables["deal"]] == ["deal_id"]
 
 
+# ---------------------------------------------------------------------------------------
+# Block scalars: the description is the body, not the indicator
+# ---------------------------------------------------------------------------------------
+#
+# `description: >` read with a plain `(.+?)` captures `>` and leaves the body unread, so
+# the column's whole description became one punctuation mark. Measured on the committed
+# reference before this: **41 of 468 Fivetran columns**, 34 `>` and 7 `|`.
+
+
+def _columns(body: str):
+    return ssd.parse_fivetran_src_yml(
+        "sources:\n  - name: s\n    tables:\n      - name: t\n        columns:\n" + body)["t"]
+
+
+def test_a_folded_block_scalar_becomes_its_text_not_a_chevron() -> None:
+    col = _columns(
+        "          - name: c\n"
+        "            description: >\n"
+        "              List of mappings representing contact IDs\n"
+        "              that have been merged into the contact.\n"
+    )[0]
+    assert col["description"] == (
+        "List of mappings representing contact IDs that have been merged into the contact.")
+
+
+def test_a_literal_block_scalar_keeps_the_lines_the_vendor_wrote_apart() -> None:
+    """This file's `|` bodies are one sentence per line — "If event type is SOCIAL, it is
+    ..." — and folding them would join statements about different cases into one."""
+    col = _columns(
+        "          - name: c\n"
+        "            description: |\n"
+        "              If the type is PUBLISHING_TASK, it is one of BLOG_POST, EMAIL.\n"
+        "              If the type is SOCIAL, it is one of twitter, facebook.\n"
+    )[0]
+    assert col["description"].splitlines() == [
+        "If the type is PUBLISHING_TASK, it is one of BLOG_POST, EMAIL.",
+        "If the type is SOCIAL, it is one of twitter, facebook.",
+    ]
+
+
+def test_a_blank_line_inside_a_folded_block_is_a_paragraph_break() -> None:
+    col = _columns(
+        "          - name: c\n"
+        "            description: >\n"
+        "              Any errors that happened.\n"
+        "\n"
+        "              NOTE: this field is deprecated.\n"
+    )[0]
+    assert col["description"] == "Any errors that happened.\nNOTE: this field is deprecated."
+
+
+def test_a_chomping_indicator_is_not_mistaken_for_the_description() -> None:
+    col = _columns(
+        "          - name: c\n            description: >-\n              Some text.\n")[0]
+    assert col["description"] == "Some text."
+
+
+def test_a_block_body_does_not_leak_into_the_next_column() -> None:
+    """A block scalar has no terminator; the first less-indented line ends it, and that
+    line still has to be processed as itself."""
+    cols = _columns(
+        "          - name: a\n"
+        "            description: |\n"
+        "              First.\n"
+        "          - name: b\n"
+        "            description: Second.\n"
+    )
+    assert [c["name"] for c in cols] == ["a", "b"]
+    assert cols[0]["description"] == "First." and cols[1]["description"] == "Second."
+
+
+def test_a_block_running_to_the_end_of_the_file_still_closes() -> None:
+    """Nothing follows it, so nothing triggers the flush — it has to happen on the way
+    out."""
+    col = _columns(
+        "          - name: c\n            description: >\n              Last line of file.")[0]
+    assert col["description"] == "Last line of file."
+
+
+def test_the_committed_reference_holds_no_bare_block_indicators() -> None:
+    """The regression guard on real data: 41 of 468 before, 0 after."""
+    path = ssd.CACHE_DIR / "hubspot.json"
+    if not path.exists():
+        pytest.skip("hubspot reference cache not refreshed on this branch")
+    cache = json.loads(path.read_text(encoding="utf-8"))
+    offenders = [
+        f"{table}.{column['name']}"
+        for source in cache["sources"]
+        for table, columns in (source.get("tables") or {}).items()
+        for column in columns
+        if (column.get("description") or "").strip() in {"|", ">", "|-", ">-", "|+", ">+"}
+    ]
+    assert not offenders, f"block-scalar indicator stored as a description: {offenders[:5]}"
+
+
 def test_the_dlt_parser_reads_the_default_property_tuples() -> None:
     text = (
         'DEFAULT_COMPANY_PROPS = (\n    "createdate",\n    "domain",\n)\n'

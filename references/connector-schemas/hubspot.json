@@ -212,15 +212,15 @@
             "name": "campaign_guid"
           },
           {
-            "description": "|",
+            "description": "Type of event. If the event type is PUBLISHING_TASK, it is one of BLOG_POST, EMAIL, LANDING_PAGE, CUSTOM.\nIf event type is SOCIAL, it is one of twitter, facebook, linkedin, googlepluspages.\nIf event type is CONTENT, it is one of email, recurring-email, blog-post, landing-page, legacy-page, site-page.",
             "name": "category"
           },
           {
-            "description": "|",
+            "description": "For event type of PUBLISHING_TASK, a numeric value corresponding to the type of task; one of 3 (BLOG_POST), 2 (EMAIL), 1 (LANDING_PAGE), 0 (CUSTOM).\nFor event type of SOCIAL, this is 0.\nIf event type is CONTENT, it is one of 2 (email, recurring-email), 3 (blog-post), 1 (landing-page), 5 (legacy-page), 4 (site-page).",
             "name": "category_id"
           },
           {
-            "description": "|",
+            "description": "The ID of the content group (aka blog) that the associated Blog Post belongs to, if any.\nOtherwise null. Only populated for single task GETs and for Blog Post Tasks.",
             "name": "content_group_id"
           },
           {
@@ -422,7 +422,7 @@
             "name": "property_annualrevenue"
           },
           {
-            "description": ">",
+            "description": "List of mappings representing contact IDs that have been merged into the contact at hand. Format: <merged_contact_id>:<merged_at_in_epoch_time>;<second_merged_contact_id>:<merged_at_in_epoch_time> This field has replaced the `CONTACT_MERGE_AUDIT` table, which was deprecated by the Hubspot v3 CRM API.",
             "name": "property_hs_calculated_merged_vids"
           }
         ],
@@ -514,35 +514,35 @@
             "name": "filters_updated_at"
           },
           {
-            "description": ">",
+            "description": "Any errors that happened the last time the list was processed.\nNOTE: This field is deprecated and will not be populated for connectors utilizing the HubSpot v3 API. This field will be removed in a future release.",
             "name": "metadata_error"
           },
           {
-            "description": ">",
+            "description": "A timestamp of the last time that the processing state changed.\nNOTE: This field is deprecated and will not be populated for connectors utilizing the HubSpot v3 API. This field will be removed in a future release.",
             "name": "metadata_last_processing_state_change_at"
           },
           {
-            "description": ">",
+            "description": "A timestamp of the last time that the size of the list changed.\nNOTE: This field is deprecated and will not be populated for connectors utilizing the HubSpot v3 API. This field will be removed in a future release.",
             "name": "metadata_last_size_change_at"
           },
           {
-            "description": ">",
+            "description": "One of DONE, REFRESHING, INITIALIZING, or PROCESSING. DONE indicates the list has finished processing, any other value indicates that list membership is being evaluated.\nNOTE: This field is deprecated and will not be populated for connectors utilizing the HubSpot v3 API. This field will be removed in a future release.",
             "name": "metadata_processing"
           },
           {
-            "description": ">",
+            "description": "The approximate number of contacts in the list.\nNOTE: This field is deprecated and will not be populated for connectors utilizing the HubSpot v3 API. This field will be removed in a future release.",
             "name": "metadata_size"
           },
           {
-            "description": ">",
+            "description": "'{{ doc(\"portal_id\") }}'\nNOTE: This field is deprecated and will not be populated for connectors utilizing the HubSpot v3 API. This field will be removed in a future release.",
             "name": "portal_id"
           },
           {
-            "description": ">",
+            "description": "If this is false, this is a system list and cannot be deleted.\nNOTE: This field is deprecated and will not be populated for connectors utilizing the HubSpot v3 API. This field will be removed in a future release.",
             "name": "deleteable"
           },
           {
-            "description": ">",
+            "description": "Whether the contact list is dynamic.\nNOTE: This field is deprecated and will not be populated for connectors utilizing the HubSpot v3 API. This field will be removed in a future release.",
             "name": "dynamic"
           }
         ],
@@ -778,7 +778,7 @@
             "name": "active"
           },
           {
-            "description": ">",
+            "description": "Boolean indicating if the pipeline stage is closed. NOTE: This field is deprecated in favor of the `is_closed` column.",
             "name": "closed_won"
           },
           {
@@ -996,7 +996,7 @@
             "name": "_fivetran_synced"
           },
           {
-            "description": "|",
+            "description": "The best-guess of the type of bounce encountered.\nIf an appropriate category couldn't be determined, this property is omitted. See below for the possible values.\nNote that this is a derived value, and may be modified at any time to improve the accuracy of classification.",
             "name": "category"
           },
           {
@@ -1256,7 +1256,7 @@
             "name": "_fivetran_synced"
           },
           {
-            "description": "|",
+            "description": "A HubSpot employee explicitly initiated the status change to block messages to the recipient.\n(Note this usage has been deprecated in favor of dropping messages with a 'dropReason' of BLOCKED_ADDRESS.)",
             "name": "bounced"
           },
           {
@@ -1264,7 +1264,7 @@
             "name": "id"
           },
           {
-            "description": "|",
+            "description": "The recipient's portal subscription status.\nNote that if this is 'UNSUBSCRIBED', the property 'subscriptions' is not necessarily an empty array, nor are all\nsubscriptions contained in it necessarily going to have their statuses set to 'UNSUBSCRIBED'.)",
             "name": "portal_subscription_status"
           },
           {
@@ -1276,7 +1276,7 @@
             "name": "source"
           },
           {
-            "description": "|",
+            "description": "An array of JSON objects representing the status of subscriptions for the recipient.\nEach JSON subscription object is comprised of the properties: 'id', 'status'.",
             "name": "subscriptions"
           }
         ],
@@ -1350,11 +1350,11 @@
             "name": "_fivetran_synced"
           },
           {
-            "description": ">",
+            "description": "Whether the engagement is currently being shown in the UI.\nPLEASE NOTE: This field will not be populated for connectors utilizing the HubSpot v3 API version. This field will be deprecated in a future release.",
             "name": "active"
           },
           {
-            "description": ">",
+            "description": "A timestamp representing when the engagement was created.\nPLEASE NOTE: This field will not be populated for connectors utilizing the HubSpot v3 API version. This field will be deprecated in a future release.",
             "name": "created_at"
           },
           {
@@ -1362,7 +1362,7 @@
             "name": "id"
           },
           {
-            "description": ">",
+            "description": "The ID of the engagement's owner.\nPLEASE NOTE: This field will not be populated for connectors utilizing the HubSpot v3 API version. This field will be deprecated in a future release.",
             "name": "owner_id"
           },
           {
@@ -1370,7 +1370,7 @@
             "name": "portal_id"
           },
           {
-            "description": ">",
+            "description": "A timestamp in representing the time that the engagement should appear in the timeline.\nPLEASE NOTE: This field will not be populated for connectors utilizing the HubSpot v3 API version. This field will be deprecated in a future release.",
             "name": "timestamp"
           },
           {
@@ -1392,19 +1392,19 @@
             "name": "_fivetran_deleted"
           },
           {
-            "description": ">",
+            "description": "This field marks the call's time of creation and determines where the call sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hs_createdate"
           },
           {
-            "description": ">",
+            "description": "This field marks the call's time of occurrence and determines where the call sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "timestamp"
           },
           {
-            "description": ">",
+            "description": "The ID of the owner associated with the call. This field determines the user listed as the call creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hubspot_owner_id"
           },
           {
-            "description": ">",
+            "description": "The ID of the team associated with the call. This field determines the team listed as the call creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version.",
             "name": "property_hubspot_team_id"
           }
         ],
@@ -1498,19 +1498,19 @@
             "name": "engagement_id"
           },
           {
-            "description": ">",
+            "description": "This field marks the email's time of creation and determines where the email sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hs_createdate"
           },
           {
-            "description": ">",
+            "description": "This field marks the email's time of occurrence and determines where the email sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "timestamp"
           },
           {
-            "description": ">",
+            "description": "The ID of the owner associated with the email. This field determines the user listed as the email creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hubspot_owner_id"
           },
           {
-            "description": ">",
+            "description": "The ID of the team associated with the email. This field determines the team listed as the email creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version.",
             "name": "property_hubspot_team_id"
           }
         ],
@@ -1568,19 +1568,19 @@
             "name": "engagement_id"
           },
           {
-            "description": ">",
+            "description": "This field marks the meeting's time of creation and determines where the meeting sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hs_createdate"
           },
           {
-            "description": ">",
+            "description": "This field marks the meeting's time of occurrence and determines where the meeting sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "timestamp"
           },
           {
-            "description": ">",
+            "description": "The ID of the owner associated with the meeting. This field determines the user listed as the meeting creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hubspot_owner_id"
           },
           {
-            "description": ">",
+            "description": "The ID of the team associated with the meeting. This field determines the team listed as the meeting creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version.",
             "name": "property_hubspot_team_id"
           }
         ],
@@ -1598,19 +1598,19 @@
             "name": "engagement_id"
           },
           {
-            "description": ">",
+            "description": "This field marks the note's time of creation and determines where the note sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hs_createdate"
           },
           {
-            "description": ">",
+            "description": "This field marks the note's time of occurrence and determines where the note sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "timestamp"
           },
           {
-            "description": ">",
+            "description": "The ID of the owner associated with the note. This field determines the user listed as the note creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hubspot_owner_id"
           },
           {
-            "description": ">",
+            "description": "The ID of the team associated with the note. This field determines the team listed as the note creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version.",
             "name": "property_hubspot_team_id"
           }
         ],
@@ -1624,19 +1624,19 @@
             "name": "engagement_id"
           },
           {
-            "description": ">",
+            "description": "This field marks the task's time of creation and determines where the task sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hs_createdate"
           },
           {
-            "description": ">",
+            "description": "This field marks the task's time of occurrence and determines where the task sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "timestamp"
           },
           {
-            "description": ">",
+            "description": "The ID of the owner associated with the task. This field determines the user listed as the task creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table.",
             "name": "property_hubspot_owner_id"
           },
           {
-            "description": ">",
+            "description": "The ID of the team associated with the task. This field determines the team listed as the task creator on the record timeline.\nPLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version.",
             "name": "property_hubspot_team_id"
           }
         ],

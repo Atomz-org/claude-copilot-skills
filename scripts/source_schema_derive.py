@@ -171,24 +171,72 @@ def fetch(url: str, timeout: int = 30) -> Optional[str]:
 # ---------------------------------------------------------------------------------------
 
 
+# `description: |` / `description: >`, with the optional chomping and explicit-indent
+# indicators YAML allows. Reading the value with a plain `(.+?)` captured the indicator
+# *as the description* and left the body unread — measured on the committed reference:
+# **41 of 468 Fivetran columns carried `|` or `>` as their whole description.**
+BLOCK_INDICATOR = re.compile(r"^([|>])[-+]?\d*$")
+
+
+def fold_block_scalar(raw: List[str], literal: bool) -> str:
+    """A block scalar's body lines -> its text. `|` keeps line breaks, `>` folds them.
+
+    The distinction is the vendor's, not ours: this file's `|` bodies are one sentence per
+    line ("If event type is SOCIAL, it is ...") and its `>` bodies are wrapped prose with a
+    blank line where a paragraph genuinely breaks. Folding both would join sentences that
+    were written apart; keeping both literal would put hard breaks through wrapped prose.
+    """
+    indents = [len(line) - len(line.lstrip()) for line in raw if line.strip()]
+    base = min(indents) if indents else 0
+    body = [line[base:].rstrip() if len(line) > base else "" for line in raw]
+    while body and not body[-1]:
+        body.pop()
+    if literal:
+        return "\n".join(body)
+    paragraphs: List[List[str]] = [[]]
+    for line in body:
+        if line:
+            paragraphs[-1].append(line)
+        elif paragraphs[-1]:
+            paragraphs.append([])
+    return "\n".join(" ".join(p) for p in paragraphs if p)
+
+
 def parse_fivetran_src_yml(text: str) -> Dict[str, List[Dict[str, str]]]:
     """`src_<name>.yml` -> {table: [{name, description}]}.
 
     Parsed with a scanner rather than a YAML loader on purpose: these files carry Jinja in
     load-bearing positions (`schema: "{{ var('hubspot_schema', 'hubspot') }}"`) and a
     loader either rejects it or re-emits it quoted. The shape being read is two fixed
-    indentation levels deep, which a scanner handles exactly.
+    indentation levels deep, which a scanner handles exactly — except for block scalars,
+    whose body is *deeper* than the key and so has to be consumed explicitly.
     """
     tables: Dict[str, List[Dict[str, str]]] = {}
     table: Optional[str] = None
     column: Optional[Dict[str, str]] = None
+    block: Optional[Dict[str, Any]] = None
+
+    def close_block() -> None:
+        nonlocal block
+        if block is not None:
+            block["column"]["description"] = fold_block_scalar(block["lines"],
+                                                               block["literal"])
+            block = None
 
     for line in text.splitlines():
+        if block is not None:
+            # A blank line belongs to the block (it is a paragraph break); so does anything
+            # indented past the key. The first line that is neither ends it, and is then
+            # processed normally — a block scalar has no terminator of its own.
+            if not line.strip() or (len(line) - len(line.lstrip())) > block["indent"]:
+                block["lines"].append(line)
+                continue
+            close_block()
         table_match = re.match(r"^      - name:\s*(\S+)\s*$", line)
         if table_match:
             table = table_match.group(1)
             tables.setdefault(table, [])
-            column = None
+            column, block = None, None
             continue
         if table is None:
             continue
@@ -196,14 +244,23 @@ def parse_fivetran_src_yml(text: str) -> Dict[str, List[Dict[str, str]]]:
         if column_match:
             column = {"name": column_match.group(1), "description": ""}
             tables[table].append(column)
+            block = None
             continue
         if column is not None:
-            description = re.match(r"^            description:\s*(.+?)\s*$", line)
+            description = re.match(r"^(            )description:\s*(.+?)\s*$", line)
             if description:
-                column["description"] = description.group(1).strip().strip("'\"")
+                value = description.group(2).strip()
+                indicator = BLOCK_INDICATOR.match(value)
+                if indicator:
+                    block = {"column": column, "indent": len(description.group(1)),
+                             "literal": indicator.group(1) == "|", "lines": []}
+                    continue
+                column["description"] = value.strip("'\"")
         # A new top-level key ends the tables block.
         if re.match(r"^  - name:\s*\S+", line) or re.match(r"^\S", line):
-            table, column = None, None
+            table, column, block = None, None, None
+    # A block scalar running to the end of the file has no following line to close it.
+    close_block()
     return {k: v for k, v in tables.items() if v}
 
 

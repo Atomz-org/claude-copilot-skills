@@ -172,11 +172,24 @@ class Annotation:
 VENDOR_PREFIX = re.compile(r"^(property|properties)_", re.I)
 
 
+def one_line(text: str) -> str:
+    """A vendor description collapsed to a single line.
+
+    The reference now carries real block scalars, so a `|` description arrives with its
+    line breaks intact — which is right for the cache and wrong for here. This module
+    renders a description twice into line-oriented text: as `definition: "..."` and as a
+    `# evidence:` comment. A newline in either splits the line, and the second half of a
+    split comment is no longer a comment — it becomes a stray YAML key in the middle of a
+    proposal.
+    """
+    return " ".join((text or "").split())
+
+
 def _described(columns: List[Dict[str, str]]) -> Dict[str, str]:
     """Bare column name -> the description the vendor wrote, for one table."""
     out: Dict[str, str] = {}
     for column in columns:
-        description = (column.get("description") or "").strip()
+        description = one_line(column.get("description") or "")
         if not description or ssd.DOC_REFERENCE.search(description):
             continue
         out.setdefault(VENDOR_PREFIX.sub("", column["name"]).lower(), description)
@@ -251,7 +264,7 @@ def derive_annotations(tables: Dict[str, List[Dict[str, str]]], citation: str,
         in_table = scoped.get(match[0], {}) if (scoped and match) else {}
         for column in tables[table]:
             name = column["name"]
-            description = (column.get("description") or "").strip()
+            description = one_line(column.get("description") or "")
             scope = "own"
             borrowed = ""
             if not description:

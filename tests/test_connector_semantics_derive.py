@@ -193,6 +193,25 @@ def test_the_matching_table_wins_even_when_the_bare_index_has_an_answer() -> Non
     assert annotations[0].definition == "Short summary of ticket."
 
 
+def test_a_multi_line_description_is_flattened_before_it_reaches_the_proposal() -> None:
+    """The reference now carries real block scalars, so a `|` description arrives with its
+    line breaks. This file renders a description into `definition: "..."` and into a
+    `# evidence:` comment, both line-oriented — and the second half of a split comment is
+    not a comment, it is a stray key in the middle of a proposal."""
+    annotations, _ = csd.derive_annotations(
+        _tables(deal=[("amount", "First sentence.\nSecond sentence.")]), "cite")
+    assert annotations[0].definition == "First sentence. Second sentence."
+
+
+def test_the_committed_proposal_is_still_one_line_per_definition() -> None:
+    path = (ENHANZA / "ontology/proposals/annotations.hubspot.yml")
+    if not path.exists():
+        pytest.skip("hubspot proposal not on this branch")
+    parsed = csd._miniyaml.parse(path.read_text(encoding="utf-8"))
+    for name, entry in (parsed.get("columns") or {}).items():
+        assert "\n" not in (entry.get("definition") or ""), name
+
+
 def test_a_doc_reference_is_excluded_from_both_indexes() -> None:
     reference = _tables(company=[("property_name", "{{ doc('company_name') }}")])
     assert csd.description_index(reference) == {}

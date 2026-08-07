@@ -83,8 +83,8 @@ columns:
     reviewed: false
     confidence: low
     # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: quote.hs_createdate
-    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml, BARE-NAME FALLBACK — no `quote` in that reference, so this may describe another entity: >
-    definition: ">"
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml, BARE-NAME FALLBACK — no `quote` in that reference, so this may describe another entity: This field marks the call's time of creation and determines where the call sits on the rec
+    definition: "This field marks the call's time of creation and determines where the call sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format. PLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table."
 
   hs_pipeline:
     reviewed: false
