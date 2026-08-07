@@ -335,6 +335,89 @@ def test_a_ref_resolving_to_nothing_still_says_so(tmp_path: Path) -> None:
     assert "resolves to no model file" in model.reason
 
 
+# ---------------------------------------------------------------------------------------
+# Expansion: the rewrite lands, or it is not called an expansion
+# ---------------------------------------------------------------------------------------
+#
+# The detector runs on `strip_noise(sql)`; the rewrite used to re-search the raw SQL. Any
+# comment or Jinja tag between `select` and `*` is whitespace in the first and unmatchable
+# in the second, so `rewrite` returned the file unchanged while `run` had already recorded
+# it as expanded. Measured: all 4 of this project's expandable models are that shape, so
+# `--write` reported four expansions and wrote four identical files.
+
+
+def _rewrite(sql: str, columns=("a", "b")):
+    body = ns.strip_noise(sql)
+    stars = list(esm.STAR.finditer(body))
+    model = esm.Model(rel="d", path=Path("d.sql"), name="d", sql=sql,
+                      star_count=len(stars),
+                      star_pos=stars[0].start() if stars else -1,
+                      star_columns=list(columns))
+    return esm.rewrite(model)
+
+
+def test_a_comment_between_select_and_star_does_not_silently_skip_the_rewrite() -> None:
+    """The house staging stub, verbatim. It is the shape every expandable model here has."""
+    out = _rewrite("select\n    -- RawColumnName as ColumnName\n    *\nfrom {{ ref('u') }}\n")
+    assert out is not None, "returned None where the star is genuinely there"
+    assert "*" not in out.split("do not hand-edit the list.\n")[-1]
+    assert "-- RawColumnName as ColumnName" in out, "dropped the author's own note"
+
+
+def test_select_distinct_star_keeps_its_distinct() -> None:
+    """`load_models` counted `select distinct *` as a star and `STAR` did not match one —
+    two regexes for one concept, disagreeing silently. Dropping the DISTINCT would change
+    the model's grain, which is worse than not rewriting it at all."""
+    out = _rewrite("select distinct * from {{ ref('u') }}\n")
+    assert out is not None
+    tail = out.split("do not hand-edit the list.\n")[-1]
+    assert tail.startswith("select distinct")
+    assert "*" not in tail
+
+
+def test_an_uppercase_distinct_is_preserved_as_written() -> None:
+    out = _rewrite("SELECT DISTINCT * from {{ ref('u') }}\n")
+    assert out is not None
+    tail = out.split("do not hand-edit the list.\n")[-1]
+    assert tail.startswith("SELECT DISTINCT") and "*" not in tail
+
+
+def test_the_star_is_replaced_where_it_was_found_not_at_the_next_match() -> None:
+    """`star_pos` already names the one star that owns the output. Searching forward from
+    it can only ever land somewhere else."""
+    sql = "with s as (\n    select 1 as x\n)\nselect\n    *\nfrom s\n"
+    out = _rewrite(sql)
+    assert out is not None
+    assert out.index("do not hand-edit") > out.index("with s as")
+
+
+def test_a_star_that_cannot_be_placed_is_refused_not_reported_as_expanded() -> None:
+    """The caller's half of the contract: `rewrite` returning None must not become a row
+    in `expanded`, because a run that says the star is gone while the file still has it is
+    the quiet detector disagreeing with the loud one."""
+    model = esm.Model(rel="d", path=Path("d.sql"), name="d", sql="select a from t\n",
+                      star_count=1, star_pos=999, star_columns=["a"])
+    assert esm.rewrite(model) is None
+
+
+@needs_enhanza
+def test_every_expandable_model_actually_changes_when_rewritten() -> None:
+    """The end-to-end guard. Before this, 4 of 4 were no-ops reported as expansions."""
+    payload = esm.run("enhanza-analytics", write=False, only=None, exclude=None)
+    if payload["status"] == "skip":
+        pytest.skip(payload["reason"])
+    assert payload["expanded"], "nothing expandable — this guard would pass vacuously"
+    project = ENHANZA / "dbt_project"
+    baseline = json.loads(
+        (ENHANZA / "artifacts" / ns.BASELINE_NAME).read_text(encoding="utf-8"))["models"]
+    models = esm.load_models(project, baseline, esm.erp_exceptions(project))
+    esm.resolve(models, esm.declared_source_columns(project), project)
+    for entry in payload["expanded"]:
+        model = next(m for m in models.values() if m.rel == entry["model"])
+        out = esm.rewrite(model)
+        assert out is not None and out != model.sql, f"no-op rewrite: {model.rel}"
+
+
 @needs_enhanza
 def test_no_upstream_is_read_out_of_a_build_directory() -> None:
     """The regression guard on real data: 6 of 6 reads were compiled artifacts before."""

@@ -72,7 +72,14 @@ REPO = _paths.REPO
 SOURCE_CALL = re.compile(r"\bsource\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]")
 REF_CALL = re.compile(r"\bref\s*\(\s*['\"]([^'\"]+)['\"]")
 ERP_FIELDS = re.compile(r"add_erp_fields\s*\(\s*columns\s*=\s*\[([^\]]*)\]", re.S)
-STAR = re.compile(r"(\bselect\s+)(\*)", re.I)
+# One definition of "a select whose projection is a star", used by the detector in
+# `load_models` and by `rewrite`. It was two — the detector matched `select distinct *` and
+# this did not — and the disagreement was silent in the worst direction: `load_models`
+# admitted such a model, `resolve` derived its columns, `run` recorded it as expanded, and
+# `rewrite` found no match and returned the file untouched. The report said the star was
+# gone, the file still had it, and `no_star_check` still flagged it. Group 1 carries the
+# `distinct` so the rewrite cannot drop it.
+STAR = re.compile(r"(\bselect\s+(?:distinct\s+)?)(\*)", re.I)
 
 # `target/` and `target-sample/` hold dbt's compiled copy of a model that also lives under
 # `models/`, and `dbt_packages/` holds the installed copy of a local package's models — so
@@ -222,7 +229,7 @@ def load_models(project: Path, baseline: List[str], exceptions: set) -> Dict[str
             continue
         sql = path.read_text(encoding="utf-8", errors="replace")
         body = ns.strip_noise(sql)
-        stars = [m for m in re.finditer(r"\bselect\s+(?:distinct\s+)?\*", body, re.I)]
+        stars = list(STAR.finditer(body))
         model = Model(rel=rel, path=path, name=path.stem, sql=sql,
                       star_count=len(stars),
                       macro_columns=erp_macro_columns(sql, exceptions))
@@ -353,15 +360,38 @@ def resolve(models: Dict[str, Model], sources: Dict[Tuple[str, str], List[str]],
 # ---------------------------------------------------------------------------------------
 
 
-def rewrite(model: Model) -> str:
-    """Replace this model's single star with its upstream's column list.
+def rewrite(model: Model) -> Optional[str]:
+    """Replace this model's single star with its upstream's column list, or None.
 
     Only the star. `add_erp_fields` emits its own columns at its own call site, so listing
     them here too printed every `<Col>ERP` twice — found by reading the first rewrite.
     The banner goes immediately above the select that owns the star, not above the first
     select in the file, which is usually inside a CTE.
+
+    Matched on the **stripped** body and anchored at `star_pos`, never re-searched on the
+    raw SQL. `load_models` detects the star on `strip_noise(sql)`, so anything that pass
+    blanks — a comment or a Jinja tag between the keyword and the star — makes the raw text
+    unmatchable while the detector is perfectly happy. That is not hypothetical: the house
+    staging stub is
+
+        select
+            -- RawColumnName as ColumnName
+            *
+
+    and all four of this project's expandable models carry it. Re-searching the raw SQL
+    found nothing, `rewrite` returned the file unchanged, and `run` had already recorded it
+    as expanded — so `--write` reported four expansions and wrote four identical files,
+    with `no_star_check` still flagging every one.
+
+    `strip_noise` is length-preserving, so a span found in the body indexes `sql` exactly;
+    the prefix is then read back out of `sql` and a `distinct` or a comment survives
+    verbatim. A star that does not match where it was found returns None, and the caller
+    refuses it rather than reporting a no-op as an expansion.
     """
     assert model.star_columns is not None
+    match = STAR.match(ns.strip_noise(model.sql), max(model.star_pos, 0))
+    if match is None:
+        return None
     indent = "    "
     listing = indent + f"\n{indent}, ".join(model.star_columns)
     banner = (
@@ -369,13 +399,11 @@ def rewrite(model: Model) -> str:
         "-- declaration; `select *` gave this model no column contract. Regenerate after\n"
         "-- changing the upstream contract; do not hand-edit the list.\n"
     )
-    match = STAR.search(model.sql, model.star_pos - 1 if model.star_pos > 0 else 0)
-    if match is None:
-        return model.sql
     line_start = model.sql.rfind("\n", 0, match.start()) + 1
     return (
         model.sql[:line_start] + banner
-        + model.sql[line_start:match.start()] + match.group(1) + "\n" + listing
+        + model.sql[line_start:match.start()]
+        + model.sql[match.start(1):match.end(1)] + "\n" + listing
         + model.sql[match.end():]
     )
 
@@ -408,11 +436,21 @@ def run(slug: str, write: bool, only: Optional[str],
         if model.star_columns is None:
             refused.append({"model": model.rel, "reason": model.reason})
             continue
+        # Rewritten in dry run too, and reported on the result. Recording "expandable" off
+        # the resolved columns alone said a model would be rewritten that `--write` then
+        # left untouched — the run reported the star gone while `no_star_check` still
+        # flagged it, and the quiet detector is the one people read.
+        rewritten = rewrite(model)
+        if rewritten is None:
+            refused.append({"model": model.rel, "reason": (
+                "columns resolved, but the star's own `select` does not match where it was "
+                "found — left alone rather than reported as expanded")})
+            continue
         expanded.append({"model": model.rel, "columns": len(model.star_columns),
                          "macro_columns": len(model.macro_columns),
                          "names": model.star_columns})
         if write:
-            model.path.write_text(rewrite(model), encoding="utf-8")
+            model.path.write_text(rewritten, encoding="utf-8")
 
     return {
         "status": "ok",
