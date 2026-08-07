@@ -264,8 +264,11 @@ def test_the_spine_refusal_reports_the_work_it_is_holding_back() -> None:
     summary = ots.run("enhanza-analytics", None, write=False, check=False)
     if summary.get("status") != "skip":
         pytest.skip("this project now declares a time spine")
+    # The manifest is gitignored, so a fresh clone — CI included — skips for want of it
+    # long before reaching the spine. Asserting on that skip is asserting on the checkout.
+    if "time spine" not in summary["reason"]:
+        pytest.skip(f"blocked earlier: {summary['reason']}")
     assert summary["semantic_models"] > 0
-    assert "time spine" in summary["reason"]
     assert summary["changed"] == []
 
 

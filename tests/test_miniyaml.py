@@ -7,6 +7,7 @@ pytest: a multi-line `expected_concepts: [a, b,` / `c]` in connectors.yml parsed
 fine everywhere locally and failed every ontology test on the runner.
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -71,3 +72,77 @@ def test_fallback_agrees_with_pyyaml_on_the_committed_catalogues():
     for path in sorted(REPO.glob("skill-packs/*/use-cases/*/ontology/connectors.yml")):
         text = path.read_text(encoding="utf-8")
         assert _miniyaml.parse(text) == yaml.safe_load(text), path
+
+
+# ---------------------------------------------------------------------------------------
+# The whole tree, not only the files this repo's own generators write
+# ---------------------------------------------------------------------------------------
+#
+# The test above covers `connectors.yml`, which this repository emits itself and therefore
+# formats to its own habits. Every gap found in this parser was in a file emitted by
+# something else — `wren context import dbt` writes block sequences flush with their key,
+# quoted scalars that wrap across lines, and `\uXXXX` escapes, and none of the three
+# parsed. They were invisible locally because PyYAML is installed here and absent on CI,
+# so the fallback path only ever ran on the runner.
+
+# `#` inside a block scalar is literal text, and the lexer strips comments before the block
+# scalar sees them. Fixing that means teaching the lexer about block-scalar state; this is
+# a fixture illustrating a GitHub Actions workflow, not a file any tool here parses, so the
+# limitation is recorded rather than fixed. A second entry here is a reason to fix it.
+KNOWN_LEXER_LIMITS = {
+    "tests/client-dbt-run.yml": "comments and blank lines inside a `run: |` block scalar",
+}
+
+
+def _repo_yaml():
+    for root in ("skill-packs", ".claude", "scripts", "tests", "templates", "references"):
+        for path in sorted((REPO / root).rglob("*.yml")):
+            if not path.is_file():
+                continue
+            if {"target", "target-sample", "dbt_packages", ".wren", "node_modules"} & set(path.parts):
+                continue
+            yield path
+
+
+def test_the_fallback_parses_every_yaml_file_in_the_repository():
+    """The half that runs on a runner with no PyYAML — which is the only place it matters.
+
+    A fallback that raises is worse than one that is imprecise: the caller gets no value at
+    all, three frames from the key that owned the problem. Measured before the wren tree
+    was read through it: 8 files raised.
+    """
+    seen = 0
+    for path in _repo_yaml():
+        seen += 1
+        try:
+            _miniyaml.parse(path.read_text(encoding="utf-8", errors="replace"))
+        except _miniyaml.MiniYamlError as exc:
+            raise AssertionError(f"{path.relative_to(REPO)}: {exc}") from None
+    assert seen > 200, "glob went stale"
+
+
+def test_the_fallback_agrees_with_pyyaml_across_the_repository():
+    """Agreement is exact on structure and on every scalar up to whitespace inside a
+    folded or quoted block — the lexer drops blank lines, so a blank line inside a quoted
+    scalar cannot be recovered as the newline PyYAML makes of it."""
+    yaml = pytest.importorskip("yaml")
+
+    def squash(value):
+        if isinstance(value, str):
+            return re.sub(r"\s+", " ", value).strip()
+        if isinstance(value, dict):
+            return {k: squash(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [squash(v) for v in value]
+        return value
+
+    for path in _repo_yaml():
+        rel = path.relative_to(REPO).as_posix()
+        if rel in KNOWN_LEXER_LIMITS:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        try:
+            expected = yaml.safe_load(text)
+        except Exception:  # noqa: BLE001 - a file PyYAML rejects is not a comparison
+            continue
+        assert squash(_miniyaml.parse(text)) == squash(expected), rel
