@@ -20,6 +20,8 @@ So the stages are one command, in dependency order, and each reports what it did
     graph      dbt lineage + ontology topology, merged  <- manifest
     alignment  the verdict                         <- project files + manifest
     wren       wren/ WrenAI semantic-layer project <- manifest + catalog + ontology artifacts
+    lightdash  dbt meta tags + lightdash/knowledge <- manifest + annotations
+    openmetadata openmetadata/ catalog bundle      <- manifest + every ontology artifact
 
 **A stage that cannot run says so and does not fail.** A fresh use-case has no manifest, and
 half of these need one; a checkout without sqlglot cannot parse columns. Reporting `skip`
@@ -563,6 +565,74 @@ def stage_lightdash(use_case: Path, slug: str, manifest: Optional[Path], check: 
     return Stage("lightdash", CHANGED if changed else OK, detail, changed)
 
 
+def stage_openmetadata(use_case: Path, slug: str, manifest: Optional[Path],
+                       check: bool) -> Stage:
+    """`openmetadata/` — the discovery-tier bundle: glossary, tags, deep column lineage.
+
+    Last, because it projects every artifact the stages above refresh — `index.json`,
+    `column-memory.json`, `column-annotations.json` — the same reason `wren` and
+    `lightdash` sit where they do.
+
+    This stage **emits and never pushes**. The bundle is a committed artifact, so
+    `--check` compares bytes exactly as it does for `wren/`; pushing it to a server is
+    `openmetadata_sync.py --push`, a separate, explicit, human-confirmed act (rule 9:
+    data egress). Returning `skip` under `--check` on the grounds that the stage needs
+    a server would leave the one stage in this pipeline that CI cannot hold — and the
+    bundle is exactly the part that goes stale silently.
+
+    A subprocess for the same reason as `wren` and `lightdash`: every skip decision
+    lives in the emitter, which reports `skip` in its payload rather than by exit code,
+    so a use-case with no `openmetadata.yml` stays green with the reason on record.
+    """
+    cmd = [
+        sys.executable, str(REPO / "scripts/openmetadata_sync.py"),
+        "--use-case", slug, "--format", "json",
+    ]
+    if manifest:
+        cmd += ["--manifest", str(manifest)]
+    if check:
+        cmd += ["--check"]
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=600)
+    payload = _first_json_line(proc.stdout)
+    if payload is None:
+        tail = (proc.stderr or proc.stdout).strip().splitlines()
+        return Stage("openmetadata", FAIL, tail[-1] if tail else f"exit {proc.returncode}")
+
+    if payload["status"] == "skip":
+        return Stage("openmetadata", SKIP, payload.get("reason", "unavailable"))
+
+    validation = payload.get("validation", {})
+    if validation.get("status") == "fail":
+        return Stage(
+            "openmetadata", FAIL,
+            f"{validation.get('error_count', 0)} payload(s) rejected by the "
+            f"OpenMetadata schema: {'; '.join(validation.get('errors', [])[:2])}",
+        )
+
+    changed = [
+        str((use_case / rel).relative_to(REPO)) for rel in payload.get("changed", [])
+    ]
+    lineage = payload.get("lineage", {})
+    detail = (
+        f"{payload.get('concept_terms', 0)} concept + "
+        f"{payload.get('column_terms', 0)} column glossary term(s), "
+        f"{payload.get('tag_definitions', 0)} tag(s) in "
+        f"{payload.get('classifications', 0)} classification(s), "
+        f"{lineage.get('column_edges', 0)} column lineage edge(s) over "
+        f"{lineage.get('table_pairs', 0)} table pair(s), "
+        f"{payload.get('column_tag_applications', 0)} column tag application(s); "
+        f"validation {validation.get('status', '?')}"
+    )
+    if payload.get("lineage_dropped"):
+        detail += (
+            f"; {payload['lineage_dropped']} binding endpoint(s) dropped "
+            "(no dbt node — SQL parse artifacts)"
+        )
+    if payload.get("unannotated_columns"):
+        detail += f"; {payload['unannotated_columns']} conformed column(s) untagged"
+    return Stage("openmetadata", CHANGED if changed else OK, detail, changed)
+
+
 # ---------------------------------------------------------------------------------------
 # Scaffolding a new use-case
 # ---------------------------------------------------------------------------------------
@@ -629,6 +699,45 @@ one CSV per kind of value, every column real.
 """
 
 
+OPENMETADATA_YML_STUB = """\
+# OpenMetadata projection settings
+# ================================
+#
+# The `openmetadata` stage builds `openmetadata/` from this file plus the ontology
+# artifacts, and pushes nothing. Egress is `scripts/openmetadata_sync.py --push`.
+#
+# `service` is the one value nothing can derive. An OpenMetadata table FQN is
+# `service.database.schema.table`, and `service` names a Database Service registered on
+# the server — a fact about the server, not about this project. Guessing it produces a
+# bundle whose every FQN resolves to nothing.
+#
+# It is a **declaration, not a discovery**: it states the name this use-case's warehouse
+# service must be created under, and the same value is written into
+# `openmetadata/ingestion/dbt.yaml`, so upstream's dbt connector and this bundle agree
+# by construction. Override per-deployment with OPENMETADATA_DB_SERVICE.
+#
+# Empty to start, so the stage skips with the reason rather than emitting a bundle
+# addressed to a service nobody created.
+
+service:
+
+glossary: {slug}
+glossary_display_name: {slug}
+
+# Optional, and only where the catalog's names differ from the ones dbt compiled into
+# `relation_name` — a cross-environment registration, for instance.
+# database: <catalog database>
+# schema: <catalog schema>
+
+# Optional. A dlt-loaded DuckDB warehouse whose real schema is read (behind
+# `--with-warehouse`) to find the columns a dlt load inserted. Declare it only where the
+# warehouse is committed or rebuilt in CI: it is read on demand precisely because a
+# gitignored warehouse would make the committed bundle differ between clones.
+# dlt_warehouse: ../warehouse.duckdb
+# dlt_schema: raw
+"""
+
+
 def scaffold(slug: str, pack: str, check: bool) -> List[Stage]:
     """Create the derived-artifact skeleton for a use-case. Invents nothing."""
     root = REPO / "skill-packs" / pack / "use-cases" / slug
@@ -639,6 +748,7 @@ def scaffold(slug: str, pack: str, check: bool) -> List[Stage]:
             namespace=namespace, slug=slug
         ),
         root / "ontology" / "reference" / "README.md": REFERENCE_README_STUB,
+        root / "openmetadata.yml": OPENMETADATA_YML_STUB.format(slug=slug),
     }
     created = [str(p.relative_to(REPO)) for p, text in files.items() if _write(p, text, check)]
 
@@ -715,6 +825,10 @@ def sync(slug: str, check: bool, manifest_arg: Optional[str],
     # After wren for the same reason: it projects column-annotations.json (refreshed
     # above) into the dbt project's Lightdash meta tags and lightdash/knowledge/.
     run("lightdash", lambda: stage_lightdash(use_case, slug, manifest, check))
+    # Last of the three serving tiers, and the only one whose output leaves the
+    # repository — so it emits a committed bundle here and pushes nowhere. See
+    # stage_openmetadata for why `--check` still gates it.
+    run("openmetadata", lambda: stage_openmetadata(use_case, slug, manifest, check))
 
     changed = [c for s in stages for c in s.changed]
     failed = [s for s in stages if s.status == FAIL]
@@ -740,7 +854,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--manifest", help="manifest.json (default: <project>/target/manifest.json)")
     p.add_argument("--stage", action="append",
                    choices=("taxonomy", "columns", "annotations", "ontology", "seeds",
-                            "graphify", "graph", "alignment", "wren", "lightdash"),
+                            "graphify", "graph", "alignment", "wren", "lightdash",
+                            "openmetadata"),
                    help="run only this stage (repeatable)")
     p.add_argument("--graphify-update", action="store_true",
                    help="rebuild the code graph before merging dbt lineage into it; never "
