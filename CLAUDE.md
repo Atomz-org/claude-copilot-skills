@@ -783,6 +783,46 @@ have to reify `models` and `mappings` into graph shapes they do not have, and on
 only the prefixes would parse while dropping nearly every statement. The graph stays in the
 `.ttl` files. Details in the use-case's `ontology/README.md`.
 
+### Seeing it — `scripts/ontology_ui.py`
+
+`index.json` answers one question per call for a machine. The same file also answers
+"what does this project actually track, and where does it come from?" for a person who
+has never heard of an ontology — which is what `scripts/ontology_ui.py` renders:
+
+```bash
+python3 scripts/ontology_ui.py --use-case enhanza-analytics   # -> public/<slug>-ontology.html
+python3 scripts/ontology_ui.py --all --check                  # the CI gate form
+python3 scripts/ontology_ui.py --use-case <slug> --fragment   # body-only, for embedding
+```
+
+One self-contained HTML file per use-case, standard library only, **no external
+reference of any kind** — it opens from `file://` and under a CSP that blocks every
+other host, same as `public/decision-path.html` beside it. Four views over the same
+payload: entity cards grouped by family, a systems × things coverage grid, per-system
+detail, and the gaps. It is a framework rather than a page: everything comes from
+`index.json`, whose shape is identical for every use-case, so a use-case scaffolded
+tomorrow renders with no new code.
+
+Three rules decide whether the picture can be trusted:
+
+- **It draws the three edges the ontology asserts, and no fourth.** `providedBy`,
+  `conformsTo`, and the property mappings. `fact_*` beside `dim_*` invites drawing a
+  foreign key between them and this ontology asserts none — a crow's foot here would be
+  a contract the model never made (rule 5). Model-level foreign keys are a real but
+  *different* question, answered by `scripts/erd_generator.py` from dbt's
+  `relationships` tests. `test_every_drawn_link_exists_in_the_index` pins it.
+- **A disagreement is shown, never averaged.** `implemented_by` is a claim the connector
+  registry makes; a row in `models` is evidence read out of the dbt project. On
+  enhanza-analytics they disagree: **112 declared links, 110 with a model behind them** —
+  `seventime/fact_work_orders` and `tripletex/dim_voucher_series` are declared and
+  unbuilt. Reporting 112 overstates coverage, reporting 110 hides that the registry is
+  wrong, so the page reports both and names the pairs. This was found *by building the
+  visualisation*, which is the argument for having one.
+- **No coverage state is colour alone.** Every cell carries a glyph (`●` `○` `▲` `·`)
+  and a text label beside the status hue, so the grid survives print, forced-colours,
+  and full colour-vision deficiency. Palette is the validated reference set; the two
+  categorical hues were run through the validator and pass every gate in both modes.
+
 ## WrenAI serving tier
 
 WrenAI is included as this repository's semantic-layer serving tier: source pinned as a
@@ -817,6 +857,54 @@ Guides are never copied out of the CLI: `wren skills get <name>` serves them
 version-matched to the installed wheel, which is why the skill is a discovery stub.
 `wren genbi deploy` is data egress and needs explicit per-deploy user confirmation
 (`wren-rules.md` rule 9).
+
+### Containerised — podman, and the arch trap
+
+`./skill-packs/wren-skills/demo/run_wren_podman_demo.sh` runs the same two exact
+assertions as the local demo, inside a container, with `--network=none`. podman rather
+than Docker: rootless, daemonless, no Desktop licence. The commands are CLI-compatible,
+so `docker` works too — the file is named for the tool it was verified with, and
+`Containerfile` is podman's native filename.
+
+There is **no compose stack to run**: the pinned submodule ships no docker assets,
+because upstream is CLI-first on the 0.13.x line. The container carries the serving
+tier — dbt + the wren CLI — not the WrenAI application (UI, vector store, LLM gateway).
+
+Three findings, each of which cost a build to learn, all on Apple Silicon:
+
+- **`wren-core-py` publishes x86_64-only Linux wheels** — no aarch64 manylinux build at
+  any version through 0.7.3. A native arm64 `pip install wrenai` therefore compiles the
+  Rust core from source and fails in a slim image with `error: linker 'cc' not found`,
+  an error about a C compiler that says nothing about the missing wheel.
+- **The x86_64 wheel does not survive emulation.** `--platform=linux/amd64` builds in
+  ~3.5 minutes and then `wren --version` dies with
+  `qemu: uncaught target signal 11 (Segmentation fault)`. That path looks like a working
+  image right up to the moment it runs, which makes it the worse of the two failures.
+  The Containerfile is therefore a multi-stage build that compiles the core natively and
+  discards the Rust toolchain — slow once, cached after.
+- **podman cannot bind-mount `~/Documents`** (TCC-protected; `statfs: operation not
+  permitted`), and its `statfs` does not resolve the macOS `/tmp` → `/private/tmp`
+  symlink. So the runner stages the use-case with `mktemp -d` plus `pwd -P` and mounts
+  that read-only — one code path on every OS, and the read-only guarantee becomes real
+  because the container never receives the working tree at all.
+- **Peak memory, not total, is what fails the build.** cargo runs one rustc per core, and
+  a stock `podman machine` has 2 GiB, so compiling sqlparser at `opt-level=3` is
+  OOM-killed and reports `signal: 9, SIGKILL` against a random crate. The Containerfile
+  bounds `CARGO_BUILD_JOBS`; the runner checks `MemTotal` and names
+  `podman machine set --memory` as the remedy. Bounding jobs alone cannot rescue 2 GiB.
+- **`--workdir /work` fails for a directory that exists.** podman 5.8.5 answers
+  `workdir "/work" does not exist on container` while `ls -ld /work` lists it and
+  `WorkingDir` inspects as `/work`. The image's `WORKDIR` already sets it, so the flag is
+  redundant and removing it is the fix — pinned, because re-adding it looks like an
+  improvement.
+
+Measured: image build ~25 min cold (the Rust core) and cached after; the run itself 16s,
+producing the same numbers as the host demo — governed == direct on all three rows, and
+view revenue 277,183.41 against the 289,470.66 raw measure.
+
+`tests/test_wren_podman_demo.py` pins the contract without running a container: the
+image's pins may not drift from `requirements.txt`, `--no-index` keeps an unsatisfiable
+pin loud, and an absent podman exits **3** (rule 7, matching `skill_map_scan.py`).
 
 ## Harness cartography — skill-map
 
