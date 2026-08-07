@@ -36,7 +36,7 @@ wrenai[mcp]==0.13.2
 # wrenai 0.13.2 imports mcp.server.fastmcp, which mcp 2.0 removed, and its extra
 # declares no upper bound — without this pin a fresh install boots a server that
 # dies on import (fix staged at external/patches/wrenai-mcp-extra-upper-bound.patch).
-mcp<3
+mcp<2
 
 # --- tests --------------------------------------------------------------------
 

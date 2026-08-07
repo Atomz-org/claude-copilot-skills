@@ -18,6 +18,25 @@
                 tenant default has not been confirmed. add_erp_fields() emits a NULL
                 DefaultCurrency for sources without one, same as Tempo. [NEEDS INPUT]
 
+      hubspot — the first CRM source here, and it claims only `dim_customers` and
+                `dim_company` even though it ships eight staging models. Deals, tickets,
+                engagements, pipelines, and contacts are source-aligned only: none of them
+                has an erp_bi_<concept> union model, and claiming a concept that has no
+                union model is exactly the shape that left `upsales` asserting
+                fact_opportunities / fact_activities / fact_appointments /
+                fact_opportunity_rows with nothing behind them. model_is_provided() would
+                answer true for a HubSpot-only tenant and the union would return nothing.
+                Add the claim in the same commit that adds the union model, never before.
+
+                `default_currency` deliberately absent. HubSpot is not an accounting system
+                and has no tenant-level default; deals carry their own currency. No revenue
+                concept is mapped, so nothing needs one. Same treatment as favrit and tempo.
+
+                Note `dim_customers` is fed by HubSpot *companies*. HubSpot contacts are
+                people and do not fit an organisation-shaped dimension; they have no home in
+                the unified layer and must not be forced into one. [NEEDS INPUT] contact PII
+                handling is unresolved — see use-cases/enhanza-hubspot-connector §7.
+
       shopify — `default_currency` is 'SEK' by explicit decision, not by detection. Shopify
                 shops are multi-currency and each order carries its own `currency`; the
                 adapters pass that through to the Currency column, so DefaultCurrency is
@@ -98,6 +117,14 @@
                     'fact_time_reporting_registrations',
                     'fact_vouchers',
                     'fact_rolling_sum'
+                ]
+            },
+            'hubspot': {
+                'name': 'HubSpot',
+                'enabled': var('is_hubspot_enabled', 'False') | as_bool,
+                'included_models': [
+                    'dim_company',
+                    'dim_customers'
                 ]
             },
             'seventime': {

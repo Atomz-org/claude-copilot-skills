@@ -194,9 +194,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Address",
@@ -211,9 +212,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Amount",
@@ -444,11 +446,12 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify",
         "tripletex",
         "xledger"
       ],
-      "carried_by_count": 4
+      "carried_by_count": 5
     },
     {
       "column": "ContributionValue",
@@ -506,10 +509,11 @@
       "connectors": [
         "favrit",
         "fortnox",
+        "hubspot",
         "shopify",
         "visma_economic"
       ],
-      "carried_by_count": 4
+      "carried_by_count": 5
     },
     {
       "column": "Country",
@@ -528,9 +532,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Currency",
@@ -600,10 +605,11 @@
       "connectors": [
         "favrit",
         "fortnox",
+        "hubspot",
         "shopify",
         "visma_economic"
       ],
-      "carried_by_count": 4
+      "carried_by_count": 5
     },
     {
       "column": "Date",
@@ -638,9 +644,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "DefaultTemplate",
@@ -655,9 +662,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Description",
@@ -733,9 +741,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "EmployeeId",
@@ -830,9 +839,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "InvoiceDate",
@@ -999,9 +1009,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Net",
@@ -1197,6 +1208,7 @@
       "connectors": [
         "favrit",
         "fortnox",
+        "hubspot",
         "seventime",
         "shopify",
         "tripletex",
@@ -1205,7 +1217,7 @@
         "visma_economic",
         "xledger"
       ],
-      "carried_by_count": 9
+      "carried_by_count": 10
     },
     {
       "column": "OrgName",
@@ -1220,13 +1232,14 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "seventime",
         "tripletex",
         "upsales",
         "visma_eaccounting",
         "visma_economic"
       ],
-      "carried_by_count": 6
+      "carried_by_count": 7
     },
     {
       "column": "OrganisationNumber",
@@ -1242,9 +1255,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "Price",
@@ -1297,9 +1311,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "ProjectId",
@@ -1331,12 +1346,13 @@
       "connectors": [
         "favrit",
         "fortnox",
+        "hubspot",
         "shopify",
         "tripletex",
         "visma_economic",
         "xledger"
       ],
-      "carried_by_count": 6
+      "carried_by_count": 7
     },
     {
       "column": "PurchasePrice",
@@ -1650,9 +1666,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "TransactionDate",
@@ -1754,9 +1771,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "isActive",
@@ -1773,9 +1791,10 @@
       ],
       "connectors": [
         "fortnox",
+        "hubspot",
         "shopify"
       ],
-      "carried_by_count": 2
+      "carried_by_count": 3
     },
     {
       "column": "isVATIncluded",

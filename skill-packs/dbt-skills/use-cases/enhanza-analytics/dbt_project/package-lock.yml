@@ -2,6 +2,7 @@ packages:
   - local: packages/core
   - local: packages/favrit
   - local: packages/fortnox
+  - local: packages/hubspot
   - local: packages/seventime
   - local: packages/shopify
   - local: packages/tempo
@@ -10,4 +11,4 @@ packages:
   - local: packages/visma_eaccounting
   - local: packages/visma_economic
   - local: packages/xledger
-sha1_hash: 4a94027e1c02c96f60a5bd004977aa462d6972de
+sha1_hash: 739d7edf3e09af79f671d680f52e62b87af0c3ca

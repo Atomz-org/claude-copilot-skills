@@ -1,0 +1,332 @@
+# `hubspot` topology, derived. NOT AN ARTIFACT — a proposal.
+#
+# Entities are the tables the connector's published schema declares.
+# Relationships are columns whose name resolves to another table in that same
+# schema — evidence, not a naming habit: a `*_id` matching no declared table is
+# listed at the bottom and never invented into a reference.
+#
+# Source: fivetran/dbt_hubspot_source@main models/src_hubspot.yml
+#
+# No concept is asserted here. Which ontology concepts a connector supplies is
+# declared in ontology/connectors.yml and generated from it; adding one here
+# would turn a catalogue expectation into a claim, which is exactly what
+# `plans_to_supply` exists to keep out of `supplies`.
+
+version: 1
+source: hubspot-reference
+confirmed: false
+
+declared_concepts: [dim_company, dim_customers]
+
+entities:
+  calendar_event:
+    columns: 21
+  company:
+    columns: 13
+  company_property_history:
+    columns: 6
+  contact:
+    columns: 10
+  contact_form_submission:
+    columns: 8
+  contact_list:
+    columns: 18
+  contact_list_member:
+    columns: 3
+  contact_merge_audit:
+    columns: 9
+  contact_property_history:
+    columns: 6
+  deal:
+    columns: 11
+  deal_company:
+    columns: 4
+  deal_contact:
+    columns: 4
+  deal_pipeline:
+    columns: 6
+  deal_pipeline_stage:
+    columns: 10
+  deal_property_history:
+    columns: 6
+  deal_stage:
+    columns: 5
+  email_campaign:
+    columns: 10
+  email_event:
+    columns: 14
+  email_event_bounce:
+    columns: 4
+  email_event_click:
+    columns: 7
+  email_event_deferred:
+    columns: 3
+  email_event_delivered:
+    columns: 3
+  email_event_dropped:
+    columns: 8
+  email_event_forward:
+    columns: 5
+  email_event_open:
+    columns: 6
+  email_event_print:
+    columns: 5
+  email_event_sent:
+    columns: 6
+  email_event_spam_report:
+    columns: 3
+  email_event_status_change:
+    columns: 6
+  email_subscription:
+    columns: 5
+  email_subscription_change:
+    columns: 8
+  engagement:
+    columns: 7
+  engagement_call:
+    columns: 5
+  engagement_communication:
+    columns: 4
+  engagement_company:
+    columns: 3
+  engagement_contact:
+    columns: 3
+  engagement_deal:
+    columns: 3
+  engagement_email:
+    columns: 5
+  engagement_email_cc:
+    columns: 4
+  engagement_email_to:
+    columns: 4
+  engagement_meeting:
+    columns: 5
+  engagement_note:
+    columns: 6
+  engagement_task:
+    columns: 5
+  form:
+    columns: 14
+  merged_deal:
+    columns: 2
+  owner:
+    columns: 9
+  owner_team:
+    columns: 3
+  property:
+    columns: 12
+  property_option:
+    columns: 5
+  role:
+    columns: 3
+  team:
+    columns: 2
+  team_user:
+    columns: 3
+  ticket:
+    columns: 13
+  ticket_company:
+    columns: 3
+  ticket_contact:
+    columns: 3
+  ticket_deal:
+    columns: 3
+  ticket_engagement:
+    columns: 3
+  ticket_pipeline:
+    columns: 7
+  ticket_pipeline_stage:
+    columns: 9
+  ticket_property_history:
+    columns: 6
+  users:
+    columns: 6
+
+relationships:
+  - from: calendar_event.owner_id
+    to: owner
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: calendar_event.owner_id
+  - from: company_property_history.company_id
+    to: company
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: company_property_history.company_id
+  - from: contact_form_submission.contact_id
+    to: contact
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact_form_submission.contact_id
+  - from: contact_form_submission.form_id
+    to: form
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact_form_submission.form_id
+  - from: contact_list_member.contact_id
+    to: contact
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact_list_member.contact_id
+  - from: contact_list_member.contact_list_id
+    to: contact_list
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact_list_member.contact_list_id
+  - from: contact_merge_audit.contact_id
+    to: contact
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact_merge_audit.contact_id
+  - from: contact_merge_audit.user_id
+    to: users
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact_merge_audit.user_id
+  - from: contact_property_history.contact_id
+    to: contact
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact_property_history.contact_id
+  - from: deal.deal_pipeline_id
+    to: deal_pipeline
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal.deal_pipeline_id
+  - from: deal.deal_pipeline_stage_id
+    to: deal_pipeline_stage
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal.deal_pipeline_stage_id
+  - from: deal.owner_id
+    to: owner
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal.owner_id
+  - from: deal_company.company_id
+    to: company
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal_company.company_id
+  - from: deal_company.deal_id
+    to: deal
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal_company.deal_id
+  - from: deal_contact.contact_id
+    to: contact
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal_contact.contact_id
+  - from: deal_contact.deal_id
+    to: deal
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal_contact.deal_id
+  - from: deal_property_history.deal_id
+    to: deal
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal_property_history.deal_id
+  - from: deal_stage.deal_id
+    to: deal
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal_stage.deal_id
+  - from: email_event.email_campaign_id
+    to: email_campaign
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: email_event.email_campaign_id
+  - from: email_subscription_change.email_subscription_id
+    to: email_subscription
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: email_subscription_change.email_subscription_id
+  - from: engagement.owner_id
+    to: owner
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement.owner_id
+  - from: engagement_call.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_call.engagement_id
+  - from: engagement_communication.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_communication.engagement_id
+  - from: engagement_company.company_id
+    to: company
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_company.company_id
+  - from: engagement_company.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_company.engagement_id
+  - from: engagement_contact.contact_id
+    to: contact
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_contact.contact_id
+  - from: engagement_contact.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_contact.engagement_id
+  - from: engagement_deal.deal_id
+    to: deal
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_deal.deal_id
+  - from: engagement_deal.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_deal.engagement_id
+  - from: engagement_email.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_email.engagement_id
+  - from: engagement_email_cc.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_email_cc.engagement_id
+  - from: engagement_email_to.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_email_to.engagement_id
+  - from: engagement_meeting.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_meeting.engagement_id
+  - from: engagement_note.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_note.engagement_id
+  - from: engagement_task.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: engagement_task.engagement_id
+  - from: merged_deal.deal_id
+    to: deal
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: merged_deal.deal_id
+  - from: owner_team.owner_id
+    to: owner
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: owner_team.owner_id
+  - from: owner_team.team_id
+    to: team
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: owner_team.team_id
+  - from: property_option.property_id
+    to: property
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: property_option.property_id
+  - from: team_user.team_id
+    to: team
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: team_user.team_id
+  - from: team_user.user_id
+    to: users
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: team_user.user_id
+  - from: ticket_company.company_id
+    to: company
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket_company.company_id
+  - from: ticket_company.ticket_id
+    to: ticket
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket_company.ticket_id
+  - from: ticket_contact.contact_id
+    to: contact
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket_contact.contact_id
+  - from: ticket_contact.ticket_id
+    to: ticket
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket_contact.ticket_id
+  - from: ticket_deal.deal_id
+    to: deal
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket_deal.deal_id
+  - from: ticket_deal.ticket_id
+    to: ticket
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket_deal.ticket_id
+  - from: ticket_engagement.engagement_id
+    to: engagement
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket_engagement.engagement_id
+  - from: ticket_engagement.ticket_id
+    to: ticket
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket_engagement.ticket_id
+  - from: ticket_property_history.ticket_id
+    to: ticket
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket_property_history.ticket_id
+  - from: users.role_id
+    to: role
+    # from: fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: users.role_id
+
+# Named an entity this schema does not declare. Reported, never
+# invented into a relationship:
+#   calendar_event.campaign_guid names `campaign_gu`, which this schema does not declare
+#   calendar_event.category_id names `category`, which this schema does not declare
+#   calendar_event.content_group_id names `content_group`, which this schema does not declare
+#   calendar_event.content_id names `content`, which this schema does not declare
+#   calendar_event.portal_id names `portal`, which this schema does not declare
+#   company.portal_id names `portal`, which this schema does not declare
+#   company_property_history.source_id names `source`, which this schema does not declare
+#   contact_form_submission.conversion_id names `conversion`, which this schema does not declare
+#   contact_form_submission.page_id names `page`, which this schema does not declare
+#   contact_form_submission.portal_id names `portal`, which this schema does not declare
+#   contact_list.created_by_id names `created_by`, which this schema does not declare
+#   contact_list.object_type_id names `object_type`, which this schema does not declare
+#   contact_list.portal_id names `portal`, which this schema does not declare
+#   contact_merge_audit.canonical_vid names `canonical_v`, which this schema does not declare
+#   contact_merge_audit.entity_id names `entity`, which this schema does not declare
+#   contact_property_history.source_id names `source`, which this schema does not declare
+#   deal.portal_id names `portal`, which this schema does not declare
+#   deal_company.type_id names `type`, which this schema does not declare
+#   deal_contact.type_id names `type`, which this schema does not declare
+#   deal_pipeline.pipeline_id names `pipeline`, which this schema does not declare
+#   deal_pipeline_stage.pipeline_id names `pipeline`, which this schema does not declare
+#   deal_pipeline_stage.stage_id names `stage`, which this schema does not declare
+#   deal_property_history.source_id names `source`, which this schema does not declare
+#   deal_stage.source_id names `source`, which this schema does not declare
+#   email_campaign.app_id names `app`, which this schema does not declare
+#   email_campaign.content_id names `content`, which this schema does not declare
+#   email_event.app_id names `app`, which this schema does not declare
+#   email_event.caused_by_id names `caused_by`, which this schema does not declare
+#   email_event.obsoleted_by_id names `obsoleted_by`, which this schema does not declare
+#   email_event.portal_id names `portal`, which this schema does not declare
+#   ... 30 more

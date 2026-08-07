@@ -24,7 +24,7 @@ Partial (macro-generated column list, cannot be fully named): fortnox, shopify
 
 ## dim_company
 
-Suppliers: fortnox (fortnox_erp_bi_dim_company), seventime (seventime_erp_bi_dim_company), tripletex (tripletex_erp_bi_dim_company), upsales (upsales_erp_bi_dim_company), visma_eaccounting (visma_eaccounting_erp_bi_dim_company), visma_economic (visma_economic_erp_bi_dim_company)
+Suppliers: fortnox (fortnox_erp_bi_dim_company), hubspot (hubspot_erp_bi_dim_company) [no data yet — ingestion pending], seventime (seventime_erp_bi_dim_company), tripletex (tripletex_erp_bi_dim_company), upsales (upsales_erp_bi_dim_company), visma_eaccounting (visma_eaccounting_erp_bi_dim_company), visma_economic (visma_economic_erp_bi_dim_company)
 Conformed columns (3): OrgId, OrgName, City
 Partial (macro-generated column list, cannot be fully named): fortnox
 
@@ -36,9 +36,9 @@ Partial (macro-generated column list, cannot be fully named): fortnox
 
 ## dim_customers
 
-Suppliers: fortnox (fortnox_erp_bi_dim_customers), shopify (shopify_erp_bi_dim_customers)
+Suppliers: fortnox (fortnox_erp_bi_dim_customers), hubspot (hubspot_erp_bi_dim_customers) [no data yet — ingestion pending], shopify (shopify_erp_bi_dim_customers)
 Conformed columns (44): CustomerId, CustomerNumber, Name, OrganisationNumber, Address, ZipCode, Phone, AdditionalPhone, Email, Website, Fax, City, Type, isActive, Country, Comments, OurReference, YourReference, DefaultTemplate, DefaultVATType, TemplateReference, DefaultDeliveryType, DeliveryCountry, DeliveryCity, DeliveryAddress1, DeliveryAddress2, DeliveryName, DeliveryPhone1, DeliveryPhone2, DeliveryZipCode, DeliveryFax, VisitingAddress, VisitingCity, VisitingCountry, TermsOfPayment, EmailInvoice, InvoiceRemark, VATNumber, PriceListId, CostCenterId, ProjectId, FirstInvoiceDate, LastInvoiceDate, InvoiceDiscount
-Partial (macro-generated column list, cannot be fully named): fortnox, shopify
+Partial (macro-generated column list, cannot be fully named): fortnox, hubspot, shopify
 
 ## dim_financial_years
 

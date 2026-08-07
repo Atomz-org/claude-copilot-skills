@@ -3,7 +3,7 @@
 - dbt project: `enhanza_erp_bi`
 - dbt profile/target: `enhanza_sample.dev`
 - imported models: 95
-- imported sources: 100
+- imported sources: 104
 - imported relationships: 101
 
 Structural metadata comes from `manifest.json` and `catalog.json`. The sections below summarize dbt test-derived constraints and warnings.

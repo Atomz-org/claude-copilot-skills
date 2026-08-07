@@ -43,6 +43,17 @@ vars:
   is_erp_enabled: false          # gates the unified erp_bi and logic_bi layers
   is_favrit_enabled: false
   is_fortnox_enabled: false
+  is_hubspot_enabled: false      # CRM. Source dataset does not exist yet — connector is `planned`
+
+  # Contacts are gated separately, and both flags are required to build them. HubSpot
+  # contacts are personal data of identifiable individuals (prospects and form-fills, not
+  # customers of record) and rule 17 requires the masking/hashing/exclusion decision to be
+  # made in staging before the table is read — a decision the data-protection owner has not
+  # made. One flag for the whole package would make "turn HubSpot on" silently also mean
+  # "materialise raw contact PII into the warehouse", and the person flipping it would have
+  # no reason to know that. Two flags cannot make the decision, but they stop it being made
+  # by accident.
+  is_hubspot_contacts_enabled: false
   is_seventime_enabled: false
   is_shopify_enabled: false
   is_tempo_enabled: false
@@ -122,6 +133,8 @@ models:
     +enabled: "{{ var('is_favrit_enabled', false) | as_bool }}"
   enhanza_fortnox:
     +enabled: "{{ var('is_fortnox_enabled', false) | as_bool }}"
+  enhanza_hubspot:
+    +enabled: "{{ var('is_hubspot_enabled', false) | as_bool }}"
   enhanza_seventime:
     +enabled: "{{ var('is_seventime_enabled', false) | as_bool }}"
   enhanza_shopify:
