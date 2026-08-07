@@ -33,10 +33,17 @@ the name its own docs and `CLAUDE.md` use internally.
   and `tests/test_wren_semantic_equivalence.py` holds every generated view row-for-row
   equal to a hand-written oracle. See [docs/WRENAI_INTEGRATION.md](docs/WRENAI_INTEGRATION.md)
   and [docs/SEMANTIC_LAYER_ALIGNMENT.md](docs/SEMANTIC_LAYER_ALIGNMENT.md).
+  Lightdash serves the exploration tier over the same projects
+  ([docs/LIGHTDASH_INTEGRATION.md](docs/LIGHTDASH_INTEGRATION.md)).
+- **A Lightdash BI tier for exploration and agentic analytics.** The `lightdash` sync
+  stage derives explore joins from `relationships` tests, PII hiding and AI hints from
+  the column annotations, and validates offline with `lightdash compile` — while
+  MetricFlow metrics reach Lightdash through its own native translation, never as a
+  second definition. See [docs/LIGHTDASH_INTEGRATION.md](docs/LIGHTDASH_INTEGRATION.md).
 - **An MCP surface for agents and BI.** The `wren` sync stage emits a per-use-case MCP
-  server config at `wren/mcp.json` (gitignored, regenerated per clone), and each
-  use-case's `ontology/index.json` is a flat projection whose `mcp_tools` block names the
-  key that backs each tool.
+  server config at `wren/mcp.json` (gitignored, regenerated per clone), each use-case's
+  `ontology/index.json` is a flat projection whose `mcp_tools` block names the key that
+  backs each tool, and a running Lightdash instance serves MCP at `/api/v1/mcp`.
 
 ## Try it in 60 seconds
 
@@ -77,6 +84,7 @@ filtered MetricFlow definition, not the raw measure.
 | Claude Code | skills, slash commands, and agents in `.claude/`, generated from `skill-packs/` |
 | VS Code & GitHub Codespaces | `.devcontainer/devcontainer.json` |
 | Any MCP client | per-use-case server config at `wren/mcp.json`, emitted by the `wren` sync stage |
+| Lightdash | explore joins, PII hiding, and AI hints generated into dbt `meta` tags by the `lightdash` sync stage; local instance via `skill-packs/lightdash-skills/deploy/` |
 
 ## How it fits together
 
@@ -133,7 +141,8 @@ Skills link to shared assets with one relative path — `../../references/x.md` 
 why both copies must exist: it resolves inside the pack *and* after activation.
 
 Current packs: `skill-packs/github-skills/` (shared base), `skill-packs/dbt-skills/`
-(analytics domain), `skill-packs/wren-skills/` (semantic serving). Each carries a
+(analytics domain), `skill-packs/wren-skills/` (semantic serving),
+`skill-packs/lightdash-skills/` (BI serving). Each carries a
 `.claude-plugin/plugin.json` manifest, validated by
 `scripts/marketplace_portability_check.sh`. The canonical dbt entrypoint is `dbt-skill`
 (`skill-packs/dbt-skills/.claude/skills/dbt-skill/SKILL.md`); `senior-analytics-engineer`

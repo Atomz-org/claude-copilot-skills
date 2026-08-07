@@ -92,6 +92,7 @@ Several files in this repository are derived, not written:
 | `ontology/column-memory.json` | `scripts/dbt_column_memory.py --write` |
 | `ontology/index.json`, `ontology/*.ttl` | `scripts/use_case_sync.py` |
 | `artifacts/graphify-fragment.json` | `artifacts/refresh.sh` |
+| `lightdash/knowledge/`, marker-owned `meta:` blocks in schema YAML | `scripts/use_case_sync.py --stage lightdash` |
 | `.claude/`, `references/`, `templates/` | `scripts/activate_skill_stack.sh` |
 
 Committing them is deliberate: it is what lets a fresh clone work with no dbt and no
