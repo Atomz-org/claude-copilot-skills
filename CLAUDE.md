@@ -896,7 +896,8 @@ pin loud, and an absent podman exits **3** (rule 7, matching `skill_map_scan.py`
 A CodeRabbit review comment is the right place to *discuss* a finding and the wrong place
 to *track* one: invisible from a board, gone when the pull request closes, counted by
 nothing. `scripts/coderabbit_to_issues.py` moves the ones worth tracking into issues on
-ProjectV2 #1, and closes them again when the thread they came from is resolved.
+ProjectV2 #1, and closes them again when the thread they came from is resolved. Setup, the
+runbook, and the full rationale: [docs/CODERABBIT_ISSUE_BRIDGE.md](docs/CODERABBIT_ISSUE_BRIDGE.md).
 
 ```bash
 python3 scripts/coderabbit_to_issues.py --repo <O/R> --all-open              # dry run
