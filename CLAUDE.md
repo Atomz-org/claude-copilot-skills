@@ -891,6 +891,62 @@ view revenue 277,183.41 against the 289,470.66 raw measure.
 image's pins may not drift from `requirements.txt`, `--no-index` keeps an unsatisfiable
 pin loud, and an absent podman exits **3** (rule 7, matching `skill_map_scan.py`).
 
+## CodeRabbit findings as tracked work
+
+A CodeRabbit review comment is the right place to *discuss* a finding and the wrong place
+to *track* one: invisible from a board, gone when the pull request closes, counted by
+nothing. `scripts/coderabbit_to_issues.py` moves the ones worth tracking into issues on
+ProjectV2 #1, and closes them again when the thread they came from is resolved.
+
+```bash
+python3 scripts/coderabbit_to_issues.py --repo <O/R> --all-open              # dry run
+python3 scripts/coderabbit_to_issues.py --repo <O/R> --pr 84 --write --project 1
+python3 scripts/coderabbit_to_issues.py --repo <O/R> --all-open --reconcile --write
+```
+
+Nothing is written without `--write`; the default prints what it would do and exits 0,
+because the target is a real tracker.
+
+Measured on this repository's nine open pull requests: **91 findings — 5 critical, 53
+major, 33 minor — and 0 unreadable**, one pull request carrying 40 of them.
+
+Four rules decide whether the output is trustworthy, and each was a real constraint:
+
+- **The mapping is rebuilt by listing the label, never by searching.** Every issue body
+  carries `<!-- coderabbit-comment-id: N -->`. GitHub's search index lags writes by up to a
+  minute and CodeRabbit posts a whole review at once, so a search-backed lookup duplicates
+  the issues it exists to prevent — intermittently, under exactly the load it will meet.
+  The workflow is also `concurrency`-serialised repository-wide, because two runs racing
+  would each read "no issue yet" and both create one.
+- **A finding whose title cannot be read is refused, not named after its file.** A path
+  reads like a title and is not one; the run reports it as `unreadable` instead.
+- **An unavailable project is not a failure** — the rule the rest of this repository runs
+  on. `GITHUB_TOKEN` cannot write an organisation ProjectV2; that needs a PAT with
+  `project` scope in `CODERABBIT_PROJECT_TOKEN`. Without it the issues are still created
+  and the run says the project step was skipped.
+- **Closing by hand breaks the loop.** The reconciler keys on the review thread's
+  `isResolved`, so the issue body says to resolve the thread rather than close the issue.
+
+Two parsing rules were wrong first, against the 91-comment corpus:
+
+- **The title is not a whole line.** `^\*\*(.+?)\*\*$` dropped 2 of 91, and they were the
+  two that also hide behind a collapsed `<details>` block — so the fallback would have been
+  a bare file path. Anchored at line start only.
+- **A `**` inside a fenced block is not a title.** CodeRabbit's analysis sections carry
+  whole shell scripts, and one held `rg -n '**...**'`.
+
+### There is no event for a resolved thread
+
+The one thing this cannot do promptly. Resolving a review thread emits
+`pull_request_review_thread`, which is a **webhook** event and *not* a workflow trigger:
+absent from GitHub's workflow schema, whose `on:` list carries every recent addition
+(`merge_group`, `discussion`, `branch_protection_rule`). Listing it would not merely fail
+to fire — an unknown `on:` key stops the whole file loading, taking the schedule with it.
+
+So the sweep is the only mechanism, GraphQL `isResolved` is the source of truth, and the
+cost is latency rather than a missed close. `tests/test_coderabbit_to_issues.py` and the
+trigger check in `tests/test_workflow_triggers.py` pin both halves.
+
 ## Harness cartography — skill-map
 
 `graphify` maps the **code**; `skill-map` maps the **harness** — skills, commands,
