@@ -597,18 +597,38 @@ def merge_into_graph(fragment_path: Path, project_root: Path) -> int:
             file=sys.stderr,
         )
         return 3
+    # The edge projection is a named function rather than an inline comprehension: the
+    # `_src`/`_tgt` rule below is not obvious, and a comment cannot live inside a dict
+    # comprehension. Two things it must keep doing, both easy to lose in a tidy-up:
+    #
+    #   - `_src`/`_tgt` win over `u`/`v`. graphify keeps the authoritative endpoint ids
+    #     there when it has remapped node keys; `u`/`v` are the fallback, not the
+    #     answer. Writing `u`/`v` unconditionally repoints those edges silently.
+    #   - a `source`/`target` already on the edge is dropped, not merged. On a re-merge
+    #     the input fragment's own edges carry them, and they describe the fragment's
+    #     node ids rather than the merged graph's.
+    #
+    # Building a new dict also leaves the live graph attributes alone; popping from `d`
+    # mutates the graph being iterated.
     code = (
         "import json,sys\n"
         "from pathlib import Path\n"
         "from graphify.build import build_merge\n"
+        "\n"
+        "def clean_edge(u, v, d):\n"
+        "    edge = {k: val for k, val in d.items()\n"
+        "            if k not in ('_src', '_tgt', 'source', 'target')}\n"
+        "    edge['source'] = d.get('_src', u)\n"
+        "    edge['target'] = d.get('_tgt', v)\n"
+        "    return edge\n"
+        "\n"
         f"frag=json.loads(Path({str(fragment_path)!r}).read_text(encoding='utf-8'))\n"
         "G=build_merge([frag], graph_path='graphify-out/graph.json', "
         f"root={str(REPO)!r}, directed=False)\n"
         "print(f'merged: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges')\n"
-        "out={'nodes':[{'id':n,**d} for n,d in G.nodes(data=True)],\n"
-        " 'edges':[{**{k:v for k,v in d.items() if k not in ('_src','_tgt','source','target')},\n"
-        "  'source':d.get('_src',u),'target':d.get('_tgt',v)} for u,v,d in G.edges(data=True)],\n"
-        " 'hyperedges':list(G.graph.get('hyperedges',[]))}\n"
+        "out={'nodes':[{'id':n, **d} for n, d in G.nodes(data=True)],\n"
+        " 'edges':[clean_edge(u, v, d) for u, v, d in G.edges(data=True)],\n"
+        " 'hyperedges':list(G.graph.get('hyperedges', []))}\n"
         "Path('graphify-out/graph.json').write_text(json.dumps(out,ensure_ascii=False),encoding='utf-8')\n"
     )
     result = subprocess.run([python, "-c", code], cwd=REPO, capture_output=True, text=True)
