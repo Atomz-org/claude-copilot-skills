@@ -513,6 +513,56 @@ def stage_wren(use_case: Path, slug: str, manifest: Optional[Path], check: bool)
     return Stage("wren", CHANGED if changed else OK, detail, changed)
 
 
+def stage_lightdash(use_case: Path, slug: str, manifest: Optional[Path], check: bool) -> Stage:
+    """Lightdash meta tags plus `lightdash/knowledge/` — the BI/agentic projection.
+
+    A subprocess for the same reason as wren: CLI resolution (env, PATH,
+    .lightdash-cli/) and every skip decision live in lightdash_context_sync.py, and the
+    emitter reports `skip` in its payload rather than by exit code, so a runner without
+    Node stays green with the reason on record. Sequenced after wren because it projects
+    the same refreshed artifacts (column-annotations.json) the earlier stages produce.
+    """
+    cmd = [
+        sys.executable, str(REPO / "scripts/lightdash_context_sync.py"),
+        "--use-case", slug, "--format", "json",
+    ]
+    if manifest:
+        cmd += ["--manifest", str(manifest)]
+    if check:
+        cmd += ["--check"]
+    # 900: the emitter budgets 300s for the one `lightdash compile` call it makes.
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=900)
+    payload = _first_json_line(proc.stdout)
+    if payload is None:
+        tail = (proc.stderr or proc.stdout).strip().splitlines()
+        return Stage("lightdash", FAIL, tail[-1] if tail else f"exit {proc.returncode}")
+
+    if payload["status"] == "skip":
+        return Stage("lightdash", SKIP, payload.get("reason", "unavailable"))
+
+    compile_result = payload.get("compile", {})
+    if compile_result.get("status") == "fail":
+        return Stage("lightdash", FAIL, f"lightdash compile: {compile_result.get('detail', '?')}")
+
+    changed = [
+        str((use_case / rel).relative_to(REPO))
+        for rel in payload.get("changed", [])
+    ]
+    mf = payload.get("metricflow", {})
+    detail = (
+        f"{payload.get('joins', 0)} joins, {payload.get('primary_keys', 0)} keys, "
+        f"{payload.get('pii_hidden', 0)} pii hidden, "
+        f"{payload.get('ai_hints', 0)} ai hints, "
+        f"metricflow {len(mf.get('translated', []))}/"
+        f"{len(mf.get('translated', [])) + len(mf.get('skipped', []))} translated, "
+        f"compile {compile_result.get('status', '?')}"
+    )
+    refused = payload.get("refused", [])
+    if refused:
+        detail += f"; {len(refused)} file(s) refused (other generator)"
+    return Stage("lightdash", CHANGED if changed else OK, detail, changed)
+
+
 # ---------------------------------------------------------------------------------------
 # Scaffolding a new use-case
 # ---------------------------------------------------------------------------------------
@@ -662,6 +712,9 @@ def sync(slug: str, check: bool, manifest_arg: Optional[str],
     # (index.json, column-memory.json) into the Wren project, so running it earlier
     # would enrich from the previous generation.
     run("wren", lambda: stage_wren(use_case, slug, manifest, check))
+    # After wren for the same reason: it projects column-annotations.json (refreshed
+    # above) into the dbt project's Lightdash meta tags and lightdash/knowledge/.
+    run("lightdash", lambda: stage_lightdash(use_case, slug, manifest, check))
 
     changed = [c for s in stages for c in s.changed]
     failed = [s for s in stages if s.status == FAIL]
@@ -687,7 +740,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--manifest", help="manifest.json (default: <project>/target/manifest.json)")
     p.add_argument("--stage", action="append",
                    choices=("taxonomy", "columns", "annotations", "ontology", "seeds",
-                            "graphify", "graph", "alignment", "wren"),
+                            "graphify", "graph", "alignment", "wren", "lightdash"),
                    help="run only this stage (repeatable)")
     p.add_argument("--graphify-update", action="store_true",
                    help="rebuild the code graph before merging dbt lineage into it; never "

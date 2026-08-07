@@ -133,10 +133,12 @@ def test_columns_and_annotations_are_sequenced_before_the_ontology(monkeypatch) 
         return stage
 
     for name in ("taxonomy", "columns", "annotations", "ontology", "seeds",
-                 "graph", "alignment", "wren"):
+                 "graph", "alignment", "wren", "lightdash"):
         monkeypatch.setattr(sync, f"stage_{name}", record(name))
     sync.sync("enhanza-analytics", check=True, manifest_arg=None)
     assert order.index("columns") < order.index("annotations") < order.index("ontology")
+    # Both serving tiers run last, after every artifact they project has refreshed.
+    assert order.index("alignment") < order.index("wren") < order.index("lightdash")
 
 
 def test_a_failing_stage_does_not_abort_the_others(monkeypatch, tmp_path: Path) -> None:
@@ -147,11 +149,13 @@ def test_a_failing_stage_does_not_abort_the_others(monkeypatch, tmp_path: Path) 
     monkeypatch.setattr(sync, "stage_ontology", explode)
     monkeypatch.setattr(sync, "stage_wren",
                         lambda *a, **k: sync.Stage("wren", sync.SKIP))
+    monkeypatch.setattr(sync, "stage_lightdash",
+                        lambda *a, **k: sync.Stage("lightdash", sync.SKIP))
     result = sync.sync("enhanza-analytics", check=True, manifest_arg=str(tmp_path / "nope.json"))
     stages = _stages(result)
     assert stages["ontology"]["status"] == sync.FAIL
     assert "generator is broken" in stages["ontology"]["detail"]
-    assert {"spec", "seeds", "graph", "alignment", "wren"} <= set(stages)
+    assert {"spec", "seeds", "graph", "alignment", "wren", "lightdash"} <= set(stages)
 
 
 def test_a_refused_downgrade_fails_the_stage_that_was_refused(monkeypatch, tmp_path: Path) -> None:
@@ -254,6 +258,7 @@ def test_the_graph_rebuild_runs_before_the_dbt_merge(monkeypatch) -> None:
     monkeypatch.setattr(sync, "stage_seeds", lambda *a, **k: sync.Stage("seeds", sync.SKIP))
     monkeypatch.setattr(sync, "stage_alignment", lambda *a, **k: sync.Stage("alignment", sync.SKIP))
     monkeypatch.setattr(sync, "stage_wren", lambda *a, **k: sync.Stage("wren", sync.SKIP))
+    monkeypatch.setattr(sync, "stage_lightdash", lambda *a, **k: sync.Stage("lightdash", sync.SKIP))
 
     sync.sync("enhanza-analytics", check=False, manifest_arg=None, graphify_update=True)
     assert order == ["graphify", "graph"], order
@@ -271,6 +276,7 @@ def test_the_rebuild_is_opt_in_and_skipped_under_check(monkeypatch) -> None:
     monkeypatch.setattr(sync, "stage_graph", lambda *a, **k: sync.Stage("graph", sync.SKIP))
     monkeypatch.setattr(sync, "stage_alignment", lambda *a, **k: sync.Stage("alignment", sync.SKIP))
     monkeypatch.setattr(sync, "stage_wren", lambda *a, **k: sync.Stage("wren", sync.SKIP))
+    monkeypatch.setattr(sync, "stage_lightdash", lambda *a, **k: sync.Stage("lightdash", sync.SKIP))
     sync.sync("enhanza-analytics", check=False, manifest_arg=None)
     assert called == [], "the rebuild must not run unless asked for"
 
