@@ -1,0 +1,16 @@
+{
+  "dropped": {
+    "unresolved_source_models": {},
+    "unresolved_target_models": {}
+  },
+  "edges": [],
+  "generated_by": "scripts/openmetadata_sync.py",
+  "lineage_source": "DbtLineage",
+  "stats": {
+    "bindings": 0,
+    "column_edges": 0,
+    "multi_source_columns": 0,
+    "table_pairs": 0,
+    "transforms": {}
+  }
+}

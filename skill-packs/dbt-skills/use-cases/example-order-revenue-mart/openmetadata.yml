@@ -1,0 +1,22 @@
+# OpenMetadata projection settings for the worked example
+# =======================================================
+#
+# The `openmetadata` stage builds `openmetadata/` from this file plus the ontology
+# artifacts, and pushes nothing. Egress is `scripts/openmetadata_sync.py --push`.
+#
+# `service` names the OpenMetadata Database Service this project's warehouse is
+# registered under — a fact about the server, which nothing in manifest.json knows. It
+# is a **declaration, not a discovery**: register the example's DuckDB warehouse under
+# this name and the FQNs in openmetadata/ resolve. `openmetadata/ingestion/dbt.yaml`
+# carries the same value, so upstream's dbt connector and this bundle agree by
+# construction. Override per-deployment with OPENMETADATA_DB_SERVICE.
+#
+# This use-case has no `ontology/index.json` and no `ontology/column-annotations.json`,
+# so its bundle carries no glossary terms and no facet tags — that is the honest state
+# of the example, not a defect in the emitter. `enhanza-analytics` is the use-case where
+# the full projection is exercised.
+
+service: example_duckdb
+
+glossary: example-order-revenue-mart
+glossary_display_name: Example Order Revenue Mart

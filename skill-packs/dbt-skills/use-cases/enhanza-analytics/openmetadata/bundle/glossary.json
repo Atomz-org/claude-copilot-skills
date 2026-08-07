@@ -1,0 +1,2579 @@
+{
+  "generated_by": "scripts/openmetadata_sync.py",
+  "glossary": {
+    "description": "Business glossary for the `enhanza-analytics` use-case, projected from its ontology. Concept terms come from `ontology/index.json`; conformed column terms from `ontology/column-annotations.json`. Git is the source of truth — edit the artifacts and regenerate, never the catalog.",
+    "displayName": "Enhanza Analytics",
+    "mutuallyExclusive": false,
+    "name": "enhanza-analytics",
+    "provider": "user"
+  },
+  "terms": [
+    {
+      "description": "Conformed concept **dim_accounting** (`erp:Classifier`).\n\nSupplied by 1 connector(s): favrit.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_accounting",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Accounting",
+      "name": "dim_accounting"
+    },
+    {
+      "description": "Conformed concept **dim_accounts** (`erp:Account`).\n\nSupplied by 5 connector(s): fortnox, tripletex, visma_eaccounting, visma_economic, xledger.\n\nPlanned by: hogia_your_landlord, poweroffice, quickbooks, visma_net, xero.\n\nColumn contract: 16 conformed column(s); adapters fortnox_erp_bi_dim_accounts.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_accounts",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Account",
+      "name": "dim_accounts"
+    },
+    {
+      "description": "Conformed concept **dim_articles** (`erp:Article`).\n\nSupplied by 6 connector(s): fortnox, seventime, shopify, upsales, visma_eaccounting, visma_economic.\n\nPlanned by: dynamics365, quickbooks, xero.\n\nColumn contract: 10 conformed column(s); adapters fortnox_erp_bi_dim_articles, seventime_erp_bi_dim_articles, shopify_erp_bi_dim_articles, upsales_erp_bi_dim_articles, visma_eaccounting_erp_bi_dim_articles, visma_economic_erp_bi_dim_articles.\n\nPartial for fortnox, shopify — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_articles",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Article",
+      "name": "dim_articles"
+    },
+    {
+      "description": "Conformed concept **dim_assets_types** (`erp:Asset`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_assets_types",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#AssetsType",
+      "name": "dim_assets_types"
+    },
+    {
+      "description": "Conformed concept **dim_bundle_articles** (`erp:BundleArticle`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_bundle_articles",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#BundleArticle",
+      "name": "dim_bundle_articles"
+    },
+    {
+      "description": "Conformed concept **dim_company** (`erp:Organisation`).\n\nSupplied by 6 connector(s): fortnox, seventime, tripletex, upsales, visma_eaccounting, visma_economic.\n\nColumn contract: 3 conformed column(s); adapters fortnox_erp_bi_dim_company, seventime_erp_bi_dim_company, tripletex_erp_bi_dim_company, upsales_erp_bi_dim_company, visma_eaccounting_erp_bi_dim_company, visma_economic_erp_bi_dim_company.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_company",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Company",
+      "name": "dim_company"
+    },
+    {
+      "description": "Conformed concept **dim_cost_centers** (`erp:CostCenter`).\n\nSupplied by 4 connector(s): fortnox, tripletex, visma_eaccounting, xledger.\n\nPlanned by: visma_net.\n\nColumn contract: 5 conformed column(s); adapters fortnox_erp_bi_dim_cost_centers.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_cost_centers",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#CostCenter",
+      "name": "dim_cost_centers"
+    },
+    {
+      "description": "Conformed concept **dim_customers** (`erp:Customer`).\n\nSupplied by 7 connector(s): fortnox, seventime, shopify, tripletex, upsales, visma_eaccounting, visma_economic.\n\nPlanned by: dynamics365, hogia_your_landlord, hubspot, poweroffice, quickbooks, salesforce, serviceprotokoll, visma_net, xero.\n\nColumn contract: 44 conformed column(s); adapters fortnox_erp_bi_dim_customers, shopify_erp_bi_dim_customers.\n\nPartial for fortnox, shopify — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_customers",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Customer",
+      "name": "dim_customers"
+    },
+    {
+      "description": "Conformed concept **dim_employees** (`erp:Employee`).\n\nSupplied by 1 connector(s): fortnox.\n\nPlanned by: dynamics365, salesforce, serviceprotokoll.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_employees",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Employee",
+      "name": "dim_employees"
+    },
+    {
+      "description": "Conformed concept **dim_expenses** (`erp:Classifier`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_expenses",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Expense",
+      "name": "dim_expenses"
+    },
+    {
+      "description": "Conformed concept **dim_financial_years** (`erp:FinancialYear`).\n\nSupplied by 7 connector(s): fortnox, seventime, tripletex, upsales, visma_eaccounting, visma_economic, xledger.\n\nPlanned by: poweroffice, quickbooks, visma_net, xero.\n\nColumn contract: 7 conformed column(s); adapters fortnox_erp_bi_dim_financial_years, seventime_erp_bi_dim_financial_years, tripletex_erp_bi_dim_financial_years, upsales_erp_bi_dim_financial_years, visma_eaccounting_erp_bi_dim_financial_years, visma_economic_erp_bi_dim_financial_years, xledger_erp_bi_dim_financial_years.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_financial_years",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#FinancialYear",
+      "name": "dim_financial_years"
+    },
+    {
+      "description": "Conformed concept **dim_labels** (`erp:Label`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_labels",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Label",
+      "name": "dim_labels"
+    },
+    {
+      "description": "Conformed concept **dim_meta_data** (`erp:Classifier`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_meta_data",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#MetaData",
+      "name": "dim_meta_data"
+    },
+    {
+      "description": "Conformed concept **dim_pricelists** (`erp:PriceList`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_pricelists",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Pricelist",
+      "name": "dim_pricelists"
+    },
+    {
+      "description": "Conformed concept **dim_prices** (`erp:PriceList`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_prices",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Price",
+      "name": "dim_prices"
+    },
+    {
+      "description": "Conformed concept **dim_projects** (`erp:Project`).\n\nSupplied by 4 connector(s): fortnox, tripletex, visma_eaccounting, xledger.\n\nPlanned by: poweroffice, visma_net.\n\nColumn contract: 9 conformed column(s); adapters fortnox_erp_bi_dim_projects, tripletex_erp_bi_dim_projects, xledger_erp_bi_dim_projects.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_projects",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Project",
+      "name": "dim_projects"
+    },
+    {
+      "description": "Conformed concept **dim_ratings** (`erp:Classifier`).\n\nSupplied by 1 connector(s): favrit.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_ratings",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Rating",
+      "name": "dim_ratings"
+    },
+    {
+      "description": "Conformed concept **dim_stockpoints** (`erp:StockPoint`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 13 conformed column(s); adapters fortnox_erp_bi_dim_stockpoints.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_stockpoints",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Stockpoint",
+      "name": "dim_stockpoints"
+    },
+    {
+      "description": "Conformed concept **dim_supplier_invoice_files** (`erp:Classifier`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 5 conformed column(s); adapters fortnox_erp_bi_dim_supplier_invoice_files.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_supplier_invoice_files",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#SupplierInvoiceFile",
+      "name": "dim_supplier_invoice_files"
+    },
+    {
+      "description": "Conformed concept **dim_supplier_items** (`erp:Article`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_supplier_items",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#SupplierItem",
+      "name": "dim_supplier_items"
+    },
+    {
+      "description": "Conformed concept **dim_suppliers** (`erp:Supplier`).\n\nSupplied by 3 connector(s): fortnox, tripletex, visma_economic.\n\nPlanned by: poweroffice, quickbooks, visma_net, xero.\n\nColumn contract: 19 conformed column(s); adapters fortnox_erp_bi_dim_suppliers.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_suppliers",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Supplier",
+      "name": "dim_suppliers"
+    },
+    {
+      "description": "Conformed concept **dim_user_locations** (`erp:Organisation`).\n\nSupplied by 1 connector(s): favrit.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_user_locations",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#UserLocation",
+      "name": "dim_user_locations"
+    },
+    {
+      "description": "Conformed concept **dim_voucher_series** (`erp:VoucherSeries`).\n\nSupplied by 2 connector(s): fortnox, tripletex.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "dim_voucher_series",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#VoucherSerie",
+      "name": "dim_voucher_series"
+    },
+    {
+      "description": "Conformed concept **fact_absence_transactions** (`erp:AbsenceTransaction`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 10 conformed column(s); adapters fortnox_erp_bi_fact_absence_transactions.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_absence_transactions",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#AbsenceTransaction",
+      "name": "fact_absence_transactions"
+    },
+    {
+      "description": "Conformed concept **fact_activities** (`crm:Activity`).\n\nSupplied by 1 connector(s): upsales.\n\nPlanned by: dynamics365, hubspot, salesforce.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_activities",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Activitie",
+      "name": "fact_activities"
+    },
+    {
+      "description": "Conformed concept **fact_appointments** (`crm:Appointment`).\n\nSupplied by 1 connector(s): upsales.\n\nPlanned by: hubspot, salesforce.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_appointments",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Appointment",
+      "name": "fact_appointments"
+    },
+    {
+      "description": "Conformed concept **fact_asset_rows** (`erp:LineItem`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_asset_rows",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#AssetRow",
+      "name": "fact_asset_rows"
+    },
+    {
+      "description": "Conformed concept **fact_assets** (`erp:Asset`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_assets",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Asset",
+      "name": "fact_assets"
+    },
+    {
+      "description": "Conformed concept **fact_attendance_transactions** (`erp:AttendanceTransaction`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 8 conformed column(s); adapters fortnox_erp_bi_fact_attendance_transactions.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_attendance_transactions",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#AttendanceTransaction",
+      "name": "fact_attendance_transactions"
+    },
+    {
+      "description": "Conformed concept **fact_budgets** (`erp:Budget`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 7 conformed column(s); adapters fortnox_erp_bi_fact_budgets.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_budgets",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Budget",
+      "name": "fact_budgets"
+    },
+    {
+      "description": "Conformed concept **fact_contract_rows** (`erp:LineItem`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_contract_rows",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#ContractRow",
+      "name": "fact_contract_rows"
+    },
+    {
+      "description": "Conformed concept **fact_contracts** (`erp:Contract`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_contracts",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Contract",
+      "name": "fact_contracts"
+    },
+    {
+      "description": "Conformed concept **fact_employee_schedules** (`erp:Event`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_employee_schedules",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#EmployeeSchedule",
+      "name": "fact_employee_schedules"
+    },
+    {
+      "description": "Conformed concept **fact_employee_wages** (`erp:SalaryTransaction`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 7 conformed column(s); adapters fortnox_erp_bi_fact_employee_wages.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_employee_wages",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#EmployeeWage",
+      "name": "fact_employee_wages"
+    },
+    {
+      "description": "Conformed concept **fact_incoming_goods** (`erp:IncomingGoods`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 25 conformed column(s); adapters fortnox_erp_bi_fact_incoming_goods.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_incoming_goods",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#IncomingGood",
+      "name": "fact_incoming_goods"
+    },
+    {
+      "description": "Conformed concept **fact_invoice_accruals** (`erp:Event`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_invoice_accruals",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#InvoiceAccrual",
+      "name": "fact_invoice_accruals"
+    },
+    {
+      "description": "Conformed concept **fact_invoice_payments** (`erp:Payment`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 17 conformed column(s); adapters fortnox_erp_bi_fact_invoice_payments.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_invoice_payments",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#InvoicePayment",
+      "name": "fact_invoice_payments"
+    },
+    {
+      "description": "Conformed concept **fact_invoice_rows** (`erp:LineItem`).\n\nSupplied by 4 connector(s): fortnox, seventime, visma_eaccounting, visma_economic.\n\nPlanned by: hogia_your_landlord, quickbooks, xero.\n\nColumn contract: 22 conformed column(s); adapters fortnox_erp_bi_fact_invoice_rows, seventime_erp_bi_fact_invoice_rows, visma_eaccounting_erp_bi_fact_invoice_rows, visma_economic_erp_bi_fact_invoice_rows.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_invoice_rows",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#InvoiceRow",
+      "name": "fact_invoice_rows"
+    },
+    {
+      "description": "Conformed concept **fact_invoices** (`erp:Invoice`).\n\nSupplied by 5 connector(s): fortnox, seventime, tripletex, visma_eaccounting, visma_economic.\n\nPlanned by: hogia_your_landlord, poweroffice, quickbooks, visma_net, xero.\n\nColumn contract: 58 conformed column(s); adapters fortnox_erp_bi_fact_invoices.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_invoices",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Invoice",
+      "name": "fact_invoices"
+    },
+    {
+      "description": "Conformed concept **fact_locked_period** (`erp:LockedPeriod`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_locked_period",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#LockedPeriod",
+      "name": "fact_locked_period"
+    },
+    {
+      "description": "Conformed concept **fact_offer_rows** (`erp:LineItem`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_offer_rows",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#OfferRow",
+      "name": "fact_offer_rows"
+    },
+    {
+      "description": "Conformed concept **fact_offers** (`erp:Offer`).\n\nSupplied by 2 connector(s): fortnox, seventime.\n\nColumn contract: 43 conformed column(s); adapters fortnox_erp_bi_fact_offers.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_offers",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Offer",
+      "name": "fact_offers"
+    },
+    {
+      "description": "Conformed concept **fact_opportunities** (`crm:Opportunity`).\n\nSupplied by 1 connector(s): upsales.\n\nPlanned by: dynamics365, hubspot, salesforce.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_opportunities",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Opportunitie",
+      "name": "fact_opportunities"
+    },
+    {
+      "description": "Conformed concept **fact_opportunity_rows** (`crm:OpportunityLine`).\n\nSupplied by 1 connector(s): upsales.\n\nPlanned by: hubspot, salesforce.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_opportunity_rows",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#OpportunityRow",
+      "name": "fact_opportunity_rows"
+    },
+    {
+      "description": "Conformed concept **fact_order_rows** (`erp:LineItem`).\n\nSupplied by 4 connector(s): favrit, fortnox, shopify, upsales.\n\nPlanned by: dynamics365.\n\nColumn contract: 28 conformed column(s); adapters favrit_erp_bi_fact_order_rows, fortnox_erp_bi_fact_order_rows, shopify_erp_bi_fact_order_rows.\n\nPartial for favrit, fortnox, shopify — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_order_rows",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#OrderRow",
+      "name": "fact_order_rows"
+    },
+    {
+      "description": "Conformed concept **fact_orders** (`erp:Order`).\n\nSupplied by 4 connector(s): fortnox, shopify, upsales, visma_economic.\n\nPlanned by: dynamics365.\n\nColumn contract: 49 conformed column(s); adapters fortnox_erp_bi_fact_orders, shopify_erp_bi_fact_orders.\n\nPartial for fortnox, shopify — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_orders",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Order",
+      "name": "fact_orders"
+    },
+    {
+      "description": "Conformed concept **fact_production_orders** (`erp:ProductionOrder`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_production_orders",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#ProductionOrder",
+      "name": "fact_production_orders"
+    },
+    {
+      "description": "Conformed concept **fact_purchase_orders** (`erp:PurchaseOrder`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 31 conformed column(s); adapters fortnox_erp_bi_fact_purchase_orders.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_purchase_orders",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#PurchaseOrder",
+      "name": "fact_purchase_orders"
+    },
+    {
+      "description": "Conformed concept **fact_rolling_sum** (`erp:Event`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_rolling_sum",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#RollingSum",
+      "name": "fact_rolling_sum"
+    },
+    {
+      "description": "Conformed concept **fact_salary_transactions** (`erp:SalaryTransaction`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 14 conformed column(s); adapters fortnox_erp_bi_fact_salary_transactions.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_salary_transactions",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#SalaryTransaction",
+      "name": "fact_salary_transactions"
+    },
+    {
+      "description": "Conformed concept **fact_stockbalance** (`erp:StockBalance`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 8 conformed column(s); adapters fortnox_erp_bi_fact_stockbalance.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_stockbalance",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Stockbalance",
+      "name": "fact_stockbalance"
+    },
+    {
+      "description": "Conformed concept **fact_stocktakings** (`erp:Stocktaking`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 13 conformed column(s); adapters fortnox_erp_bi_fact_stocktakings.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_stocktakings",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Stocktaking",
+      "name": "fact_stocktakings"
+    },
+    {
+      "description": "Conformed concept **fact_supplier_invoice_accruals** (`erp:Event`).\n\nSupplied by 1 connector(s): fortnox.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_supplier_invoice_accruals",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#SupplierInvoiceAccrual",
+      "name": "fact_supplier_invoice_accruals"
+    },
+    {
+      "description": "Conformed concept **fact_supplier_invoice_rows** (`erp:LineItem`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 26 conformed column(s); adapters fortnox_erp_bi_fact_supplier_invoice_rows.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_supplier_invoice_rows",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#SupplierInvoiceRow",
+      "name": "fact_supplier_invoice_rows"
+    },
+    {
+      "description": "Conformed concept **fact_supplier_invoices** (`erp:SupplierInvoice`).\n\nSupplied by 1 connector(s): fortnox.\n\nColumn contract: 22 conformed column(s); adapters fortnox_erp_bi_fact_supplier_invoices.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_supplier_invoices",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#SupplierInvoice",
+      "name": "fact_supplier_invoices"
+    },
+    {
+      "description": "Conformed concept **fact_time_reporting_registrations** (`erp:TimeReportingRegistration`).\n\nSupplied by 3 connector(s): fortnox, seventime, tempo.\n\nPlanned by: serviceprotokoll.\n\nColumn contract: 17 conformed column(s); adapters fortnox_erp_bi_fact_time_reporting_registrations, seventime_erp_bi_fact_time_reporting_registrations, tempo_erp_bi_fact_time_reporting_registrations.\n\nPartial for fortnox, tempo — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_time_reporting_registrations",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#TimeReportingRegistration",
+      "name": "fact_time_reporting_registrations"
+    },
+    {
+      "description": "Conformed concept **fact_vouchers** (`erp:Voucher`).\n\nSupplied by 4 connector(s): fortnox, tripletex, visma_eaccounting, visma_economic.\n\nPlanned by: poweroffice, quickbooks, visma_net, xero.\n\nColumn contract: 23 conformed column(s); adapters fortnox_erp_bi_fact_vouchers, visma_economic_erp_bi_fact_vouchers.\n\nPartial for fortnox — those adapters build their column list through a macro, so the contract cannot name every column they carry.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_vouchers",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#Voucher",
+      "name": "fact_vouchers"
+    },
+    {
+      "description": "Conformed concept **fact_work_orders** (`erp:Document`).\n\nSupplied by 1 connector(s): seventime.\n\nPlanned by: serviceprotokoll.\n\nDerived from `ontology/index.json`; no business definition is asserted here because none is recorded in the repository.",
+      "displayName": "fact_work_orders",
+      "glossary": "enhanza-analytics",
+      "iri": "https://w3id.org/enhanza/topology#WorkOrder",
+      "name": "fact_work_orders"
+    },
+    {
+      "description": "BAS account number, consists of four digits, e.g. 1234, and the name of the account in the chart of accounts\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_budgets, fact_supplier_invoice_rows, fact_vouchers.\n\nSupplied by connector(s): fortnox, visma_economic.",
+      "displayName": "Account",
+      "glossary": "enhanza-analytics",
+      "name": "Account",
+      "relatedTerms": [
+        "enhanza-analytics.fact_budgets",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "BAS account class defined by first account digit\n\nFacets: role `dimension`.\n\nCarried by concept(s): dim_accounts, fact_vouchers.\n\nSupplied by connector(s): fortnox, visma_economic.",
+      "displayName": "AccountClass",
+      "glossary": "enhanza-analytics",
+      "name": "AccountClass",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "First account digit, e.g., 1xxx\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "AccountClassId",
+      "glossary": "enhanza-analytics",
+      "name": "AccountClassId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Unique Account identifier used as a primary key\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts, fact_budgets, fact_order_rows, fact_salary_transactions, fact_supplier_invoice_rows, fact_vouchers.\n\nSupplied by connector(s): favrit, fortnox, shopify, visma_economic.",
+      "displayName": "AccountId",
+      "glossary": "enhanza-analytics",
+      "name": "AccountId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts",
+        "enhanza-analytics.fact_budgets",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_salary_transactions",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "The name of the account in the chart of accounts\n\nFacets: role `dimension`.\n\nCarried by concept(s): dim_accounts.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "AccountName",
+      "glossary": "enhanza-analytics",
+      "name": "AccountName",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "BAS account number, consists of four digits, e.g. 1234\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_invoice_rows.\n\nSupplied by connector(s): fortnox, seventime, visma_eaccounting, visma_economic.",
+      "displayName": "AccountNumber",
+      "glossary": "enhanza-analytics",
+      "name": "AccountNumber",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Whether the article in Fortnox is marked as active or inactive\n\nFacets: role `flag`.\n\nCarried by concept(s): dim_articles.\n\nSupplied by connector(s): fortnox, seventime, shopify, upsales, visma_eaccounting, visma_economic.",
+      "displayName": "Active",
+      "glossary": "enhanza-analytics",
+      "name": "Active",
+      "relatedTerms": [
+        "enhanza-analytics.dim_articles"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Flag"
+        }
+      ]
+    },
+    {
+      "description": "Phone2 field in Fortnox\n\nFacets: role `dimension`, PII `direct`.\n\nCarried by concept(s): dim_customers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "AdditionalPhone",
+      "glossary": "enhanza-analytics",
+      "name": "AdditionalPhone",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "PII.Sensitive"
+        }
+      ]
+    },
+    {
+      "description": "Address1 field in Fortnox\n\nFacets: role `dimension`, PII `quasi`.\n\nCarried by concept(s): dim_customers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "Address",
+      "glossary": "enhanza-analytics",
+      "name": "Address",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnPII.Quasi"
+        }
+      ]
+    },
+    {
+      "description": "Profit & Loss: Aggregation of Credit and Debit\n\nFacets: role `measure`, additivity `additive`, unit `currency`.\n\nCarried by concept(s): fact_budgets, fact_vouchers.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "Amount",
+      "glossary": "enhanza-analytics",
+      "name": "Amount",
+      "relatedTerms": [
+        "enhanza-analytics.fact_budgets",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.Additive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Salary: Price per unit (day, hour etc.)\n\nFacets: role `measure`, additivity `non_additive`, unit `currency`.\n\n**Do not SUM() this column** without reading its additivity: summing it produces a plausible number that is wrong.\n\nCarried by concept(s): fact_salary_transactions.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "AmountPerUnit",
+      "glossary": "enhanza-analytics",
+      "name": "AmountPerUnit",
+      "relatedTerms": [
+        "enhanza-analytics.fact_salary_transactions"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.NonAdditive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Unique Article identifier used as a primary key\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_articles, fact_incoming_goods, fact_order_rows, fact_purchase_orders, fact_stockbalance, fact_stocktakings, fact_supplier_invoice_rows.\n\nSupplied by connector(s): favrit, fortnox, seventime, shopify, upsales, visma_eaccounting, visma_economic.",
+      "displayName": "ArticleId",
+      "glossary": "enhanza-analytics",
+      "name": "ArticleId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_articles",
+        "enhanza-analytics.fact_incoming_goods",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_purchase_orders",
+        "enhanza-analytics.fact_stockbalance",
+        "enhanza-analytics.fact_stocktakings",
+        "enhanza-analytics.fact_supplier_invoice_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Description of the article (including its number)\n\nFacets: role `text`.\n\nCarried by concept(s): dim_articles.\n\nSupplied by connector(s): fortnox, seventime, shopify, upsales, visma_eaccounting, visma_economic.",
+      "displayName": "ArticleName",
+      "glossary": "enhanza-analytics",
+      "name": "ArticleName",
+      "relatedTerms": [
+        "enhanza-analytics.dim_articles"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Text"
+        }
+      ]
+    },
+    {
+      "description": "The article number indicated on the line where applicable\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_articles, fact_incoming_goods, fact_invoice_rows, fact_order_rows, fact_purchase_orders, fact_supplier_invoice_rows.\n\nSupplied by connector(s): favrit, fortnox, seventime, shopify, upsales, visma_eaccounting, visma_economic.",
+      "displayName": "ArticleNumber",
+      "glossary": "enhanza-analytics",
+      "name": "ArticleNumber",
+      "relatedTerms": [
+        "enhanza-analytics.dim_articles",
+        "enhanza-analytics.fact_incoming_goods",
+        "enhanza-analytics.fact_invoice_rows",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_purchase_orders",
+        "enhanza-analytics.fact_supplier_invoice_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Calculated field from difference between Credit and Debit\n\nFacets: role `measure`, additivity `semi_additive`, unit `currency`.\n\n**Do not SUM() this column** without reading its additivity: summing it produces a plausible number that is wrong.\n\nCarried by concept(s): fact_invoices, fact_supplier_invoice_rows, fact_supplier_invoices, fact_vouchers.\n\nSupplied by connector(s): fortnox, visma_economic.",
+      "displayName": "Balance",
+      "glossary": "enhanza-analytics",
+      "name": "Balance",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.SemiAdditive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Balance sheet at the beginning of the financial year\n\nFacets: role `measure`, additivity `semi_additive`, unit `currency`.\n\n**Do not SUM() this column** without reading its additivity: summing it produces a plausible number that is wrong.\n\nCarried by concept(s): dim_accounts.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "BalanceBroughtForward",
+      "glossary": "enhanza-analytics",
+      "name": "BalanceBroughtForward",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.SemiAdditive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Final current balance for the financial year\n\nFacets: role `measure`, additivity `semi_additive`, unit `currency`.\n\n**Do not SUM() this column** without reading its additivity: summing it produces a plausible number that is wrong.\n\nCarried by concept(s): dim_accounts.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "BalanceCarriedForward",
+      "glossary": "enhanza-analytics",
+      "name": "BalanceCarriedForward",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.SemiAdditive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Month is represented by its last calendar day\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): fact_budgets.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "BudgetDate",
+      "glossary": "enhanza-analytics",
+      "name": "BudgetDate",
+      "relatedTerms": [
+        "enhanza-analytics.fact_budgets"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "Absence/attendance: standard abbreviation of absence/attendance reason\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_absence_transactions, fact_attendance_transactions.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "CauseCode",
+      "glossary": "enhanza-analytics",
+      "name": "CauseCode",
+      "relatedTerms": [
+        "enhanza-analytics.fact_absence_transactions",
+        "enhanza-analytics.fact_attendance_transactions"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Absence/attendance: detailed explanation of absence/attendance reason\n\nFacets: role `text`.\n\nCarried by concept(s): fact_absence_transactions, fact_attendance_transactions.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "CauseCodeName",
+      "glossary": "enhanza-analytics",
+      "name": "CauseCodeName",
+      "relatedTerms": [
+        "enhanza-analytics.fact_absence_transactions",
+        "enhanza-analytics.fact_attendance_transactions"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Text"
+        }
+      ]
+    },
+    {
+      "description": "Salary: Comments to the salary transactions if any\n\nFacets: role `dimension`.\n\nCarried by concept(s): dim_customers, dim_projects, fact_invoices, fact_offers, fact_orders, fact_salary_transactions.\n\nSupplied by connector(s): fortnox, shopify, tripletex, xledger.",
+      "displayName": "Comments",
+      "glossary": "enhanza-analytics",
+      "name": "Comments",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.dim_projects",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_orders",
+        "enhanza-analytics.fact_salary_transactions"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Sold value minus estimated price of the item. The item row value is used\n\nFacets: role `measure`, additivity `additive`, unit `currency`.\n\nCarried by concept(s): fact_invoice_rows, fact_invoices, fact_offers, fact_order_rows, fact_orders.\n\nSupplied by connector(s): favrit, fortnox, seventime, shopify, visma_eaccounting, visma_economic.",
+      "displayName": "ContributionValue",
+      "glossary": "enhanza-analytics",
+      "name": "ContributionValue",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_rows",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_orders"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.Additive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Foreign key to dim_cost_centers\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts, dim_cost_centers, dim_customers, dim_suppliers, fact_absence_transactions, fact_attendance_transactions, fact_budgets, fact_employee_wages, fact_incoming_goods, fact_invoices, fact_offers, fact_order_rows, fact_purchase_orders, fact_salary_transactions, fact_stocktakings, fact_supplier_invoice_rows, fact_supplier_invoices, fact_vouchers.\n\nSupplied by connector(s): favrit, fortnox, shopify, visma_economic.",
+      "displayName": "CostCenterId",
+      "glossary": "enhanza-analytics",
+      "name": "CostCenterId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts",
+        "enhanza-analytics.dim_cost_centers",
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.dim_suppliers",
+        "enhanza-analytics.fact_absence_transactions",
+        "enhanza-analytics.fact_attendance_transactions",
+        "enhanza-analytics.fact_budgets",
+        "enhanza-analytics.fact_employee_wages",
+        "enhanza-analytics.fact_incoming_goods",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_purchase_orders",
+        "enhanza-analytics.fact_salary_transactions",
+        "enhanza-analytics.fact_stocktakings",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Customer and Supplier's address, country\n\nFacets: role `dimension`.\n\nCarried by concept(s): dim_customers, dim_suppliers, fact_invoices, fact_offers, fact_orders.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "Country",
+      "glossary": "enhanza-analytics",
+      "name": "Country",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.dim_suppliers",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_orders"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Original transaction currency used in Fortnox\n\nFacets: role `dimension`.\n\nCarried by concept(s): dim_suppliers, fact_invoice_payments, fact_invoices, fact_offers, fact_order_rows, fact_orders, fact_purchase_orders, fact_supplier_invoice_rows, fact_supplier_invoices.\n\nSupplied by connector(s): favrit, fortnox, shopify.",
+      "displayName": "Currency",
+      "glossary": "enhanza-analytics",
+      "name": "Currency",
+      "relatedTerms": [
+        "enhanza-analytics.dim_suppliers",
+        "enhanza-analytics.fact_invoice_payments",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_orders",
+        "enhanza-analytics.fact_purchase_orders",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Exchange rate from Fortnox, used to convert all values to SEK\n\nFacets: role `measure`, additivity `non_additive`, unit `currency`.\n\n**Do not SUM() this column** without reading its additivity: summing it produces a plausible number that is wrong.\n\nCarried by concept(s): fact_invoice_payments, fact_invoices, fact_offers, fact_orders, fact_supplier_invoice_rows.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "CurrencyRate",
+      "glossary": "enhanza-analytics",
+      "name": "CurrencyRate",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_payments",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_orders",
+        "enhanza-analytics.fact_supplier_invoice_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.NonAdditive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Unique identifyer of a customer in your workspace\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_customers, fact_invoice_payments, fact_invoices, fact_offers, fact_order_rows, fact_orders, fact_purchase_orders, fact_vouchers.\n\nSupplied by connector(s): favrit, fortnox, shopify, visma_economic.",
+      "displayName": "CustomerId",
+      "glossary": "enhanza-analytics",
+      "name": "CustomerId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.fact_invoice_payments",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_orders",
+        "enhanza-analytics.fact_purchase_orders",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Transaction date, i.e. 2024-03-25\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): fact_absence_transactions, fact_attendance_transactions, fact_salary_transactions, fact_stockbalance, fact_stocktakings.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "Date",
+      "glossary": "enhanza-analytics",
+      "name": "Date",
+      "relatedTerms": [
+        "enhanza-analytics.fact_absence_transactions",
+        "enhanza-analytics.fact_attendance_transactions",
+        "enhanza-analytics.fact_salary_transactions",
+        "enhanza-analytics.fact_stockbalance",
+        "enhanza-analytics.fact_stocktakings"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "Customer's default invoice delivery type\n\nFacets: role `dimension`.\n\nCarried by concept(s): dim_customers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "DefaultDeliveryType",
+      "glossary": "enhanza-analytics",
+      "name": "DefaultDeliveryType",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Customer's default invoice template\n\nFacets: role `dimension`.\n\nCarried by concept(s): dim_customers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "DefaultTemplate",
+      "glossary": "enhanza-analytics",
+      "name": "DefaultTemplate",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Text description of the asset type\n\nFacets: role `text`.\n\nCarried by concept(s): dim_cost_centers, dim_projects, fact_order_rows, fact_vouchers.\n\nSupplied by connector(s): favrit, fortnox, shopify, tripletex, visma_economic, xledger.",
+      "displayName": "Description",
+      "glossary": "enhanza-analytics",
+      "name": "Description",
+      "relatedTerms": [
+        "enhanza-analytics.dim_cost_centers",
+        "enhanza-analytics.dim_projects",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Text"
+        }
+      ]
+    },
+    {
+      "description": "Based on document the file is linked to\n\nFacets: role `dimension`.\n\nCarried by concept(s): fact_time_reporting_registrations.\n\nSupplied by connector(s): fortnox, seventime, tempo.",
+      "displayName": "DocumentType",
+      "glossary": "enhanza-analytics",
+      "name": "DocumentType",
+      "relatedTerms": [
+        "enhanza-analytics.fact_time_reporting_registrations"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Date on which the document is due\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): fact_invoices, fact_supplier_invoice_rows, fact_supplier_invoices.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "DueDate",
+      "glossary": "enhanza-analytics",
+      "name": "DueDate",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "Customer email. Nullable — Shopify permits phone-only customers.\n\nFacets: role `dimension`, PII `direct`.\n\nCarried by concept(s): dim_customers, dim_suppliers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "Email",
+      "glossary": "enhanza-analytics",
+      "name": "Email",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.dim_suppliers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "PII.Sensitive"
+        }
+      ]
+    },
+    {
+      "description": "Unique employee identifier in your workspace\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_absence_transactions, fact_attendance_transactions, fact_employee_wages, fact_salary_transactions.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "EmployeeId",
+      "glossary": "enhanza-analytics",
+      "name": "EmployeeId",
+      "relatedTerms": [
+        "enhanza-analytics.fact_absence_transactions",
+        "enhanza-analytics.fact_attendance_transactions",
+        "enhanza-analytics.fact_employee_wages",
+        "enhanza-analytics.fact_salary_transactions"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Name of the file in the system\n\nFacets: role `text`.\n\nCarried by concept(s): dim_supplier_invoice_files.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "FileName",
+      "glossary": "enhanza-analytics",
+      "name": "FileName",
+      "relatedTerms": [
+        "enhanza-analytics.dim_supplier_invoice_files"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Text"
+        }
+      ]
+    },
+    {
+      "description": "Final payment deadline for the document\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): fact_invoices, fact_supplier_invoice_rows, fact_supplier_invoices.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "FinalPayDate",
+      "glossary": "enhanza-analytics",
+      "name": "FinalPayDate",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "Foreign key to dim_financial_years\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts, dim_financial_years, fact_budgets, fact_invoices, fact_vouchers.\n\nSupplied by connector(s): fortnox, seventime, tripletex, upsales, visma_eaccounting, visma_economic, xledger.",
+      "displayName": "FinancialYearId",
+      "glossary": "enhanza-analytics",
+      "name": "FinancialYearId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts",
+        "enhanza-analytics.dim_financial_years",
+        "enhanza-analytics.fact_budgets",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "The earliest invoice date for the customer / supplier available in your synced data\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): dim_customers, dim_suppliers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "FirstInvoiceDate",
+      "glossary": "enhanza-analytics",
+      "name": "FirstInvoiceDate",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.dim_suppliers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "Date the document is issued\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): fact_invoice_rows, fact_invoices, fact_supplier_invoice_rows, fact_supplier_invoices.\n\nSupplied by connector(s): fortnox, seventime, visma_eaccounting, visma_economic.",
+      "displayName": "InvoiceDate",
+      "glossary": "enhanza-analytics",
+      "name": "InvoiceDate",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_rows",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "Document number\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_invoice_payments, fact_invoice_rows, fact_invoices.\n\nSupplied by connector(s): fortnox, seventime, visma_eaccounting, visma_economic.",
+      "displayName": "InvoiceNo",
+      "glossary": "enhanza-analytics",
+      "name": "InvoiceNo",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_payments",
+        "enhanza-analytics.fact_invoice_rows",
+        "enhanza-analytics.fact_invoices"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "0 if no invoice is created for this order yet\n\nFacets: role `dimension`.\n\nCarried by concept(s): fact_offers, fact_order_rows, fact_orders.\n\nSupplied by connector(s): favrit, fortnox, shopify.",
+      "displayName": "InvoiceReference",
+      "glossary": "enhanza-analytics",
+      "name": "InvoiceReference",
+      "relatedTerms": [
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_orders"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "'Sales' for Customer invoices, 'Supplier' for Supplier invoices\n\nFacets: role `dimension`.\n\nCarried by concept(s): fact_invoice_rows.\n\nSupplied by connector(s): fortnox, seventime, visma_eaccounting, visma_economic.",
+      "displayName": "InvoiceType",
+      "glossary": "enhanza-analytics",
+      "name": "InvoiceType",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "TRUE if invoice balance is not 0 and due date has already passed\n\nFacets: role `flag`.\n\nCarried by concept(s): fact_invoices.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "IsDue",
+      "glossary": "enhanza-analytics",
+      "name": "IsDue",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoices"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Flag"
+        }
+      ]
+    },
+    {
+      "description": "Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels\n\nFacets: role `dimension`.\n\nCarried by concept(s): fact_invoices, fact_offers, fact_orders.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "Labels",
+      "glossary": "enhanza-analytics",
+      "name": "Labels",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_orders"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "BAS main account defined by first two account digits\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "MainAccount",
+      "glossary": "enhanza-analytics",
+      "name": "MainAccount",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "First two digits, e.g., 12xx\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "MainAccountId",
+      "glossary": "enhanza-analytics",
+      "name": "MainAccountId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Full customer/supplier name and number\n\nFacets: role `text`.\n\nCarried by concept(s): dim_customers, dim_stockpoints, dim_suppliers, fact_stocktakings.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "Name",
+      "glossary": "enhanza-analytics",
+      "name": "Name",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.dim_stockpoints",
+        "enhanza-analytics.dim_suppliers",
+        "enhanza-analytics.fact_stocktakings"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Text"
+        }
+      ]
+    },
+    {
+      "description": "Sales value of delivered items excluding VAT\n\nFacets: role `measure`, additivity `additive`, unit `currency`.\n\nCarried by concept(s): fact_invoice_payments, fact_invoices, fact_offers, fact_orders.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "Net",
+      "glossary": "enhanza-analytics",
+      "name": "Net",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_payments",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_orders"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.Additive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Short note made on article\n\nFacets: role `text`.\n\nCarried by concept(s): dim_cost_centers.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "Note",
+      "glossary": "enhanza-analytics",
+      "name": "Note",
+      "relatedTerms": [
+        "enhanza-analytics.dim_cost_centers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Text"
+        }
+      ]
+    },
+    {
+      "description": "BAS account number, consists of four digits, e.g., 1234\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts, fact_invoice_payments.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "Number",
+      "glossary": "enhanza-analytics",
+      "name": "Number",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts",
+        "enhanza-analytics.fact_invoice_payments"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Salary: Number of days, hours etc. the employee is paid for\n\nFacets: role `measure`, additivity `additive`, unit `quantity`.\n\nCarried by concept(s): fact_salary_transactions.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "NumberOfUnits",
+      "glossary": "enhanza-analytics",
+      "name": "NumberOfUnits",
+      "relatedTerms": [
+        "enhanza-analytics.fact_salary_transactions"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.Additive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Quantity"
+        }
+      ]
+    },
+    {
+      "description": "Order creation date, from `created_at`.\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): fact_order_rows, fact_orders.\n\nSupplied by connector(s): favrit, fortnox, shopify.",
+      "displayName": "OrderDate",
+      "glossary": "enhanza-analytics",
+      "name": "OrderDate",
+      "relatedTerms": [
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_orders"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "Shopify order id. Primary key.\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_order_rows, fact_orders.\n\nSupplied by connector(s): favrit, fortnox, shopify.",
+      "displayName": "OrderId",
+      "glossary": "enhanza-analytics",
+      "name": "OrderId",
+      "relatedTerms": [
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_orders"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "0 if no order is created for this offer yet\n\nFacets: role `dimension`.\n\nCarried by concept(s): fact_invoices, fact_offers.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "OrderReference",
+      "glossary": "enhanza-analytics",
+      "name": "OrderReference",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Line quantity ordered.\n\nFacets: role `measure`, additivity `additive`, unit `quantity`.\n\nCarried by concept(s): fact_order_rows.\n\nSupplied by connector(s): favrit, fortnox, shopify.",
+      "displayName": "OrderedQuantity",
+      "glossary": "enhanza-analytics",
+      "name": "OrderedQuantity",
+      "relatedTerms": [
+        "enhanza-analytics.fact_order_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.Additive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Quantity"
+        }
+      ]
+    },
+    {
+      "description": "Potential NET value in SEK, discounts applied of the total ordered quantity\n\nFacets: role `measure`, additivity `additive`, unit `currency`.\n\nCarried by concept(s): fact_order_rows.\n\nSupplied by connector(s): favrit, fortnox, shopify.",
+      "displayName": "OrderedValue",
+      "glossary": "enhanza-analytics",
+      "name": "OrderedValue",
+      "relatedTerms": [
+        "enhanza-analytics.fact_order_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.Additive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Unique identifier of your organisation that can be found in the Enhanza app\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_company, dim_financial_years, dim_supplier_invoice_files, fact_absence_transactions, fact_attendance_transactions, fact_budgets, fact_employee_wages, fact_incoming_goods, fact_invoice_payments, fact_invoice_rows, fact_invoices, fact_offers, fact_order_rows, fact_orders, fact_purchase_orders, fact_salary_transactions, fact_stockbalance, fact_stocktakings, fact_supplier_invoice_rows, fact_supplier_invoices, fact_vouchers.\n\nSupplied by connector(s): favrit, fortnox, seventime, shopify, tripletex, upsales, visma_eaccounting, visma_economic, xledger.",
+      "displayName": "OrgId",
+      "glossary": "enhanza-analytics",
+      "name": "OrgId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_company",
+        "enhanza-analytics.dim_financial_years",
+        "enhanza-analytics.dim_supplier_invoice_files",
+        "enhanza-analytics.fact_absence_transactions",
+        "enhanza-analytics.fact_attendance_transactions",
+        "enhanza-analytics.fact_budgets",
+        "enhanza-analytics.fact_employee_wages",
+        "enhanza-analytics.fact_incoming_goods",
+        "enhanza-analytics.fact_invoice_payments",
+        "enhanza-analytics.fact_invoice_rows",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_orders",
+        "enhanza-analytics.fact_purchase_orders",
+        "enhanza-analytics.fact_salary_transactions",
+        "enhanza-analytics.fact_stockbalance",
+        "enhanza-analytics.fact_stocktakings",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Your company(s) in Fortnox\n\nFacets: role `text`.\n\nCarried by concept(s): dim_company.\n\nSupplied by connector(s): fortnox, seventime, tripletex, upsales, visma_eaccounting, visma_economic.",
+      "displayName": "OrgName",
+      "glossary": "enhanza-analytics",
+      "name": "OrgName",
+      "relatedTerms": [
+        "enhanza-analytics.dim_company"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Text"
+        }
+      ]
+    },
+    {
+      "description": "Organisation ID of your company(s) used as a primary key\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_customers, dim_suppliers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "OrganisationNumber",
+      "glossary": "enhanza-analytics",
+      "name": "OrganisationNumber",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.dim_suppliers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Price from Price list\n\nFacets: role `measure`, additivity `non_additive`, unit `currency`.\n\n**Do not SUM() this column** without reading its additivity: summing it produces a plausible number that is wrong.\n\nCarried by concept(s): fact_supplier_invoice_rows.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "Price",
+      "glossary": "enhanza-analytics",
+      "name": "Price",
+      "relatedTerms": [
+        "enhanza-analytics.fact_supplier_invoice_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.NonAdditive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "NET price in SEK after all discounts applied\n\nFacets: role `measure`, additivity `non_additive`, unit `currency`.\n\n**Do not SUM() this column** without reading its additivity: summing it produces a plausible number that is wrong.\n\nCarried by concept(s): fact_invoice_rows, fact_order_rows.\n\nSupplied by connector(s): favrit, fortnox, seventime, shopify, visma_eaccounting, visma_economic.",
+      "displayName": "PriceAfterDiscount",
+      "glossary": "enhanza-analytics",
+      "name": "PriceAfterDiscount",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_rows",
+        "enhanza-analytics.fact_order_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.NonAdditive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Customer's default price list ID, no relationship since it's a deprecated dimension\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_customers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "PriceListId",
+      "glossary": "enhanza-analytics",
+      "name": "PriceListId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Foreign key to dim_projects\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts, dim_customers, dim_projects, dim_suppliers, fact_absence_transactions, fact_attendance_transactions, fact_employee_wages, fact_incoming_goods, fact_invoices, fact_offers, fact_order_rows, fact_purchase_orders, fact_salary_transactions, fact_stocktakings, fact_supplier_invoice_rows, fact_supplier_invoices, fact_vouchers.\n\nSupplied by connector(s): favrit, fortnox, shopify, tripletex, visma_economic, xledger.",
+      "displayName": "ProjectId",
+      "glossary": "enhanza-analytics",
+      "name": "ProjectId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts",
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.dim_projects",
+        "enhanza-analytics.dim_suppliers",
+        "enhanza-analytics.fact_absence_transactions",
+        "enhanza-analytics.fact_attendance_transactions",
+        "enhanza-analytics.fact_employee_wages",
+        "enhanza-analytics.fact_incoming_goods",
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_order_rows",
+        "enhanza-analytics.fact_purchase_orders",
+        "enhanza-analytics.fact_salary_transactions",
+        "enhanza-analytics.fact_stocktakings",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Estimated price of the item. The value of the item line is used\n\nFacets: role `measure`, additivity `non_additive`, unit `currency`.\n\n**Do not SUM() this column** without reading its additivity: summing it produces a plausible number that is wrong.\n\nCarried by concept(s): dim_articles.\n\nSupplied by connector(s): fortnox, seventime, shopify, upsales, visma_eaccounting, visma_economic.",
+      "displayName": "PurchasePrice",
+      "glossary": "enhanza-analytics",
+      "name": "PurchasePrice",
+      "relatedTerms": [
+        "enhanza-analytics.dim_articles"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.NonAdditive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "The number of items invoiced/ordered\n\nFacets: role `measure`, additivity `additive`, unit `quantity`.\n\nCarried by concept(s): fact_supplier_invoice_rows.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "Quantity",
+      "glossary": "enhanza-analytics",
+      "name": "Quantity",
+      "relatedTerms": [
+        "enhanza-analytics.fact_supplier_invoice_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.Additive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Quantity"
+        }
+      ]
+    },
+    {
+      "description": "Current amount in stock from fortnox_bi.fact_stockbalance\n\nFacets: role `measure`, additivity `semi_additive`, unit `quantity`.\n\n**Do not SUM() this column** without reading its additivity: summing it produces a plausible number that is wrong.\n\nCarried by concept(s): dim_articles.\n\nSupplied by connector(s): fortnox, seventime, shopify, upsales, visma_eaccounting, visma_economic.",
+      "displayName": "QuantityInStock",
+      "glossary": "enhanza-analytics",
+      "name": "QuantityInStock",
+      "relatedTerms": [
+        "enhanza-analytics.dim_articles"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.SemiAdditive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Quantity"
+        }
+      ]
+    },
+    {
+      "description": "Additional email details, EmailAddressTo\n\nFacets: role `dimension`, PII `direct`.\n\nCarried by concept(s): fact_invoices, fact_offers, fact_orders.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "RecipientEmail",
+      "glossary": "enhanza-analytics",
+      "name": "RecipientEmail",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_orders"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "PII.Sensitive"
+        }
+      ]
+    },
+    {
+      "description": "Phone1 field in Fortnox\n\nFacets: role `dimension`, PII `direct`.\n\nCarried by concept(s): fact_invoices, fact_offers, fact_orders.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "RecipientPhone",
+      "glossary": "enhanza-analytics",
+      "name": "RecipientPhone",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoices",
+        "enhanza-analytics.fact_offers",
+        "enhanza-analytics.fact_orders"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "PII.Sensitive"
+        }
+      ]
+    },
+    {
+      "description": "Associated transaction document number\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_vouchers.\n\nSupplied by connector(s): fortnox, visma_economic.",
+      "displayName": "ReferenceNumber",
+      "glossary": "enhanza-analytics",
+      "name": "ReferenceNumber",
+      "relatedTerms": [
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Type of associated transaction, e.g. Invoice payment, Supplier invoice etc.\n\nFacets: role `dimension`.\n\nCarried by concept(s): fact_vouchers.\n\nSupplied by connector(s): fortnox, visma_economic.",
+      "displayName": "ReferenceType",
+      "glossary": "enhanza-analytics",
+      "name": "ReferenceType",
+      "relatedTerms": [
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Salary: Standard unique slary type identifier\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_salary_transactions.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "SalaryCode",
+      "glossary": "enhanza-analytics",
+      "name": "SalaryCode",
+      "relatedTerms": [
+        "enhanza-analytics.fact_salary_transactions"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "The total value of the selected document type line in SEK after discounts\n\nFacets: role `measure`, additivity `additive`, unit `currency`.\n\nCarried by concept(s): fact_invoice_rows, fact_order_rows.\n\nSupplied by connector(s): favrit, fortnox, seventime, shopify, visma_eaccounting, visma_economic.",
+      "displayName": "SalesValue",
+      "glossary": "enhanza-analytics",
+      "name": "SalesValue",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_rows",
+        "enhanza-analytics.fact_order_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Measure"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnAdditivity.Additive"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Currency"
+        }
+      ]
+    },
+    {
+      "description": "Date and time the work/absence started\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): fact_time_reporting_registrations.\n\nSupplied by connector(s): fortnox, seventime, tempo.",
+      "displayName": "StartTime",
+      "glossary": "enhanza-analytics",
+      "name": "StartTime",
+      "relatedTerms": [
+        "enhanza-analytics.fact_time_reporting_registrations"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "Unique warehouse (stock point) identifyier for youe workspace\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_stockpoints, fact_orders, fact_stockbalance, fact_stocktakings.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "StockPointId",
+      "glossary": "enhanza-analytics",
+      "name": "StockPointId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_stockpoints",
+        "enhanza-analytics.fact_orders",
+        "enhanza-analytics.fact_stockbalance",
+        "enhanza-analytics.fact_stocktakings"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "BAS sub-account defined by first three account digits\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "SubAccount",
+      "glossary": "enhanza-analytics",
+      "name": "SubAccount",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "First three digits, e.g., 123x\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_accounts.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "SubAccountId",
+      "glossary": "enhanza-analytics",
+      "name": "SubAccountId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_accounts"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Unique Supplier identifier used as a primary key\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_suppliers, fact_incoming_goods, fact_purchase_orders, fact_supplier_invoice_rows, fact_supplier_invoices, fact_vouchers.\n\nSupplied by connector(s): fortnox, visma_economic.",
+      "displayName": "SupplierId",
+      "glossary": "enhanza-analytics",
+      "name": "SupplierId",
+      "relatedTerms": [
+        "enhanza-analytics.dim_suppliers",
+        "enhanza-analytics.fact_incoming_goods",
+        "enhanza-analytics.fact_purchase_orders",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "GivenNumber field in Fortnox\n\nFacets: role `identifier`.\n\nCarried by concept(s): dim_supplier_invoice_files, fact_supplier_invoice_rows, fact_supplier_invoices.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "SupplierInvoiceNo",
+      "glossary": "enhanza-analytics",
+      "name": "SupplierInvoiceNo",
+      "relatedTerms": [
+        "enhanza-analytics.dim_supplier_invoice_files",
+        "enhanza-analytics.fact_supplier_invoice_rows",
+        "enhanza-analytics.fact_supplier_invoices"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Supplier name (and number)\n\nFacets: role `text`.\n\nCarried by concept(s): dim_articles.\n\nSupplied by connector(s): fortnox, seventime, shopify, upsales, visma_eaccounting, visma_economic.",
+      "displayName": "SupplierName",
+      "glossary": "enhanza-analytics",
+      "name": "SupplierName",
+      "relatedTerms": [
+        "enhanza-analytics.dim_articles"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Text"
+        }
+      ]
+    },
+    {
+      "description": "Address2 field in Fortnox\n\nFacets: role `dimension`.\n\nCarried by concept(s): dim_customers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "TemplateReference",
+      "glossary": "enhanza-analytics",
+      "name": "TemplateReference",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Transaction Date\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): fact_vouchers.\n\nSupplied by connector(s): fortnox, visma_economic.",
+      "displayName": "TransactionDate",
+      "glossary": "enhanza-analytics",
+      "name": "TransactionDate",
+      "relatedTerms": [
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "Unique identifier of ERP user who registered the transaction\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_time_reporting_registrations.\n\nSupplied by connector(s): fortnox, seventime, tempo.",
+      "displayName": "UserId",
+      "glossary": "enhanza-analytics",
+      "name": "UserId",
+      "relatedTerms": [
+        "enhanza-analytics.fact_time_reporting_registrations"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "UserId available in Fortnox UI only\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_time_reporting_registrations.\n\nSupplied by connector(s): fortnox, seventime, tempo.",
+      "displayName": "UserNo",
+      "glossary": "enhanza-analytics",
+      "name": "UserNo",
+      "relatedTerms": [
+        "enhanza-analytics.fact_time_reporting_registrations"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Unique voucher series identifyer based on financial year\n\nFacets: role `identifier`.\n\nCarried by concept(s): fact_invoice_payments, fact_vouchers.\n\nSupplied by connector(s): fortnox, visma_economic.",
+      "displayName": "VoucherSeriesId",
+      "glossary": "enhanza-analytics",
+      "name": "VoucherSeriesId",
+      "relatedTerms": [
+        "enhanza-analytics.fact_invoice_payments",
+        "enhanza-analytics.fact_vouchers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Identifier"
+        }
+      ]
+    },
+    {
+      "description": "Date on which this payment amount came into force\n\nFacets: role `timestamp`, unit `date`.\n\nCarried by concept(s): fact_employee_wages.\n\nSupplied by connector(s): fortnox.",
+      "displayName": "WageChangeDate",
+      "glossary": "enhanza-analytics",
+      "name": "WageChangeDate",
+      "relatedTerms": [
+        "enhanza-analytics.fact_employee_wages"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Timestamp"
+        },
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnUnit.Date"
+        }
+      ]
+    },
+    {
+      "description": "WWW field in Fortnox\n\nFacets: role `dimension`.\n\nCarried by concept(s): dim_customers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "Website",
+      "glossary": "enhanza-analytics",
+      "name": "Website",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Dimension"
+        }
+      ]
+    },
+    {
+      "description": "Indicates whether the article is currently active\n\nFacets: role `flag`.\n\nCarried by concept(s): dim_customers, dim_stockpoints, dim_suppliers.\n\nSupplied by connector(s): fortnox, shopify.",
+      "displayName": "isActive",
+      "glossary": "enhanza-analytics",
+      "name": "isActive",
+      "relatedTerms": [
+        "enhanza-analytics.dim_customers",
+        "enhanza-analytics.dim_stockpoints",
+        "enhanza-analytics.dim_suppliers"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Flag"
+        }
+      ]
+    },
+    {
+      "description": "TRUE is VAT is originally included in article price. Already used in calculations\n\nFacets: role `flag`.\n\nCarried by concept(s): fact_order_rows.\n\nSupplied by connector(s): favrit, fortnox, shopify.",
+      "displayName": "isVATIncluded",
+      "glossary": "enhanza-analytics",
+      "name": "isVATIncluded",
+      "relatedTerms": [
+        "enhanza-analytics.fact_order_rows"
+      ],
+      "tags": [
+        {
+          "labelType": "Automated",
+          "source": "Classification",
+          "state": "Confirmed",
+          "tagFQN": "ColumnRole.Flag"
+        }
+      ]
+    }
+  ],
+  "unannotated_columns": [
+    "AccountIdVoucher",
+    "Address1",
+    "Address2",
+    "AdministrationFee",
+    "AvailableStock",
+    "ChargeHours",
+    "City",
+    "Code",
+    "ContactPerson",
+    "ContractReference",
+    "ContributionPercent",
+    "CopyRemarks",
+    "CostCenterIdERP",
+    "CountryCode",
+    "CreditInvoiceReference",
+    "CustomerNumber",
+    "DefaultVATType",
+    "DeliveredQuantity",
+    "DeliveryAddress",
+    "DeliveryAddress1",
+    "DeliveryAddress2",
+    "DeliveryCity",
+    "DeliveryCountry",
+    "DeliveryCountryCode",
+    "DeliveryDate",
+    "DeliveryFax",
+    "DeliveryName",
+    "DeliveryPhone",
+    "DeliveryPhone1",
+    "DeliveryPhone2",
+    "DeliveryState",
+    "DeliveryZipCode",
+    "DescriptionRows",
+    "DisablePaymentFile",
+    "Discount",
+    "DiscountType",
+    "DocumentId",
+    "DueStatus",
+    "EmailInvoice",
+    "EndDate",
+    "ExpenseDetails",
+    "ExpenseId",
+    "ExpireDate",
+    "Extent",
+    "ExternalInvoiceReference1",
+    "ExternalInvoiceReference2",
+    "Fax",
+    "FileURL",
+    "FinancialYear",
+    "Freight",
+    "FromDate",
+    "FyCounter",
+    "Gross",
+    "HourlyPayAtDate",
+    "Hours",
+    "HouseWork",
+    "Id",
+    "IdString",
+    "InStock",
+    "InvoiceDiscount",
+    "InvoiceId",
+    "InvoiceNumber",
+    "InvoiceOCR",
+    "InvoicePeriodEnd",
+    "InvoicePeriodStart",
+    "InvoiceRemark",
+    "IsActive",
+    "IsUsingStockPoints",
+    "IsVoided",
+    "IssueCategory1",
+    "ItemId",
+    "LabelId",
+    "LastInvoiceDate",
+    "LastRemindDate",
+    "Manufacturer",
+    "ModeOfPayment",
+    "ModeOfPaymentAccountId",
+    "MonthlySalaryAtDate",
+    "NetOriginalCurrency",
+    "NotCompleted",
+    "OfferDate",
+    "OfferId",
+    "OfferNo",
+    "OfferReference",
+    "OrderNo",
+    "OrderNum",
+    "OrderType",
+    "OurReference",
+    "OutboundDate",
+    "PaymentDate",
+    "Phone",
+    "PreDefinedAccount",
+    "PriceBeforeDiscount",
+    "PriceList",
+    "ProjectIdERP",
+    "ProjectLeader",
+    "ProjectNumber",
+    "RegistrationCodeId",
+    "RegistrationCodeName",
+    "RegistrationCodeType",
+    "Remarks",
+    "Reminders",
+    "ResponsiblePerson",
+    "RoundOff",
+    "Sent",
+    "Source",
+    "Startdate",
+    "Status",
+    "StockGoods",
+    "StockPointCode",
+    "StockTakenQuantity",
+    "StockTakingId",
+    "StopTime",
+    "SupplierInvoiceId",
+    "SupplierNumber",
+    "TaxReduction",
+    "TermsOfDelivery",
+    "TermsOfPayment",
+    "ToDate",
+    "Total",
+    "TotalQuantityInStock",
+    "TotalToPay",
+    "TotalVAT",
+    "TransactionInformation",
+    "Type",
+    "Unit",
+    "UnitCost",
+    "UnitPrice",
+    "UserName",
+    "VAT",
+    "VATCode",
+    "VATNumber",
+    "Vat",
+    "VisitingAddress",
+    "VisitingCity",
+    "VisitingCountry",
+    "VoucherId",
+    "VoucherNumber",
+    "VoucherSeries",
+    "WayOfDelivery",
+    "WorkedDate",
+    "WorkedHours",
+    "YourOrderNumber",
+    "YourReference",
+    "ZipCode",
+    "backOrderQuantity",
+    "batch",
+    "completed",
+    "currencyRate",
+    "date",
+    "deliveryDate",
+    "directCost",
+    "hasCopyRemarks",
+    "id",
+    "invoicedQuantity",
+    "isBooked",
+    "isCredit",
+    "isHolidayEntitling",
+    "isManuallyCompleted",
+    "isStockItem",
+    "isUsingCompanyAddress",
+    "isWarehouseReady",
+    "itemUnit",
+    "messageToSupplier",
+    "nonInvoiceable",
+    "note",
+    "orderDate",
+    "orderRowValue",
+    "orderRowValueSek",
+    "orderedQuantity",
+    "ourReference",
+    "price",
+    "purchaseOrderId",
+    "purchaseOrderState",
+    "purchaseType",
+    "receivedQuantity",
+    "released",
+    "remainingOrderedQuantity",
+    "responseState",
+    "stockPointId",
+    "takenQuantity",
+    "voided",
+    "yourReference"
+  ]
+}

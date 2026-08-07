@@ -1,0 +1,36 @@
+# OpenMetadata projection settings for this use-case
+# ==================================================
+#
+# Hand-authored, like ontology/connectors.yml. Everything else in openmetadata/ is
+# derived from it plus the ontology artifacts.
+#
+# `service` is the one value that cannot be derived from anything in the dbt project.
+# An OpenMetadata table FQN is `service.database.schema.table`, and `service` names a
+# Database Service registered on the server — a fact about the server, not the project.
+#
+# It is a **declaration, not a discovery**: it states the name this use-case's warehouse
+# service must be created under, and scripts/openmetadata_sync.py writes the same value
+# into openmetadata/ingestion/dbt.yaml, so the connector and the enrichment bundle agree
+# by construction. A deployment that named it something else overrides with the
+# OPENMETADATA_DB_SERVICE environment variable rather than editing this file.
+#
+# If FQNs do not resolve on the server, this is the first line to check.
+
+service: enhanza_bigquery
+
+# The glossary this use-case's concept and column terms live in. Defaults to the slug.
+glossary: enhanza-analytics
+glossary_display_name: Enhanza Analytics
+
+# Optional. Set only where the catalog's database/schema names differ from the ones
+# dbt compiled into `relation_name` — a cross-environment registration, for instance.
+# Left unset, every FQN uses dbt's own resolved relation, which is what the warehouse
+# actually holds.
+# database: enhanza_prod
+# schema: analytics
+
+# Optional. A dlt-loaded DuckDB warehouse whose real schema is read to find the columns
+# a dlt load inserted (`_dlt_id`, `_dlt_load_id`, …). Path is relative to this file.
+# Without it, dlt columns are still found wherever the dbt project declares them.
+# dlt_warehouse: ../warehouse.duckdb
+# dlt_schema: raw

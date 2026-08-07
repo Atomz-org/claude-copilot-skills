@@ -1,0 +1,67 @@
+{
+  "applications": [],
+  "evidence": [
+    "none — no dlt warehouse declared and no dbt-declared dlt columns"
+  ],
+  "generated_by": "scripts/openmetadata_sync.py",
+  "glossary_terms": [
+    {
+      "description": "Row key. Unique identifier dlt assigns to every row in every table it loads, root and nested. Load provenance, not a business key: joining on it across loads is meaningless and grouping by it is always wrong.",
+      "displayName": "_dlt_id",
+      "name": "dlt_id",
+      "synonyms": [
+        "_dlt_id"
+      ]
+    },
+    {
+      "description": "Position of this item in the source list it was unpacked from. Present only on nested tables built from a JSON array; it preserves order, and it is not a quantity.",
+      "displayName": "_dlt_list_idx",
+      "name": "dlt_list_idx",
+      "synonyms": [
+        "_dlt_list_idx"
+      ]
+    },
+    {
+      "description": "Load package identifier. Names the pipeline run that inserted the row, and joins to `_dlt_loads` for its timestamp and status. The correct column for 'what arrived when', and the correct one to exclude from a business grain.",
+      "displayName": "_dlt_load_id",
+      "name": "dlt_load_id",
+      "synonyms": [
+        "_dlt_load_id"
+      ]
+    },
+    {
+      "description": "Parent row key. Present only on nested tables; references the `_dlt_id` of the row in the parent table this one was unpacked from.",
+      "displayName": "_dlt_parent_id",
+      "name": "dlt_parent_id",
+      "synonyms": [
+        "_dlt_parent_id"
+      ]
+    },
+    {
+      "description": "Root row key. Added to nested tables loaded with the `merge` write disposition so a nested row can be traced to its root-table row.",
+      "displayName": "_dlt_root_id",
+      "name": "dlt_root_id",
+      "synonyms": [
+        "_dlt_root_id"
+      ]
+    }
+  ],
+  "known_columns": [
+    "_dlt_id",
+    "_dlt_list_idx",
+    "_dlt_load_id",
+    "_dlt_parent_id",
+    "_dlt_root_id"
+  ],
+  "known_tables": [
+    "_dlt_loads",
+    "_dlt_pipeline_state",
+    "_dlt_version"
+  ],
+  "stats": {
+    "column_applications": 0,
+    "glossary_terms": 5,
+    "tables_carrying_dlt_columns": 0,
+    "tables_tagged": 0
+  }
+}

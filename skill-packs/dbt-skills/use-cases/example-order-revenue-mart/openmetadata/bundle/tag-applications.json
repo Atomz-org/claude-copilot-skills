@@ -1,0 +1,7 @@
+{
+  "columns": [],
+  "generated_by": "scripts/openmetadata_sync.py",
+  "note": "A work list, not a payload: `tags` are tag FQNs, and the `tagLabel` around each is a constant of this bridge (Automated/Confirmed/Classification) built at push time. Embedding the full label per row repeated four constant fields 1300 times and taught a reader nothing. Applied with PATCH against the entity, never PUT: a PUT of a Table would replace the columns the dbt connector owns.",
+  "tables": [],
+  "unresolved": []
+}

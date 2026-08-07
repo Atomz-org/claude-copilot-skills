@@ -1,0 +1,12 @@
+{
+  "generated_by": "scripts/openmetadata_sync.py",
+  "glossary": {
+    "description": "Business glossary for the `example-order-revenue-mart` use-case, projected from its ontology. Concept terms come from `ontology/index.json`; conformed column terms from `ontology/column-annotations.json`. Git is the source of truth — edit the artifacts and regenerate, never the catalog.",
+    "displayName": "Example Order Revenue Mart",
+    "mutuallyExclusive": false,
+    "name": "example-order-revenue-mart",
+    "provider": "user"
+  },
+  "terms": [],
+  "unannotated_columns": []
+}

@@ -1,0 +1,199 @@
+{
+  "classifications": [
+    {
+      "description": "What a conformed column is, structurally. Derived from `ontology/column-annotations.json`; a column with no recorded role carries no tag rather than a default.",
+      "displayName": "ColumnRole",
+      "mutuallyExclusive": true,
+      "name": "ColumnRole",
+      "provider": "user"
+    },
+    {
+      "description": "Whether SUM() over this column is meaningful, and at which grain (analytics rule 11). Absent means undecided, never 'additive'.",
+      "displayName": "ColumnAdditivity",
+      "mutuallyExclusive": true,
+      "name": "ColumnAdditivity",
+      "provider": "user"
+    },
+    {
+      "description": "The unit a conformed column's values are expressed in.",
+      "displayName": "ColumnUnit",
+      "mutuallyExclusive": true,
+      "name": "ColumnUnit",
+      "provider": "user"
+    },
+    {
+      "description": "Personal-data class beyond OpenMetadata's system `PII` classification. `pii: direct` is tagged `PII.Sensitive` instead; these cover the classes the system classification has no member for.",
+      "displayName": "ColumnPII",
+      "mutuallyExclusive": false,
+      "name": "ColumnPII",
+      "provider": "user"
+    },
+    {
+      "description": "How a column or table came to exist, as distinct from what it means. Applied by scripts/openmetadata_sync.py from the repository's own artifacts.",
+      "displayName": "DataProvenance",
+      "mutuallyExclusive": false,
+      "name": "DataProvenance",
+      "provider": "user"
+    }
+  ],
+  "generated_by": "scripts/openmetadata_sync.py",
+  "system_tags_used": [
+    "PII.Sensitive"
+  ],
+  "tags": [
+    {
+      "classification": "ColumnRole",
+      "description": "Identifies a row or an entity. Arithmetic on it is always a bug, even where the warehouse type is numeric.",
+      "displayName": "Identifier",
+      "name": "Identifier",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnRole",
+      "description": "A quantity intended for aggregation. Check its additivity tag first.",
+      "displayName": "Measure",
+      "name": "Measure",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnRole",
+      "description": "A value to group or filter by.",
+      "displayName": "Dimension",
+      "name": "Dimension",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnRole",
+      "description": "A point in time; the grain of any time-series cut over this table.",
+      "displayName": "Timestamp",
+      "name": "Timestamp",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnRole",
+      "description": "A boolean or two-valued indicator.",
+      "displayName": "Flag",
+      "name": "Flag",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnRole",
+      "description": "Free text. Not a closed domain, not safe to group by.",
+      "displayName": "Text",
+      "name": "Text",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnAdditivity",
+      "description": "Summable across every dimension including time.",
+      "displayName": "Additive",
+      "name": "Additive",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnAdditivity",
+      "description": "Summable across some dimensions but not time — a balance or a stock level. Summing it across periods double-counts.",
+      "displayName": "SemiAdditive",
+      "name": "SemiAdditive",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnAdditivity",
+      "description": "Never summable — a rate, a ratio, a price per unit. Store the numerator and denominator and define the ratio as a metric.",
+      "displayName": "NonAdditive",
+      "name": "NonAdditive",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnUnit",
+      "description": "A monetary amount. Mixing currencies without conversion is a defect.",
+      "displayName": "Currency",
+      "name": "Currency",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnUnit",
+      "description": "A cardinality.",
+      "displayName": "Count",
+      "name": "Count",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnUnit",
+      "description": "A physical or logical quantity.",
+      "displayName": "Quantity",
+      "name": "Quantity",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnUnit",
+      "description": "A proportion. Non-additive by construction.",
+      "displayName": "Percent",
+      "name": "Percent",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnUnit",
+      "description": "An elapsed time.",
+      "displayName": "Duration",
+      "name": "Duration",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnUnit",
+      "description": "A calendar value.",
+      "displayName": "Date",
+      "name": "Date",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnUnit",
+      "description": "Dimensionless.",
+      "displayName": "None",
+      "name": "None",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnPII",
+      "description": "Quasi-identifier: not identifying alone, identifying in combination. Masking it is usually the wrong remedy — generalisation or suppression at the grain is.",
+      "displayName": "Quasi",
+      "name": "Quasi",
+      "provider": "user"
+    },
+    {
+      "classification": "ColumnPII",
+      "description": "Indirectly identifying through a join to another table. The disclosure risk lives in the join, not in this column.",
+      "displayName": "Indirect",
+      "name": "Indirect",
+      "provider": "user"
+    },
+    {
+      "classification": "DataProvenance",
+      "description": "Inserted by a dlt load, not by the source system. Carries load provenance, never business meaning: never a measure, never a dimension to group a business question by.",
+      "displayName": "Dltsystemcolumn",
+      "name": "Dltsystemcolumn",
+      "provider": "user"
+    },
+    {
+      "classification": "DataProvenance",
+      "description": "A dlt bookkeeping table (`_dlt_loads`, `_dlt_version`, `_dlt_pipeline_state`). Load history, not business data.",
+      "displayName": "Dltsystemtable",
+      "name": "Dltsystemtable",
+      "provider": "user"
+    },
+    {
+      "classification": "DataProvenance",
+      "description": "Carries a conformed column contract: the same name means the same thing in every connector that supplies this concept.",
+      "displayName": "Conformedcolumn",
+      "name": "Conformedcolumn",
+      "provider": "user"
+    },
+    {
+      "classification": "DataProvenance",
+      "description": "Realises one conformed concept for one connector. Its column list is governed by that concept's contract in `ontology/column-memory.json`.",
+      "displayName": "Adaptermodel",
+      "name": "Adaptermodel",
+      "provider": "user"
+    }
+  ]
+}
