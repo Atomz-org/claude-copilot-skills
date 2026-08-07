@@ -102,7 +102,7 @@ Artifacts that must be regenerated in the top layer:
 
 ```bash
 python3 scripts/use_case_sync.py --use-case <slug>          # ontology, columns, seeds, graph, wren
-./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills    # only if a pack asset changed
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills    # only if a pack asset changed
 ./scripts/check.sh                                          # the seven gates
 ```
 

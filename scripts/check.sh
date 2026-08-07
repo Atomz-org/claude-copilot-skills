@@ -91,7 +91,7 @@ fi
 # is not, so this compares before and after instead of resetting anything. Nothing you have
 # not committed is ever discarded here.
 BEFORE="$(git status --porcelain)"
-if ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills >/dev/null 2>&1; then
+if ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills >/dev/null 2>&1; then
     AFTER="$(git status --porcelain)"
     if [ "$BEFORE" = "$AFTER" ]; then
         pass "activation drift" "pack and mirror in sync"
@@ -99,12 +99,12 @@ if ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills >/d
         CHANGED="$(comm -13 <(printf '%s\n' "$BEFORE" | sort) <(printf '%s\n' "$AFTER" | sort) | head -1)"
         fail "activation drift" "${CHANGED:-a generated file changed}" \
             ".claude/, references/ and templates/ are copies, rebuilt from skill-packs/. Editing a copy works until the next rebuild silently reverts it." \
-            "make the same edit under skill-packs/<pack>/, then: ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills"
+            "make the same edit under skill-packs/<pack>/, then: ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills"
     fi
 else
     fail "activation drift" "activation script failed" \
         "The step that rebuilds .claude/ from skill-packs/ did not finish." \
-        "./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills    # run it directly to see the error"
+        "./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills    # run it directly to see the error"
 fi
 
 # ---------------------------------------------------------------------------------------

@@ -29,7 +29,7 @@ jobs:
       - name: Activate stack from shared packs
         run: |
           chmod +x scripts/activate_skill_stack.sh
-          ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
+          ./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills
 
       - name: Validate guardrail hook
         run: |

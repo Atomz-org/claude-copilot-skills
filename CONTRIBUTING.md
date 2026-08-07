@@ -51,7 +51,7 @@ silently reverts it. The correct loop is:
 ```bash
 # 1. edit the source under skill-packs/<pack>/
 # 2. regenerate the mirror
-./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills
+./scripts/activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills
 # 3. commit both the pack change and the regenerated copy
 ```
 

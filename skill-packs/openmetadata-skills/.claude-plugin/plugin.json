@@ -1,0 +1,35 @@
+{
+  "name": "openmetadata-skills",
+  "version": "1.0.0",
+  "description": "OpenMetadata discovery tier: a unidirectional push of this repository's ontology, deep column lineage, glossary, and facet tags into a catalog UI, plus the agent surface for querying it.",
+  "sourceOfTruth": "skill-packs/openmetadata-skills/.claude",
+  "components": {
+    "commands": ".claude/commands",
+    "skills": ".claude/skills",
+    "rules": ".claude/rules"
+  },
+  "harnessTargets": [
+    "claude",
+    "copilot",
+    "cursor",
+    "codex",
+    "gemini"
+  ],
+  "canonicalEntrySkill": "openmetadata-catalog",
+  "upstream": {
+    "repository": "https://github.com/open-metadata/OpenMetadata",
+    "submodules": {
+      "external/OpenMetadata": "tag 1.13.3-release — JSON schemas the emitted payloads are validated against",
+      "external/OpenMetadataStandards": "OWL ontology the RDF alignment's om: terms are validated against",
+      "external/openmetadata-dbt-action": "reference — the dbt ingestion workflow shape",
+      "external/openmetadata-demo": "reference — API-lineage and MCP patterns",
+      "external/openmetadata-ai-sdk": "reference — agent surface shape",
+      "external/openmetadata-sqllineage": "reference — evaluated, not adopted",
+      "external/openmetadata-retention": "reference — evaluated, not adopted",
+      "external/collate-dbt-artifacts-parser": "reference — evaluated, not adopted"
+    },
+    "runtime": "openmetadata-ingestion[dbt]==1.13.3.0 (optional; must match the server version)",
+    "server": "1.13.3-release",
+    "license": "Apache-2.0"
+  }
+}

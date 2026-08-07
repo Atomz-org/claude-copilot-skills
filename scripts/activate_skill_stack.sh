@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # One or more domain stacks, layered in argument order over the shared base.
-# `activate_skill_stack.sh dbt-skills wren-skills lightdash-skills` composes the analytics stack with the
+# `activate_skill_stack.sh dbt-skills wren-skills lightdash-skills openmetadata-skills` composes the analytics stack with the
 # WrenAI serving tier; a single argument behaves exactly as before. Later stacks win on
 # a filename collision — `scripts/skill_map_scan.py --check` is the gate that reports one.
 # The no-arg default is the SAME stack list CI activates, so the documented bare
