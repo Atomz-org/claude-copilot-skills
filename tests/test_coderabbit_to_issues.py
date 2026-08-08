@@ -159,29 +159,63 @@ def test_a_body_with_no_marker_yields_nothing_rather_than_a_zero() -> None:
     assert cri.markers_in("") == []
 
 
+# ---------------------------------------------------------------------------------------
+# Pagination — the documented shape, not the observed one
+# ---------------------------------------------------------------------------------------
+#
+# `gh api --paginate` is documented as emitting one JSON array *per page*: "Each page is a
+# separate JSON array. Pass --slurp to wrap all pages of JSON arrays or objects into an
+# outer JSON array." The build on this machine merges them instead, so a bare `--paginate`
+# parses cleanly here and would return only page one wherever it does not. That failure is
+# silent — findings past the hundredth are never filed and no count is short — so both
+# fetches use the shape gh states rather than the one it happens to produce.
+
+
+def _pages(*pages):
+    return lambda args, token=None: json.dumps(list(pages))
+
+
+def test_review_comments_reads_every_page(monkeypatch) -> None:
+    seen = {}
+
+    def fake_gh(args, token=None):
+        seen["args"] = list(args)
+        return json.dumps([[{"id": 1}, {"id": 2}], [{"id": 3}]])
+
+    monkeypatch.setattr(cri, "gh", fake_gh)
+    rows = cri.review_comments("o/r", 84)
+    assert "--slurp" in seen["args"], "a bare --paginate depends on undocumented merging"
+    assert [r["id"] for r in rows] == [1, 2, 3], "pages were not flattened"
+
+
+def test_a_pull_request_with_no_review_comments_yields_an_empty_list(monkeypatch) -> None:
+    """`--slurp` returns `[[]]`, not `[]`, so the flatten has to survive an empty page."""
+    monkeypatch.setattr(cri, "gh", _pages([]))
+    assert cri.review_comments("o/r", 84) == []
+
+
 def test_the_existing_issue_lookup_is_paginated_not_capped(monkeypatch) -> None:
     """Any `--limit` here is a silent truncation of the set that stops re-filing.
 
     The issue this lookup misses gets its finding filed again — and again on every review
-    after that, because the duplicate is equally invisible. `--paginate` merges pages of a
-    JSON array, which is why `--slurp` (it wraps them instead, and would need flattening)
-    is wrong here.
+    after that, because the duplicate is equally invisible.
     """
     seen = {}
 
     def fake_gh(args, token=None):
         seen["args"] = list(args)
-        return json.dumps([
+        return json.dumps([[
             {"number": 5, "state": "open", "title": "t",
              "body": "x " + cri.MARKER.format(id=42)},
             # The issues endpoint returns pull requests too; they carry this key.
             {"number": 6, "state": "open", "title": "pr", "pull_request": {"url": "u"},
              "body": cri.MARKER.format(id=99)},
-        ])
+        ]])
 
     monkeypatch.setattr(cri, "gh", fake_gh)
     found = cri.existing_issues("o/r")
     assert "--paginate" in seen["args"], "a capped list silently stops deduplicating"
+    assert "--slurp" in seen["args"]
     assert not any(a.startswith("--limit") for a in seen["args"])
     assert 42 in found and 99 not in found, "a pull request was mistaken for an issue"
     assert found[42]["state"] == "OPEN", "REST says `open`; the reconciler compares `OPEN`"

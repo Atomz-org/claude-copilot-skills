@@ -248,8 +248,22 @@ def open_pull_requests(repo: str) -> List[int]:
 
 
 def review_comments(repo: str, pr: int) -> List[Dict[str, Any]]:
-    return gh_json(["api", "--paginate",
-                    f"repos/{repo}/pulls/{pr}/comments?per_page=100"]) or []
+    """Every review comment on one pull request, across every page.
+
+    `--slurp` and flatten, rather than trusting `--paginate` to merge. gh's own help says
+    it does not — *"Each page is a separate JSON array. Pass `--slurp` to wrap all pages of
+    JSON arrays or objects into an outer JSON array"* — while the build here merges three
+    pages into one 78-item array that `json.loads` reads directly.
+
+    Depending on the undocumented behaviour is what makes this break on a runner with a
+    different gh, and it breaks the quiet way: `review_comments` returns page one, so every
+    finding past the hundredth is never filed and nothing reports a gap. `--slurp` has a
+    stated shape — a list of pages, `[[]]` when there are none — so flattening it is
+    deterministic on every build.
+    """
+    pages = gh_json(["api", "--paginate", "--slurp",
+                     f"repos/{repo}/pulls/{pr}/comments?per_page=100"]) or []
+    return [comment for page in pages for comment in (page or [])]
 
 
 THREADS_QUERY = """
@@ -298,12 +312,13 @@ def existing_issues(repo: str) -> Dict[int, Dict[str, Any]]:
     Paginated through the REST endpoint rather than `gh issue list --limit N`. Any limit is
     a silent truncation of *this* set, and this set is what stops the script re-filing:
     the 1001st issue is not seen, so its finding is filed again, and again on every review
-    after that. `--paginate` merges the pages into one array — the documented behaviour for
-    a JSON-array response, and the reason `--slurp` (which wraps pages instead, and would
-    need flattening) is wrong here.
+    after that. `--slurp` for the same reason as `review_comments` — the page-merging of a
+    bare `--paginate` is not documented, and this is the lookup where losing a page files
+    duplicates rather than merely missing input.
     """
-    rows = gh_json(["api", "--paginate",
-                    f"repos/{repo}/issues?labels={LABEL}&state=all&per_page=100"]) or []
+    pages = gh_json(["api", "--paginate", "--slurp",
+                     f"repos/{repo}/issues?labels={LABEL}&state=all&per_page=100"]) or []
+    rows = [row for page in pages for row in (page or [])]
     out: Dict[int, Dict[str, Any]] = {}
     for row in rows:
         # The issues endpoint returns pull requests as well; they carry this key.
