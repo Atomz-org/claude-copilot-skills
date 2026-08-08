@@ -401,6 +401,23 @@ def test_a_multi_macro_file_names_every_macro_it_holds() -> None:
     assert macros, "no macro nodes emitted"
     assert all(n.get("dbt_macros") for n in macros), "every macro node lists its macros"
     multi = [n for n in macros if len(n["dbt_macros"]) > 1]
+    # Without this the test passes vacuously on the exact regression it exists to catch:
+    # if aggregation kept one macro per file, `multi` is empty, the loop never runs, and
+    # green means "no multi-macro file was emitted" rather than "every one is complete".
+    assert multi, "no multi-macro file emitted — aggregation kept one macro per file"
+    # Named rather than counted, so dropping a macro from a known file is caught too. A
+    # superset, not equality: adding a macro to this file is a legitimate change and must
+    # not turn this gate red, while losing one of these three must.
+    fixture = "macros/erp/erp_union.sql"
+    held = {
+        macro
+        for node in multi
+        if node["source_file"].endswith(fixture)
+        for macro in node["dbt_macros"]
+    }
+    assert held >= {"erp_union", "erp_sources_for", "erp_concept_from_model_name"}, (
+        f"{fixture} defines three macros; the fragment names {sorted(held)}"
+    )
     for node in multi:
         assert node["dbt_macros"] == sorted(node["dbt_macros"])
         # Labelled by the file, not by an arbitrary one of its macros. That the stem
