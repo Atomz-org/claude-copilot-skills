@@ -13,7 +13,7 @@ permissions:
 jobs:
   close-linked-issues:
     if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Close linked issues
         env:
