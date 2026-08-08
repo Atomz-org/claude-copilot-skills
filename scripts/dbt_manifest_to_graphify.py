@@ -569,6 +569,16 @@ def build_fragment(
     # keep input order — which is the non-determinism this removes. `build_merge` reads
     # both arrays as sets, so order carries no meaning to lose.
     def _canonical(record: Dict[str, Any]) -> str:
+        """One record as a total, content-derived sort key.
+
+        `sort_keys=True` makes the string independent of the order the dict was built
+        in, so two machines that parsed in different orders produce the same key; the
+        whole record participates, which is what makes the ordering total where an id
+        or an (source, target, relation) triple is only partial. It doubles as the
+        identity used to drop duplicate edges, so equal keys mean equal records —
+        `ensure_ascii=False` keeps that true for the non-ASCII text dbt descriptions
+        carry, which would otherwise compare by their escape sequences.
+        """
         return json.dumps(record, sort_keys=True, ensure_ascii=False)
 
     nodes.sort(key=_canonical)
