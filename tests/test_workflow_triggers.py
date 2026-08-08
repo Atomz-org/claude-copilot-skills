@@ -53,6 +53,13 @@ def allowed_triggers() -> set:
         return PINNED
 
 
+def workflow_files():
+    """Both extensions. GitHub reads `.yml` and `.yaml` alike, so a scan globbing one of
+    them reports a clean sweep over a directory it only half looked at — and the file it
+    skipped is the one nobody thought to check."""
+    return sorted(set(WORKFLOWS.glob("*.yml")) | set(WORKFLOWS.glob("*.yaml")))
+
+
 def workflow_events(path: Path):
     yaml = pytest.importorskip("yaml")
     document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -68,7 +75,7 @@ def test_every_workflow_trigger_is_one_github_accepts() -> None:
     allowed = allowed_triggers()
     offenders = {
         path.name: [e for e in workflow_events(path) if e not in allowed]
-        for path in sorted(WORKFLOWS.glob("*.yml"))
+        for path in workflow_files()
     }
     offenders = {k: v for k, v in offenders.items() if v}
     assert not offenders, (
@@ -101,7 +108,39 @@ def test_the_coderabbit_bridge_keeps_a_schedule() -> None:
 
 def test_every_workflow_parses() -> None:
     yaml = pytest.importorskip("yaml")
-    for path in sorted(WORKFLOWS.glob("*.yml")):
+    for path in workflow_files():
         document = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert isinstance(document, dict), path.name
         assert document.get("jobs"), f"{path.name}: no jobs"
+
+
+def test_both_yaml_extensions_are_scanned(tmp_path, monkeypatch) -> None:
+    """A scan globbing one extension reports a clean sweep over a directory it half
+    looked at. There is no `.yaml` workflow here today, which is exactly why the gap
+    would go unnoticed until somebody adds one."""
+    fake = tmp_path / "workflows"
+    fake.mkdir()
+    (fake / "a.yml").write_text("on: push\njobs: {}\n")
+    (fake / "b.yaml").write_text("on: push\njobs: {}\n")
+    monkeypatch.setitem(globals(), "WORKFLOWS", fake)
+    assert [p.name for p in workflow_files()] == ["a.yml", "b.yaml"]
+
+
+def test_the_bridge_scopes_a_hand_run_to_the_pull_request_it_names() -> None:
+    """`workflow_dispatch` naming one pull request must act on that pull request.
+
+    The reconcile step read only `pull_request.number`, which a dispatch leaves empty, so
+    it fell through to `--all-open`: a hand-run asking for one pull request quietly swept
+    every open one. That is the opposite of scoping, and it is the shape most likely to be
+    used while debugging a single issue.
+    """
+    path = WORKFLOWS / "coderabbit-issues.yml"
+    if not path.exists():
+        pytest.skip("bridge workflow not on this branch")
+    yaml = pytest.importorskip("yaml")
+    jobs = yaml.safe_load(path.read_text(encoding="utf-8"))["jobs"]
+    for name in ("file", "reconcile"):
+        env = next(s["env"] for s in jobs[name]["steps"] if s.get("env"))
+        assert "github.event.inputs.pull_request" in str(env.get("TARGET_PR", "")), (
+            f"the `{name}` job ignores the dispatch input and scopes to the wrong set"
+        )

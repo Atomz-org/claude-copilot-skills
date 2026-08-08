@@ -294,13 +294,31 @@ def existing_issues(repo: str) -> Dict[int, Dict[str, Any]]:
 
     Search is eventually consistent and CodeRabbit posts a whole review at once, so a
     search-backed lookup duplicates issues intermittently under exactly the load this meets.
+
+    Paginated through the REST endpoint rather than `gh issue list --limit N`. Any limit is
+    a silent truncation of *this* set, and this set is what stops the script re-filing:
+    the 1001st issue is not seen, so its finding is filed again, and again on every review
+    after that. `--paginate` merges the pages into one array — the documented behaviour for
+    a JSON-array response, and the reason `--slurp` (which wraps pages instead, and would
+    need flattening) is wrong here.
     """
-    rows = gh_json(["issue", "list", "--repo", repo, "--label", LABEL, "--state", "all",
-                    "--limit", "1000", "--json", "number,body,state,title"]) or []
+    rows = gh_json(["api", "--paginate",
+                    f"repos/{repo}/issues?labels={LABEL}&state=all&per_page=100"]) or []
     out: Dict[int, Dict[str, Any]] = {}
     for row in rows:
-        for comment_id in markers_in(row.get("body") or ""):
-            out[comment_id] = row
+        # The issues endpoint returns pull requests as well; they carry this key.
+        if row.get("pull_request"):
+            continue
+        issue = {
+            "number": row["number"],
+            "body": row.get("body") or "",
+            # REST says `open`/`closed`; `gh issue list --json` says `OPEN`/`CLOSED`, and
+            # the reconciler compares against the upper form.
+            "state": (row.get("state") or "").upper(),
+            "title": row.get("title") or "",
+        }
+        for comment_id in markers_in(issue["body"]):
+            out[comment_id] = issue
     return out
 
 

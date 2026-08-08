@@ -12,6 +12,7 @@ were each wrong first against that corpus.
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -156,6 +157,34 @@ def test_the_marker_round_trips_through_the_rendered_body() -> None:
 def test_a_body_with_no_marker_yields_nothing_rather_than_a_zero() -> None:
     assert cri.markers_in("an issue somebody wrote by hand") == []
     assert cri.markers_in("") == []
+
+
+def test_the_existing_issue_lookup_is_paginated_not_capped(monkeypatch) -> None:
+    """Any `--limit` here is a silent truncation of the set that stops re-filing.
+
+    The issue this lookup misses gets its finding filed again — and again on every review
+    after that, because the duplicate is equally invisible. `--paginate` merges pages of a
+    JSON array, which is why `--slurp` (it wraps them instead, and would need flattening)
+    is wrong here.
+    """
+    seen = {}
+
+    def fake_gh(args, token=None):
+        seen["args"] = list(args)
+        return json.dumps([
+            {"number": 5, "state": "open", "title": "t",
+             "body": "x " + cri.MARKER.format(id=42)},
+            # The issues endpoint returns pull requests too; they carry this key.
+            {"number": 6, "state": "open", "title": "pr", "pull_request": {"url": "u"},
+             "body": cri.MARKER.format(id=99)},
+        ])
+
+    monkeypatch.setattr(cri, "gh", fake_gh)
+    found = cri.existing_issues("o/r")
+    assert "--paginate" in seen["args"], "a capped list silently stops deduplicating"
+    assert not any(a.startswith("--limit") for a in seen["args"])
+    assert 42 in found and 99 not in found, "a pull request was mistaken for an issue"
+    assert found[42]["state"] == "OPEN", "REST says `open`; the reconciler compares `OPEN`"
 
 
 def test_the_title_leads_with_the_file_because_a_board_shows_nothing_else() -> None:

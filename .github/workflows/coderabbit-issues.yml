@@ -100,12 +100,16 @@ jobs:
       - name: Close issues whose review thread is resolved
         env:
           GH_TOKEN: ${{ github.token }}
-          TARGET_PR: ${{ github.event.pull_request.number }}
+          # The dispatch input first, exactly as the `file` job reads it. Taking only
+          # `pull_request.number` meant a hand-run naming one PR silently swept every open
+          # one instead — the opposite of a scoped run, and the shape most likely to be
+          # used while debugging a single issue.
+          TARGET_PR: ${{ github.event.inputs.pull_request || github.event.pull_request.number }}
           WRITE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.write || 'true' }}
         run: |
           set -o pipefail
           args=(--repo "${{ github.repository }}" --reconcile)
-          # A `closed` event names its own PR; the schedule sweeps every open one.
+          # A `closed` event or a dispatch names its own PR; the schedule sweeps them all.
           if [ -n "$TARGET_PR" ] && [ "${{ github.event_name }}" != "schedule" ]; then
             args+=(--pr "$TARGET_PR")
           else
