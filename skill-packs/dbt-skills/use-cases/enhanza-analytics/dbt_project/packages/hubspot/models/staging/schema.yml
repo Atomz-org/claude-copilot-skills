@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: hubspot_bi_dim_customers_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot companies.'
+  - name: hubspot_bi_dim_company_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot account_details.'
+  - name: hubspot_bi_fact_deals_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot deals.'
+  - name: hubspot_bi_dim_pipelines_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot deal_pipelines.'
+  - name: hubspot_bi_dim_deal_stages_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot deal_stages.'
+  - name: hubspot_bi_dim_contacts_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot contacts.'
+  - name: hubspot_bi_fact_tickets_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot tickets.'
+  - name: hubspot_bi_fact_engagements_staging
+    description: '[NEEDS INPUT] one row per <entity>; staged HubSpot engagements.'
+
+  # The two adapters into the unified layer. Ephemeral, so erp_union() inlines them;
+  # they are the only HubSpot models any erp_bi_* union reads.
+  - name: hubspot_erp_bi_dim_customers
+    description: >
+      One row per HubSpot company, adapted to the common ERP customer schema. Source is
+      companies, NOT contacts — this dimension is organisation-shaped and HubSpot
+      contacts are people. 44 columns matching fortnox_erp_bi_dim_customers; HubSpot is a
+      CRM, so everything invoice- and delivery-related is typed NULL, as is
+      OrganisationNumber, for which HubSpot has no native property.
+  - name: hubspot_erp_bi_dim_company
+    description: >
+      One row per tenant — the organisation whose warehouse this is, read from the
+      tenant's own HubSpot account record. NOT a customer dimension: HubSpot companies
+      are customer organisations and belong in hubspot_erp_bi_dim_customers. Three
+      columns before add_erp_fields(), matching visma_eaccounting_erp_bi_dim_company and
+      upsales_erp_bi_dim_company: OrgId, OrgName, City.

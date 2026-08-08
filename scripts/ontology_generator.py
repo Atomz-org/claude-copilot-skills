@@ -255,6 +255,15 @@ class ConnectorSpec:
     name: str
     kind: str
     status: str
+    # Whether the raw dataset this connector reads actually exists yet. A *different*
+    # fact from `status`, and conflating them is a defect: `status` says the connector is
+    # wired into the dbt registry (`test_catalogue_and_registry_agree` pins it to
+    # `global_configs.sql`), and `planned` is tested to mean nothing is known at all — no
+    # source tables, no models, no mappings. A connector whose adapters are written and
+    # whose ingestion job has not run is in neither state, and forcing it into `planned`
+    # asserts its models do not exist while they sit in the manifest. `landed` is the
+    # default because it is the state every connector here was in before one was not.
+    ingestion: str = "landed"
     region: Optional[str] = None
     expected_concepts: List[str] = field(default_factory=list)
     # filled from the project, never from the catalogue
@@ -280,6 +289,7 @@ def read_catalogue(path: Path) -> List[ConnectorSpec]:
                 name=row.get("name", row["key"]),
                 kind=row.get("kind", "erp"),
                 status=row.get("status", "planned"),
+                ingestion=str(row.get("ingestion", "landed")),
                 region=row.get("region"),
                 expected_concepts=list(row.get("expected_concepts", []) or []),
             )
@@ -798,6 +808,7 @@ def render_index(specs: List[ConnectorSpec], cfg: OntologyConfig, slug: str,
             "label": spec.name,
             "kind": spec.kind,
             "status": spec.status,
+            "ingestion": spec.ingestion,
             "region": spec.region,
             "enable_var": f"is_{spec.key}_enabled",
             "default_currency": spec.default_currency,

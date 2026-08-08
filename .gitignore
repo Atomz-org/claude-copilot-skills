@@ -122,3 +122,8 @@ data/stream_store/
 *.duckdb.wal
 skill-packs/*/use-cases/*/warehouse.duckdb
 .dlt/
+
+
+# Local Lightdash CLI state. The CLI's local memory index (LanceDB) and app registry, and its scratch generation dir, deleted on exit but ignored so an interrupted run cannot stage half a generation.
+.lightdash-cli/
+.lightdash-cli.tmp/

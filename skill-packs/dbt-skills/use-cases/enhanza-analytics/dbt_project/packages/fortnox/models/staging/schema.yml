@@ -38,6 +38,18 @@ models:
   - name: fortnox_bi_fact_assets_staging
   - name: fortnox_bi_fact_attendance_transactions_staging
   - name: fortnox_erp_bi_fact_attendance_transactions
+    description: >
+      One row per row of `fortnox_api.attendance_transactions` — hours reported against a
+      cause code, with the employee's cost centre and project filled in where the
+      transaction states none of its own.
+
+      Grain assumption, untested: `public.cause_codes` is joined on `Code` alone, without
+      `OrgId`, and `fortnox_api.employees` on `(OrgId, EmployeeId)`. Neither is declared
+      unique anywhere in this project, so a duplicate on either side multiplies the
+      transaction and every `Hours` total silently doubles. No column of this model is a
+      key, so the grain cannot be asserted with dbt's built-in tests, and `dbt_utils` —
+      whose `unique_combination_of_columns` and `equal_rowcount` would — is not installed
+      here.
   - name: fortnox_bi_fact_budgets_staging
   - name: fortnox_erp_bi_fact_budgets
   - name: fortnox_bi_fact_contract_rows_staging
@@ -65,10 +77,43 @@ models:
   - name: fortnox_erp_bi_fact_purchase_orders
   - name: fortnox_bi_fact_salary_transactions_staging
   - name: fortnox_erp_bi_fact_salary_transactions
+    description: >
+      One row per row of `fortnox_api.salary_transactions` — one salary line, with the
+      expense's account resolved through the financial year that contains the line's date.
+
+      Grain assumption, untested, and weaker than the other fact models here:
+      `financial_years` is joined on `st.Date between fy.FromDate and fy.ToDate`, a range
+      join rather than an equality lookup, so two financial years overlapping for one
+      `OrgId` multiply the line — and `Total`, `VAT` and `NumberOfUnits` with it. The
+      `expenses`, `accounts` and `employees` joins are equality lookups on their natural
+      keys, none of which is declared unique in this project either. No column of this
+      model is a key, so nothing here can assert the grain with dbt's built-in tests.
   - name: fortnox_bi_fact_stockbalance_staging
   - name: fortnox_erp_bi_fact_stockbalance
+    description: >
+      One row per row of `fortnox_api.stockbalance` in the most recent snapshot only —
+      one item per stock point, at current balance. The upstream `where` keeps rows whose
+      `ifnull(enz_sync_ts, enz_created_at)` equals the table maximum, so this model carries
+      no history: an earlier balance is not here to be found. There is no join and no
+      unnest, so the grain is exactly the surviving source rows'.
+
+      `Date` is `date(ENZ_SYNC_TS)` while the snapshot filter falls back to
+      `enz_created_at`, so a row that survives on the fallback carries a null `Date`.
+      `ItemId` repeats once per stock point and is not a key.
   - name: fortnox_bi_fact_stocktakings_staging
   - name: fortnox_erp_bi_fact_stocktakings
+    description: >
+      One row per element of the source's `Rows` array — **not** one per stocktaking.
+      The upstream cross-joins each record to its lines with
+      `unnest(json_extract_array(s.Rows))`, so `StockTakingId`, `Name`, `Date`,
+      `ResponsiblePerson` and `Status` repeat once per counted article. Counting rows here
+      counts article counts, not stocktakings, and `StockTakingId` is deliberately not
+      unique.
+
+      `StockTakenQuantity` and `TotalQuantityInStock` are read out of the array element, so
+      they are at this grain and are the columns that may be summed. `stockpoints` is
+      left-joined on `(Id, OrgId)`, which is not declared unique — a duplicate there
+      multiplies the line again.
   - name: fortnox_bi_fact_supplier_invoice_accruals_staging
   - name: fortnox_bi_fact_supplier_invoice_rows_staging
   - name: fortnox_erp_bi_fact_supplier_invoice_rows

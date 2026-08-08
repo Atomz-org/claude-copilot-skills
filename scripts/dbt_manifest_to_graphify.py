@@ -554,15 +554,20 @@ def build_fragment(
     # (test_the_committed_fragment_is_what_refresh_sh_produces), so its order has to be a
     # property of the content rather than of whatever order dbt happened to parse in.
     # It was not: `hyperedges` sorted, `nodes` and `edges` did not, and the arrays came
-    # out in manifest iteration order. The emitter is deterministic for one manifest —
-    # two consecutive runs are byte-identical — but two machines parse in different
-    # orders, so the test failed on every developer's laptop while passing in CI. A test
-    # that is red locally and green in CI is worse than one that is simply red: it gets
-    # ignored, and it takes the real failures with it.
+    # out in manifest iteration order. Node order follows the manifest's dict order, which
+    # follows dbt's parse order, which differs between a partial parse and a full one — so
+    # re-running `artifacts/refresh.sh` produced a 1.1 MB diff with zero content change:
+    # same nodes, same edges, none added, none removed, none altered, and a reviewer cannot
+    # tell that from a real diff. The emitter is deterministic for one manifest — two
+    # consecutive runs are byte-identical — but two machines parse in different orders, so
+    # the test failed on every developer's laptop while passing in CI. A test that is red
+    # locally and green in CI is worse than one that is simply red: it gets ignored, and it
+    # takes the real failures with it.
     #
     # Sorting on the canonical serialization rather than on an id, because neither a node
     # id nor an (source, target, relation) triple is unique here. Ties under a partial key
-    # keep input order — which is the non-determinism this removes.
+    # keep input order — which is the non-determinism this removes. `build_merge` reads
+    # both arrays as sets, so order carries no meaning to lose.
     def _canonical(record: Dict[str, Any]) -> str:
         return json.dumps(record, sort_keys=True, ensure_ascii=False)
 

@@ -1,0 +1,119 @@
+name: CodeRabbit Findings to Issues
+
+# CodeRabbit posts each finding as a review comment. A thread is the right place to discuss
+# one and the wrong place to track one: invisible from a board, gone when the PR closes,
+# counted by nothing. This files the findings worth tracking as issues and closes them
+# again when their thread is resolved.
+#
+# Two jobs, because the two directions have different triggers and different failure modes.
+
+on:
+  # CodeRabbit finishes a review by submitting it, so this fires once per review rather
+  # than once per comment.
+  pull_request_review:
+    types: [submitted]
+  pull_request:
+    types: [closed]
+  # Resolving a review thread emits `pull_request_review_thread`, which is a **webhook**
+  # event and NOT a workflow trigger — absent from GitHub's own workflow schema, which
+  # carries every recent addition (`merge_group`, `discussion`, `branch_protection_rule`).
+  # Listing it here would not merely fail to fire: an unknown `on:` key stops the whole
+  # file loading, taking this schedule with it. So there is no push signal for resolution
+  # and the sweep is the only mechanism — GraphQL `isResolved` is the source of truth, and
+  # the cost of having no event is latency, not a missed close.
+  #
+  # Cron on Actions is best-effort and slips under load; treat 15 minutes as a floor.
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: "One PR number, or blank for every open PR"
+        required: false
+      min_severity:
+        description: "critical | major | minor | trivial"
+        required: false
+        default: minor
+      write:
+        description: "Set to true to actually create and close"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  # Serialised repository-wide. Two runs racing would each read "no issue exists yet" and
+  # both create one — the duplicate this script's marker lookup exists to prevent, arriving
+  # by a route the lookup cannot see.
+  group: coderabbit-issues-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  file:
+    # Only when CodeRabbit is the reviewer, and never on the schedule — filing is driven by
+    # a review, reconciling by the clock.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request_review' &&
+       contains(github.event.review.user.login, 'coderabbit'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: File Major and Minor findings as issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Absent by design until somebody adds it: GITHUB_TOKEN cannot write to an
+          # organisation ProjectV2. Without this the issues are still created and the run
+          # says the project step was skipped.
+          CODERABBIT_PROJECT_TOKEN: ${{ secrets.CODERABBIT_PROJECT_TOKEN }}
+          TARGET_PR: ${{ github.event.inputs.pull_request || github.event.pull_request.number }}
+          MIN_SEVERITY: ${{ github.event.inputs.min_severity || 'minor' }}
+          # A scheduled or event-driven run always writes. A manual one is a dry run unless
+          # asked, so `workflow_dispatch` stays safe to press.
+          WRITE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.write || 'true' }}
+        run: |
+          set -o pipefail
+          args=(--repo "${{ github.repository }}" --min-severity "$MIN_SEVERITY" --project 1)
+          if [ -n "$TARGET_PR" ]; then args+=(--pr "$TARGET_PR"); else args+=(--all-open); fi
+          if [ "$WRITE" = "true" ]; then args+=(--write); fi
+          python3 scripts/coderabbit_to_issues.py "${args[@]}" | tee "$GITHUB_STEP_SUMMARY"
+
+  reconcile:
+    # Everything except a review submission: the clock, a closed PR, or a hand-run.
+    if: github.event_name != 'pull_request_review'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Close issues whose review thread is resolved
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # The dispatch input first, exactly as the `file` job reads it. Taking only
+          # `pull_request.number` meant a hand-run naming one PR silently swept every open
+          # one instead — the opposite of a scoped run, and the shape most likely to be
+          # used while debugging a single issue.
+          TARGET_PR: ${{ github.event.inputs.pull_request || github.event.pull_request.number }}
+          WRITE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.write || 'true' }}
+        run: |
+          set -o pipefail
+          args=(--repo "${{ github.repository }}" --reconcile)
+          # A `closed` event or a dispatch names its own PR; the schedule sweeps them all.
+          if [ -n "$TARGET_PR" ] && [ "${{ github.event_name }}" != "schedule" ]; then
+            args+=(--pr "$TARGET_PR")
+          else
+            args+=(--all-open)
+          fi
+          if [ "$WRITE" = "true" ]; then args+=(--write); fi
+          python3 scripts/coderabbit_to_issues.py "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"

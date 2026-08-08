@@ -43,8 +43,8 @@ time — two month-end balances added together is not a two-month balance.
 | `AccountName` | dimension | - | 1 | The name of the account in the chart of accounts |
 | `AccountNumber` | identifier | - | 4 | BAS account number, consists of four digits, e.g. 1234 |
 | `Active` | flag | - | 6 | Whether the article in Fortnox is marked as active or inactive |
-| `AdditionalPhone` | dimension | - | 2 | Phone2 field in Fortnox |
-| `Address` | dimension | - | 2 | Address1 field in Fortnox |
+| `AdditionalPhone` | dimension | - | 3 | Phone2 field in Fortnox |
+| `Address` | dimension | - | 3 | Address1 field in Fortnox |
 | `Amount` | measure | currency | 1 | Profit & Loss: Aggregation of Credit and Debit |
 | `AmountPerUnit` | measure | currency | 1 | Salary: Price per unit (day, hour etc.) |
 | `ArticleId` | identifier | - | 7 | Unique Article identifier used as a primary key |
@@ -56,25 +56,25 @@ time — two month-end balances added together is not a two-month balance.
 | `BudgetDate` | timestamp | date | 1 | Month is represented by its last calendar day |
 | `CauseCode` | identifier | - | 1 | Absence/attendance: standard abbreviation of absence/attendance reason |
 | `CauseCodeName` | text | - | 1 | Absence/attendance: detailed explanation of absence/attendance reason |
-| `Comments` | dimension | - | 4 | Salary: Comments to the salary transactions if any |
+| `Comments` | dimension | - | 5 | Salary: Comments to the salary transactions if any |
 | `ContributionValue` | measure | currency | 6 | Sold value minus estimated price of the item. The item row value is used |
-| `CostCenterId` | identifier | - | 4 | Foreign key to dim_cost_centers |
-| `Country` | dimension | - | 2 | Customer and Supplier's address, country |
+| `CostCenterId` | identifier | - | 5 | Foreign key to dim_cost_centers |
+| `Country` | dimension | - | 3 | Customer and Supplier's address, country |
 | `Currency` | dimension | - | 3 | Original transaction currency used in Fortnox |
 | `CurrencyRate` | measure | currency | 2 | Exchange rate from Fortnox, used to convert all values to SEK |
-| `CustomerId` | identifier | - | 4 | Unique identifyer of a customer in your workspace |
+| `CustomerId` | identifier | - | 5 | Unique identifyer of a customer in your workspace |
 | `Date` | timestamp | date | 1 | Transaction date, i.e. 2024-03-25 |
-| `DefaultDeliveryType` | dimension | - | 2 | Customer's default invoice delivery type |
-| `DefaultTemplate` | dimension | - | 2 | Customer's default invoice template |
+| `DefaultDeliveryType` | dimension | - | 3 | Customer's default invoice delivery type |
+| `DefaultTemplate` | dimension | - | 3 | Customer's default invoice template |
 | `Description` | text | - | 6 | Text description of the asset type |
 | `DocumentType` | dimension | - | 3 | Based on document the file is linked to |
 | `DueDate` | timestamp | date | 1 | Date on which the document is due |
-| `Email` | dimension | - | 2 | Customer email. Nullable — Shopify permits phone-only customers. |
+| `Email` | dimension | - | 3 | Customer email. Nullable — Shopify permits phone-only customers. |
 | `EmployeeId` | identifier | - | 1 | Unique employee identifier in your workspace |
 | `FileName` | text | - | 1 | Name of the file in the system |
 | `FinalPayDate` | timestamp | date | 1 | Final payment deadline for the document |
 | `FinancialYearId` | identifier | - | 7 | Foreign key to dim_financial_years |
-| `FirstInvoiceDate` | timestamp | date | 2 | The earliest invoice date for the customer / supplier available in your synced data |
+| `FirstInvoiceDate` | timestamp | date | 3 | The earliest invoice date for the customer / supplier available in your synced data |
 | `InvoiceDate` | timestamp | date | 4 | Date the document is issued |
 | `InvoiceNo` | identifier | - | 4 | Document number |
 | `InvoiceReference` | dimension | - | 3 | 0 if no invoice is created for this order yet |
@@ -83,7 +83,7 @@ time — two month-end balances added together is not a two-month balance.
 | `Labels` | dimension | - | 2 | Invoice label, only one label per document is supported. For more details, use fortnox_bi.dim_labels |
 | `MainAccount` | identifier | - | 1 | BAS main account defined by first two account digits |
 | `MainAccountId` | identifier | - | 1 | First two digits, e.g., 12xx |
-| `Name` | text | - | 2 | Full customer/supplier name and number |
+| `Name` | text | - | 3 | Full customer/supplier name and number |
 | `Net` | measure | currency | 2 | Sales value of delivered items excluding VAT |
 | `Note` | text | - | 1 | Short note made on article |
 | `Number` | identifier | - | 1 | BAS account number, consists of four digits, e.g., 1234 |
@@ -93,13 +93,13 @@ time — two month-end balances added together is not a two-month balance.
 | `OrderReference` | dimension | - | 1 | 0 if no order is created for this offer yet |
 | `OrderedQuantity` | measure | quantity | 3 | Line quantity ordered. |
 | `OrderedValue` | measure | currency | 3 | Potential NET value in SEK, discounts applied of the total ordered quantity |
-| `OrgId` | identifier | - | 9 | Unique identifier of your organisation that can be found in the Enhanza app |
-| `OrgName` | text | - | 6 | Your company(s) in Fortnox |
-| `OrganisationNumber` | identifier | - | 2 | Organisation ID of your company(s) used as a primary key |
+| `OrgId` | identifier | - | 10 | Unique identifier of your organisation that can be found in the Enhanza app |
+| `OrgName` | text | - | 7 | Your company(s) in Fortnox |
+| `OrganisationNumber` | identifier | - | 3 | Organisation ID of your company(s) used as a primary key |
 | `Price` | measure | currency | 1 | Price from Price list |
 | `PriceAfterDiscount` | measure | currency | 6 | NET price in SEK after all discounts applied |
-| `PriceListId` | identifier | - | 2 | Customer's default price list ID, no relationship since it's a deprecated dimension |
-| `ProjectId` | identifier | - | 6 | Foreign key to dim_projects |
+| `PriceListId` | identifier | - | 3 | Customer's default price list ID, no relationship since it's a deprecated dimension |
+| `ProjectId` | identifier | - | 7 | Foreign key to dim_projects |
 | `PurchasePrice` | measure | currency | 6 | Estimated price of the item. The value of the item line is used |
 | `Quantity` | measure | quantity | 1 | The number of items invoiced/ordered |
 | `QuantityInStock` | measure | quantity | 6 | Current amount in stock from fortnox_bi.fact_stockbalance |
@@ -116,14 +116,14 @@ time — two month-end balances added together is not a two-month balance.
 | `SupplierId` | identifier | - | 2 | Unique Supplier identifier used as a primary key |
 | `SupplierInvoiceNo` | identifier | - | 1 | GivenNumber field in Fortnox |
 | `SupplierName` | text | - | 6 | Supplier name (and number) |
-| `TemplateReference` | dimension | - | 2 | Address2 field in Fortnox |
+| `TemplateReference` | dimension | - | 3 | Address2 field in Fortnox |
 | `TransactionDate` | timestamp | date | 2 | Transaction Date |
 | `UserId` | identifier | - | 3 | Unique identifier of ERP user who registered the transaction |
 | `UserNo` | identifier | - | 3 | UserId available in Fortnox UI only |
 | `VoucherSeriesId` | identifier | - | 2 | Unique voucher series identifyer based on financial year |
 | `WageChangeDate` | timestamp | date | 1 | Date on which this payment amount came into force |
-| `Website` | dimension | - | 2 | WWW field in Fortnox |
-| `isActive` | flag | - | 2 | Indicates whether the article is currently active |
+| `Website` | dimension | - | 3 | WWW field in Fortnox |
+| `isActive` | flag | - | 3 | Indicates whether the article is currently active |
 | `isVATIncluded` | flag | - | 3 | TRUE is VAT is originally included in article price. Already used in calculations |
 
 183 further conformed column(s) are not annotated yet. A column absent from this file has no recorded meaning — treat its additivity and PII class as unknown rather than assuming defaults.

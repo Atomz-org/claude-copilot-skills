@@ -1,0 +1,159 @@
+# `hubspot` column annotations, derived. NOT AN ARTIFACT — a proposal.
+#
+# Written by `connector_semantics_derive.py --connector hubspot`. Facets come
+# from `column_annotations.derive` — the same function the rest of the project
+# uses, so the six derivation rules it encodes apply here too. What this adds is
+# the vendor's own column description as the evidence that function weights
+# highest, which is the one input a connector with no landed data cannot get
+# locally.
+#
+# Source: dlt-hub/verified-sources@master sources/hubspot/settings.py
+#
+# Every entry is `reviewed: false`. These describe what a connector vendor
+# publishes, not what this tenant's warehouse landed. Re-running after the real
+# schema arrives rewrites this file and leaves anything already promoted into
+# ontology/annotations.yml untouched — the derivation is disposable, the
+# promotion is not.
+#
+#     python3 scripts/connector_semantics_derive.py --use-case enhanza-analytics --connector hubspot --promote
+
+version: 1
+source: hubspot-reference
+
+columns:
+  amount:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.amount
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal.amount (exact, vendor prefix stripped): The total value of the deal in the deal's currency.
+    definition: "The total value of the deal in the deal's currency."
+
+  closedate:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.closedate
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal.closedate (exact, vendor prefix stripped): The day the deal is expected to close, or was closed.
+    definition: "The day the deal is expected to close, or was closed."
+
+  content:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.content
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.content (exact, vendor prefix stripped): Text in body of the ticket.
+    definition: "Text in body of the ticket."
+
+  createdate:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: company.createdate
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: company.createdate (exact, vendor prefix stripped): The date the company was added to your account.
+    definition: "The date the company was added to your account."
+
+  dealname:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: deal.dealname
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: deal.dealname (exact, vendor prefix stripped): The name you have given this deal.
+    definition: "The name you have given this deal."
+
+  description:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: product.description
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml, BARE-NAME FALLBACK — no `product` in that reference, so this may describe another entity: Description of Event.
+    definition: "Description of Event."
+
+  email:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.email
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact.email (exact, vendor prefix stripped): The contact's email.
+    # evidence: pii=direct: an email address identifies a person directly
+    pii: direct
+    definition: "The contact's email."
+
+  firstname:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.firstname
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact.firstname (exact, vendor prefix stripped): The contact's first name.
+    definition: "The contact's first name."
+
+  hs_createdate:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: quote.hs_createdate
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml, BARE-NAME FALLBACK — no `quote` in that reference, so this may describe another entity: This field marks the call's time of creation and determines where the call sits on the rec
+    definition: "This field marks the call's time of creation and determines where the call sits on the record timeline. You can use either a Unix timestamp in milliseconds or UTC format. PLEASE NOTE: This field will only be populated for connectors utilizing the HubSpot v3 API version. For the pre HubSpot v3 versions, this value may be found within the parent `engagement` table."
+
+  hs_pipeline:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_pipeline
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.hs_pipeline (exact, vendor prefix stripped): The ID of the ticket's pipeline.
+    definition: "The ID of the ticket's pipeline."
+
+  hs_pipeline_stage:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_pipeline_stage
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.hs_pipeline_stage (exact, vendor prefix stripped): The ID of the ticket's pipeline stage.
+    definition: "The ID of the ticket's pipeline stage."
+
+  hs_ticket_category:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_ticket_category
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.hs_ticket_category (exact, vendor prefix stripped): The category of the ticket.
+    definition: "The category of the ticket."
+
+  hs_ticket_priority:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.hs_ticket_priority
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.hs_ticket_priority (exact, vendor prefix stripped): The priority of the ticket.
+    definition: "The priority of the ticket."
+
+  lastname:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: contact.lastname
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: contact.lastname (exact, vendor prefix stripped): The contact's last name.
+    definition: "The contact's last name."
+
+  name:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: company.name
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: company.name (exact, vendor prefix stripped): The name of the company.
+    definition: "The name of the company."
+
+  subject:
+    reviewed: false
+    confidence: low
+    # evidence: dlt-hub/verified-sources@master sources/hubspot/settings.py :: ticket.subject
+    # evidence: description via fivetran/dbt_hubspot_source@main models/src_hubspot.yml :: ticket.subject (exact, vendor prefix stripped): Short summary of ticket.
+    definition: "Short summary of ticket."
+
+# Abstained — no description and no readable name shape. Honestly
+# unannotated rather than guessed:
+#   company.domain: no description and no readable name shape
+#   company.hs_lastmodifieddate: no description and no readable name shape
+#   company.hs_object_id: no description and no readable name shape
+#   contact.hs_object_id: no description and no readable name shape
+#   contact.lastmodifieddate: no description and no readable name shape
+#   deal.dealstage: no description and no readable name shape
+#   deal.hs_lastmodifieddate: no description and no readable name shape
+#   deal.hs_object_id: no description and no readable name shape
+#   deal.pipeline: no description and no readable name shape
+#   product.hs_lastmodifieddate: no description and no readable name shape
+#   product.hs_object_id: no description and no readable name shape
+#   product.price: no description and no readable name shape
+#   quote.hs_expiration_date: no description and no readable name shape
+#   quote.hs_lastmodifieddate: no description and no readable name shape
+#   quote.hs_object_id: no description and no readable name shape
+#   quote.hs_public_url_key: no description and no readable name shape
+#   quote.hs_status: no description and no readable name shape
+#   quote.hs_title: no description and no readable name shape
+#   ticket.hs_lastmodifieddate: no description and no readable name shape
+#   ticket.hs_object_id: no description and no readable name shape

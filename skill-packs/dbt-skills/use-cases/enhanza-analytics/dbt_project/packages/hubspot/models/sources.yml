@@ -1,0 +1,86 @@
+version: 2
+
+sources:
+  # HubSpot — the first CRM source in this project. Two things differ from every
+  # connector above it:
+  #
+  # 1. Only `companies` and `account_details` reach the unified layer. The rest are
+  #    source-aligned by decision, so that CRM concepts with no erp_bi_<concept> union
+  #    model are never claimed in the registry. See use-cases/enhanza-hubspot-connector.
+  # 2. `contacts` carries personal data of identifiable individuals — prospects and
+  #    form-fills, not customers of record. Rule 17 requires the masking/hashing/exclusion
+  #    decision to be made in staging before this table is read.
+  #    [NEEDS INPUT] data-protection owner has not ruled. Until then the staging model is
+  #    a stub and the connector ships with is_hubspot_enabled: false.
+  #
+  # [NEEDS INPUT] no hubspot_api_<uid> dataset exists yet. Every table name below is a
+  # specification for the ingestion job, not an observed schema. Confirm each before the
+  # first run — a wrong name fails at compile time, which is the safe direction.
+  # [NEEDS INPUT] `loaded_at_field` and the thresholds are copied from shopify_api and are
+  # unconfirmed for HubSpot's sync cadence.
+  - name: hubspot_api
+    description: 'HubSpot raw data (CRM). Company-level tables feed the unified layer; deal, ticket, and engagement tables are source-aligned only.'
+    database: "{{ target.project | default(target.database) }}"
+    schema: hubspot_api_{{ var('uid') }}
+    loaded_at_field: _loaded_at
+    freshness:
+      warn_after: {count: 12, period: hour}
+      error_after: {count: 24, period: hour}
+    tables:
+      # reaches the unified layer via an adapter
+      - name: companies
+        description: 'HubSpot company records. Adapted to erp_bi_dim_customers — organisation-shaped, unlike contacts.'
+        # generated: source_schema_derive
+        # Derived from a published connector schema; unconfirmed against
+        # this tenant's warehouse. See ontology/proposals/source-columns.derived.yml
+        columns:
+          - name: createdate
+          - name: domain
+          - name: hs_lastmodifieddate
+          - name: hs_object_id
+          - name: name
+      - name: account_details
+        description: 'The tenant''s own HubSpot portal/account record. Adapted to erp_bi_dim_company, which holds one row per tenant — NOT one row per HubSpot company.'
+      # source-aligned only — no adapter, no registry claim
+      - name: deals
+        # generated: source_schema_derive
+        # Derived from a published connector schema; unconfirmed against
+        # this tenant's warehouse. See ontology/proposals/source-columns.derived.yml
+        columns:
+          - name: amount
+          - name: closedate
+          - name: createdate
+          - name: dealname
+          - name: dealstage
+          - name: hs_lastmodifieddate
+          - name: hs_object_id
+          - name: pipeline
+      - name: deal_pipelines
+      - name: deal_stages
+      - name: contacts
+        description: 'PII. Personal data of identifiable individuals. See rule 17 and the [NEEDS INPUT] above.'
+        # generated: source_schema_derive
+        # Derived from a published connector schema; unconfirmed against
+        # this tenant's warehouse. See ontology/proposals/source-columns.derived.yml
+        columns:
+          - name: createdate
+          - name: email
+          - name: firstname
+          - name: hs_object_id
+          - name: lastmodifieddate
+          - name: lastname
+      - name: tickets
+        # generated: source_schema_derive
+        # Derived from a published connector schema; unconfirmed against
+        # this tenant's warehouse. See ontology/proposals/source-columns.derived.yml
+        columns:
+          - name: createdate
+          - name: content
+          - name: hs_lastmodifieddate
+          - name: hs_object_id
+          - name: hs_pipeline
+          - name: hs_pipeline_stage
+          - name: hs_ticket_category
+          - name: hs_ticket_priority
+          - name: subject
+      - name: engagements
